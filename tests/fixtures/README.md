@@ -19,3 +19,7 @@ are left out): `bursar_refund_policy`, `admissions_tuition_refund`, `math_faqs`,
 `advisement_six_steps` (email link text split by a `<br>`, correct href) and
 `bursar_payment_plan` (malformed table markup: a row whose cells sit outside any `<tr>`).
 `placeholders_only.html` is hand-written: no real page is placeholder-only today.
+Added for the page review: `advisement_gen_ed` (login links, a `<ul>` directly inside a `<ul>`),
+`advisement_required_core` (tab panes, header row drawn with `<strong>`), `registrar_course_scheduling`
+(a link whose fragment contains `login`) and `financial_aid_sap` (contact panels nested inside one
+another, hours panels without a heading element, a `<table>` directly inside an `<ol>`).

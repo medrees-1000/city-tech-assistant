@@ -37,6 +37,9 @@ class Ctx:
     base_url: str
     email_repairs: list[dict] = field(default_factory=list)
     placeholders_removed: int = 0
+    tab_labels: dict[str, str] = field(default_factory=dict)  # pane id -> tab title
+    tab_level: int = 2  # heading level used for tab titles
+    last_level: int = 1  # level of the most recent heading
 
 
 def absolute(href: str, base: str) -> str:
@@ -91,6 +94,16 @@ def inline_node(n, ctx: Ctx) -> str:
     return f"{BREAK}{text}{BREAK}" if n.name in LINE_BREAKERS else text
 
 
+def is_login_url(url: str) -> bool:
+    """Single sign-on host, or "login" in the path or fragment: never keep these links."""
+    parts = urlsplit(url)
+    return (
+        (parts.hostname or "").lower() == "ssologin.cuny.edu"
+        or "login" in parts.path.lower()
+        or "login" in parts.fragment.lower()
+    )
+
+
 def link_markdown(a: Tag, ctx: Ctx) -> str:
     href = (a.get("href") or "").strip()
     if href.lower().startswith("mailto:"):
@@ -98,7 +111,10 @@ def link_markdown(a: Tag, ctx: Ctx) -> str:
     text = clean(inline(a, ctx), ctx)
     if not href or href.startswith("#") or href.lower().startswith(("javascript:", "tel:")):
         return text
-    return f"[{text}]({absolute(href, ctx.base_url)})" if text else ""
+    url = absolute(href, ctx.base_url)
+    if is_login_url(url):
+        return text  # keep the link text, drop the login link
+    return f"[{text}]({url})" if text else ""
 
 
 Block = tuple[str, int, str]  # (kind, heading level, text)
@@ -126,11 +142,27 @@ def blocks(nodes: Iterable, ctx: Ctx) -> list[Block]:
             pending.append(inline_node(ch, ctx))
             continue
         flush()
-        if ch.name in HEADINGS or (ch.name == "p" and "barTitle" in (ch.get("class") or [])):
-            # <p class="barTitle"> is a styled section label (52 on the real pages): level 2
-            text = clean(inline(ch, ctx), ctx)
+        classes = ch.get("class") or []
+        if ch.name == "ul" and "nav-tabs" in classes:
+            # the tab titles become headings above their panes, so the list itself is dropped
+            ctx.tab_level = ctx.last_level + 1
+            for a in ch.find_all("a", href=True):
+                if a["href"].startswith("#"):
+                    ctx.tab_labels[a["href"][1:]] = clean(inline(a, ctx), ctx)
+        elif "tab-pane" in classes and ctx.tab_labels.get(ch.get("id", "")):
+            out.append(("h", ctx.tab_level, ctx.tab_labels[ch["id"]]))
+            out.extend(blocks(ch.children, ctx))
+        elif ch.name in HEADINGS or (ch.name == "p" and "barTitle" in classes):
+            # <p class="barTitle"> is a styled section label (52 on the real pages): level 2.
+            # On some pages it is never closed, so the paragraphs after it are nested inside it:
+            # only its leading inline text is the heading, the rest is ordinary content.
+            head, rest = split_heading(ch)
+            text = clean("".join(inline_node(n, ctx) for n in head), ctx)
             if text:
-                out.append(("h", int(ch.name[1]) if ch.name in HEADINGS else 2, text))
+                level = int(ch.name[1]) if ch.name in HEADINGS else 2
+                ctx.last_level = level
+                out.append(("h", level, text))
+            out.extend(blocks(rest, ctx))
         elif ch.name in ("ul", "ol"):
             out.extend(list_blocks(ch, ctx))
         elif ch.name == "table":
@@ -146,20 +178,32 @@ def blocks(nodes: Iterable, ctx: Ctx) -> list[Block]:
     return out
 
 
+def split_heading(el: Tag) -> tuple[list, list]:
+    """(leading inline nodes, everything from the first block-level child on)."""
+    head: list = []
+    children = list(el.children)
+    for i, c in enumerate(children):
+        inline_child = isinstance(c, NavigableString) or c.name in INLINE or c.name == "br"
+        if not inline_child:
+            return head, children[i:]
+        head.append(c)
+    return head, []
+
+
 def list_blocks(lst: Tag, ctx: Ctx) -> list[Block]:
-    """A list as markdown. Elements that sit directly inside the <ul>/<ol> but are not <li>
-    (a <p> or a <table>, which real pages do) are kept as ordinary blocks, in order."""
+    """A list as markdown. Elements that sit directly inside the <ul>/<ol> but are not <li> or a
+    nested list (a <p> or a <table>, which real pages do) are kept as ordinary blocks, in order."""
     out: list[Block] = []
     run: list[Tag] = []
 
     def flush_run() -> None:
-        lines = list_lines(lst, ctx, items=run)
+        lines = list_lines(lst, ctx, children=run)
         if lines:
             out.append(("list", 0, "\n".join(lines)))
         run.clear()
 
     for ch in lst.children:
-        if isinstance(ch, Tag) and ch.name == "li":
+        if isinstance(ch, Tag) and ch.name in ("li", "ul", "ol"):
             run.append(ch)
         elif isinstance(ch, NavigableString) and not ch.strip():
             continue  # whitespace between <li> tags must not split the list
@@ -170,17 +214,26 @@ def list_blocks(lst: Tag, ctx: Ctx) -> list[Block]:
     return out
 
 
-def list_lines(lst: Tag, ctx: Ctx, depth: int = 0, items: list[Tag] | None = None) -> list[str]:
+def list_lines(lst: Tag, ctx: Ctx, depth: int = 0, children: list[Tag] | None = None) -> list[str]:
+    """Markdown lines of a list. A <ul> placed directly inside a <ul> (invalid HTML that real pages
+    use) is treated as the children of the item before it, so its items stay indented."""
     lines = []
-    for i, li in enumerate(lst.find_all("li", recursive=False) if items is None else items, 1):
-        nested = [c for c in li.children if isinstance(c, Tag) and c.name in ("ul", "ol")]
-        parts = [inline_node(c, ctx) for c in li.children if c not in nested]
-        text = clean("".join(parts), ctx)
-        if text:
-            marker = f"{i}." if lst.name == "ol" else "-"
-            lines.append(f"{'  ' * depth}{marker} {text}")
-        for n in nested:
-            lines.extend(list_lines(n, ctx, depth + 1))
+    count = 0
+    for ch in lst.children if children is None else children:
+        if not isinstance(ch, Tag):
+            continue
+        if ch.name in ("ul", "ol"):
+            lines.extend(list_lines(ch, ctx, depth + 1))
+        elif ch.name == "li":
+            count += 1
+            nested = [c for c in ch.children if isinstance(c, Tag) and c.name in ("ul", "ol")]
+            parts = [inline_node(c, ctx) for c in ch.children if c not in nested]
+            text = clean("".join(parts), ctx)
+            if text:
+                marker = f"{count}." if lst.name == "ol" else "-"
+                lines.append(f"{'  ' * depth}{marker} {text}")
+            for n in nested:
+                lines.extend(list_lines(n, ctx, depth + 1))
     return lines
 
 
@@ -203,9 +256,15 @@ def table_rows(node: Tag) -> Iterator[list[Tag]]:
         yield orphans
 
 
+def is_bold_only(cell: Tag, ctx: Ctx) -> bool:
+    strong = cell.find(["strong", "b"])
+    return bool(strong) and clean(cell.get_text(" "), ctx) == clean(strong.get_text(" "), ctx)
+
+
 def table_markdown(table: Tag, ctx: Ctx) -> str:
     """GFM table. A first row of only <th> is the header. Other <th> cells are row labels (bold)."""
     rows: list[list[tuple[str, str]]] = []
+    bold_rows: list[bool] = []  # row is made only of bold cells (a header drawn with <strong>)
     for cells in table_rows(table):
         row: list[tuple[str, str]] = []
         for c in cells:
@@ -215,10 +274,12 @@ def table_markdown(table: Tag, ctx: Ctx) -> str:
             row.extend([(c.name, "")] * (span - 1))
         if row:
             rows.append(row)
+            bold_rows.append(all(is_bold_only(c, ctx) for c in cells if c.get_text(strip=True)))
     if not rows:
         return ""
     width = max(len(r) for r in rows)
-    header_row = rows[0] if all(kind == "th" for kind, _ in rows[0]) else None
+    all_th = all(kind == "th" for kind, _ in rows[0])
+    header_row = rows[0] if all_th or (bold_rows[0] and any(t for _, t in rows[0])) else None
     body = rows[1:] if header_row else rows
     header = [t for _, t in header_row] if header_row else [""] * width
 
@@ -232,19 +293,33 @@ def table_markdown(table: Tag, ctx: Ctx) -> str:
 
 
 def to_sections(found: list[Block]) -> list[dict]:
+    """Split blocks by heading. Sections with no text are dropped; `parents` keeps the headings
+    above a section (for example the FAQ category above a question)."""
     sections: list[dict] = []
-    cur: dict = {"heading": None, "level": 0, "parts": []}
+    stack: list[dict] = []  # open headings, outermost first
+    cur: dict | None = None
 
     def push() -> None:
-        if cur["heading"] is not None or cur["parts"]:
+        if cur and cur["parts"]:
             sections.append({"heading": cur["heading"], "level": cur["level"],
+                             "parents": cur["parents"],
                              "markdown": "\n\n".join(cur["parts"])})  # fmt: skip
 
     for kind, level, text in found:
         if kind == "h":
             push()
-            cur = {"heading": text, "level": level, "parts": []}
+            while stack and stack[-1]["level"] >= level:
+                stack.pop()
+            cur = {
+                "heading": text,
+                "level": level,
+                "parents": [dict(h) for h in stack],
+                "parts": [],
+            }
+            stack.append({"level": level, "heading": text})
         else:
+            if cur is None:
+                cur = {"heading": None, "level": 0, "parents": [], "parts": []}
             cur["parts"].append(text)
     push()
     return sections
@@ -254,15 +329,24 @@ def contact_block(soup: BeautifulSoup, ctx: Ctx) -> dict:
     """Keep the "CONTACT US" panel and any panel with HOURS in its heading; drop promo panels."""
     panels = []
     for panel in soup.select(PANELS):
+        if panel.find_parent(class_="panel"):
+            continue  # nested panels are already part of their parent's body
         head = panel.select_one(".panel-heading")
-        heading = clean(head.get_text(" "), ctx) if head else ""
+        if head:
+            heading = clean(head.get_text(" "), ctx)
+        else:  # some panels have no heading element: the title is the first line of text
+            heading = clean(next(panel.stripped_strings, ""), ctx)
         if heading.lower() != "contact us" and "hours" not in heading.lower():
             continue
         body = panel.select_one(".panel-body") or panel
-        md = "\n\n".join(text for _, _, text in blocks(body.children, ctx))
+        found = blocks(body.children, ctx)
+        if found and found[0][2] == heading:  # the title was inside the body: do not repeat it
+            found = found[1:]
+        md = "\n\n".join(text for _, _, text in found)
         panels.append({"heading": heading, "markdown": md})
     text = "\n".join(p["markdown"] for p in panels)
     return {
+        "embed": False,  # the per-owner contact record is used instead; chunking skips this
         "panels": panels,
         "emails": sorted(set(EMAIL.findall(text))),
         "phones": sorted(set(PHONE.findall(text))),
@@ -299,15 +383,16 @@ def pdf_links(main: Tag, base: str) -> list[dict]:
         href = a["href"].strip()
         if urlsplit(href).path.lower().endswith(".pdf"):
             url = absolute(href, base)
-            if url not in seen:
+            if url not in seen and not is_login_url(url):
                 seen.add(url)
                 found.append({"url": url, "text": " ".join(a.get_text(" ").split())})
     return found
 
 
 def not_collected(meta: dict, reason: str, title: str | None = None) -> dict:
-    return {**meta, "title": title, "status": "not_collected", "reason": reason, "sections": [],
-            "contact": {"panels": [], "emails": [], "phones": []}, "chair": None,
+    return {**meta, "title": title, "status": "not_collected", "reason": reason,
+            "index": False, "index_reason": f"not collected: {reason}", "sections": [],
+            "contact": {"embed": False, "panels": [], "emails": [], "phones": []}, "chair": None,
             "pdf_links": [], "email_repairs": []}  # fmt: skip
 
 
@@ -336,6 +421,8 @@ def parse_page(html: bytes, meta: dict) -> dict:
         "title": title,
         "status": "collected",
         "reason": "",
+        "index": True,
+        "index_reason": None,
         "sections": sections,
         "contact": contact_block(soup, ctx),
         "chair": chair,
@@ -349,11 +436,13 @@ def parse_page(html: bytes, meta: dict) -> dict:
 def render_markdown(record: dict) -> str:
     """The cleaned page as one markdown document (for reading and review)."""
     lines = [f"<!-- {record['source_url']} | status: {record['status']} -->"]
+    shown: list[str] = []  # headings already printed, so a parent heading appears once
     for s in record["sections"]:
-        if s["heading"]:
-            lines.append(f"{'#' * max(s['level'], 1)} {s['heading']}")
-        if s["markdown"]:
-            lines.append(s["markdown"])
+        for h in [*s.get("parents", []), {"level": s["level"], "heading": s["heading"]}]:
+            if h["heading"] and h["heading"] not in shown:
+                lines.append(f"{'#' * max(h['level'], 1)} {h['heading']}")
+                shown.append(h["heading"])
+        lines.append(s["markdown"])
     for p in record["contact"]["panels"]:
         lines += [f"**{p['heading']}**", p["markdown"]]
     return "\n\n".join(lines) + "\n"

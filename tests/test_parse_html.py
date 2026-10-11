@@ -54,12 +54,18 @@ def test_title_sections_and_metadata():
     assert rec["title"] == "Tuition Refund Policy - Bursar's Office - City Tech"
     assert rec["status"] == "collected" and rec["kind"] == "office" and rec["owner"] == "bursar"
     assert headings(rec) == [
-        (1, "Refund Policy"),
         (2, "Refund Policy and Deadlines for Dropping Classes"),
         (2, "Summer Session I 2026 Refund Policy"),
         (2, "Summer Session II 2026 Refund Policy"),
         (2, "Fall 2026 Refund Policy"),
     ]
+
+
+def test_empty_sections_are_dropped_but_parent_headings_are_kept_in_parents():
+    rec = parse("bursar_refund_policy", "/bursar/refund-policy.aspx")
+    assert all(s["markdown"].strip() for s in rec["sections"])  # "# Refund Policy" had no text
+    assert rec["sections"][0]["parents"] == [{"level": 1, "heading": "Refund Policy"}]
+    assert "# Refund Policy\n\n## Refund Policy and Deadlines" in render_markdown(rec)
 
 
 def test_refund_table_th_row_labels_are_bold_and_header_row_is_the_header():
@@ -116,9 +122,14 @@ def test_promo_panels_are_dropped():
 
 def test_faq_accordion_questions_become_sections_and_layout_tables_are_not_tables():
     rec = parse("math_faqs", "/mathematics/faqs.aspx", "department", "MATH-NYT")
-    assert (2, "MATH PLACEMENT") in headings(rec)  # <p class="barTitle"> is a section label
     q = next(s for s in rec["sections"] if s["heading"] == "What determines my math placement?")
     assert q["level"] == 3
+    # <p class="barTitle"> is a level-2 section label; it has no text of its own, so it is a parent
+    assert q["parents"] == [
+        {"level": 1, "heading": "Frequently Asked Questions"},
+        {"level": 2, "heading": "MATH PLACEMENT"},
+    ]
+    assert "## MATH PLACEMENT" in render_markdown(rec)
     assert q["markdown"].startswith("Your placement is based on your high school records.")
     layout = [s for s in rec["sections"] if s["level"] == 3]
     assert len(layout) >= 10
@@ -130,8 +141,9 @@ def test_layout_table_with_headings_is_walked_not_rendered_as_a_table():
         "<h1>FAQ</h1><table><tr><td><h3>Q1?</h3><p>A1.</p></td></tr>"
         "<tr><td><h3>Q2?</h3><p>A2.</p></td></tr></table>"
     )
-    assert headings(rec) == [(1, "FAQ"), (3, "Q1?"), (3, "Q2?")]
-    assert rec["sections"][1]["markdown"] == "A1."
+    assert headings(rec) == [(3, "Q1?"), (3, "Q2?")]
+    assert rec["sections"][0]["markdown"] == "A1."
+    assert rec["sections"][0]["parents"] == [{"level": 1, "heading": "FAQ"}]
 
 
 def test_data_table_header_row_th_and_colspan():
@@ -274,3 +286,109 @@ def test_whitespace_between_list_items_keeps_one_list():
         "<h1>A</h1><ul>\n  <li>one</li>\n  <li>two</li>\n</ul><ol>\n<li>x</li>\n<li>y</li>\n</ol>"
     )
     assert rec["sections"][0]["markdown"] == "- one\n- two\n\n1. x\n2. y"
+
+
+def test_login_links_are_removed_but_the_link_text_stays():
+    rec = inline_page(
+        "<h1>A</h1><p>"
+        '<a href="https://ssologin.cuny.edu/cuny.html?x=1">CUNYfirst</a> '
+        '<a href="/student/login/">Log in here</a> '
+        '<a href="https://cuny.coursedog.com/#/login?continue=%2Fproducts">Coursedog</a> '
+        '<a href="/ok.aspx">Fine</a></p>'
+        '<p><a href="/forms/Login-Guide.pdf">Guide</a> <a href="/forms/form.pdf">Form</a></p>'
+    )
+    md = rec["sections"][0]["markdown"]
+    assert md.splitlines()[0] == (
+        "CUNYfirst Log in here Coursedog [Fine](https://www.citytech.cuny.edu/ok.aspx)"
+    )
+    assert "ssologin" not in md and "login" not in md.lower().replace("log in", "")
+    assert [link["text"] for link in rec["pdf_links"]] == [
+        "Form"
+    ]  # the login-path PDF is dropped too
+
+
+def test_real_pages_keep_no_login_links():
+    for name, path in (
+        ("advisement_gen_ed", "/advisement/gen-ed.aspx"),
+        ("registrar_course_scheduling", "/registrar/course-scheduling.aspx"),
+    ):
+        rec = parse(name, path, owner="x")
+        out = render_markdown(rec)
+        assert "ssologin.cuny.edu" not in out and "/login" not in out.lower()
+    rec = parse("registrar_course_scheduling", "/registrar/course-scheduling.aspx")
+    env = next(s for s in rec["sections"] if s["heading"] == "Coursedog Environments")
+    assert env["markdown"].startswith("Coursedog Production")  # text kept, link gone
+
+
+def test_college_option_nested_lists_keep_their_indentation():
+    rec = parse("advisement_gen_ed", "/advisement/gen-ed.aspx", owner="advisement")
+    s = next(s for s in rec["sections"] if s["heading"] == "College Option")
+    lines = s["markdown"].splitlines()
+    first = lines.index(
+        "- One course in speech/oral communication"
+    )  # list with a <ul> inside a <ul>
+    assert lines[first + 1 : first + 7] == [
+        "  - COM 1330 Public Speaking",
+        "  - COM 1332 Introduction to Human Communication",
+        "  - COM 1403 Introduction to Communication in Healthcare Professions",
+        "  - COM 2405 Principles of Persuasion",
+        "  - COM 2406 Gender and Health Communication",
+        "  - COM 3401 Business & Professional Communication",
+    ]
+    assert lines[first + 7].startswith("- One [interdisciplinary (ID) course](")
+    nested = [x for x in lines if x.startswith("  - COM ")]
+    assert len(nested) == 18  # three lists of six, none left unindented
+    assert not [x for x in lines if x.startswith("- COM ")]
+    assert "" not in lines[first : first + 9]  # the list is not split into several
+
+
+def test_list_directly_inside_a_list_belongs_to_the_previous_item():
+    rec = inline_page("<h1>A</h1><ul><li>a</li><ul><li>a1</li><li>a2</li></ul><li>b</li></ul>")
+    assert rec["sections"][0]["markdown"] == "- a\n  - a1\n  - a2\n- b"
+
+
+def test_tab_titles_become_headings_above_their_panes():
+    rec = parse("advisement_required_core", "/advisement/required-core.aspx", owner="advisement")
+    assert headings(rec) == [
+        (2, "English Composition"),
+        (2, "Mathematical and Quantitative Reasoning"),
+        (2, "Life and Physical Sciences"),
+    ]
+    assert rec["sections"][0]["parents"] == [
+        {"level": 1, "heading": "Required Common Core Courses"}
+    ]
+    out = render_markdown(rec)
+    assert "- English Composition" not in out  # the detached tab list is gone
+    assert "MAT 1190 | Quantitative Reasoning | MQR |" in out
+
+
+def test_header_row_drawn_with_strong_is_the_table_header():
+    rec = parse("advisement_required_core", "/advisement/required-core.aspx", owner="advisement")
+    lines = rec["sections"][0]["markdown"].splitlines()
+    assert lines[:3] == ["| Course | Title | Area(s) |", "| --- | --- | --- |",
+                         "| ENG 1101 | English Composition I | EC |"]  # fmt: skip
+    plain = inline_page("<h1>A</h1><table><tr><td>x</td><td>y</td></tr></table>")
+    assert plain["sections"][0]["markdown"].splitlines()[0] == "|  |  |"  # not bold: no header
+
+
+def test_hours_panels_without_a_heading_element_are_kept_and_nested_panels_not_repeated():
+    rec = parse("financial_aid_sap", "/financial-aid/sap.aspx", owner="financial-aid")
+    assert [p["heading"] for p in rec["contact"]["panels"]] == ["CONTACT US"]
+    contact = rec["contact"]["panels"][0]["markdown"]
+    for title in ("IN-PERSON HOURS", "ZOOM HOURS", "PHONE HOURS", "WEB-LAB HOURS"):
+        assert contact.count(title) == 1  # present once, from the nested panel
+    assert "Federal Pell Grant" not in contact  # the ANNOUNCEMENTS promo panel is dropped
+
+
+def test_table_directly_inside_an_ordered_list_is_kept_on_a_real_page():
+    rec = parse("financial_aid_sap", "/financial-aid/sap.aspx", owner="financial-aid")
+    assert any("Attempted Credits" in s["markdown"] for s in rec["sections"])
+
+
+def test_academic_calendar_style_tabs_without_content_are_dropped():
+    rec = inline_page(
+        '<h1>T</h1><ul class="nav nav-tabs"><li><a href="#a">2026</a></li>'
+        '<li><a href="#b">2027</a></li></ul>'
+        '<div class="tab-pane" id="a"><p>one</p></div><div class="tab-pane" id="b"></div>'
+    )
+    assert headings(rec) == [(2, "2026")] and rec["sections"][0]["markdown"] == "one"

@@ -43,9 +43,9 @@ def test_page_targets_label_office_and_department():
     ]
 
 
-def test_sources_yaml_has_59_pages():
+def test_sources_yaml_has_63_pages():
     targets = page_targets(load_sources())
-    assert sum(t.kind == "office" for t in targets) == 24
+    assert sum(t.kind == "office" for t in targets) == 28  # 24 + 4 advisement pages added later
     assert sum(t.kind == "department" for t in targets) == 35
     assert all(t.url.startswith("https://www.citytech.cuny.edu/") for t in targets)
 

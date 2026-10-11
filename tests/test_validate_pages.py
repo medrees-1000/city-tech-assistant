@@ -2,8 +2,12 @@ from cta.validate.pages import (
     check_bodies,
     check_chairs,
     check_cleaned_text,
+    check_contacts,
     check_hashes_and_log,
+    check_index_flags,
+    check_links,
     check_redirects,
+    check_sections,
     check_status,
     counts_per_owner,
     email_repairs,
@@ -21,6 +25,7 @@ def manifest_entry(**over):
 
 def record(**over):
     base = {
+        "pdf_links": [], "index": True, "index_reason": None,
         "source_url": U, "http_status": 200, "status": "collected", "reason": "", "kind": "office",
         "owner": "bursar", "sections": [{"heading": "H", "level": 1, "markdown": "body text"}],
         "contact": {"panels": [], "emails": [], "phones": []}, "chair": None, "email_repairs": [],
@@ -145,3 +150,40 @@ def test_counts_per_owner():
 
 def test_run_page_checks_clean_data():
     assert run_page_checks([manifest_entry()], [record()], [log_row()]) == []
+
+
+def md(text):
+    return record(sections=[{"heading": "H", "level": 1, "markdown": text}])
+
+
+def test_login_links_fail_and_long_query_urls_warn():
+    sso = md("[x](https://ssologin.cuny.edu/cuny.html?a=1)")
+    path = md("[x](https://www.citytech.cuny.edu/login/)")
+    frag = md("[x](https://cuny.coursedog.com/#/login?continue=1)")
+    assert [f.check for f in check_links([sso, path, frag])] == ["login_links"] * 3
+    pdf = record(pdf_links=[{"url": "https://www.citytech.cuny.edu/a/login.pdf", "text": "t"}])
+    assert [f.check for f in check_links([pdf])] == ["login_links"]
+    long_q = md("[x](https://example.com/p?" + "a=1&" * 30 + ")")
+    found = check_links([long_q, md("[ok](https://example.com/p?a=1)")])
+    assert [(f.check, f.severity) for f in found] == [("long_urls", "warning")]
+
+
+def test_empty_sections_fail():
+    r = record(sections=[{"heading": "H", "level": 1, "markdown": "  "}])
+    assert [f.check for f in check_sections([r])] == ["empty_sections"]
+    assert check_sections([record()]) == []
+
+
+def test_index_flag_rules():
+    assert check_index_flags([record(index=True, index_reason=None)]) == []
+    assert check_index_flags([record(index=False, index_reason="links only")]) == []
+    assert len(check_index_flags([record(index=False, index_reason=None)])) == 1
+    no_field = {k: v for k, v in record().items() if k != "index"}
+    assert len(check_index_flags([no_field])) == 1
+    assert len(check_index_flags([record(index=True, status="not_collected")])) == 1
+
+
+def test_inconsistent_contacts_warn():
+    ok = {"owner": "bursar", "consistent": True}
+    bad = {"owner": "x", "consistent": False}
+    assert [(f.check, f.severity) for f in check_contacts([ok, bad])] == [("contacts", "warning")]

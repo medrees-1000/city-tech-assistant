@@ -11,6 +11,7 @@ import sys
 from collections import Counter
 from urllib.parse import urlsplit
 
+from cta.parse.html import is_login_url
 from cta.settings import ROOT
 from cta.validate.findings import Finding
 
@@ -18,6 +19,8 @@ EMAIL_OK = re.compile(r"^[\w.+-]+@[\w-]+(?:\.[\w-]+)+$")
 SPACED = re.compile(r"\S\s+@\w|\w@\s+\S")
 PLACEHOLDER = re.compile(r"\{\{.*?\}\}")
 CHAIR_FIELDS = ("name", "role", "room", "phone", "email")
+LINK = re.compile(r"\[[^\]]*\]\((https?://[^)\s]+)\)")
+MAX_QUERY = 100
 
 
 def page_text(rec: dict) -> str:
@@ -136,12 +139,66 @@ def check_chairs(records: list[dict]) -> list[Finding]:
     return found
 
 
+def check_links(records: list[dict]) -> list[Finding]:
+    """No login links anywhere; a URL whose query string is over 100 characters is a warning."""
+    found = []
+    for r in records:
+        urls = LINK.findall(page_text(r)) + [link["url"] for link in r["pdf_links"]]
+        for url in dict.fromkeys(urls):
+            if is_login_url(url):
+                found.append(
+                    Finding("login_links", "fail", f"login link kept: {url[:80]}", r["source_url"])
+                )
+            elif len(urlsplit(url).query) > MAX_QUERY:
+                msg = f"query string of {len(urlsplit(url).query)} characters: {url[:80]}"
+                found.append(Finding("long_urls", "warning", msg, r["source_url"]))
+    return found
+
+
+def check_sections(records: list[dict]) -> list[Finding]:
+    """No section with empty markdown."""
+    return [
+        Finding("empty_sections", "fail", f"empty section {s['heading']!r}", r["source_url"])
+        for r in records
+        for s in r["sections"]
+        if not s["markdown"].strip()
+    ]
+
+
+def check_index_flags(records: list[dict]) -> list[Finding]:
+    """Every record has index (bool); index false always says why."""
+    found = []
+    for r in records:
+        if not isinstance(r.get("index"), bool):
+            found.append(Finding("index", "fail", "index missing or not a bool", r["source_url"]))
+        elif not r["index"] and not r.get("index_reason"):
+            found.append(
+                Finding("index", "fail", "index is false without a reason", r["source_url"])
+            )
+        elif r["index"] and r["status"] != "collected":
+            found.append(
+                Finding("index", "fail", "indexed page was not collected", r["source_url"])
+            )
+    return found
+
+
+def check_contacts(contacts: list[dict]) -> list[Finding]:
+    """The panels of an owner should be identical on all its pages; differences are warnings."""
+    return [
+        Finding("contacts", "warning", f"{c['owner']}: panels differ between pages", c["owner"])
+        for c in contacts
+        if not c["consistent"]
+    ]
+
+
 def email_repairs(records: list[dict]) -> dict[str, list[dict]]:
     """Pages where an email address had to be repaired (for the validation log)."""
     return {r["source_url"]: r["email_repairs"] for r in records if r["email_repairs"]}
 
 
-def run_page_checks(manifest: list[dict], records: list[dict], log: list[dict]) -> list[Finding]:
+def run_page_checks(
+    manifest: list[dict], records: list[dict], log: list[dict], contacts: list[dict] | None = None
+) -> list[Finding]:
     return [
         *check_status(manifest),
         *check_redirects(manifest),
@@ -149,6 +206,10 @@ def run_page_checks(manifest: list[dict], records: list[dict], log: list[dict]) 
         *check_hashes_and_log(manifest, log),
         *check_cleaned_text(records),
         *check_chairs(records),
+        *check_links(records),
+        *check_sections(records),
+        *check_index_flags(records),
+        *check_contacts(contacts or []),
     ]
 
 
@@ -171,7 +232,11 @@ def main() -> int:
     ]
     log_path = ROOT / "data" / "raw" / "fetch_log.jsonl"
     log = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines() if line]
-    findings = run_page_checks(manifest, records, log)
+    contacts = [
+        json.loads(p.read_text(encoding="utf-8"))
+        for p in sorted((processed / "contacts").glob("*.json"))
+    ]
+    findings = run_page_checks(manifest, records, log, contacts)
     for k, v in counts_per_owner(records).items():
         print(f"{k:28} {v}")
     for f in findings:
