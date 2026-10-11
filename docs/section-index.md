@@ -80,10 +80,10 @@ department, department CST-NYT, scope department, term -: 4 sections, 1103 chars
 
 | id | doc_type | department | scope | term | terms | source | heading path | chars |
 |---|---|---|---|---|---|---|---|---|
-| page/CST-NYT/degrees#1 | department | CST-NYT | department | - | - | https://www.citytech.cuny.edu/computer-systems/degrees.aspx | Degrees > [Computer Information Systems/AAS](https://citytech.catalog.cuny.edu/programs/CIS-AAS) | 249 |
-| page/CST-NYT/degrees#2 | department | CST-NYT | department | - | - | https://www.citytech.cuny.edu/computer-systems/degrees.aspx | Degrees > [Computer Systems Technology/BTech](https://citytech.catalog.cuny.edu/programs/CIB-BT) | 266 |
-| page/CST-NYT/degrees#3 | department | CST-NYT | department | - | - | https://www.citytech.cuny.edu/computer-systems/degrees.aspx | Degrees > [Data Science/BS](https://citytech.catalog.cuny.edu/programs/DSCI-BS) | 234 |
-| page/CST-NYT/degrees#4 | department | CST-NYT | department | - | - | https://www.citytech.cuny.edu/computer-systems/degrees.aspx | Degrees > [Cybersecurity/BS](https://citytech.catalog.cuny.edu/programs/CYBER-BS) | 354 |
+| page/CST-NYT/degrees#1 | department | CST-NYT | department | - | - | https://www.citytech.cuny.edu/computer-systems/degrees.aspx | Degrees > Computer Information Systems/AAS | 249 |
+| page/CST-NYT/degrees#2 | department | CST-NYT | department | - | - | https://www.citytech.cuny.edu/computer-systems/degrees.aspx | Degrees > Computer Systems Technology/BTech | 266 |
+| page/CST-NYT/degrees#3 | department | CST-NYT | department | - | - | https://www.citytech.cuny.edu/computer-systems/degrees.aspx | Degrees > Data Science/BS | 234 |
+| page/CST-NYT/degrees#4 | department | CST-NYT | department | - | - | https://www.citytech.cuny.edu/computer-systems/degrees.aspx | Degrees > Cybersecurity/BS | 354 |
 
 ### https://www.citytech.cuny.edu/computer-systems/
 
@@ -302,8 +302,8 @@ department, department EET-NYT, scope department, term -: 3 sections, 524 chars.
 
 | id | doc_type | department | scope | term | terms | source | heading path | chars |
 |---|---|---|---|---|---|---|---|---|
-| page/EET-NYT/degrees#1 | department | EET-NYT | department | - | - | https://www.citytech.cuny.edu/electrical-telecomm/degrees.aspx | Degrees > [Electrical Engineering Technology/AAS](https://citytech.catalog.cuny.edu/programs/ET-AAS) | 117 |
-| page/EET-NYT/degrees#2 | department | EET-NYT | department | - | - | https://www.citytech.cuny.edu/electrical-telecomm/degrees.aspx | Degrees > [Electrical Engineering Technology/BTech](https://citytech.catalog.cuny.edu/programs/ETB-BTECH) | 142 |
+| page/EET-NYT/degrees#1 | department | EET-NYT | department | - | - | https://www.citytech.cuny.edu/electrical-telecomm/degrees.aspx | Degrees > Electrical Engineering Technology/AAS | 117 |
+| page/EET-NYT/degrees#2 | department | EET-NYT | department | - | - | https://www.citytech.cuny.edu/electrical-telecomm/degrees.aspx | Degrees > Electrical Engineering Technology/BTech | 142 |
 | page/EET-NYT/degrees#3 | department | EET-NYT | department | - | - | https://www.citytech.cuny.edu/electrical-telecomm/degrees.aspx | Degrees > Accelerator Science and Technology Minor | 265 |
 
 ### https://www.citytech.cuny.edu/electrical-telecomm/
@@ -382,10 +382,10 @@ department, department MATH-NYT, scope department, term -: 4 sections, 1894 char
 
 | id | doc_type | department | scope | term | terms | source | heading path | chars |
 |---|---|---|---|---|---|---|---|---|
-| page/MATH-NYT/degrees#1 | department | MATH-NYT | department | - | - | https://www.citytech.cuny.edu/mathematics/degrees.aspx | Degrees > [Applied Mathematics/BS](https://citytech.catalog.cuny.edu/programs/APM-BS) | 683 |
-| page/MATH-NYT/degrees#2 | department | MATH-NYT | department | - | - | https://www.citytech.cuny.edu/mathematics/degrees.aspx | Degrees > [Computer Science/AS](https://citytech.catalog.cuny.edu/programs/CSC-AS) | 320 |
-| page/MATH-NYT/degrees#3 | department | MATH-NYT | department | - | - | https://www.citytech.cuny.edu/mathematics/degrees.aspx | Degrees > [Mathematics Education/BS](https://citytech.catalog.cuny.edu/programs/MEDU-BS) | 400 |
-| page/MATH-NYT/degrees#4 | department | MATH-NYT | department | - | - | https://www.citytech.cuny.edu/mathematics/degrees.aspx | Degrees > [Computer Science/Minor](https://citytech.catalog.cuny.edu/programs/CSCI-MIN) | 491 |
+| page/MATH-NYT/degrees#1 | department | MATH-NYT | department | - | - | https://www.citytech.cuny.edu/mathematics/degrees.aspx | Degrees > Applied Mathematics/BS | 683 |
+| page/MATH-NYT/degrees#2 | department | MATH-NYT | department | - | - | https://www.citytech.cuny.edu/mathematics/degrees.aspx | Degrees > Computer Science/AS | 320 |
+| page/MATH-NYT/degrees#3 | department | MATH-NYT | department | - | - | https://www.citytech.cuny.edu/mathematics/degrees.aspx | Degrees > Mathematics Education/BS | 400 |
+| page/MATH-NYT/degrees#4 | department | MATH-NYT | department | - | - | https://www.citytech.cuny.edu/mathematics/degrees.aspx | Degrees > Computer Science/Minor | 491 |
 
 ### https://www.citytech.cuny.edu/mathematics/faqs.aspx
 
@@ -475,7 +475,7 @@ howto, department -, scope city_tech, term -: 2 sections, 2277 chars.
 | id | doc_type | department | scope | term | terms | source | heading path | chars |
 |---|---|---|---|---|---|---|---|---|
 | page/advisement/degree-checklist#1 | howto | - | city_tech | - | - | https://www.citytech.cuny.edu/advisement/degree-checklist.aspx | Degree Requirements and Sample Course of Study > Degree Requirements | 1374 |
-| page/advisement/degree-checklist#2 | howto | - | city_tech | - | - | https://www.citytech.cuny.edu/advisement/degree-checklist.aspx | Degree Requirements and Sample Course of Study > [Sample Course of Study](https://www.citytech.cuny.edu/academics/areas-of-study.aspx) | 903 |
+| page/advisement/degree-checklist#2 | howto | - | city_tech | - | - | https://www.citytech.cuny.edu/advisement/degree-checklist.aspx | Degree Requirements and Sample Course of Study > Sample Course of Study | 903 |
 
 ### https://www.citytech.cuny.edu/advisement/flexible-core.aspx
 
