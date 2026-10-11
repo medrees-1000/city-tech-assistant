@@ -149,7 +149,12 @@ stray space inside an email address; fix it).
   ends January 2027, so resolve each row's year carefully and have the owner verify it.
 - Some rows are TBA (e.g. commencement). Store the date as null and answer "not announced".
 - Each PDF has a "Last updated" date and says the calendar can change; show it in the answer.
-- Each row: `event`, `date`, `term`, `applies_to`, `source_pdf`, `last_updated`, `verified`.
+- Each row (`data/calendar/calendar_events.json`, built by `uv run python -m cta.parse.calendar_build`):
+  `id`, `term`, `event`, `date_start`, `date_end`, `date_raw`, `weekday_raw`, `applies_to`, `bold`,
+  `source_pdf`, `source_page`, `pdf_last_updated`, `verified` (always false until the owner checks the row
+  in `docs/calendar-verification.md`), `notes`. The PDFs are Excel tables; rows are rebuilt from character
+  positions (the text stream is not in reading order). One event per printed line of the event cell; a line
+  that wraps onto a second line is joined and noted. `pdf_last_updated` is the printed "Last updated" date.
 
 ## Architecture
 

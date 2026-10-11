@@ -264,3 +264,57 @@ Decisions applied:
 Source typo, left as printed (not changed): financial-aid "PHONE HOURS" table says
 "Tuesday | 9:00 PM - 5:00 PM"; it should presumably be AM. It is in the financial-aid contact record and in
 the contact panel of each of the 4 financial-aid pages.
+
+## 2026-10-11: calendar table (Fall 2026, Winter 2027, Spring 2027)
+
+Built by `uv run python -m cta.parse.calendar_build` from `data/pdfs/{fall_2026,winter_2027,spring_2027}.pdf`
+into `data/calendar/calendar_events.json`; the owner's review sheet is `docs/calendar-verification.md`.
+All 136 rows are `verified: false`. Checks: **0 failures**, 0 weekday mismatches, 0 lines that could not
+be parsed.
+
+- Text layer: all three PDFs have one (readable text-drawing operators; one image each, a logo).
+  Checked first with the standard library, then with pdfplumber (new dependency). No OCR.
+- Events per term: Fall 2026 55 (page 1: 45, page 2: 10), Winter 2027 26 (page 1), Spring 2027 55
+  (page 1: 44, page 2: 11). Summer 2027 and Fall 2027: no rows, status "abstain".
+- `pdf_last_updated` from the printed text: Fall "9/15/26" (2026-09-15), Winter and Spring "7/27/26"
+  (2026-07-27). The PDF metadata dates differ (for example Fall ModDate 2026-09-15, Winter 2026-08-28);
+  the printed text is used.
+- Rows are rebuilt from character positions: the cell borders are thin rectangles and each character
+  belongs to the cell holding its center (the stream order is not reading order, and a few words such as
+  "Friday" change font mid-word).
+- Bold: the font name says it (`TimesNewRomanPS-BoldMT` vs `TimesNewRomanPSMT`). Spot-checked on a
+  rendering of the Winter page: the 9 bold events match the printed bold lines. No event line mixes bold
+  and regular text, so `bold` is never null here (50 true, 86 false).
+- Year: Winter 2027 starts in December 2026 (first row December 28, 2026); the year moves to the next
+  one when the table goes from December to January. Fall 2026 prints "January 01, 2027" for its last
+  row, which agrees. No printed year disagreed with the table position. A date was never changed.
+- Weekday check: all 135 dated rows match (including ranges such as "Tuesday-Monday" for Dec 15-21,
+  2026). The TBA row has no date to check.
+- Wrapped lines (8 rows, joined and noted "printed on 2 lines; joined as wrapped text"): a printed line
+  continues the one above it when it starts with a lowercase letter or digit, or when its first word would
+  not have fitted on the line above. Rows: Fall 35 (Plan Week), 38 (early registration), 41 (appeals
+  deadline); Winter 17 (appeals deadline); Spring 1 (appeals), 33 (Plan Week), 38 (early registration),
+  46 (appeals). Winter row 17 was checked against the rendered page. This rule is mine, not the PDF's:
+  the owner should check these 8 rows in particular.
+- TBA: Spring 2027 "87th Commencement Ceremony", date_raw "TBA", weekday_raw "TBA", dates null.
+- `applies_to` is filled only when the text names who it is for (11 rows: "all students" for the
+  online-registration rows, the ASAP/CSTEP/Honors/SEEK list for early registration, and the
+  "students dismissed ..." qualifier of the appeals deadline). Otherwise null.
+- Date windows (`config/calendar_terms.yaml`): Winter 2027 2026-12-20..2027-02-10 (owner's description).
+  Fall 2026 2026-06-29..2027-01-21 and Spring 2027 2026-11-29..2027-06-27 are my choice from the dates
+  printed in their own PDFs (60 days before the printed start-of-term event to 31 days after the
+  end-of-term event). Owner to confirm.
+- Text in each PDF outside the table, not turned into events: the title, the line "*The Academic Calendar
+  is subject to change at any time by official action of the University", "CUNY Policy on Religious
+  Accommodations" and "All Religions and Ethnic Holidays Calendar".
+- Automatic checks (tested, including with deliberately damaged data): required fields and unique ids; dates
+  inside the term window; printed weekday matches the date; no duplicate rows; every character the PDF has
+  inside the table (minus the header row) is in the table and nothing else is, and the event texts equal
+  the printed event lines in order; each term has one start and one end event; the title matches the file;
+  no-calendar terms have no rows and abstain.
+- The completeness check compares the table with all characters inside the table outline, found without
+  using the rows or cells, so a dropped, duplicated or invented line is caught. It cannot catch a wrong
+  grouping of lines into events (for example a line wrongly joined or split): that is what the manual row
+  check is for.
+
+Pending (owner): check every row of `docs/calendar-verification.md` against its PDF, then set `verified: true`.
