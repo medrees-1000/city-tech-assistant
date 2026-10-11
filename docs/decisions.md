@@ -22,3 +22,10 @@ Short notes on choices that are not obvious from the code. Newest last.
 - Refund pages (`refund_pages` in `config/sources.yaml`) also store `covered_terms`, every term their
   headings and tables name, and `seasons_without_year`, the season names they use without a year. The
   coverage is what the page prints; it is not assumed from the page's purpose.
+
+## Phase 3 answer rule: terms on retrieved sections
+
+If none of the terms tagged on a retrieved section matches the term the question is about (or the current
+term when none is named), the answer states the term printed on the source (for example "this page lists
+Fall 2024 hours") or abstains with the office contact. Term filtering is soft: a section with no terms is
+never excluded.

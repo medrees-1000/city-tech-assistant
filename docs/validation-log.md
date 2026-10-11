@@ -629,3 +629,12 @@ PASS (534 sections in 82 records), calendar PASS.
 
 Full validation: courses PASS (30 warnings), pages PASS (2 accepted), pdfs PASS, departments PASS, metadata
 PASS (534 sections, 82 records), calendar PASS.
+
+## Open list: pages whose printed term is not current, owner to check live (Oct 11, 2026)
+
+- `electrical-telecomm/student-hours.aspx`: titled "Fall 2024".
+- `electrical-telecomm/advisement.aspx`: table titled "Summer 2026 Advisement Schedule".
+- `electrical-telecomm/` (root page): the same "Summer 2026 Advisement Schedule" table.
+- `advisement/virtual-advisors.aspx`: the EET section, table titled "Summer 2026 Advisement Schedule".
+
+The EET root "Our Mission" section is tagged Summer 2026 only because an advisement table sits inside it.

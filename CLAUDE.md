@@ -99,8 +99,10 @@ Skip `program-DSCI-BS-*.pdf`: it is a subset of the CST department PDF.
 - `registrar/academic-calendar.aspx` links 12 PDFs under `/registrar/docs/` (winter, spring,
   summer, fall 2026 and winter, spring 2027, each with a `_meeting_grid.pdf`). Summer 2027 and
   Fall 2027 calendars are not published, so abstain on those terms.
-- `admissions/tuition-refund.aspx` and `bursar/refund-policy.aspx` show tables only for Summer I,
-  Summer II and Fall 2026. Spring/Winter 2027 refund answers must come from the calendar PDFs.
+- `admissions/tuition-refund.aspx` has one generic CUNY refund schedule ("Fall and Spring",
+  "Summer Session", no year) and no covered terms. Refund dates for a named term come from
+  `bursar/refund-policy.aspx` (Summer I 2026, Summer II 2026, Fall 2026) or the calendar PDFs. Winter
+  and Spring 2027 refund answers come only from the aid refund calendar PDF and the calendar table.
 - Pages link many form PDFs (re-admission, ePermit, graduation application, TAP waiver). Record
   the links in the page record (`pdf_links`), not in the fetch log, and do not download or index forms for now.
 - The financial aid FAQ links several 2025-26 guide PDFs. They are out of date; skip them.
