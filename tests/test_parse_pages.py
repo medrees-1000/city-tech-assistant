@@ -137,9 +137,9 @@ def test_page_metadata_adds_doc_type_and_note_and_no_index_overrides_index(tmp_p
     shutil.copy(PAGES / "bursar_refund_policy.html", raw / "a.html")
     e = entry("/bursar/refund-policy.aspx", "a")
     e["saved_as"] = "raw/a.html"
-    meta = {e["url"]: {"doc_type": "advisement_contacts", "note": "lists staff emails"}}
+    meta = {e["url"]: {"doc_type": "contacts", "note": "lists staff emails"}}
     rec = record_for(e, tmp_path / "raw_root", None, meta)
-    assert rec["doc_type"] == "advisement_contacts" and rec["note"] == "lists staff emails"
+    assert rec["doc_type"] == "contacts" and rec["note"] == "lists staff emails"
     assert rec["index"] is True  # kept for indexing
     plain = record_for(e, tmp_path / "raw_root")
     assert plain["doc_type"] is None and plain["note"] is None
@@ -160,9 +160,12 @@ def test_sources_yaml_decisions():
         f"{base}/mathematics/articulation-agreement.aspx",
     }
     assert src["page_metadata"][f"{base}/advisement/virtual-advisors.aspx"] == {
-        "doc_type": "advisement_contacts",
-        "note": "lists staff emails",
+        "note": "lists staff emails"
     }
+    assert src["doc_types"] == [
+        "policy", "calendar", "catalog_course", "program", "department", "faq", "aid", "howto",
+        "contacts",
+    ]  # fmt: skip
 
 
 FIN_AID = (
@@ -206,3 +209,60 @@ def test_the_contact_record_has_an_hours_field():
     c = build_contacts(recs)["x"]
     assert c["hours"][0]["heading"] == "OFFICE HOURS"
     assert build_contacts([collected("y", CONTACT, "u1")])["y"]["hours"] == []
+
+
+RULES = [
+    {"path": "/registrar/academic-calendar.aspx", "doc_type": "calendar"},
+    {"path": "/advisement/virtual-advisors.aspx", "doc_type": "contacts"},
+    {"path": "*/faqs.aspx", "doc_type": "faq"},
+    {"path": "/registrar/*", "doc_type": "policy"},
+    {"path": "/dental/*", "doc_type": "department"},
+]
+
+
+def test_doc_type_is_the_first_matching_rule_and_null_when_none_matches():
+    from cta.parse.pages import doc_type_for
+
+    base = "https://www.citytech.cuny.edu"
+    assert doc_type_for(f"{base}/registrar/academic-calendar.aspx", RULES) == "calendar"
+    assert doc_type_for(f"{base}/registrar/faqs.aspx", RULES) == "faq"  # faq before policy
+    assert doc_type_for(f"{base}/registrar/grade-policies.aspx", RULES) == "policy"
+    assert doc_type_for(f"{base}/dental/index.aspx", RULES) == "department"
+    assert doc_type_for(f"{base}/library/hours.aspx", RULES) is None
+    assert doc_type_for(f"{base}/registrar/faqs.aspx", None) is None
+
+
+def test_the_real_rules_cover_every_collected_page_by_the_stated_decisions():
+    from cta.parse.pages import doc_type_for
+    from cta.settings import load_sources
+
+    rules = load_sources()["page_doc_types"]
+    base = "https://www.citytech.cuny.edu"
+    expected = {
+        "registrar/faqs.aspx": "faq", "registrar/grade-policies.aspx": "policy",
+        "registrar/academic-calendar.aspx": "calendar", "bursar/refund-policy.aspx": "policy",
+        "admissions/tuition-refund.aspx": "policy", "financial-aid/sap.aspx": "aid",
+        "financial-aid/faqs.aspx": "faq", "advisement/six-steps.aspx": "howto",
+        "advisement/virtual-advisors.aspx": "contacts",
+        "computer-systems/degrees.aspx": "department",
+        "mathematics/faqs.aspx": "faq", "dental/faq.aspx": "faq",
+        "dental/clinic.aspx": "department", "electrical-telecomm/chairperson.aspx": "department",
+    }  # fmt: skip
+    for path, doc_type in expected.items():
+        assert doc_type_for(f"{base}/{path}", rules) == doc_type, path
+    assert doc_type_for(f"{base}/unknown/page.aspx", rules) is None
+
+
+def test_page_records_carry_department_scope_term_and_last_updated(tmp_path):
+    raw = tmp_path / "raw_root" / "raw"
+    raw.mkdir(parents=True)
+    shutil.copy(PAGES / "bursar_refund_policy.html", raw / "a.html")
+    e = entry("/bursar/refund-policy.aspx", "a")
+    e["saved_as"] = "raw/a.html"
+    office = record_for(e, tmp_path / "raw_root", None, None, RULES)
+    assert (office["department"], office["scope"], office["term"], office["last_updated"]) == (
+        None, "city_tech", None, None,
+    )  # fmt: skip
+    e["kind"], e["owner"] = "department", "DENT-NYT"
+    dept = record_for(e, tmp_path / "raw_root", None, None, RULES)
+    assert (dept["department"], dept["scope"]) == ("DENT-NYT", "department")

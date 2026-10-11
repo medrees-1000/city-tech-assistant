@@ -113,9 +113,26 @@ no_index_pages:  # crawled and parsed, kept as records, but index: false. Reason
   "https://www.citytech.cuny.edu/mathematics/articulation-agreement.aspx": "only a list of links to articulation agreement PDFs; the agreements themselves are not collected"
   "https://www.citytech.cuny.edu/advisement/interdisciplinary.aspx": "class-section tables per term, out of scope"
 
+doc_types: [policy, calendar, catalog_course, program, department, faq, aid, howto, contacts]
+
+page_doc_types:  # URL path pattern -> doc_type for page records. The first rule that matches wins.
+  # A page that no rule covers keeps doc_type null and is flagged by the checks (never guessed).
+  - {path: "/registrar/academic-calendar.aspx", doc_type: calendar}
+  - {path: "/advisement/virtual-advisors.aspx", doc_type: contacts}
+  - {path: "*/faqs.aspx", doc_type: faq}  # any faqs page, including the financial aid one
+  - {path: "*/faq.aspx", doc_type: faq}  # the dental department page is faq.aspx
+  - {path: "/registrar/*", doc_type: policy}
+  - {path: "/bursar/*", doc_type: policy}
+  - {path: "/admissions/*", doc_type: policy}
+  - {path: "/financial-aid/*", doc_type: aid}
+  - {path: "/advisement/*", doc_type: howto}
+  - {path: "/computer-systems/*", doc_type: department}
+  - {path: "/mathematics/*", doc_type: department}
+  - {path: "/electrical-telecomm/*", doc_type: department}
+  - {path: "/dental/*", doc_type: department}
+
 page_metadata:  # extra fields copied into a page record
   "https://www.citytech.cuny.edu/advisement/virtual-advisors.aspx":
-    doc_type: advisement_contacts
     note: "lists staff emails"
 
 skip_pages:  # placeholders, JS-loaded or out of scope

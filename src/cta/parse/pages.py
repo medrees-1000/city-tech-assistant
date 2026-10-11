@@ -7,6 +7,7 @@ Reads data/processed/pages_manifest.json and the raw HTML. No network.
 import json
 import re
 from collections import Counter
+from fnmatch import fnmatchcase
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -19,11 +20,18 @@ def slug_of(url: str) -> str:
     return last.removesuffix(".aspx") if "." in last else "index"
 
 
+def doc_type_for(url: str, rules: list[dict] | None) -> str | None:
+    """The doc_type of the first rule whose pattern matches the URL path (None if none does)."""
+    path = urlsplit(url).path
+    return next((r["doc_type"] for r in rules or [] if fnmatchcase(path, r["path"])), None)
+
+
 def record_for(
     entry: dict,
     raw_root: Path,
     no_index: dict[str, str] | None = None,
     metadata: dict[str, dict] | None = None,
+    doc_rules: list[dict] | None = None,
 ) -> dict:
     """One manifest entry -> one page record. owner/kind come from the manifest.
 
@@ -46,6 +54,12 @@ def record_for(
     if entry["url"] in (no_index or {}):
         rec["index"] = False
         rec["index_reason"] = no_index[entry["url"]]
+    is_dept = entry["kind"] == "department"
+    rec["doc_type"] = doc_type_for(entry["url"], doc_rules)  # null if no rule covers the page
+    rec["department"] = entry["owner"] if is_dept else None  # null for central offices
+    rec["scope"] = "department" if is_dept else "city_tech"
+    rec["term"] = None  # web pages print no term
+    rec["last_updated"] = None  # nor a last-updated date
     rec.update((metadata or {}).get(entry["url"], {}))
     return rec
 
@@ -137,10 +151,11 @@ def build_pages(
     out_dir: Path,
     no_index: dict[str, str] | None = None,
     metadata: dict[str, dict] | None = None,
+    doc_rules: list[dict] | None = None,
 ) -> list[dict]:
     records = []
     for entry in manifest:
-        rec = record_for(entry, raw_root, no_index, metadata)
+        rec = record_for(entry, raw_root, no_index, metadata, doc_rules)
         path = out_dir / "pages" / rec["owner"] / f"{slug_of(rec['source_url'])}.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(rec, indent=1, ensure_ascii=False), encoding="utf-8")
@@ -158,7 +173,12 @@ def main() -> None:
     sources = load_sources()
     no_index = sources.get("no_index_pages", {})
     records = build_pages(
-        manifest, ROOT / "data" / "raw", processed, no_index, sources.get("page_metadata", {})
+        manifest,
+        ROOT / "data" / "raw",
+        processed,
+        no_index,
+        sources.get("page_metadata", {}),
+        sources.get("page_doc_types", []),
     )
     collected = sum(r["status"] == "collected" for r in records)
     indexed = sum(r["index"] for r in records)
