@@ -1,0 +1,134 @@
+"""Automatic course checks from docs/data-validation.md.
+
+Run: uv run python -m cta.validate.courses
+A "fail" finding fails the build. A "review" finding is flagged for the owner, not guessed away.
+"""
+
+import json
+import re
+import sys
+from collections import Counter
+from dataclasses import dataclass
+from pathlib import Path
+
+from cta.settings import ROOT, load_sources
+
+REQUIRED_FIELDS = ("code", "title", "description", "credits", "department", "status")
+RULE_ID = re.compile(r"\b\d{6}\b")
+COURSE_CODE = re.compile(r"\b([A-Z]{2,5}) ?(\d{3,4}[A-Z]?)\b")
+MAX_COUNT_CHANGE = 3  # "a few courses"
+
+
+@dataclass
+class Finding:
+    check: str
+    severity: str  # "fail" or "review"
+    message: str
+    course: str | None = None
+
+
+def check_totals(summary: dict, expected_total: int) -> list[Finding]:
+    found = []
+    downloaded, before, after = (
+        summary["downloaded"],
+        summary["total_before"],
+        summary["total_after"],
+    )
+    if not downloaded == before == after:
+        msg = f"API total before={before}, after={after}, downloaded={downloaded}"
+        found.append(Finding("totals", "fail", msg))
+    if before != expected_total:
+        msg = f"API total is {before}, CLAUDE.md says {expected_total}"
+        found.append(Finding("totals", "review", msg))
+    return found
+
+
+def check_required_fields(records: list[dict]) -> list[Finding]:
+    found = []
+    for rec in records:
+        missing = [f for f in REQUIRED_FIELDS if rec.get(f) in (None, "")]
+        if missing:
+            found.append(Finding("required_fields", "fail", f"missing {missing}", rec.get("code")))
+        if rec.get("status") != "Active":
+            found.append(
+                Finding("required_fields", "fail", f"status={rec.get('status')}", rec.get("code"))
+            )
+    return found
+
+
+def check_rules_resolved(records: list[dict]) -> list[Finding]:
+    found = []
+    for rec in records:
+        text = rec.get("prerequisite_text")
+        if rec.get("rule_id") and not text:
+            msg = f"rule {rec['rule_id']} did not resolve to text"
+            found.append(Finding("rules_resolved", "fail", msg, rec["code"]))
+        elif text and RULE_ID.search(text):
+            msg = f"prerequisite text contains a 6-digit rule ID: {text[:80]!r}"
+            found.append(Finding("rules_resolved", "fail", msg, rec["code"]))
+    return found
+
+
+def check_prereq_codes_exist(records: list[dict], all_codes: set[str]) -> list[Finding]:
+    found = []
+    for rec in records:
+        for prefix, number in COURSE_CODE.findall(rec.get("prerequisite_text") or ""):
+            code = f"{prefix} {number}"
+            if code not in all_codes:
+                msg = f"prerequisite mentions {code}, which is not in the catalog"
+                found.append(Finding("prereq_codes", "review", msg, rec["code"]))
+    return found
+
+
+def check_no_duplicates(records: list[dict]) -> list[Finding]:
+    counts = Counter((r["department"], r["code"]) for r in records)
+    return [
+        Finding("duplicates", "fail", f"{n} records for {code} in {dept}", code)
+        for (dept, code), n in counts.items()
+        if n > 1
+    ]
+
+
+def check_counts(current: dict[str, int], previous: dict[str, int]) -> list[Finding]:
+    found = []
+    for dept in sorted(set(current) | set(previous)):
+        now, before = current.get(dept, 0), previous.get(dept)
+        if before is not None and abs(now - before) > MAX_COUNT_CHANGE:
+            found.append(Finding("counts", "review", f"{dept}: {before} -> {now}"))
+    return found
+
+
+def run_course_checks(
+    records: list[dict], summary: dict, all_codes: set[str], expected_total: int
+) -> list[Finding]:
+    current = dict(Counter(r["department"] for r in records))
+    return [
+        *check_totals(summary, expected_total),
+        *check_required_fields(records),
+        *check_rules_resolved(records),
+        *check_prereq_codes_exist(records, all_codes),
+        *check_no_duplicates(records),
+        *check_counts(current, summary.get("previous_counts_per_department", {})),
+    ]
+
+
+def load_records(processed: Path) -> list[dict]:
+    paths = sorted((processed / "courses").rglob("*.json"))
+    return [json.loads(p.read_text(encoding="utf-8")) for p in paths]
+
+
+def main() -> int:
+    processed = ROOT / "data" / "processed"
+    summary = json.loads((processed / "catalog_run.json").read_text(encoding="utf-8"))
+    records = load_records(processed)
+    expected = load_sources()["catalog_api"]["expected_total"]
+    findings = run_course_checks(records, summary, set(summary["all_codes"]), expected)
+    for f in findings:
+        print(f"[{f.severity.upper()}] {f.check} {f.course or ''}: {f.message}")
+    fails = sum(f.severity == "fail" for f in findings)
+    print(f"{len(records)} records, {fails} failures, {len(findings) - fails} flagged for review")
+    return 1 if fails else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
