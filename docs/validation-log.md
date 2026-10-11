@@ -514,3 +514,50 @@ calendar PDFs are re-read in memory and the table file is not touched):
   Mathematics credit mismatches, the MATH minor's incomplete title) and `docs/manual-check-contacts.md`,
   both built by `scripts/make_manual_check_docs.py`. One thing to look at while checking contacts: the
   financial aid page's PHONE HOURS table prints Tuesday as "9:00 PM - 5:00 PM" (left as printed).
+
+## Phase 1, step 7: office hours, empty labels, section index — 2026-10-11
+
+Part A, office hours. Before this step the hours were stored only as panel text inside the contact records
+(`panels`), with no field of their own. Per owner, what the raw HTML prints and what was stored:
+
+| Owner | Raw HTML (sidebar panels) | Stored before | Stored now (`hours`) |
+|---|---|---|---|
+| CST-NYT | OFFICE HOURS panel | `panels[1]` | the same panel |
+| DENT-NYT | none (the PATIENT CARE CLINIC panel prints no times; its "Patient Care Clinic Hours and Information" is a link to clinic.aspx, a content page) | none | none printed |
+| EET-NYT, MATH-NYT | none | none | none printed |
+| admissions, advisement, registrar | none | none | none printed |
+| bursar | "Bursar Service Window Hours" and "Bursar Office Hours" panels | both in `panels` | both panels |
+| financial-aid | hours inside the CONTACT US panel (IN-PERSON, ZOOM, PHONE, WEB-LAB, FEDERAL WORK STUDY) | inside `panels[0]` | the hours part of that panel |
+| the 4 chairs | no hours of their own; the chairperson pages carry the department sidebar (CST shows its OFFICE HOURS panel) | none | none (chair record has no hours field) |
+
+- New `hours` field on every contacts record (list of `{heading, markdown, where, embed: false}`), derived
+  from the same sidebar panels as the other contact blocks: panels with HOURS in the heading, and for
+  CONTACT US the part from the first "... HOURS" line to the last table (the FAFSA and TAP school codes after
+  it are not hours). Printed as is: the financial aid PHONE HOURS table still says "Tuesday 9:00 PM - 5:00 PM".
+- The financial aid page also has HTML comments with an old note ("open ... Wednesday November 22nd"), "Financial
+  Aid Office Hours (June 15-19, 2026)" and other text. They are not visible on the page, so they are not
+  captured. Say if you want them.
+- New check `hours_missing` / `hours_incomplete` (in `cta.validate.pages`): the raw HTML of every page is read
+  again with the same panel selector; a panel counts as an hours panel when its heading has "hours" or its
+  visible text has a clock time (comments are ignored). It fails if that owner's record has no hours, or if a
+  clock time printed in such a panel is not in the stored hours. All owners pass. `docs/manual-check-contacts.md`
+  has an Hours column ("none printed" only where the raw HTML has no hours panel; chair rows say "department
+  hours, see above" for CST and "none printed" for the others).
+
+Part B, empty labels. Bare labels whose text was all stripped as generic rule text are removed and recorded in
+`stripped` as `empty_label`: 10 records, all the label "Writing Intensive" (CST 4, MATH 3, EET 2, DENT 1). A
+label followed by a kept directive or content stays ("Required Common Core", "Flexible Common Core", "College
+Option" all have content or a bold directive under them). New check `empty_section` / `empty_label`: no section
+with a heading and no content, and none that ends in a bare Title Case label. Before the fix the label check
+flagged 10 sections (the same 10 labels); sections with a heading and no content: 0 (the sections builder
+already drops them; it dropped 1 heading, "Program Description" in the DENT program, which is listed in
+`dropped_empty_headings`). After the fix: 0 flagged, 0 findings in all four departments. The CUNYfirst
+callouts are unchanged.
+
+Part C, `docs/section-index.md` (built by `scripts/make_section_index.py`, logic in `cta.index.section_index`):
+545 sections in 66 sources (page 246, program 232, advisement_contacts 20, department 16, aid 12, howto 10,
+policy 9). Five page records are left out (index false or not collected). The PDF Chair sections
+(`embed: false`) and all contact blocks are not in it. Pages have no `doc_type` yet and show as `page`.
+
+Full validation after the step: courses PASS (30 warnings), pages PASS (2 accepted), pdfs PASS, departments
+PASS, calendar PASS.
