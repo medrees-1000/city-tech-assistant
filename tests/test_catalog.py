@@ -16,7 +16,7 @@ from cta.crawl.fetcher import FetchBlocked
 from cta.settings import load_sources
 from tests.conftest import FIXTURES
 
-CFG = {**load_sources()["catalog_api"], "page_size": 4}  # 10 courses -> 3 pages
+CFG = {**load_sources()["catalog_api"], "page_size": 4}  # 11 courses -> 3 pages
 COURSES = json.loads((FIXTURES / "catalog_page.json").read_text())["data"]
 RULES = json.loads((FIXTURES / "catalog_rules.json").read_text())["data"]
 PILOT = {"CST-NYT", "MATH-NYT", "EET-NYT", "DENT-NYT"}
@@ -66,6 +66,7 @@ def test_keep_departments_drops_other_departments():
         "EET 3672",
         "MAT 1190",
         "MAT 2540",
+        "MST 1101",
     ]
 
 
@@ -123,9 +124,9 @@ def test_collect_writes_one_record_per_kept_course(api, tmp_path):
     fetcher, _, _ = api
     summary = collect(fetcher, PILOT_CFG, tmp_path / "processed")
     assert summary["counts_per_department"] == {
-        "CST-NYT": 4, "DENT-NYT": 1, "EET-NYT": 1, "MATH-NYT": 2,
+        "CST-NYT": 5, "DENT-NYT": 1, "EET-NYT": 1, "MATH-NYT": 2,
     }  # fmt: skip
-    assert summary["prereq_styles"] == {"none": 1, "shorthand": 2, "text": 5}
+    assert summary["prereq_styles"] == {"none": 1, "shorthand": 2, "text": 6}
     recs = records_by_code(tmp_path / "processed")
     assert recs["EET 3672"]["prerequisite_text"] == "PRE: EET 3122"
     assert recs["CST 4900"]["prerequisite_text"] == "PRE_CST3500_CST3600"
@@ -195,6 +196,15 @@ def test_pathways_label_comes_from_catalog_requirement_designation(api, tmp_path
     for code, rec in recs.items():
         raw = next(c for c in COURSES if c["code"] == code)
         assert rec["pathways_label"] == raw["customFields"].get("catalogRequirementDesignation")
+
+
+def test_legacy_prefix_courses_are_kept_and_flagged(api, tmp_path):
+    fetcher, _, _ = api
+    collect(fetcher, PILOT_CFG, tmp_path / "processed")
+    recs = records_by_code(tmp_path / "processed")
+    assert recs["MST 1101"]["legacy_prefix"] is True  # Active in the catalog: kept, not dropped
+    assert recs["MST 1101"]["status"] == "Active"
+    assert [c for c, r in recs.items() if r["legacy_prefix"]] == ["MST 1101"]
 
 
 def test_list_request_asks_for_the_pathways_columns():

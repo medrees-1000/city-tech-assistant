@@ -50,7 +50,7 @@ the 1,445 Active catalog courses. Not fixed; the owner decides:
   - TCET 3202: referenced by TCET 4102
 
 Other observations (no check covers these yet):
-- 8 Active records in CST-NYT have legacy prefixes: DPT 2309, MST 1101, MST 1204, MST 1205,
+- (Decision 2026-10-11: kept and flagged `legacy_prefix: true`.) 8 Active records in CST-NYT have legacy prefixes: DPT 2309, MST 1101, MST 1204, MST 1205,
   MST 2050, MST 2304, MST 2307, MST 2405. CLAUDE.md says to drop MST/DPT from the PDFs. They were
   kept here because the catalog lists them as Active.
 - The full catalog has one duplicated code, `AFR 2000` (outside the four departments).
@@ -112,3 +112,10 @@ plus 2 new `pathways_labels`).
   Left null, not inferred.
 - New warning check `pathways_labels`: a coded `pathways_category` (no spaces) with no label.
   It flags those 2 courses.
+
+## 2026-10-11: `legacy_prefix` flag (rebuilt from saved raw data, no new requests)
+
+Owner decision: the 8 Active MST/DPT courses (DPT 2309, MST 1101, 1204, 1205, 2050, 2304, 2307,
+2405) are kept and flagged `legacy_prefix: true`; the catalog wins. CLAUDE.md updated. 197 records,
+0 failures, 30 warnings, fetch log unchanged. Open: `docs/data-validation.md` (PDF checks) still says
+legacy MST/DPT courses "do not appear in cleaned output"; not edited, owner to confirm wording.

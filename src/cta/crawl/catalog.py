@@ -142,6 +142,7 @@ def prereq_style(rule_id: str | None, text: str | None) -> str:
     return "shorthand" if SHORTHAND.fullmatch(text) else "text"
 
 
+LEGACY_PREFIXES = {"MST", "DPT"}  # old subject prefixes the catalog still lists as Active
 WRITING_INTENSIVE = "WRIC"  # catalog attribute strings look like "WRIC - WRIC (Writing Intensive)"
 
 
@@ -172,6 +173,7 @@ def to_record(course: dict, dept_ids: set[str], rule_text: str | None, fetched_a
         "all_departments": [d["id"] for d in course["departments"]],
         "status": course.get("status"),
         "subject_code": course.get("subjectCode"),
+        "legacy_prefix": course.get("subjectCode") in LEGACY_PREFIXES,  # flagged, not dropped
         "course_number": course.get("courseNumber"),
         "course_group_id": course.get("courseGroupId"),
         "rule_id": course.get("requirementGroup") or None,

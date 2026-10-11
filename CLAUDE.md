@@ -114,7 +114,7 @@ stray space inside an email address; fix it).
 - Huge generic rule-text dumps (Flexible Core, Liberal Arts, Required Common Core). Strip them and
   keep only the program-specific requirements and the course lists.
 - Drop the Advisory Commission tables (outside people, only noise) and blank "Programs" pages.
-- Drop legacy courses (MST/DPT prefixes) and anything tagged "(Inactive)"; drop trailing
+- Drop anything tagged "(Inactive)"; drop trailing
   "Total ... Credits 0" lines.
 - EET starts with an empty stray program ("Accelerator Science and Technology"); ignore it.
 - Broken characters appear (e.g. `O�ers`, `O�ce` for "Offers", "Office"; a lost "ff" ligature).
@@ -125,6 +125,8 @@ stray space inside an email address; fix it).
   invent a term.
 - The file name carries the generation date; keep it in metadata.
 - Catalog wins for course facts (API over PDF if they disagree); the registrar calendar wins for dates.
+- Legacy courses (MST/DPT prefixes): the catalog wins. The 8 that the catalog lists as Active (7 MST,
+  1 DPT, all CST) stay in the course records, flagged `legacy_prefix: true`, not dropped.
 
 ### Calendar PDFs
 

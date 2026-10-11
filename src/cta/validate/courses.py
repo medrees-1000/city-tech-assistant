@@ -65,6 +65,8 @@ def check_extra_fields(records: list[dict]) -> list[Finding]:
         bad = [f for f in ("liberal_arts", "writing_intensive") if not isinstance(rec.get(f), bool)]
         if not isinstance(rec.get("catalog_attributes"), list):
             bad.append("catalog_attributes")
+        if not isinstance(rec.get("legacy_prefix"), bool):
+            bad.append("legacy_prefix")
         bad += [f for f in ("credit_hours", "contact_hours") if not isinstance(rec.get(f), dict)]
         if not isinstance(rec.get("pathways_category"), str) or not rec["pathways_category"]:
             bad.append("pathways_category")

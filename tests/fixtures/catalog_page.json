@@ -568,6 +568,62 @@
    "subjectCode": "MAT",
    "globalCourseTitle": "MAT 2540 - Discrete Structures and Algorithms II (3 cr)",
    "orderByKeyForCode": "MAT0000002540"
+  },
+  {
+   "_id": "0400761-2025-01-25",
+   "code": "MST 1101",
+   "courseGroupId": "0400761",
+   "courseNumber": "1101",
+   "credits": {
+    "courseCount": 1,
+    "repeatable": false,
+    "numberOfRepeats": 1,
+    "numberOfCredits": 3,
+    "creditHours": {
+     "min": 3,
+     "max": 3,
+     "operator": ""
+    },
+    "contactHours": {
+     "value": 4,
+     "operator": ""
+    },
+    "academicProgressHours": {
+     "value": 3,
+     "operator": ""
+    },
+    "financialAidHours": {
+     "value": 3,
+     "operator": ""
+    }
+   },
+   "customFields": {
+    "cuPathwayFlag": false,
+    "cuLibartsFlag": false,
+    "catalogAttributes": []
+   },
+   "departmentOwnership": [],
+   "departments": [
+    {
+     "id": "CST-NYT",
+     "name": "Computer Systems Tech",
+     "displayName": "Computer Systems Technology",
+     "status": "Active"
+    }
+   ],
+   "description": "An introduction to the concepts of Word Processing, Spreadsheet, Database and Presentation applications using Microsoft Office 97 under the Windows 95.  In each case, a specific Microsoft Office 97 application is demonstrated and used by students in hands-on laboratory assignments.  Extensive use of the PC lab to maximize skill level.",
+   "effectiveEndDate": null,
+   "effectiveStartDate": "2025-01-25",
+   "id": "0400761-2025-01-25",
+   "name": "Introduction to Microcomputers",
+   "requirementDesignation": "Regular Non-Liberal Arts",
+   "requirementGroup": "014345",
+   "status": "Active",
+   "subjectCode": "MST",
+   "deprecatedCourseGroupId": "Hxzx1FLvoJMxdywH1fHE",
+   "alternativeCode": null,
+   "globalCourseTitle": "MST 1101 - Introduction to Microcomputers (3 cr)",
+   "orderByKeyForCode": "MST0000001101"
   }
  ],
  "limit": 20,

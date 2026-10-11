@@ -41,6 +41,12 @@
    "catalogDisplayName": "PRE_CST1201_CST1204",
    "code": "014418",
    "descriptionLong": "PRE_CST1201_CST1204"
+  },
+  "014345": {
+   "_id": "014345",
+   "catalogDisplayName": "P: Eligibility for ENG1101 or ENG 1101CO or ENG 1101ML\nEligibility for MAT1190 or MAT1190CO or higher",
+   "code": "014345",
+   "descriptionLong": "P: Eligibility for ENG1101 or ENG 1101CO or ENG 1101ML\nEligibility for MAT1190 or MAT1190CO or higher"
   }
  }
 }
