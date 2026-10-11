@@ -346,3 +346,48 @@ real difference of one day, not a typo in one weekday. The Fall 2026 deadline ag
 (Friday, November 13, 2026). Handling: the calendar PDF is the source for dates (CLAUDE.md: the registrar
 calendar wins for dates); the calendar row carries this in its `notes`. The SAP page text is kept as it is.
 Status: open, nobody has asked either office which date is right.
+
+## 2026-10-11: the four smaller PDFs
+
+Records in `data/processed/pdfs/<slug>.json` (not committed), built by `uv run python -m cta.parse.pdf_docs`
+(checks in `cta/validate/pdfs.py`). All four have `index: true`, `text_source: "text layer"`. Findings: 0
+failures, no line that could not be placed. The four files are in `known_data` in `config/sources.yaml`.
+
+| Record | doc_type / scope | term / aid year | pdf_last_updated | file_modified | Sections |
+|---|---|---|---|---|---|
+| financial-aid-refund-calendar-2026-2027 | aid / city_tech | aid year 2026-2027 | 2026-06-08 ("Updated 06/08/2026") | 2026-07-27T09:22:20-04:00 | 7 (title + 7 headings; 3 tables) |
+| dropping-withdrawing-fall-2026 | policy / city_tech | term Fall 2026 | none printed | 2026-09-01T09:23:13-04:00 | 9 (title + 8 headings) |
+| special-circumstances-flyer | aid / city_tech | aid year "2025-2026 & 2026-2027" | none printed | none (created 2026-01-16T15:31:41) | 5 |
+| cunyfirst-student-reference | howto / cuny | none printed | none printed | 2022-12-28T12:06:31-05:00 | 10 |
+
+- Refund calendar: all three date tables and every date are as printed (the main table is 5 columns, its
+  last row has 3 dates and keeps its blank cells; the two book-advance lists are one column each). The
+  printed "Updated 06/08/2026" (a footer) differs from the metadata date (2026-07-27); both are kept. The
+  footer lines and the page number are in `excluded`, not in a section.
+- Dropping and Withdrawing: the PDF has one heading style, so all headings are level 2 under the title
+  (the three "Dropping a Class ..." headings are not nested under "Dropping Classes": nothing in the PDF says
+  so). No "last updated" is printed, so `pdf_last_updated` is null. Bold dates and terms are kept as `**`.
+- Special circumstances flyer: the owner asked for a transcription from a rendered image, but the PDF has a
+  text layer, so the text is read from it, panel by panel (intro, STEP 1-3, contact). The record says so in
+  `note` and is NOT flagged as transcribed from an image. The rendered page was compared with the text by
+  eye. The `ﬁ` and `ﬂ` ligatures are replaced by `fi` and `fl` (13 times, listed in `repairs`; this also
+  makes the email address `finaidspecialcircumstances@citytech.cuny.edu` correct). The line-by-line check
+  cannot be used (the lines of different panels share a baseline); the character check is.
+- CUNYfirst guide: written steps only. 22 lines of 7 pt callout text laid over the screenshots (for example
+  "Click here to choose your college of enrollment and financial aid year") are in `excluded` with that
+  reason. `note` says its examples show Hunter and LaGuardia and the 2022-23 aid year; that is the owner's
+  reading of the screenshots, which are images and are not in the record. The guide's last section is the
+  W-2 form (the cover also says "paycheck"); there is a section on accepting/reducing/declining offers that is
+  not in the owner's list. Its heading "VIEW YOUR FEDERAL WORK- STUDY W-2 FORM" is kept as printed.
+- Parser decisions (documented, applied to all four): a bold-only line without final `. ! ? , ;` and with
+  space above it is a heading; a line that ends early starts a new paragraph, a line whose next word would not
+  have fitted continues it; lines ending in a hyphen are joined without a space ("three-quarter-time", a URL;
+  listed in `repairs`); superscript ordinals ("21st", "5th") are joined, other superscripts get a `^`.
+- Checks (tested, including with damaged records): no U+FFFD; every character the PDF prints is in the record
+  and nothing else (each record is compared with all characters of the PDF); every line pdfplumber finds is
+  in the record, in order (not for the flyer); the term, aid year and "Updated" date the PDF prints in its
+  title area or text are in the record and none is invented; every table has all its cells and equal row
+  widths (refund calendar only; the other PDFs have none that count, and the frames and cover grid in the
+  CUNYfirst guide are skipped).
+- Not committed: the flyer (1 MB) and CUNYfirst (1.4 MB) PDFs, so their tests are skipped when `data/pdfs`
+  is missing. The refund calendar and Dropping PDFs are committed as test fixtures.

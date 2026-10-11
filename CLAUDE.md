@@ -38,7 +38,7 @@ class meeting grid PDFs (optional later).
 | Term calendars | `fall_2026.pdf`, `winter_2027.pdf`, `spring_2027.pdf` | extract to calendar table, owner verifies every row |
 | Refund and aid dates | `Award_Year_2026_2027_Financial_Aid_Payment_Refund__Calendar.pdf` | parse, chunk by section, term metadata |
 | Drop/withdraw rules and aid effects | `Fall_2026_Dropping_and_Withdrawing_from_Classes.pdf` | parse, chunk by section |
-| Special circumstances contact | `Special_Circumstances_Flyer_...pdf` (infographic) | type the few facts by hand |
+| Special circumstances contact | `Special_Circumstances_Flyer_...pdf` (infographic) | read the text layer panel by panel (it has one; checked against the rendered page) |
 | 24 office pages and about 35 department pages (incl. chair and contact blocks) | citytech.cuny.edu HTML | crawl, follow same-host redirects |
 | How-to for viewing aid and holds in CUNYfirst | `cunyfirst_student_reference.pdf` (CUNY-wide) | parse, chunk by section, scope=cuny |
 
