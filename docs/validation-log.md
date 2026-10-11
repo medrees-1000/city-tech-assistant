@@ -638,3 +638,38 @@ PASS (534 sections, 82 records), calendar PASS.
 - `advisement/virtual-advisors.aspx`: the EET section, table titled "Summer 2026 Advisement Schedule".
 
 The EET root "Our Mission" section is tagged Summer 2026 only because an advisement table sits inside it.
+
+## Phase 1, step 10: load and check the eval questions — 2026-10-11
+
+- `eval/questions.jsonl` (30 questions) was found at `eval/results/questions.jsonl`; I moved it to the path
+  CLAUDE.md names, `eval/questions.jsonl` (`eval/results/` is for result summaries). No question text, split or
+  gold answer was changed. The only edits to the file are the calendar row ids of q09 and q11.
+- `cta.eval.questions` (`uv run python -m cta.eval.questions`, not in CI) checks every row: required fields,
+  type, split, unique ids, department (four ids or null), and every gold source: a section id must be a
+  section in the index data (embed true) with the same source and heading path; `catalog:<CODE>` must be a
+  course record; a calendar entry must be a verified event whose term starts the heading. Answerable types
+  (lookup, multi_chunk, time_sensitive) must have gold sources.
+- Result: 29 of 30 ok. Open: **q12** (see below). The stored headings of `page/CST-NYT/degrees#1-4` and
+  `page/EET-NYT/degrees#1-2` carry markdown link markup (`[Computer Information Systems/AAS](https://...)`);
+  the question file gives the visible text, so the check compares headings with link markup removed. The
+  headings in the index are unchanged (worth cleaning before chunking, owner to decide).
+- Calendar ids: q09 -> `fall-2026-044` (Fri Nov 13, 2026, "Deadline to submit Satisfactory Academic Progress
+  (SAP) Appeals for Title IV for Fall 2026"); q11 -> `spring-2027-055` (87th Commencement Ceremony, date TBA,
+  calendar last updated 2026-07-27). q09's gold answer (Friday, November 13, 2026) matches the row and the SAP
+  page (`sap#12`: "Fall 2026: Friday, November 13, 2026"). q10 matches `spring-2027-043` (Wednesday, March 31,
+  2027, last updated 7/27/26) and the row's note (the SAP page lists Tuesday, March 30, 2027; the page text is
+  "Tuesday, March 30th, 2027").
+- **q12 left as TODO**: Winter 2027 has no row for the end of classes. The candidates are `winter-2027-023`
+  "End of Winter 2027 Session" (Mon Jan 25, 2027) and `winter-2027-022` "Final Examinations" (Mon Jan 25,
+  2027); the owner decides which, if either, answers "when do classes end". `gold_answer` stays
+  FILL_FROM_CALENDAR.
+- `docs/eval-review.md` (built by `scripts/make_eval_review.py`): each question with the full markdown of its
+  gold sections, course description and prerequisite text, or calendar row. Marked: q12 unresolved; q23 to q29
+  have no gold sources (ambiguous and unanswerable types; q30 has one).
+- Chained prerequisites (suggestions only, not added to the file; shown in the review doc). q20, DEN 2400:
+  "Prerequisites: DEN 2300, DEN 2311, DEN 2315 & DEN 2318. Corequisites: DEN 2413." Those four are already gold
+  sources; DEN 2413 (corequisite) is not. One level further they name DEN 1200, DEN 1217, DEN 1218, BIO 3302,
+  CHEM 1000 (and BIO 3524 via DEN 2413). q22, MAT 2675: "Prerequisites of MAT 1575 AND MAT 2580". MAT 1575:
+  "PREREQUISITE OF MAT 1475, MUST NOT HAVE PASSED MAT 2675" (names MAT 1475; MAT 2675 is an exclusion, not a
+  prerequisite); MAT 2580: "PRE: MAT1475". MAT 1475 itself: "PRE: MAT 1375 OR Meet the Math Placement for MAT
+  1475". Suggested: MAT 1575, MAT 2580, MAT 1475.
