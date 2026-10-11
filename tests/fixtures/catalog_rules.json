@@ -1,52 +1,34 @@
 {
- "100001": {
-  "data": {
-   "100001": {
-    "_id": "100001",
-    "code": "100001",
-    "catalogDisplayName": "No prerequisite.",
-    "descriptionLong": "No prerequisite."
-   }
-  }
- },
- "100002": {
-  "data": {
-   "100002": {
-    "_id": "100002",
-    "code": "100002",
-    "catalogDisplayName": "Prerequisite: CST 1101 with a C or higher.",
-    "descriptionLong": "Prerequisite: CST 1101 with a C or higher."
-   }
-  }
- },
- "100003": {
-  "data": {
-   "100003": {
-    "_id": "100003",
-    "code": "100003",
-    "catalogDisplayName": "Placement.",
-    "descriptionLong": "Placement."
-   }
-  }
- },
- "100004": {
-  "data": {
-   "100004": {
-    "_id": "100004",
-    "code": "100004",
-    "catalogDisplayName": "Prerequisite: EET 2101 and MATH 1101.",
-    "descriptionLong": "Prerequisite: EET 2101 and MATH 1101."
-   }
-  }
- },
- "100005": {
-  "data": {
-   "100005": {
-    "_id": "100005",
-    "code": "100005",
-    "catalogDisplayName": "Prerequisite: CET 1001.",
-    "descriptionLong": "Prerequisite: CET 1001."
-   }
+ "data": {
+  "036458": {
+   "_id": "036458",
+   "catalogDisplayName": "Prerequisite: CST1201 & CST 1204  Pre/Corequisite: MAT 1375",
+   "code": "036458",
+   "descriptionLong": "Prerequisite: CST1201 & CST 1204  Pre/Corequisite: MAT 1375"
+  },
+  "014763": {
+   "_id": "014763",
+   "catalogDisplayName": "PRE_CST3500_CST3600",
+   "code": "014763",
+   "descriptionLong": "PRE_CST3500_CST3600"
+  },
+  "014269": {
+   "_id": "014269",
+   "catalogDisplayName": "Prerequisites: DEN 1200, DEN 1217 & DEN 1218 (all with a grade of C or higher).",
+   "code": "014269",
+   "descriptionLong": "Prerequisites: DEN 1200, DEN 1217 & DEN 1218 (all with a grade of C or higher)."
+  },
+  "027626": {
+   "_id": "027626",
+   "catalogDisplayName": "PRE: EET 3122",
+   "code": "027626",
+   "descriptionLong": "PRE: EET 3122"
+  },
+  "018161": {
+   "_id": "018161",
+   "catalogDisplayName": "CUNY proficiency in mathematics. Pre/corequisite: ENG 1101 or prerequisite: ENG 1101CO or ENG 1101ML.* Students who already have credit for MAT 1275CO or MAT 1275 or higher will not receive credit for this course",
+   "code": "018161",
+   "descriptionLong": "CUNY proficiency in mathematics. Pre/corequisite: ENG 1101 or prerequisite: ENG 1101CO or ENG 1101ML.* Students who already have credit for MAT 1275CO or MAT 1275 or higher will not receive credit for this course"
   }
  }
 }
