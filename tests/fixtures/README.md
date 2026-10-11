@@ -23,3 +23,9 @@ Added for the page review: `advisement_gen_ed` (login links, a `<ul>` directly i
 `advisement_required_core` (tab panes, header row drawn with `<strong>`), `registrar_course_scheduling`
 (a link whose fragment contains `login`) and `financial_aid_sap` (contact panels nested inside one
 another, hours panels without a heading element, a `<table>` directly inside an `<ol>`).
+
+## calendar/
+
+`winter_2027.pdf` is the real Winter 2027 academic calendar (one page, saved 2026-10-11, "Last
+updated: 7/27/26"). The Fall and Spring PDFs are not committed (`data/pdfs/` is ignored); tests that
+need them are skipped when the files are missing.

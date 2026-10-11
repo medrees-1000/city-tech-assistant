@@ -1,0 +1,23 @@
+# Calendar PDFs and the date window each term's events must fall in (inclusive).
+# The term itself is read from the title printed in the PDF and must match `term` here.
+#
+# Winter 2027: the owner's description (late December 2026 to early February 2027).
+# Fall 2026, Spring 2027: chosen from the dates printed in their own PDFs. The window runs from
+# 60 days before the printed "Start of <term>" event to 31 days after the printed "End of <term>"
+# event (Fall: Aug 28 -> Jun 29, Dec 21 -> Jan 21; Spring: Jan 28 -> Nov 29, May 27 -> Jun 27).
+# Owner to confirm.
+terms:
+  - term: Fall 2026
+    pdf: data/pdfs/fall_2026.pdf
+    window: [2026-06-29, 2027-01-21]
+  - term: Winter 2027
+    pdf: data/pdfs/winter_2027.pdf
+    window: [2026-12-20, 2027-02-10]
+  - term: Spring 2027
+    pdf: data/pdfs/spring_2027.pdf
+    window: [2026-11-29, 2027-06-27]
+
+# Terms with no published calendar: no rows are produced and questions about them abstain.
+no_calendar_terms:
+  - Summer 2027
+  - Fall 2027
