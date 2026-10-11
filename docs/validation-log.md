@@ -93,3 +93,22 @@ Fetch log unchanged (240 rows). 197 records, 0 failures, same 28 warnings.
   Open question for the owner: map codes to labels, or store `catalogRequirementDesignation` too.
 - `extra_fields` check now also requires a non-empty `pathways_category`. Failures: 0.
   Warnings: the same 28. Fetch log: no gaps (4 robots.txt 404s, everything else 200).
+
+## 2026-10-11: `pathways_label` added (rebuilt from saved raw data, no new requests)
+
+Fetch log unchanged (319 rows). 197 records, 0 failures, 30 warnings (the same 28 `prereq_codes`
+plus 2 new `pathways_labels`).
+
+- `pathways_label` = `customFields.catalogRequirementDesignation`, exactly as in the raw JSON, else
+  null. `pathways_category` is still the raw `requirementDesignation`. No code is mapped to a label.
+- 15 of 197 records have a label: RLA_FC_ScientificWorld 8 ("Flexible Core - Scientific World"),
+  RLA_RC_Mathtcl&QuantveReasng 5 and DLA_RC_Mathtcl&QuantveReasng 2 (both
+  "Required Core - Mathematical&QuantitativeReasoning"). The 182 courses with a readable
+  `pathways_category` (Regular/Laboratory ...) have no such key, so their label is null.
+- Correction to the earlier entry: the 2 DLA_RC_Mathtcl&QuantveReasng courses (MAT 1190CO,
+  MAT 1275CO) do have a label. Only 2 coded records lack one: CST 1102 and CST 1102ID, both
+  `RLA_CollegeOption`. Their raw `customFields` hold only `catalogAttributes`, `cuLibartsFlag`
+  and `cuPathwayFlag` (true); no `catalogRequirementDesignation` or `cuPathwaysAttribute`.
+  Left null, not inferred.
+- New warning check `pathways_labels`: a coded `pathways_category` (no spaces) with no label.
+  It flags those 2 courses.

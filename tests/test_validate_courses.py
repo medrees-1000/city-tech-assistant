@@ -2,6 +2,7 @@ from cta.validate.courses import (
     check_counts,
     check_extra_fields,
     check_no_duplicates,
+    check_pathways_labels,
     check_prereq_codes_exist,
     check_required_fields,
     check_rules_resolved,
@@ -124,3 +125,14 @@ def test_extra_fields_fail_on_missing_or_wrong_type():
     bad = [rec(liberal_arts=None), rec(writing_intensive="yes"), rec(catalog_attributes=None),
            rec(credit_hours=None), rec(contact_hours=3)]  # fmt: skip
     assert [f.severity for f in check_extra_fields(bad)] == ["fail"] * 5
+
+
+def test_coded_pathways_category_without_label_is_a_warning():
+    coded = rec(code="CST 1102", pathways_category="RLA_CollegeOption", pathways_label=None)
+    found = check_pathways_labels([coded])
+    assert [(f.severity, f.course) for f in found] == [("warning", "CST 1102")]
+
+
+def test_labeled_or_readable_pathways_category_is_fine():
+    coded = rec(pathways_category="RLA_FC_ScientificWorld", pathways_label="Flexible Core")
+    assert check_pathways_labels([coded, rec(pathways_label=None)]) == []

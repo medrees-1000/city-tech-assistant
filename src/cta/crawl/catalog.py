@@ -165,6 +165,8 @@ def to_record(course: dict, dept_ids: set[str], rule_text: str | None, fetched_a
         # The catalog page's Pathways label, kept exactly as the API returns it: a label such as
         # "Regular Non-Liberal Arts", or a code such as "RLA_FC_ScientificWorld" for some courses.
         "pathways_category": course.get("requirementDesignation") or None,
+        # Readable text for coded categories. Only some courses have it; never filled in by hand.
+        "pathways_label": custom.get("catalogRequirementDesignation") or None,
         "department": kept[0]["id"],
         "department_name": kept[0].get("name"),
         "all_departments": [d["id"] for d in course["departments"]],

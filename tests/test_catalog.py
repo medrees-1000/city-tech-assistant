@@ -180,8 +180,27 @@ def test_pathways_category_is_the_api_value_unchanged(api, tmp_path):
         assert rec["pathways_category"] == raw[code]["requirementDesignation"]
 
 
-def test_list_request_asks_for_the_pathways_column():
-    assert "requirementDesignation" in CFG["columns"].split(",")
+def test_pathways_label_comes_from_catalog_requirement_designation(api, tmp_path):
+    fetcher, _, _ = api
+    collect(fetcher, PILOT_CFG, tmp_path / "processed")
+    recs = records_by_code(tmp_path / "processed")
+    assert recs["MAT 2540"]["pathways_category"] == "RLA_FC_ScientificWorld"
+    assert recs["MAT 2540"]["pathways_label"] == "Flexible Core - Scientific World"
+    assert recs["MAT 1190"]["pathways_label"] == (
+        "Required Core - Mathematical&QuantitativeReasoning"
+    )
+    # courses without the raw key stay null; nothing is derived from pathways_category
+    assert recs["CST 2406"]["pathways_label"] is None
+    assert recs["CST 1101"]["pathways_label"] is None
+    for code, rec in recs.items():
+        raw = next(c for c in COURSES if c["code"] == code)
+        assert rec["pathways_label"] == raw["customFields"].get("catalogRequirementDesignation")
+
+
+def test_list_request_asks_for_the_pathways_columns():
+    columns = CFG["columns"].split(",")
+    assert "requirementDesignation" in columns
+    assert "customFields.catalogRequirementDesignation" in columns
 
 
 def test_collect_stops_if_robots_disallows_api(make_fetcher, tmp_path):

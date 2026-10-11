@@ -75,6 +75,22 @@ def check_extra_fields(records: list[dict]) -> list[Finding]:
     return found
 
 
+def check_pathways_labels(records: list[dict]) -> list[Finding]:
+    """A coded pathways_category (no spaces, e.g. RLA_CollegeOption) with no pathways_label."""
+    return [
+        Finding(
+            "pathways_labels",
+            "warning",
+            f"{r['pathways_category']} has no pathways_label",
+            r["code"],
+        )
+        for r in records
+        if r.get("pathways_category")
+        and " " not in r["pathways_category"]
+        and not r.get("pathways_label")
+    ]
+
+
 def check_rules_resolved(records: list[dict]) -> list[Finding]:
     found = []
     for rec in records:
@@ -135,6 +151,7 @@ def run_course_checks(
         *check_totals(summary, expected_total),
         *check_required_fields(records),
         *check_extra_fields(records),
+        *check_pathways_labels(records),
         *check_rules_resolved(records),
         *check_prereq_codes_exist(records, all_codes),
         *check_no_duplicates(records),
