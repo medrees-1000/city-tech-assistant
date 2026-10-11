@@ -16,6 +16,7 @@ REPLACEMENT = "�"
 BROKEN_GLYPH = "⯑"
 LIGATURES = "".join(chr(c) for c in range(0xFB00, 0xFB07))
 TOTAL_LINE = re.compile(r"Total (?:General Education|Major|Minor|Elective) Credits")
+BARE_NUMBERS = re.compile(r"\d+(?: - \d+)? \d+(?: - \d+)?$")
 ID_ALONE = re.compile(r"(?:^|\| )\d{6}(?: \||$)")
 STRAY = "Accelerator Science and Technology"
 
@@ -195,6 +196,113 @@ def check_rules_resolved(record: dict) -> list[Finding]:
     return found
 
 
+def table_rows(markdown: str) -> list[list[list[str]]]:
+    """Each markdown table of a section as rows of cells (the --- row is left out)."""
+    tables: list[list[list[str]]] = []
+    for block in markdown.split("\n\n"):
+        if not block.startswith("|"):
+            continue
+        rows = []
+        for line in block.split("\n"):
+            cells = [c.strip() for c in re.split(r"(?<!\\)\|", line.strip().strip("|"))]
+            if not all(set(c) <= {"-"} and c for c in cells):
+                rows.append(cells)
+        tables.append(rows)
+    return tables
+
+
+def check_table_format(record: dict) -> list[Finding]:
+    """No empty header row, no column that is "-" or "No" in every row, no rule ID at the start of
+    a rule notes cell, and no semester heading that ends in two bare numbers."""
+    found = []
+    name = record_label(record)
+    for s in record["sections"]:
+        for rows in table_rows(s["markdown"]):
+            head, body = rows[0], rows[1:]
+            if not any(head):
+                found.append(
+                    Finding("table_header", "fail", f"empty header in {s['heading']!r}", name)
+                )
+            for i, col in enumerate(head[1:], 1):
+                if body and all(r[i] in ("-", "No") for r in body if len(r) > i):
+                    found.append(
+                        Finding(
+                            "table_constant_column",
+                            "fail",
+                            f"column {col!r} is '-' or 'No' in every row of {s['heading']!r}",
+                            name,
+                        )
+                    )
+            if "Rule notes" in head:
+                i = head.index("Rule notes")
+                if any(re.match(r"\d{6}\b", r[i]) for r in body if len(r) > i):
+                    found.append(
+                        Finding(
+                            "rule_id_in_cell",
+                            "fail",
+                            f"rule ID in a cell of {s['heading']!r}",
+                            name,
+                        )
+                    )
+        if s.get("generated") and s["level"] == 4 and BARE_NUMBERS.search(s["heading"] or ""):
+            found.append(
+                Finding("semester_heading", "fail", f"bare credit numbers: {s['heading']!r}", name)
+            )
+    return found
+
+
+def check_rule_ids_on_sections(record: dict) -> list[Finding]:
+    """Every rule ID of a degree map card is in the rule_ids list of a semester section."""
+    on_sections = {i for s in record["sections"] for i in s.get("rule_ids", [])}
+    used = {
+        r["id"]
+        for m in record.get("program", {}).get("degree_maps", [])
+        for sem in m["semesters"]
+        for card in sem["cards"]
+        for r in card["rules"]
+        if r["id"]
+    }
+    missing = sorted(used - on_sections)
+    return (
+        [
+            Finding(
+                "rule_ids", "fail", f"rule IDs not on any section: {missing}", record_label(record)
+            )
+        ]
+        if missing
+        else []
+    )
+
+
+def check_map_labels(record: dict) -> list[Finding]:
+    labels = [m["label"] for m in record.get("program", {}).get("degree_maps", [])]
+    return [
+        Finding("map_label", "fail", f"degree map label {label!r} used twice", record_label(record))
+        for label, n in Counter(labels).items()
+        if n > 1
+    ]
+
+
+def check_pdf_contact_not_indexed(overview: dict) -> list[Finding]:
+    """The PDF "Chair" block is an office contact: embed false (the web page is the source)."""
+    name = record_label(overview)
+    found = []
+    chair_sections = [s for s in overview["sections"] if s["heading"] == "Chair"]
+    if any(s.get("embed") is not False for s in chair_sections):
+        found.append(
+            Finding(
+                "pdf_contact_indexed", "fail", "the PDF Chair section is not embed: false", name
+            )
+        )
+    if overview["chair_pdf"].get("embed") is not False:
+        found.append(Finding("pdf_contact_indexed", "fail", "chair_pdf is not embed: false", name))
+    if not overview.get("contact_pdf_vs_root"):
+        found.append(
+            Finding("contact_compare", "warning", "no root page contact block to compare", name)
+        )
+    return found
+
+
 def check_chair(overview: dict) -> list[Finding]:
     chair = overview.get("chair") or {}
     found = []
@@ -283,8 +391,11 @@ def run_department_checks(records: list[dict], parsed, generic: set[str]) -> lis
             *check_no_rule_dumps(r, generic),
             *check_no_markers(r),
             *check_rules_resolved(r),
+            *check_table_format(r),
+            *check_rule_ids_on_sections(r),
+            *check_map_labels(r),
         ]
         if r["doc_type"] == "department":
-            found += check_chair(r)
+            found += [*check_chair(r), *check_pdf_contact_not_indexed(r)]
     found += check_completeness(records, parsed.stream.body_chars)
     return found

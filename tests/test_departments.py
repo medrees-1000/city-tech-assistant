@@ -8,13 +8,20 @@ from cta.parse.departments import (
     build_all,
     codes_in_tree,
     compare_chair,
+    compare_contact,
     credit_flags,
     credit_totals,
     dedupe_maps,
     file_date,
+    fix_table,
+    fix_tables,
     legacy_lines,
+    load_root_contact,
+    map_blocks,
+    map_labels,
     parse_rule_notes,
     resolve_notes,
+    semester_label,
     slugify,
     strip_boilerplate,
     strip_inactive,
@@ -25,9 +32,13 @@ from cta.parse.pdf_docs import PLine
 from cta.validate.departments import (
     check_characters,
     check_completeness,
+    check_map_labels,
     check_no_markers,
     check_no_rule_dumps,
+    check_pdf_contact_not_indexed,
     check_required_parts,
+    check_rule_ids_on_sections,
+    check_table_format,
     check_term_not_invented,
     run_department_checks,
 )
@@ -286,6 +297,23 @@ def dent_build(tmp_path_factory):
         ),
         encoding="utf-8",
     )
+    contacts = processed / "contacts"
+    contacts.mkdir()
+    (contacts / "DENT-NYT.json").write_text(
+        json.dumps(
+            {
+                "panels": [
+                    {
+                        "heading": "CONTACT US",
+                        "markdown": "285 Jay Street\nAcademic Building 701 (A-701)\n"
+                        "Brooklyn, NY 11201\n\nEmail: office@example.edu\n\nPhone: 718-260-5070",
+                    }
+                ],
+                "source_pages": ["https://www.citytech.cuny.edu/dental/"],
+            }
+        ),
+        encoding="utf-8",
+    )
     from cta.parse import departments
 
     old = dict(departments.DEPARTMENTS)
@@ -424,3 +452,197 @@ def test_catalog_rewrite_keeps_the_programs_field(tmp_path):
     path.write_text(json.dumps(stored), encoding="utf-8")
     write_records([dict(rec)], tmp_path)
     assert json.loads(path.read_text(encoding="utf-8"))["programs"] == ["CST-NYT/some-program"]
+
+
+# ---- step 6: headings, tables, rule IDs, contacts ------------------------------------------------
+
+
+def test_semester_label_shows_one_number_when_equal_and_labels_both_when_they_differ():
+    assert semester_label("Year 1 Fall 11 11") == "Year 1 Fall (11 credits)"
+    assert semester_label("Year 2 Fall 15 - 18 15 - 18") == "Year 2 Fall (15 - 18 credits)"
+    assert semester_label("Year 1 Spring 16 18") == (
+        "Year 1 Spring (16 actual credits, 18 progress credits)"
+    )
+    assert semester_label("Year 4 Fall Semester 4 15 - 16 15 - 17") == (
+        "Year 4 Fall Semester 4 (15 - 16 actual credits, 15 - 17 progress credits)"
+    )
+    assert semester_label("- Fall Semester 1 9 - 11 16 - 22") == (
+        "- Fall Semester 1 (9 - 11 actual credits, 16 - 22 progress credits)"
+    )
+    assert semester_label("no numbers here") == "no numbers here"
+
+
+def test_maps_with_the_same_name_are_labelled_by_pdf_page_and_others_are_not():
+    a, b, c = dmap("Same", []), dmap("Same", []), dmap("Other", [])
+    a.page, b.page, c.page = 40, 46, 50
+    assert map_labels([a, b, c]) == ["Same (PDF page 40)", "Same (PDF page 46)", "Other"]
+
+
+TABLE = (
+    "| Requirement | Rule notes | Notes | Credits | Clinical |\n| --- | --- | --- | --- | --- |\n"
+    "| A | text | - | 3 | No |\n| B | - | No | 4 | - |"
+)
+
+
+def test_fix_table_drops_only_columns_that_are_dash_or_no_in_every_row():
+    md, done = fix_table(TABLE)
+    assert done["dropped"] == ["Notes", "Clinical"]
+    assert (
+        md == "| Requirement | Rule notes | Credits |\n| --- | --- | --- |\n"
+        "| A | text | 3 |\n| B | - | 4 |"
+    )
+    kept, none = fix_table(TABLE.replace("| - | 3 | No |", "| x | 3 | No |"))
+    assert none["dropped"] == ["Clinical"] and "Notes" in kept.split("\n")[0]
+
+
+def test_fix_table_never_drops_the_first_column_or_changes_a_table_with_nothing_to_fix():
+    md = "| Item | Cost |\n| --- | --- |\n| - | $5 |\n| No | $6 |"
+    assert fix_table(md) == (md, {"promoted": None, "dropped": []})
+
+
+def test_fix_table_promotes_the_first_row_when_the_header_is_empty_and_the_row_is_a_header():
+    md = "|  |  |\n| --- | --- |\n| ITEM | COST |\n| Book | $5 |"
+    out, done = fix_table(md)
+    assert out == "| ITEM | COST |\n| --- | --- |\n| Book | $5 |" and done["promoted"] == [
+        "ITEM",
+        "COST",
+    ]
+    not_header = "|  |  |\n| --- | --- |\n| Book | $5 |\n| Pen | $1 |"
+    assert fix_table(not_header)[0] == not_header
+
+
+def test_fix_tables_records_where_each_repair_happened():
+    header_table = "|  |  |\n| --- | --- |\n| ITEM | COST |\n| a | b |"
+    blocks = [
+        ("h", 1, "P"),
+        ("h", 2, "General"),
+        ("table", 0, header_table),
+        ("h", 2, "Maps"),
+        ("h", 3, "Map"),
+        ("table", 0, TABLE),
+    ]
+    out, repairs = fix_tables(blocks)
+    assert [(r["kind"], r["where"]) for r in repairs] == [
+        ("table_header_promoted", "P / General"),
+        ("dropped_columns", "P / Maps / Map"),
+    ]
+    assert repairs[1]["columns"] == ["Notes", "Clinical"] and out[2][2].startswith(
+        "| ITEM | COST |"
+    )
+
+
+def test_map_blocks_move_rule_ids_to_the_section_and_keep_only_the_text_in_the_cell():
+    first = card("BIO 1 - X", rule_notes="013475 - old text, 013081 - other")
+    m = dmap("Plan", [first, card("ENG 1 - Y")], total="10")
+    m.semesters[0].printed = "Year 1 Fall 11 11"
+    rules = {
+        (0, 0, 0): [
+            {"id": "013475", "printed": "old", "resolved": "Prerequisites: BIO 1"},
+            {"id": "013081", "printed": "other", "resolved": None},
+        ],
+        (0, 0, 1): [],
+    }
+    blocks, ids = map_blocks([m], rules, {}, ["Plan"])
+    assert ids == {("Degree map: Plan", "Year 1 Fall (11 credits)"): ["013475", "013081"]}
+    table = next(b[2] for b in blocks if b[0] == "table")
+    assert "| BIO 1 - X | Prerequisites: BIO 1; other |" in table and "013475" not in table
+    assert "| ENG 1 - Y | - |" in table
+
+
+ROOT_PANEL = {
+    "panels": [
+        {
+            "heading": "CONTACT US",
+            "markdown": "1 St\nNamm Hall 914 (N-914)\n\nEmail: a@x.edu\n\nPhone: 718-260-5170",
+        }
+    ],
+    "source_pages": ["https://x/"],
+}
+
+
+def test_root_contact_is_read_from_the_contacts_file(tmp_path):
+    (tmp_path / "contacts").mkdir()
+    (tmp_path / "contacts" / "CST-NYT.json").write_text(json.dumps(ROOT_PANEL), encoding="utf-8")
+    root = load_root_contact(tmp_path, "CST-NYT")
+    assert (root["room"], root["phone"], root["email"]) == ("N-914", "718-260-5170", "a@x.edu")
+    assert load_root_contact(tmp_path, "NOPE") is None
+
+
+def test_pdf_contact_block_is_compared_with_the_root_page_block():
+    root = {
+        "room": "N-914",
+        "phone": "718-260-5170",
+        "email": "a@x.edu",
+        "source_page": "https://x/",
+    }
+    pdf = {"office": "Namm Building, room N-914", "phone": "718-260-5170", "email": None}
+    same = compare_contact(pdf, root)
+    assert same["matches"] and [r["result"] for r in same["rows"]] == [
+        "match",
+        "match",
+        "not printed in the PDF",
+    ]
+    other = compare_contact({**pdf, "phone": "718-000-0000"}, root)
+    assert not other["matches"] and other["rows"][1]["result"] == "MISMATCH"
+    assert compare_contact(pdf, None) is None
+
+
+def test_dent_headings_tables_rule_ids_and_contact(dent_build):
+    records, _, _ = dent_build
+    overview, program = records
+    headings = [s["heading"] for s in program["sections"]]
+    assert "Year 1 Fall (11 credits)" in headings and "Year 1 Spring (10 - 11 credits)" in headings
+    fall = next(s for s in program["sections"] if s["heading"] == "Year 1 Fall (11 credits)")
+    assert fall["rule_ids"] == ["013475", "034625", "013081"] and fall["generated"] is True
+    assert "013475" not in fall["markdown"] and "Rule notes" in fall["markdown"]
+    assert "Criticality" not in fall["markdown"] and "Actual Credits" in fall["markdown"]
+    repairs = {
+        (r["kind"], r["where"].split(" / ")[-1])
+        for r in program["repairs"]
+        if r["kind"] != "ligature"
+    }
+    assert ("table_header_promoted", "Additional Costs") in repairs
+    dropped = next(r for r in program["repairs"] if r["kind"] == "dropped_columns")
+    assert "Criticality" in dropped["columns"] and "Rule notes" not in dropped["columns"]
+    costs = next(s for s in program["sections"] if s["heading"] == "Additional Costs")
+    assert "| ITEM | COST |" in costs["markdown"] and "|  |  |" not in costs["markdown"]
+    chair = next(s for s in overview["sections"] if s["heading"] == "Chair")
+    assert chair["embed"] is False and overview["chair_pdf"]["embed"] is False
+    assert overview["contact_pdf_vs_root"]["matches"] is True
+    assert any("source mismatch, not a data error" in f for f in overview["flags"])
+
+
+def test_checks_catch_table_and_rule_id_and_label_and_contact_problems(dent_build):
+    records = dent_build[0]
+    program = records[1]
+
+    def sem(r):
+        return next(s for s in r[1]["sections"] if s["heading"] == "Year 1 Fall (11 credits)")
+
+    bad = mutate(
+        records,
+        lambda r: sem(r).update(markdown=sem(r)["markdown"] + "\n| X | 013475 y | 1 | 2 | 3 |"),
+    )
+    assert "rule_id_in_cell" in names(check_table_format(bad[1]))
+    bad = mutate(records, lambda r: sem(r).update(markdown=TABLE))
+    assert {"table_constant_column"} <= names(check_table_format(bad[1]))
+    bad = mutate(records, lambda r: sem(r).update(markdown="|  |  |\n| --- | --- |\n| a | b |"))
+    assert "table_header" in names(check_table_format(bad[1]))
+    bad = mutate(records, lambda r: sem(r).update(heading="Year 1 Fall 11 11"))
+    assert "semester_heading" in names(check_table_format(bad[1]))
+    assert check_table_format(program) == []
+    bad = mutate(records, lambda r: sem(r).update(rule_ids=[]))
+    assert "rule_ids" in names(check_rule_ids_on_sections(bad[1]))
+    assert check_rule_ids_on_sections(program) == []
+    bad = mutate(
+        records,
+        lambda r: r[1]["program"]["degree_maps"].append(dict(r[1]["program"]["degree_maps"][0])),
+    )
+    assert "map_label" in names(check_map_labels(bad[1]))
+    overview = records[0]
+    assert check_pdf_contact_not_indexed(overview) == []
+    chair = lambda r: next(s for s in r[0]["sections"] if s["heading"] == "Chair")  # noqa: E731
+    bad = mutate(records, lambda r: chair(r).pop("embed"))
+    assert "pdf_contact_indexed" in names(check_pdf_contact_not_indexed(bad[0]))
+    bad = mutate(records, lambda r: r[0]["chair_pdf"].update(embed=True))
+    assert "pdf_contact_indexed" in names(check_pdf_contact_not_indexed(bad[0]))

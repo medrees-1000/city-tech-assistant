@@ -97,6 +97,55 @@ def room_code(text: str | None) -> str | None:
     return f"{m[1]}-{m[2]}" if m else None
 
 
+def load_root_contact(processed: Path, dept: str) -> dict | None:
+    """The CONTACT US block of the department root page (data/processed/contacts/<dept>.json)."""
+    path = processed / "contacts" / f"{dept}.json"
+    if not path.exists():
+        return None
+    data = json.loads(path.read_text(encoding="utf-8"))
+    panel = next((p for p in data["panels"] if p["heading"] == "CONTACT US"), None)
+    if panel is None:
+        return None
+    text = panel["markdown"]
+    phone = re.search(r"Phone:\s*([\d-]+)", text)
+    email = re.search(r"Email:\s*(\S+)", text)
+    return {
+        "room": room_code(text),
+        "phone": phone[1] if phone else None,
+        "email": email[1] if email else None,
+        "source_page": data["source_pages"][0],
+        "printed": text,
+    }
+
+
+def compare_contact(pdf: dict, root: dict | None) -> dict | None:
+    """The PDF "Chair" block against the CONTACT US block of the department root page."""
+    if root is None:
+        return None
+    pairs = [
+        ("office", room_code(pdf["office"]), root["room"]),
+        ("phone", re.sub(r"\D", "", pdf["phone"] or ""), re.sub(r"\D", "", root["phone"] or "")),
+        ("email", (pdf["email"] or "").lower(), (root["email"] or "").lower()),
+    ]
+    rows = []
+    for name, a, b in pairs:
+        shown = {"office": pdf["office"], "phone": pdf["phone"], "email": pdf["email"]}[name]
+        result = "not printed in the PDF" if not a else "match" if a == b else "MISMATCH"
+        rows.append(
+            {
+                "field": name,
+                "pdf": shown,
+                "root_page": root["room" if name == "office" else name],
+                "result": result,
+            }
+        )
+    return {
+        "source": root["source_page"],
+        "rows": rows,
+        "matches": all(r["result"] in ("match", "not printed in the PDF") for r in rows),
+    }
+
+
 def compare_chair(pdf: dict, web: dict | None) -> tuple[dict, list[dict]]:
     """(chair to use, comparison rows). The web page wins; every difference is a row."""
     rows = []
@@ -285,12 +334,42 @@ MAP_HEADER = [
 ]
 
 
+SEMESTER_ROW = re.compile(
+    r"^(?P<lead>.*?)\s+(?P<actual>\d+(?: - \d+)?)\s+(?P<progress>\d+(?: - \d+)?)$"
+)
+
+
+def semester_label(printed: str) -> str:
+    """ "Year 1 Fall 11 11" -> "Year 1 Fall (11 credits)". The PDF header over the row is
+    "Year Semester Actual Credits Progress Credits", so the two numbers are actual and progress
+    credits. One number is shown when they are equal, both are labelled when they differ."""
+    m = SEMESTER_ROW.match(printed)
+    if not m:
+        return printed
+    actual, progress = m["actual"], m["progress"]
+    if actual == progress:
+        return f"{m['lead']} ({actual} credits)"
+    return f"{m['lead']} ({actual} actual credits, {progress} progress credits)"
+
+
+def map_labels(maps: list[DegreeMap]) -> list[str]:
+    """The map name; maps that share a name get the PDF page they start on (the PDF prints no
+    track or year to tell them apart)."""
+    names = Counter(m.name for m in maps)
+    return [f"{m.name} (PDF page {m.page})" if names[m.name] > 1 else m.name for m in maps]
+
+
 def map_blocks(
-    maps: list[DegreeMap], rules: dict[int, list], tracks_note: dict[int, str]
-) -> list[Block]:
+    maps: list[DegreeMap], rules: dict[tuple, list], tracks_note: dict[int, str], labels: list[str]
+) -> tuple[list[Block], dict[tuple[str, str], list[str]]]:
+    """Blocks of the degree maps, and the rule IDs of each semester table, keyed by the map and
+    semester headings. The rule notes cells hold only the resolved text; the IDs go on the
+    section."""
     blocks: list[Block] = []
+    rule_ids: dict[tuple[str, str], list[str]] = {}
     for n, m in enumerate(maps):
-        blocks.append(("h", 3, f"Degree map: {m.name}"))
+        map_heading = f"Degree map: {labels[n]}"
+        blocks.append(("h", 3, map_heading))
         info = (
             f"Total degree map credits: {m.total_credits}. "
             f"Effective catalog year (as printed): {m.effective_year}."
@@ -301,19 +380,20 @@ def map_blocks(
         if m.narrative:
             blocks.append(("p", 0, m.narrative))
         for s_i, sem in enumerate(m.semesters):
-            blocks.append(("h", 4, sem.printed))
+            sem_heading = semester_label(sem.printed)
+            blocks.append(("h", 4, sem_heading))
+            ids: list[str] = []
             rows = [MAP_HEADER]
             for c_i, card in enumerate(sem.cards):
                 notes = rules.get((n, s_i, c_i), [])
-                shown = "; ".join(
-                    f"{x['id'] + ' ' if x['id'] else ''}{x['resolved'] or x['printed']}"
-                    for x in notes
-                )
+                ids += [x["id"] for x in notes if x["id"] and x["id"] not in ids]
+                shown = "; ".join(x["resolved"] or x["printed"] for x in notes)
                 f = card.fields
                 values = [f.get(key, "-") for key in MAP_HEADER[3:]]
                 rows.append([" OR ".join(card.options), shown or "-", card.notes or "-", *values])
-            head = rows[0]
+            rule_ids[(map_heading, sem_heading)] = ids
             body = table_markdown(rows[1:]).splitlines()[2:] if len(rows) > 1 else []
+            head = MAP_HEADER
             md = "\n".join(
                 [
                     "| " + " | ".join(head) + " |",
@@ -322,7 +402,68 @@ def map_blocks(
                 ]
             )
             blocks.append(("table", 0, md))
-    return blocks
+    return blocks, rule_ids
+
+
+# ---- table fixes: promote a header, drop constant columns -----------------------------------
+
+CONSTANT_VALUES = ("-", "No")
+
+
+def table_cells(line: str) -> list[str]:
+    return [c.strip().replace("\\|", "|") for c in re.split(r"(?<!\\)\|", line.strip().strip("|"))]
+
+
+def table_line(cells: list[str]) -> str:
+    return "| " + " | ".join(c.replace("|", "\\|") for c in cells) + " |"
+
+
+def fix_table(md: str) -> tuple[str, dict]:
+    """Promote the first data row to the header when the header is empty and that row is clearly
+    a header (all upper case, like "ITEM | COST"). Drop every column (except the first) whose
+    cells are all "-" or "No". A column with any other value is never dropped."""
+    lines = md.split("\n")
+    head, rows = table_cells(lines[0]), [table_cells(ln) for ln in lines[2:]]
+    done: dict = {"promoted": None, "dropped": []}
+    if not any(head) and rows and all(c and c.isupper() for c in rows[0]):
+        head, rows = rows[0], rows[1:]
+        done["promoted"] = head
+    keep = [0] + [
+        i
+        for i in range(1, len(head))
+        if not rows or not all(r[i] in CONSTANT_VALUES for r in rows if len(r) > i)
+    ]
+    done["dropped"] = [head[i] or f"column {i + 1}" for i in range(len(head)) if i not in keep]
+    if done["promoted"] is None and not done["dropped"]:
+        return md, done
+    head = [head[i] for i in keep]
+    rows = [[r[i] for i in keep if i < len(r)] for r in rows]
+    out = [table_line(head), "| " + " | ".join("---" for _ in head) + " |"]
+    return "\n".join(out + [table_line(r) for r in rows]), done
+
+
+def fix_tables(blocks: list[Block]) -> tuple[list[Block], list[dict]]:
+    """fix_table on every table block; returns the new blocks and the repairs to record."""
+    out: list[Block] = []
+    repairs: list[dict] = []
+    stack: dict[int, str] = {}
+    for kind_, level, text in blocks:
+        if kind_ == "h":
+            stack = {k: v for k, v in stack.items() if k < level}
+            stack[level] = text
+        if kind_ != "table":
+            out.append((kind_, level, text))
+            continue
+        where = " / ".join(stack[k] for k in sorted(stack))
+        md, done = fix_table(text)
+        if done["promoted"]:
+            repairs.append({"kind": "table_header_promoted", "where": where,
+                            "header": done["promoted"]})  # fmt: skip
+        if done["dropped"]:
+            repairs.append({"kind": "dropped_columns", "where": where, "columns": done["dropped"],
+                            "rule": "every cell is '-' or 'No'"})  # fmt: skip
+        out.append((kind_, level, md))
+    return out, repairs
 
 
 def map_signature(m: DegreeMap) -> tuple:
@@ -634,7 +775,9 @@ def hegis_cip(blocks: list[Block]) -> dict:
     return {"hegis": None, "cip": None}
 
 
-def build_overview(parsed: Parsed, chair_web: dict | None) -> dict:
+def build_overview(
+    parsed: Parsed, chair_web: dict | None, root_contact: dict | None = None
+) -> dict:
     stripped: list[dict] = []
     flags: list[str] = []
     blocks, chair_pdf = overview_blocks(
@@ -650,12 +793,18 @@ def build_overview(parsed: Parsed, chair_web: dict | None) -> dict:
         )
     cards, card_chars = course_region(parsed.parts.courses)
     chair, comparison = compare_chair(chair_pdf, chair_web)
+    contact = compare_contact(chair_pdf, root_contact)
+    blocks, table_repairs = fix_tables(blocks)
+    chair_pdf["embed"] = (
+        False  # a department-office contact, not the chair; the web page is the source
+    )
     record = {
         **base_fields(parsed, "department"),
         "title": parsed.parts.dept_title,
         "chair": chair,
         "chair_pdf": chair_pdf,
         "chair_comparison": comparison,
+        "contact_pdf_vs_root": contact,
         "sections": (sections := to_sections([("h", 1, parsed.parts.dept_title), *blocks])),
         "dropped_empty_headings": dropped_headings(
             [("h", 1, parsed.parts.dept_title), *blocks], sections
@@ -665,13 +814,23 @@ def build_overview(parsed: Parsed, chair_web: dict | None) -> dict:
         "course_card_chars": dict(card_chars),
         "page_footers": parsed.stream.footers,
         "flags": flags,
-        "repairs": [],
+        "repairs": table_repairs,
     }
-    for item in comparison:
-        if item["result"].startswith("MISMATCH"):
-            flags.append(
-                f"chair {item['field']}: PDF {item['pdf']!r}, web {item['web']!r} (web wins)"
-            )
+    for s in sections:
+        if s["heading"] == "Chair":
+            s["embed"] = False  # the web page is the only contact source
+    differs = [i["field"] for i in comparison if i["result"].startswith("MISMATCH")]
+    if differs and contact is not None and contact["matches"]:
+        flags.append(
+            "source mismatch, not a data error: the PDF 'Chair' block differs from "
+            f"chairperson.aspx in {', '.join(differs)}, but matches the root page contact block "
+            "(it is the department office contact); not indexed"
+        )
+    elif differs:
+        flags.append(
+            f"PDF 'Chair' block differs from chairperson.aspx in {', '.join(differs)}"
+            + (" and from the root page contact block" if contact else " (no root contact block)")
+        )
     return record
 
 
@@ -718,7 +877,8 @@ def build_program(
         flags.append(f"{where}: the program title is printed incomplete: {tree.title!r}")
     names = Counter(m.name for m in kept_maps)
     flags += [
-        f"{where}: {n} different degree maps have the same name {name!r}"
+        f"{where}: {n} different degree maps have the same name {name!r}; the PDF prints no "
+        "track or year to tell them apart, so each is labelled with its PDF page"
         for name, n in names.items()
         if n > 1
     ]
@@ -732,20 +892,27 @@ def build_program(
             blocks += [("h", 4, g.title), ("p", 0, f"**Type** {g.type_label}"), *gblocks]
     if tree.has_maps_heading:
         blocks.append(("h", 2, "Degree Maps"))
-    blocks += map_blocks(
-        kept_maps, {k: v for k, v in rules.items()}, {k: v for k, v in tracks.items() if v}
+    labels = map_labels(kept_maps)
+    map_part, rule_ids = map_blocks(
+        kept_maps, rules, {k: v for k, v in tracks.items() if v}, labels
     )
+    blocks += map_part
+    blocks, table_repairs = fix_tables(blocks)
     sections = to_sections(blocks)
     for s in sections:
         if s["heading"] == "Degree Maps" or any(
             p["heading"] == "Degree Maps" for p in s["parents"]
         ):
             s["generated"] = True  # built from the degree map data, not printed text
+        parent = s["parents"][-1]["heading"] if s["parents"] else None
+        if (parent, s["heading"]) in rule_ids:
+            s["rule_ids"] = rule_ids[(parent, s["heading"])]
     codes = codes_in_tree(tree)
     parts = [p.strip() for p in tree.title.split(" - ")]
     maps_out = []
     for n, m in enumerate(kept_maps):
         d = asdict(m)
+        d["label"] = labels[n]
         d["tracks"] = [m.name] + [o.name for o in repeats[n]]
         d["repeats_dropped"] = len(repeats[n])
         d["printed"] = map_printed(m)
@@ -772,7 +939,7 @@ def build_program(
         "dropped_empty_headings": dropped_headings(blocks, sections),
         "stripped": stripped,
         "flags": flags,
-        "repairs": [],
+        "repairs": table_repairs,
     }
 
 
@@ -780,7 +947,7 @@ def finalize(record: dict, ligatures: list[dict]) -> dict:
     """Apply the broken-glyph repairs to every string and list all repairs on the record."""
     repairs: list[dict] = []
     out = repair_strings(record, repairs, record.get("title", ""))
-    out["repairs"] = repairs + ligatures
+    out["repairs"] = [*record.get("repairs", []), *repairs, *ligatures]
     return out
 
 
@@ -817,7 +984,8 @@ def build_all(
     records: dict[str, list[dict]] = {}
     for dept, p in parsed.items():
         ligs = ligature_repairs(p)
-        out = [finalize(build_overview(p, load_web_chair(processed, dept)), ligs)]
+        root = load_root_contact(processed, dept)
+        out = [finalize(build_overview(p, load_web_chair(processed, dept), root), ligs)]
         for tree in p.trees:
             out.append(finalize(build_program(p, tree, generic, resolve), []))
         records[dept] = out
