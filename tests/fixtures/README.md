@@ -29,3 +29,9 @@ another, hours panels without a heading element, a `<table>` directly inside an 
 `winter_2027.pdf` is the real Winter 2027 academic calendar (one page, saved 2026-10-11, "Last
 updated: 7/27/26"). The Fall and Spring PDFs are not committed (`data/pdfs/` is ignored); tests that
 need them are skipped when the files are missing.
+
+## pdfs/
+
+The real refund calendar and the real Dropping and Withdrawing PDF (saved 2026-10-11). The flyer
+(1 MB) and the CUNYfirst guide (1.4 MB) are not committed; tests that need them are skipped when
+`data/pdfs/` is missing.
