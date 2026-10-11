@@ -87,7 +87,7 @@ Skip `program-DSCI-BS-*.pdf`: it is a subset of the CST department PDF.
 - `admissions/tuition-refund.aspx` and `bursar/refund-policy.aspx` show tables only for Summer I,
   Summer II and Fall 2026. Spring/Winter 2027 refund answers must come from the calendar PDFs.
 - Pages link many form PDFs (re-admission, ePermit, graduation application, TAP waiver). Record
-  the links in the fetch log but do not download or index forms for now.
+  the links in the page record (`pdf_links`), not in the fetch log, and do not download or index forms for now.
 - The financial aid FAQ links several 2025-26 guide PDFs. They are out of date; skip them.
 
 ### Department web pages

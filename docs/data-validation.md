@@ -20,7 +20,8 @@ fail the build. Manual checks are done by the owner and recorded at the bottom.
 - No replacement characters (`�`), no `{{...}}` placeholders, no repeated rule-dump blocks, no
   "Advisory Commission" or blank-page text left in the cleaned output.
 - Each department PDF yields at least: overview, one program, requirements and one degree map.
-- Legacy (MST/DPT) and "(Inactive)" courses do not appear in cleaned output.
+- "(Inactive)" courses do not appear in cleaned output. Legacy MST/DPT courses are flagged
+  (`legacy_prefix`), not dropped.
 
 ### Web pages
 - Every crawled page returns 200 and has non-empty main content after the mega-menu is stripped.
