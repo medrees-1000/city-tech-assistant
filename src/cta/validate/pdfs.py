@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pdfplumber
 
-from cta.parse.pdf_docs import BULLETS, LIGATURES, in_box
+from cta.parse.pdf_docs import BULLETS, LIGATURES, SCREENSHOT_LABEL, in_box
 from cta.validate.findings import Finding
 
 REPLACEMENT = "�"
@@ -68,7 +68,8 @@ def record_text(record: dict) -> str:
         if s["heading"]:
             headings.add(s["heading"])
         headings.update(h["heading"] for h in s["parents"])
-        parts.append(markdown_text(s["markdown"]))
+        text = markdown_text(s["markdown"])
+        parts.append("\n".join(x for x in text.split("\n") if x != SCREENSHOT_LABEL))
     parts += sorted(headings)
     parts += [e["text"] for e in record["excluded"]]
     return normalize("\n".join(parts))

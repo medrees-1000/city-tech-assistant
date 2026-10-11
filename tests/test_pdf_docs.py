@@ -461,7 +461,7 @@ def test_flyer_is_read_from_the_text_layer_panel_by_panel():
 
 
 @pytest.mark.skipif(not HAVE_ALL, reason="data/pdfs is not committed")
-def test_cunyfirst_guide_keeps_the_written_steps_and_drops_screenshot_callouts():
+def test_cunyfirst_guide_keeps_the_written_steps_and_the_screenshot_callouts_as_notes():
     from cta.parse.pdf_docs import parse_cunyfirst
 
     r = parse_cunyfirst(PDFS / "cunyfirst_student_reference.pdf")
@@ -474,15 +474,26 @@ def test_cunyfirst_guide_keeps_the_written_steps_and_drops_screenshot_callouts()
                 "DIRECT LOAN PROCESSING FORM",
                 "BALANCE, PENDING FINANCIAL AID & REFUNDS", "FORM 1098-T", "W-2 FORM"):  # fmt: skip
         assert any(key in h for h in headings), key
-    assert {e["reason"] for e in r["excluded"]} == {
-        "screenshot annotation (7 pt callout text laid over a screenshot)"
+    assert r["excluded"] == []
+    assert "Screenshot notes" in r["note"] and "laid over" in r["note"]
+    notes = {
+        s["heading"]: s["markdown"].split("**Screenshot notes**\n\n")[1].split("\n")
+        for s in r["sections"]
+        if "**Screenshot notes**" in s["markdown"]
     }
-    assert len(r["excluded"]) == 22
+    counts = {
+        key: len(v)
+        for h, v in notes.items()
+        for key in ("TASKS", "SUPPLEMENT", "AWARDS", "BALANCE")
+        if key in h
+    }
+    assert counts == {"TASKS": 4, "SUPPLEMENT": 2, "AWARDS": 14, "BALANCE": 2}
+    assert sum(len(v) for v in notes.values()) == 22
+    awards = next(v for h, v in notes.items() if "AWARDS" in h)
+    assert awards[0] == "- Click here to choose your college of"  # page order
+    assert awards[-1] == "- view information by term"
     text = " ".join(s["markdown"] for s in r["sections"])
-    assert (
-        "Click here to choose your college" not in text
-        and "**STEP# 1:** Login to CUNYfirst" in text
-    )
+    assert "**STEP# 1:** Login to CUNYfirst" in text
     assert "origination fee" in text and "Never miss an aid refund" in text
     assert run_pdf_checks(r, PDFS / "cunyfirst_student_reference.pdf") == []
 
@@ -511,3 +522,44 @@ def test_the_four_pdfs_are_in_the_known_data_list_of_sources_yaml():
         assert by_file[name]["record"] == f"data/processed/pdfs/{slug}.json"
     assert by_file["cunyfirst_student_reference.pdf"]["scope"] == "cuny"
     assert Counter(k["doc_type"] for k in known) == {"aid": 2, "policy": 1, "howto": 1}
+
+
+def test_screenshot_notes_go_at_the_end_of_the_section_they_sat_under_in_page_order():
+    from cta.parse.pdf_docs import with_screenshot_notes
+
+    body = [("h", 1, "ONE"), ("p", 0, "text one"), ("h", 1, "TWO"), ("p", 0, "text two")]
+    notes = [
+        {"page": 3, "text": "first", "heading": "ONE"},
+        {"page": 3, "text": "second", "heading": "ONE"},
+        {"page": 5, "text": "third", "heading": "TWO"},
+    ]
+    assert with_screenshot_notes(body, notes) == [
+        ("h", 1, "ONE"), ("p", 0, "text one"),
+        ("p", 0, "**Screenshot notes**"), ("list", 0, "- first\n- second"),
+        ("h", 1, "TWO"), ("p", 0, "text two"),
+        ("p", 0, "**Screenshot notes**"), ("list", 0, "- third"),
+    ]  # fmt: skip
+    with pytest.raises(ValueError):
+        with_screenshot_notes(body, [{"page": 1, "text": "x", "heading": "NOPE"}])
+
+
+def test_flow_records_the_heading_of_an_excluded_line_only_when_notes_are_wanted():
+    from cta.parse.pdf_docs import FlowConfig, Repairs, flow_blocks
+
+    items = [("line", line("HEAD", 100, bold=True)), ("line", line("Callout", 130, size=7.0)),
+             ("line", line("Body text.", 160))]  # fmt: skip
+    exclude = lambda ln: "callout" if ln.size < 8 else None  # noqa: E731
+    _, with_notes = flow_blocks(items, FlowConfig(exclude=exclude, notes=True), Repairs())
+    assert with_notes == [{"page": 1, "text": "Callout", "reason": "callout", "heading": "HEAD"}]
+    _, plain = flow_blocks(items, FlowConfig(exclude=exclude), Repairs())
+    assert plain == [{"page": 1, "text": "Callout", "reason": "callout"}]
+
+
+def test_the_screenshot_notes_label_is_not_counted_as_printed_text():
+    from cta.validate.pdfs import record_text
+
+    markdown = "body\n\n**Screenshot notes**\n\n- one"
+    section = {"heading": "T", "level": 1, "parents": [], "markdown": markdown}
+    record = {"title": "T", "excluded": [], "sections": [section]}
+    text = record_text(record)
+    assert "one" in text and "Screenshot" not in text

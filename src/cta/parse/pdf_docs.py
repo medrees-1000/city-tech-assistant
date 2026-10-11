@@ -219,6 +219,7 @@ class FlowConfig:
     body_gap: float = 1.8  # lines closer than this many font sizes can belong to one paragraph
     heading_gap: float = 1.5  # a heading has at least this many font sizes of space above it
     heading_join: float = 1.6  # a bold line this close below a heading line is part of the heading
+    notes: bool = False  # excluded lines also record the heading they sit under (kept as notes)
 
 
 def flow_blocks(
@@ -279,7 +280,13 @@ def flow_blocks(
         line: PLine = item
         reason = config.exclude(line) if config.exclude else None
         if reason:
-            excluded.append({"page": line.page, "text": line.plain, "reason": reason})
+            entry = {"page": line.page, "text": line.plain, "reason": reason}
+            if config.notes:
+                under = " ".join(h.plain for h in heading) if heading else None
+                entry["heading"] = under or next(
+                    (b[2] for b in reversed(blocks) if b[0] == "h"), None
+                )
+            excluded.append(entry)
             continue
         new_page = line.page != cur_page
         cur_page = line.page
@@ -516,18 +523,48 @@ def parse_dropping_withdrawing(path: Path) -> dict:
 # -- CUNYfirst guide: written steps only --
 
 
+SCREENSHOT_LABEL = "Screenshot notes"
+
+
 def cunyfirst_exclude(line: PLine) -> str | None:
     if line.size <= 8.0:
         return "screenshot annotation (7 pt callout text laid over a screenshot)"
     return None
 
 
+def with_screenshot_notes(body: list[Block], notes: list[dict]) -> list[Block]:
+    """Put each callout line, in page order, in a "Screenshot notes" list at the end of the section
+    (the heading it sat under). One list item per printed line: wrapped callouts are not joined."""
+    by_heading: dict[str | None, list[str]] = {}
+    for n in notes:
+        by_heading.setdefault(n["heading"], []).append(n["text"])
+    out: list[Block] = []
+    current: str | None = None
+
+    def close() -> None:
+        texts = by_heading.pop(current, [])
+        if texts:
+            out.append(("p", 0, f"**{SCREENSHOT_LABEL}**"))
+            out.append(("list", 0, "\n".join(f"- {t}" for t in texts)))
+
+    for b in body:
+        if b[0] == "h":
+            close()
+            current = b[2]
+        out.append(b)
+    close()
+    if by_heading:
+        raise ValueError(f"screenshot notes under unknown headings: {sorted(map(str, by_heading))}")
+    return out
+
+
 def parse_cunyfirst(path: Path) -> dict:
     note = (
         "A CUNY-wide guide, not City Tech. Per the owner, its examples show Hunter and LaGuardia "
         "and the 2022-23 aid year; that is inside the screenshots (images), which this record "
-        "does not contain. Written steps only: callout text laid over the screenshots was "
-        "dropped (see excluded)."
+        "does not contain. The 7 pt callout text that is laid over the screenshots is kept: it "
+        "is in each section under 'Screenshot notes', in page order, one item per printed line. "
+        "It is text laid over screenshots, not part of the written steps."
     )
     meta = {
         "source_file": f"data/pdfs/{path.name}",
@@ -544,7 +581,6 @@ def parse_cunyfirst(path: Path) -> dict:
     cover = [v for k, v in items if k == "line" and v.page == 1]
     rest = [(k, v) for k, v in items if not (k == "line" and v.page == 1)]
     blocks: list[Block] = []
-    excluded: list[dict] = []
     title_lines = [ln for ln in cover if ln.size >= 18]
     subtitle = [ln for ln in cover if 10.5 <= ln.size < 12]
     topics: list[list[PLine]] = []
@@ -556,12 +592,13 @@ def parse_cunyfirst(path: Path) -> dict:
     blocks.append(("h", 1, " ".join(ln.plain for ln in title_lines)))
     blocks.append(("p", 0, " ".join(ln.plain for ln in subtitle)))
     blocks.append(("list", 0, "\n".join("- " + " ".join(ln.plain for ln in t) for t in topics)))
-    cfg = FlowConfig(exclude=cunyfirst_exclude, heading_min_size=15.0)
-    body, excluded = flow_blocks(rest, cfg, repairs)
+    cfg = FlowConfig(exclude=cunyfirst_exclude, heading_min_size=15.0, notes=True)
+    body, notes = flow_blocks(rest, cfg, repairs)
+    body = with_screenshot_notes(body, notes)
     # flow_blocks makes the first heading level 1; here the title is already level 1
     fixed = [("h", 2, b[2]) if b[0] == "h" else b for b in body]
     record["title"] = blocks[0][2]
-    return finish(record, blocks + fixed, excluded, repairs)
+    return finish(record, blocks + fixed, [], repairs)
 
 
 # -- the flyer: an infographic read panel by panel from its text layer --
