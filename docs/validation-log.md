@@ -471,7 +471,7 @@ Fixes (all four departments rebuilt with `uv run python -m cta.parse.departments
   differs from `chairperson.aspx` (CST, DENT, EET: office and phone; MATH: phone), which is a **source
   mismatch, not a data error**. The Chair section and `chair_pdf` are `embed: false` (never indexed); the web
   page is the only contact source. The old "web wins" mismatch flags are now this one source-mismatch flag.
-- Tables: columns that are "-" or "No" in every row are dropped per table (88 tables had at least one; names
+- Tables: columns that are "-" or "No" in every row are dropped per table (106 tables had at least one; names
   are in each record's `repairs` as `dropped_columns` with the table's heading path; counts of drops:
   Minimum GPA, Area, Clinical, Criticality 106 each, Notes 51, Minimum Grade 31). No column with any other
   value is dropped. Rule IDs moved from the cell to `rule_ids` on the semester section (401 IDs, first-seen
