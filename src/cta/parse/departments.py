@@ -813,6 +813,7 @@ def base_fields(parsed: Parsed, doc_type: str) -> dict:
         "file_date": file_date(name),
         "term": None,  # never invented: the two labels below are stored as printed
         "term_label_pdf": labels,
+        "last_updated": None,  # the department PDFs print no update date; file_date is the date
         "term_label_web": WEB_TERM_LABEL,
         "term_label_web_source": WEB_TERM_SOURCE,
         "page_count": len(parsed.stream.footers),

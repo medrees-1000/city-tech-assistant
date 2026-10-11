@@ -413,6 +413,7 @@ def base_record(path: Path, pdf, meta: dict) -> dict:
         "source_file": meta["source_file"],
         "doc_type": meta["doc_type"],
         "scope": meta["scope"],
+        "department": None,  # these PDFs belong to a central office or to CUNY, not a department
         "term": meta.get("term"),
         "aid_year": meta.get("aid_year"),
         "pdf_last_updated": None,

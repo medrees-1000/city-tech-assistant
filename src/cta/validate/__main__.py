@@ -1,9 +1,9 @@
 """Run every automatic check of docs/data-validation.md and print one table.
 
 Run: uv run python -m cta.validate
-Areas: courses, pages, PDFs, departments, calendar. Each area checks the records on disk (what
-would be indexed) against their sources. A missing input (for example a PDF that is not committed)
-is reported as SKIPPED, never as a pass. The exit code is 1 if any check fails.
+Areas: courses, pages, PDFs, departments, metadata, calendar. Each area checks the records on
+disk (what would be indexed) against their sources. A missing input (for example a PDF that is
+not committed) is reported as SKIPPED, never as a pass. The exit code is 1 if any check fails.
 """
 
 import json
@@ -120,6 +120,20 @@ def check_departments() -> Area:
     return area
 
 
+def check_metadata() -> Area:
+    from cta.validate.metadata import embedded_sections, load_records, run_metadata_checks
+
+    area = Area("metadata")
+    records = load_records(PROCESSED)
+    if not records:
+        area.skipped = "no page, PDF or department records"
+        return area
+    area.findings = run_metadata_checks(records, load_sources()["doc_types"])
+    sections = sum(len(embedded_sections(r)) for r in records)
+    area.checked = f"{sections} sections to embed in {len(records)} records"
+    return area
+
+
 def check_calendar() -> Area:
     from cta.parse.calendar_build import build_all, load_terms, run_checks
     from cta.validate.calendar import check_verified
@@ -138,7 +152,9 @@ def check_calendar() -> Area:
     return area
 
 
-AREAS = [check_courses, check_pages, check_pdfs, check_departments, check_calendar]
+AREAS = [
+    check_courses, check_pages, check_pdfs, check_departments, check_metadata, check_calendar
+]  # fmt: skip
 
 
 def table(areas: list[Area]) -> str:
