@@ -1,4 +1,5 @@
 import copy
+import json
 from datetime import date
 from pathlib import Path
 
@@ -8,10 +9,12 @@ from cta.parse.calendar import build_events, extract_pdf
 from cta.parse.calendar_build import (
     build_all,
     load_terms,
+    refuses_overwrite,
     render_verification,
     run_checks,
 )
 from cta.validate.calendar import (
+    UnverifiedCalendarError,
     calendar_status,
     check_against_pdf,
     check_dates_in_window,
@@ -20,7 +23,9 @@ from cta.validate.calendar import (
     check_required_fields,
     check_term_markers,
     check_term_matches_pdf,
+    check_verified,
     check_weekdays,
+    load_events_for_indexing,
 )
 
 FIXTURES = Path(__file__).parent / "fixtures" / "calendar"
@@ -269,3 +274,109 @@ def test_all_three_real_calendars_build_with_no_findings():
         ("Spring 2027", "TBA", "87th Commencement Ceremony")
     ]
     assert calendar_status(events, "Fall 2027") == "abstain"
+
+
+# ---- verification: nothing is indexed until every event is verified -------------------------
+
+EVENTS_FILE = Path(__file__).resolve().parents[1] / "data" / "calendar" / "calendar_events.json"
+
+
+def verified(**over):
+    return ev(verified=True, verified_by="owner", verified_on="2026-10-11", **over)
+
+
+def write(tmp_path, events):
+    path = tmp_path / "calendar_events.json"
+    path.write_text(json.dumps(events), encoding="utf-8")
+    return path
+
+
+def test_check_verified_accepts_a_fully_verified_event():
+    assert check_verified([verified()]) == []
+
+
+def test_check_verified_fails_when_verified_is_false_or_missing():
+    found = check_verified(
+        [ev(id="a"), ev(id="b", verified=None), {**verified(id="c"), "verified": "yes"}]
+    )
+    assert [(f.check, f.course) for f in found] == [
+        ("verified", "a"),
+        ("verified", "b"),
+        ("verified", "c"),
+    ]
+
+
+def test_verified_event_needs_who_and_when():
+    no_by = {**verified(id="a"), "verified_by": ""}
+    no_on = {k: v for k, v in verified(id="b").items() if k != "verified_on"}
+    bad_on = {**verified(id="c"), "verified_on": "yesterday"}
+    found = check_verified([no_by, no_on, bad_on])
+    assert [f.course for f in found] == ["a", "b", "c"]
+
+
+def test_loading_for_indexing_returns_the_events_when_all_are_verified(tmp_path):
+    events = [verified(id="a"), verified(id="b")]
+    assert load_events_for_indexing(write(tmp_path, events)) == events
+
+
+def test_loading_for_indexing_fails_if_any_event_is_not_verified(tmp_path):
+    path = write(
+        tmp_path, [verified(id="a"), ev(id="winter-2027-007", verified=False), verified(id="c")]
+    )
+    with pytest.raises(UnverifiedCalendarError) as err:
+        load_events_for_indexing(path)
+    assert "winter-2027-007" in str(err.value) and "1 calendar problems" in str(err.value)
+
+
+def test_rebuilding_never_overwrites_verified_rows_unless_forced(tmp_path):
+    path = write(tmp_path, [verified(id="a")])
+    assert refuses_overwrite(path, force=False) is True
+    assert refuses_overwrite(path, force=True) is False
+    assert refuses_overwrite(write(tmp_path, [ev(id="a")]), force=False) is False  # nothing to lose
+    assert refuses_overwrite(tmp_path / "missing.json", force=False) is False
+
+
+def test_the_committed_calendar_file_is_fully_verified_and_loads_for_indexing():
+    events = load_events_for_indexing(EVENTS_FILE)
+    assert len(events) == 136
+    assert {e["verified_by"] for e in events} == {"owner"}
+    assert {e["verified_on"] for e in events} == {"2026-10-11"}
+    assert all(e["verified"] is True for e in events)
+
+
+def test_the_spring_sap_deadline_carries_the_cross_source_conflict_note():
+    events = json.loads(EVENTS_FILE.read_text(encoding="utf-8"))
+    row = next(e for e in events if e["id"] == "spring-2027-043")
+    assert row["event"].startswith(
+        "Deadline to submit Satisfactory Academic Progress (SAP) Appeals"
+    )
+    assert (row["date_raw"], row["weekday_raw"], row["date_start"]) == (
+        "March 31",
+        "Wednesday",
+        "2027-03-31",
+    )
+    assert row["notes"] == (
+        "Financial Aid SAP page lists Tuesday, March 30, 2027. "
+        "The calendar PDF is the source for dates."
+    )
+    other_notes = [e["id"] for e in events if e["notes"] and "joined" not in e["notes"]]
+    assert other_notes == ["spring-2027-043"]  # no other note was added
+    fall = next(e for e in events if e["id"] == "fall-2026-044")
+    assert (
+        fall["notes"] is None and fall["date_start"] == "2026-11-13"
+    )  # Fall agrees with the SAP page
+
+
+@pytest.mark.skipif(not HAVE_PDFS, reason="data/pdfs is not committed")
+def test_verifying_changed_nothing_but_the_verification_fields_and_one_note():
+    config = load_terms()
+    rebuilt, _, _ = build_all(config)
+    saved = json.loads(EVENTS_FILE.read_text(encoding="utf-8"))
+    assert [e["id"] for e in saved] == [e["id"] for e in rebuilt]
+    skip = {"verified", "verified_by", "verified_on", "notes"}
+    for old, new in zip(rebuilt, saved, strict=True):
+        assert {k: v for k, v in old.items() if k not in skip} == {
+            k: v for k, v in new.items() if k not in skip
+        }
+        if new["id"] != "spring-2027-043":
+            assert old["notes"] == new["notes"]

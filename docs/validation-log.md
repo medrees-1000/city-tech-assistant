@@ -318,3 +318,31 @@ be parsed.
   check is for.
 
 Pending (owner): check every row of `docs/calendar-verification.md` against its PDF, then set `verified: true`.
+
+## 2026-10-11: calendar verified by the owner
+
+The owner checked every row of `docs/calendar-verification.md` against the PDFs; all 136 rows are correct.
+`data/calendar/calendar_events.json`: `verified: true`, `verified_by: "owner"`, `verified_on: "2026-10-11"` on
+all 136 events (55 Fall 2026, 26 Winter 2027, 55 Spring 2027). Nothing else in the file changed except the
+`notes` entry below (the old and new data were compared field by field).
+
+- New check `check_verified` and loader `load_events_for_indexing`: loading the file for indexing raises
+  `UnverifiedCalendarError` if any event is not `verified: true`, or has no `verified_by` or a valid
+  `verified_on`. Tested, including that the committed file loads.
+- `calendar_build` no longer overwrites a file that has verified rows (it prints a message and stops
+  unless `--force` is given), so re-running it cannot reset the verification by accident.
+- `docs/calendar-verification.md` still says the rows are unverified: it is written by the build and was
+  not regenerated.
+
+### Open cross-source conflict: Spring 2027 SAP appeals deadline
+
+| Source | Value |
+|---|---|
+| Calendar PDF https://www.citytech.cuny.edu/registrar/docs/spring_2027.pdf (local copy `data/pdfs/spring_2027.pdf`, "Last updated: 7/27/26", row `spring-2027-043`, page 1) | "Deadline to submit Satisfactory Academic Progress (SAP) Appeals for Title IV for Spring 2027": **March 31, Wednesday** (2027-03-31) |
+| Financial Aid SAP page https://www.citytech.cuny.edu/financial-aid/sap.aspx (fetched 2026-10-11, section "SAP Appeal Deadlines") | "Spring 2027: **Tuesday, March 30th, 2027**" |
+
+Both weekdays agree with their own dates (March 30, 2027 is a Tuesday and March 31 a Wednesday), so this is a
+real difference of one day, not a typo in one weekday. The Fall 2026 deadline agrees in both sources
+(Friday, November 13, 2026). Handling: the calendar PDF is the source for dates (CLAUDE.md: the registrar
+calendar wins for dates); the calendar row carries this in its `notes`. The SAP page text is kept as it is.
+Status: open, nobody has asked either office which date is right.

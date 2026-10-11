@@ -4,9 +4,11 @@ Run: uv run python -m cta.parse.calendar_build   (builds the table, then runs th
 Dates are never changed to make a check pass: every problem is reported as a finding.
 """
 
+import json
 import re
 from collections import Counter
 from datetime import date
+from pathlib import Path
 
 from cta.parse.calendar import Extraction, joined_lines, weekday_check
 from cta.validate.findings import Finding
@@ -183,3 +185,37 @@ def check_no_calendar_terms(events: list[dict], terms: list[str]) -> list[Findin
 def calendar_status(events: list[dict], term: str) -> str:
     """ "available" if the table has rows for the term, otherwise "abstain" (do not answer)."""
     return "available" if any(e["term"] == term for e in events) else "abstain"
+
+
+class UnverifiedCalendarError(Exception):
+    """The calendar table has rows the owner has not verified, so it must not be indexed."""
+
+
+def check_verified(events: list[dict]) -> list[Finding]:
+    """Every event is verified: true, by someone, on a date (checked when loaded for indexing)."""
+    found = []
+    for e in events:
+        if e.get("verified") is not True:
+            found.append(Finding("verified", "fail", "verified is not true", e.get("id")))
+            continue
+        try:
+            date.fromisoformat(e["verified_on"])
+        except (KeyError, TypeError, ValueError):
+            found.append(
+                Finding("verified", "fail", "verified_on is missing or not a date", e.get("id"))
+            )
+        if not e.get("verified_by"):
+            found.append(Finding("verified", "fail", "verified_by is missing", e.get("id")))
+    return found
+
+
+def load_events_for_indexing(path: Path) -> list[dict]:
+    """Load calendar_events.json for indexing. Raises if any event is not verified."""
+    events = json.loads(path.read_text(encoding="utf-8"))
+    problems = check_verified(events)
+    if problems:
+        ids = ", ".join(str(f.course) for f in problems[:5])
+        raise UnverifiedCalendarError(
+            f"{len(problems)} calendar problems: not verified or incomplete (first: {ids})"
+        )
+    return events

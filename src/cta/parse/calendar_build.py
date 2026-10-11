@@ -2,6 +2,7 @@
 
 Run: uv run python -m cta.parse.calendar_build
 Every row is written with verified: false. The owner checks each row against the PDF.
+A file that already has verified rows is not overwritten unless --force is given.
 """
 
 import json
@@ -137,11 +138,21 @@ def render_verification(events: list[dict], extractions: list[Extraction]) -> st
     return "\n".join(lines)
 
 
+def refuses_overwrite(path: Path, force: bool) -> bool:
+    """True if the file already has verified rows (a rebuild would reset them to false)."""
+    if force or not path.exists():
+        return False
+    return any(e.get("verified") for e in json.loads(path.read_text(encoding="utf-8")))
+
+
 def main() -> int:
+    out = ROOT / "data" / "calendar" / "calendar_events.json"
+    if refuses_overwrite(out, "--force" in sys.argv):
+        print(f"{out} has verified rows; rebuilding would reset them. Use --force to overwrite.")
+        return 2
     config = load_terms()
     events, extractions, unparsed = build_all(config)
     findings = run_checks(events, extractions, unparsed, config)
-    out = ROOT / "data" / "calendar" / "calendar_events.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(events, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     (ROOT / "docs" / "calendar-verification.md").write_text(
