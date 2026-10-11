@@ -221,3 +221,6 @@ __marimo__/
 .env
 
 data/pdfs/
+# Collected data (not committed; small samples go in tests/fixtures/)
+data/raw/
+data/processed/
