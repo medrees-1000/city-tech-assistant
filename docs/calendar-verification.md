@@ -1,5 +1,7 @@
 # Calendar verification
 
+> This is the pre-verification review sheet. All 136 rows were verified by the owner on 2026-10-11.
+
 Written by `uv run python -m cta.parse.calendar_build`. Check every row against the PDF,
 tick the last column, then set `verified: true` for that event in
 `data/calendar/calendar_events.json`. All rows are `verified: false` until you do.

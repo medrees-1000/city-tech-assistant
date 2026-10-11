@@ -151,8 +151,9 @@ stray space inside an email address; fix it).
 - Each PDF has a "Last updated" date and says the calendar can change; show it in the answer.
 - Each row (`data/calendar/calendar_events.json`, built by `uv run python -m cta.parse.calendar_build`):
   `id`, `term`, `event`, `date_start`, `date_end`, `date_raw`, `weekday_raw`, `applies_to`, `bold`,
-  `source_pdf`, `source_page`, `pdf_last_updated`, `verified` (always false until the owner checks the row
-  in `docs/calendar-verification.md`), `notes`. The PDFs are Excel tables; rows are rebuilt from character
+  `source_pdf`, `source_page`, `pdf_last_updated`, `verified`, `verified_by`, `verified_on`, `notes`.
+  All 136 events are verified (owner, 2026-10-11). `calendar_build` refuses to overwrite a file that has
+  verified rows unless `--force` is given, and loading the file for indexing fails if any row is unverified. The PDFs are Excel tables; rows are rebuilt from character
   positions (the text stream is not in reading order). One event per printed line of the event cell; a line
   that wraps onto a second line is joined and noted. `pdf_last_updated` is the printed "Last updated" date.
 
