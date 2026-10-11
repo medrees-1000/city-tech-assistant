@@ -29,6 +29,12 @@
    "catalogDisplayName": "CUNY proficiency in mathematics. Pre/corequisite: ENG 1101 or prerequisite: ENG 1101CO or ENG 1101ML.* Students who already have credit for MAT 1275CO or MAT 1275 or higher will not receive credit for this course",
    "code": "018161",
    "descriptionLong": "CUNY proficiency in mathematics. Pre/corequisite: ENG 1101 or prerequisite: ENG 1101CO or ENG 1101ML.* Students who already have credit for MAT 1275CO or MAT 1275 or higher will not receive credit for this course"
+  },
+  "014206": {
+   "_id": "014206",
+   "catalogDisplayName": "PRE: MAT 2440",
+   "code": "014206",
+   "descriptionLong": "PRE: MAT 2440"
   }
  }
 }

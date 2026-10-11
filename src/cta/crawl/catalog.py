@@ -142,14 +142,28 @@ def prereq_style(rule_id: str | None, text: str | None) -> str:
     return "shorthand" if SHORTHAND.fullmatch(text) else "text"
 
 
+WRITING_INTENSIVE = "WRIC"  # catalog attribute strings look like "WRIC - WRIC (Writing Intensive)"
+
+
 def to_record(course: dict, dept_ids: set[str], rule_text: str | None, fetched_at: str) -> dict:
     kept = [d for d in course["departments"] if d["id"] in dept_ids]
     credits = course.get("credits") or {}
+    custom = course.get("customFields") or {}
+    attributes = custom.get("catalogAttributes")
     return {
         "code": course.get("code"),
         "title": course.get("name"),
         "description": course.get("description"),
         "credits": credits.get("numberOfCredits"),
+        "credit_hours": credits.get("creditHours"),  # {"min", "max", "operator"} as the API has it
+        "contact_hours": credits.get("contactHours"),  # {"value", "operator"}
+        "liberal_arts": custom.get("cuLibartsFlag"),
+        "catalog_attributes": attributes,
+        "writing_intensive": None
+        if attributes is None
+        else any(a.split(" - ")[0] == WRITING_INTENSIVE for a in attributes),
+        # Not in the raw data: the list request only asks for two customFields columns.
+        "pathways_category": None,
         "department": kept[0]["id"],
         "department_name": kept[0].get("name"),
         "all_departments": [d["id"] for d in course["departments"]],

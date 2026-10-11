@@ -433,6 +433,63 @@
    "alternativeCode": null,
    "globalCourseTitle": "MAT 1190 - Quantitative Reasoning (3 cr)",
    "orderByKeyForCode": "MAT0000001190"
+  },
+  {
+   "_id": "0399131-2026-08-28",
+   "alternativeCode": null,
+   "code": "MAT 2540",
+   "courseGroupId": "0399131",
+   "courseNumber": "2540",
+   "credits": {
+    "courseCount": 1,
+    "repeatable": false,
+    "numberOfRepeats": 1,
+    "numberOfCredits": 3,
+    "creditHours": {
+     "min": 3,
+     "max": 3,
+     "operator": ""
+    },
+    "contactHours": {
+     "value": 4,
+     "operator": ""
+    },
+    "academicProgressHours": {
+     "value": 3,
+     "operator": ""
+    },
+    "financialAidHours": {
+     "value": 3,
+     "operator": ""
+    }
+   },
+   "customFields": {
+    "cuLibartsFlag": true,
+    "catalogAttributes": [
+     "UTCO - UT_COSC_5 (Discrete Math Structures)",
+     "WRIC - WRIC (Writing Intensive)"
+    ]
+   },
+   "departmentOwnership": [],
+   "departments": [
+    {
+     "id": "MATH-NYT",
+     "name": "Mathematics",
+     "displayName": "Mathematics",
+     "status": "Active"
+    }
+   ],
+   "deprecatedCourseGroupId": "0399131",
+   "description": "This course continues the discussion of discrete mathematical structures and algorithms introduced in MAT 2440. Topics in the second course include predicate logic, recurrence relations, graphs, trees, digital logic, computational complexity and elementary computability.",
+   "effectiveEndDate": null,
+   "effectiveStartDate": "2026-08-28",
+   "id": "0399131-2026-08-28",
+   "name": "Discrete Str and Algorithms II",
+   "requirementGroup": "014206",
+   "status": "Active",
+   "subjectCode": "MAT",
+   "globalCourseTitle": "MAT 2540 - Discrete Structures and Algorithms II (3 cr)",
+   "orderByKeyForCode": "MAT0000002540"
   }
  ],
  "limit": 20,

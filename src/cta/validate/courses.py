@@ -58,6 +58,21 @@ def check_required_fields(records: list[dict]) -> list[Finding]:
     return found
 
 
+def check_extra_fields(records: list[dict]) -> list[Finding]:
+    """Fields taken from the raw data: right type, and present. pathways_category may be null."""
+    found = []
+    for rec in records:
+        bad = [f for f in ("liberal_arts", "writing_intensive") if not isinstance(rec.get(f), bool)]
+        if not isinstance(rec.get("catalog_attributes"), list):
+            bad.append("catalog_attributes")
+        bad += [f for f in ("credit_hours", "contact_hours") if not isinstance(rec.get(f), dict)]
+        if bad:
+            found.append(
+                Finding("extra_fields", "fail", f"missing or wrong type: {bad}", rec["code"])
+            )
+    return found
+
+
 def check_rules_resolved(records: list[dict]) -> list[Finding]:
     found = []
     for rec in records:
@@ -117,6 +132,7 @@ def run_course_checks(
     return [
         *check_totals(summary, expected_total),
         *check_required_fields(records),
+        *check_extra_fields(records),
         *check_rules_resolved(records),
         *check_prereq_codes_exist(records, all_codes),
         *check_no_duplicates(records),

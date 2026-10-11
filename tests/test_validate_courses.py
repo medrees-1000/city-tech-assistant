@@ -1,5 +1,6 @@
 from cta.validate.courses import (
     check_counts,
+    check_extra_fields,
     check_no_duplicates,
     check_prereq_codes_exist,
     check_required_fields,
@@ -13,6 +14,9 @@ def rec(**over) -> dict:
     base = {
         "code": "CST 1101", "title": "T", "description": "D", "credits": 3,
         "department": "CST-NYT", "status": "Active", "rule_id": "100001",
+        "liberal_arts": False, "writing_intensive": False, "catalog_attributes": [],
+        "credit_hours": {"min": 3, "max": 3, "operator": ""},
+        "contact_hours": {"value": 4, "operator": ""},
         "prerequisite_text": "Prerequisite: CST 1101.",
     }  # fmt: skip
     return {**base, **over}
@@ -104,3 +108,13 @@ def test_count_change_beyond_a_few_is_flagged():
 def test_run_course_checks_clean_data_has_no_findings():
     s = {"downloaded": 1, "total_before": 1, "total_after": 1}
     assert run_course_checks([rec()], s, {"CST 1101"}, expected_total=1) == []
+
+
+def test_extra_fields_ok_with_null_pathways_category():
+    assert check_extra_fields([rec(pathways_category=None)]) == []
+
+
+def test_extra_fields_fail_on_missing_or_wrong_type():
+    bad = [rec(liberal_arts=None), rec(writing_intensive="yes"), rec(catalog_attributes=None),
+           rec(credit_hours=None), rec(contact_hours=3)]  # fmt: skip
+    assert [f.severity for f in check_extra_fields(bad)] == ["fail"] * 5

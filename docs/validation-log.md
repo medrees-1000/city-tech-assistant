@@ -57,3 +57,18 @@ Other observations (no check covers these yet):
 - Course titles are the API `name` field, abbreviated by the catalog (for example
   "Software Development .NET Fram", "Prin Of Dh Care 4").
 - Manual check sheet: `docs/manual-check-courses.md` (20 courses). Not done yet.
+
+## 2026-10-11: extra course fields (rebuilt from saved raw data, no new crawl)
+
+Fetch log unchanged (240 rows). 197 records, 0 failures, same 28 warnings.
+
+- `description` is kept in all 197 records (it is present in all 1,445 raw courses).
+- New fields, all taken from the raw JSON: `liberal_arts` (`customFields.cuLibartsFlag`: 40 true,
+  157 false), `catalog_attributes` (`customFields.catalogAttributes`, raw strings; 38 records have
+  some), `writing_intensive` (true when an attribute starts with `WRIC`: 24 records, MATH 12,
+  CST 5, EET 5, DENT 2), `credit_hours` (`credits.creditHours`, `{min, max, operator}`) and
+  `contact_hours` (`credits.contactHours`, `{value, operator}`).
+- New automatic check `extra_fields`: those fields exist and have the right type. 0 failures.
+- `pathways_category` is null for all 197 records. It is NOT in the raw data: the list request
+  asks for only two `customFields` columns (`cuLibartsFlag`, `catalogAttributes`), and neither holds
+  a Pathways label. Waiting for the owner's OK before a new crawl to find the column.
