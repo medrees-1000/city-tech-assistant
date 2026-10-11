@@ -1,7 +1,7 @@
 """Automatic course checks from docs/data-validation.md.
 
 Run: uv run python -m cta.validate.courses
-A "fail" finding fails the build. A "review" finding is flagged for the owner, not guessed away.
+A "fail" finding fails the build. A "warning" is flagged for the owner, not guessed away.
 """
 
 import json
@@ -15,14 +15,16 @@ from cta.settings import ROOT, load_sources
 
 REQUIRED_FIELDS = ("code", "title", "description", "credits", "department", "status")
 RULE_ID = re.compile(r"\b\d{6}\b")
-COURSE_CODE = re.compile(r"\b([A-Z]{2,5}) ?(\d{3,4}[A-Z]?)\b")
+# SUBJ NNNN with an optional space and suffix letters: CST 1201, CST1201, MAT 1475H, ENG 1101CO.
+# Also matches inside shorthand such as PRE_CST3500_CST3600.
+COURSE_CODE = re.compile(r"(?<![A-Za-z0-9])([A-Z]{2,5}) ?(\d{3,4})([A-Z]{0,2})(?![A-Za-z0-9])")
 MAX_COUNT_CHANGE = 3  # "a few courses"
 
 
 @dataclass
 class Finding:
     check: str
-    severity: str  # "fail" or "review"
+    severity: str  # "fail" or "warning"
     message: str
     course: str | None = None
 
@@ -39,7 +41,7 @@ def check_totals(summary: dict, expected_total: int) -> list[Finding]:
         found.append(Finding("totals", "fail", msg))
     if before != expected_total:
         msg = f"API total is {before}, CLAUDE.md says {expected_total}"
-        found.append(Finding("totals", "review", msg))
+        found.append(Finding("totals", "warning", msg))
     return found
 
 
@@ -70,13 +72,23 @@ def check_rules_resolved(records: list[dict]) -> list[Finding]:
 
 
 def check_prereq_codes_exist(records: list[dict], all_codes: set[str]) -> list[Finding]:
+    """Warn about codes in prerequisite text that are not in the catalog (not Active, or unknown).
+
+    A match only counts as a code when SUBJ is a subject used by the catalog, so words like
+    "OR 3513" are ignored. A suffix is accepted if the code with or without it exists.
+    """
+    subjects = {code.split()[0] for code in all_codes}
     found = []
     for rec in records:
-        for prefix, number in COURSE_CODE.findall(rec.get("prerequisite_text") or ""):
-            code = f"{prefix} {number}"
-            if code not in all_codes:
-                msg = f"prerequisite mentions {code}, which is not in the catalog"
-                found.append(Finding("prereq_codes", "review", msg, rec["code"]))
+        seen = set()
+        for subj, number, suffix in COURSE_CODE.findall(rec.get("prerequisite_text") or ""):
+            code = f"{subj} {number}{suffix}"
+            if subj not in subjects or code in seen:
+                continue
+            seen.add(code)
+            if code not in all_codes and f"{subj} {number}" not in all_codes:
+                msg = f"prerequisite mentions {code}, which is not an Active catalog course"
+                found.append(Finding("prereq_codes", "warning", msg, rec["code"]))
     return found
 
 
@@ -94,7 +106,7 @@ def check_counts(current: dict[str, int], previous: dict[str, int]) -> list[Find
     for dept in sorted(set(current) | set(previous)):
         now, before = current.get(dept, 0), previous.get(dept)
         if before is not None and abs(now - before) > MAX_COUNT_CHANGE:
-            found.append(Finding("counts", "review", f"{dept}: {before} -> {now}"))
+            found.append(Finding("counts", "warning", f"{dept}: {before} -> {now}"))
     return found
 
 
@@ -126,7 +138,7 @@ def main() -> int:
     for f in findings:
         print(f"[{f.severity.upper()}] {f.check} {f.course or ''}: {f.message}")
     fails = sum(f.severity == "fail" for f in findings)
-    print(f"{len(records)} records, {fails} failures, {len(findings) - fails} flagged for review")
+    print(f"{len(records)} records, {fails} failures, {len(findings) - fails} warnings")
     return 1 if fails else 0
 
 

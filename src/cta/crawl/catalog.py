@@ -5,8 +5,13 @@ Run: uv run python -m cta.crawl.catalog
 
 import json
 import re
+import sys
+from collections import Counter
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from types import SimpleNamespace
+from urllib.parse import parse_qs, urlsplit
 
 import httpx
 
@@ -123,6 +128,20 @@ class RuleResolver:
         self.cache_path.write_text(json.dumps(self.cache, indent=1, sort_keys=True), "utf-8")
 
 
+# Rule text like PRE_CST3500_CST3600: the catalog stores a code, not readable text, and the rule
+# response has no structured fields to build text from. Kept as is and marked.
+SHORTHAND = re.compile(r"[A-Z]+(?:_[A-Z0-9]+)+")
+
+
+def prereq_style(rule_id: str | None, text: str | None) -> str:
+    """ "none" (no rule), "unresolved" (rule without text), "shorthand" or "text"."""
+    if not rule_id:
+        return "none"
+    if not text:
+        return "unresolved"
+    return "shorthand" if SHORTHAND.fullmatch(text) else "text"
+
+
 def to_record(course: dict, dept_ids: set[str], rule_text: str | None, fetched_at: str) -> dict:
     kept = [d for d in course["departments"] if d["id"] in dept_ids]
     credits = course.get("credits") or {}
@@ -140,6 +159,7 @@ def to_record(course: dict, dept_ids: set[str], rule_text: str | None, fetched_a
         "course_group_id": course.get("courseGroupId"),
         "rule_id": course.get("requirementGroup") or None,
         "prerequisite_text": rule_text,
+        "prereq_style": prereq_style(course.get("requirementGroup") or None, rule_text),
         "source": "catalog_api",
         "fetched_at": fetched_at,
     }
@@ -160,16 +180,64 @@ def collect(fetcher: Fetcher, cfg: dict, out_dir: Path) -> dict:
     kept = keep_departments(download.courses, dept_ids)
     resolver = RuleResolver(fetcher, cfg, out_dir / "rules_cache.json")
     fetched_at = utc_now()
-    records = []
     try:
-        for course in kept:
-            rule_id = course.get("requirementGroup")
-            rule = resolver.resolve(rule_id) if rule_id else None
-            records.append(to_record(course, dept_ids, rule["text"] if rule else None, fetched_at))
+        records = build_records(kept, dept_ids, resolver.resolve, fetched_at)
     finally:
         resolver.save()
     write_records(records, out_dir)
     return write_summary(download, records, resolver, out_dir, fetched_at)
+
+
+def build_records(
+    kept: list[dict], dept_ids: set[str], resolve: Callable[[str], dict | None], fetched_at: str
+) -> list[dict]:
+    records = []
+    for course in kept:
+        rule_id = course.get("requirementGroup")
+        rule = resolve(rule_id) if rule_id else None
+        records.append(to_record(course, dept_ids, rule["text"] if rule else None, fetched_at))
+    return records
+
+
+def load_saved_courses(raw_root: Path, cfg: dict) -> list[dict]:
+    """Read the course pages from the saved raw JSON (via the fetch log), in skip order."""
+    pages: dict[int, str] = {}
+    for row in RawStore(raw_root).read_log():
+        url = row["url"]
+        if row["method"] != "POST" or row["status"] != 200 or "/courses/search/" not in url:
+            continue
+        query = parse_qs(urlsplit(url).query)
+        if query["limit"] == [str(cfg["page_size"])]:
+            pages[int(query["skip"][0])] = row["saved_as"]  # a later fetch replaces an earlier one
+    courses: list[dict] = []
+    for skip in sorted(pages):
+        page = json.loads((raw_root / pages[skip]).read_text(encoding="utf-8"))
+        courses.extend(page["data"])
+    return courses
+
+
+def rebuild_from_raw(cfg: dict, raw_root: Path, out_dir: Path) -> dict:
+    """Recreate the processed records from saved raw data and the rule cache. No network."""
+    dept_ids = {d["id"] for d in cfg["departments"]}
+    summary_path = out_dir / "catalog_run.json"
+    old = json.loads(summary_path.read_text(encoding="utf-8"))
+    courses = load_saved_courses(raw_root, cfg)
+    if len(courses) != old["downloaded"]:
+        raise RuntimeError(
+            f"saved raw has {len(courses)} courses, last run had {old['downloaded']}"
+        )
+    cache = json.loads((out_dir / "rules_cache.json").read_text(encoding="utf-8"))
+
+    def lookup(rule_id: str) -> dict | None:
+        entry = cache[rule_id]  # KeyError means the rule was never fetched: do not guess
+        return entry if entry.get("text") else None
+
+    kept = keep_departments(courses, dept_ids)
+    records = build_records(kept, dept_ids, lookup, old["fetched_at"])
+    write_records(records, out_dir)
+    download = CourseDownload(old["total_before"], old["total_after"], courses)
+    stub = SimpleNamespace(calls=0)
+    return write_summary(download, records, stub, out_dir, old["fetched_at"])
 
 
 def write_summary(download, records, resolver, out_dir: Path, fetched_at: str) -> dict:
@@ -181,6 +249,7 @@ def write_summary(download, records, resolver, out_dir: Path, fetched_at: str) -
     for rec in records:
         counts[rec["department"]] = counts.get(rec["department"], 0) + 1
     summary = {
+        "prereq_styles": dict(sorted(Counter(r["prereq_style"] for r in records).items())),
         "fetched_at": fetched_at,
         "total_before": download.total_before,
         "total_after": download.total_after,
@@ -198,6 +267,10 @@ def write_summary(download, records, resolver, out_dir: Path, fetched_at: str) -
 def main() -> None:
     sources = load_sources()
     cfg = sources["catalog_api"]
+    if "--from-raw" in sys.argv:
+        out = rebuild_from_raw(cfg, ROOT / "data" / "raw", ROOT / "data" / "processed")
+        print({k: v for k, v in out.items() if k != "all_codes"})
+        return
     crawl = sources["crawl"]
     client = httpx.Client(timeout=30)
     fetcher = Fetcher(
