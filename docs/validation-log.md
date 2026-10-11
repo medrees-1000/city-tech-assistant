@@ -391,3 +391,67 @@ failures, no line that could not be placed. The four files are in `known_data` i
   CUNYfirst guide are skipped).
 - Not committed: the flyer (1 MB) and CUNYfirst (1.4 MB) PDFs, so their tests are skipped when `data/pdfs`
   is missing. The refund calendar and Dropping PDFs are committed as test fixtures.
+
+## Phase 1, step 5: department PDFs (CST, EET, DENT, MATH) — 2026-10-11
+
+Part A (follow-ups on step 4, nothing changed):
+
+- a) CUNYfirst guide, 22 excluded lines (all "screenshot annotation (7 pt callout text laid over a
+  screenshot)"). Read like a step instruction (7 places, 11 of the lines): p3 "Click here to access
+  additional information"; p4 and p6 "Click here to choose your college of enrollment and financial aid
+  year" (2 lines each); p7 "You can click on the filter icon to choose whether to view aid by type ... You
+  can also search by the status of the award ..." (2 lines) and "Use the dropdown menu to view information by
+  term or for the entire academic year" (5 lines); p8 "Use the drop-down menu to view information by term"
+  (2 lines); p14 "Choose the term you wish to view then click the go button to view." (2 lines). Plain
+  labels, not instructions: p3 "You can filter your to do list by type and by college"; p6 "This option will
+  only show when your aid has been packaged at the college for the indicated academic year". Kept excluded
+  until the owner decides.
+- b) Dropping and Withdrawing vs `calendar_events.json` (Fall 2026): Sept 3 certification date = fall-2026-010
+  (and 011 "last day to drop without a grade of WD"): match. WD window Sept 4-17 = fall-2026-013 (Sept 4, WD
+  assigned) to fall-2026-021 (Sept 17, last day to drop with WD): match. 21st day = Sept 17: same row (021):
+  match. The W period starting after Sept 17 = fall-2026-024/025 (Sept 18): match. No mismatches.
+
+Part B: records in `data/processed/departments/<dept>/` (git-ignored, like the other outputs).
+
+| Dept | Records | Sections | Stripped (type: count) |
+|---|---|---|---|
+| CST-NYT | overview + 4 programs | 124 | advisory 1, blank Programs page 1, zero total lines 20, rule-dump sentences 19, inactive 1 |
+| DENT-NYT | overview + 1 | 26 | advisory 1, blank Programs page 1, zero total lines 2, rule-dump 4 |
+| EET-NYT | overview + 2 | 38 | advisory 1, "Programs" heading 1, stray program 1, zero total lines 4, rule-dump 9 |
+| MATH-NYT | overview + 4 | 64 | advisory 3, blank Programs page 1, zero total lines 6, rule-dump 14, inactive 1 |
+
+- Checks (code in `cta.validate.departments`, run by `uv run python -m cta.parse.departments`, tested): no
+  U+FFFD, no unrepaired U+2BD1, no ligature characters, no generic rule text left, no "Advisory Commission",
+  "(Inactive)", "Total ... Credits" or stray program, each department has an overview with Description, at
+  least one program, a Requirements section and one degree map, no term invented, every rule ID resolved,
+  and a character-level completeness check (every printed character is kept, stripped, repaired or counted).
+  All four departments: 0 findings. 138 rule IDs, all in the cache (the 23 missing ones were fetched at 1
+  request/second in an earlier run).
+- Repairs: `O⯑ers`→`Offers` and `O⯑ce`→`Office` (U+2BD1 is a lost "ff"), each with its count in `repairs`;
+  ﬁ/ﬂ ligatures normalized. Only these two words are repaired; any other use of the glyph fails the check.
+- Terms: `term` is null. `term_label_pdf` comes from the degree map effective years as printed;
+  `term_label_web` is "2026 Fall Term", taken from CLAUDE.md (no collected page prints it).
+- Chair vs chairperson.aspx (web wins). The PDF block holds department-office contact data and prints no
+  email. Name matches everywhere. Mismatches: CST office (PDF N-914, web N-1000) and phone (5170 vs 5038);
+  DENT office (A-701 vs A-702) and phone (5070 vs 5907); EET office (V-733 vs V-734) and phone (5300 vs
+  5305); MATH phone (5380 vs 5928; office N-711 matches).
+- Legacy MST/DPT codes: no requirement list or degree map option names one. The only mention is the shorthand
+  `PRE_CST2307_MST2307` in rule 014435 (CST Networking and Security, IT Operations and Cybersecurity maps),
+  left as printed and flagged with the other shorthand.
+- Course links: `programs` filled on 134 of 197 course records (170 program codes). Codes in a program that
+  are not in the catalog data: none. 36 codes are in the catalog but outside the four departments, so they
+  have no course record (ENG, BIO, PHYS, COM, ...); listed in `course_links.json`.
+- Flags for the owner: (1) 57 `PRE_...` shorthand rule texts left as printed; (2) Cybersecurity BS has two
+  different degree maps with the same name and the same 114-118 total, and the requirements say "Earn at least
+  120-124": credit totals disagree; (3) MATH Applied Mathematics: map 117-119 vs "Earn at least 120"; (4) the
+  MATH minor's title is printed incomplete ("Computer Science -"); (5) no degree map is repeated per track, so
+  no "applies to tracks" note exists (CST Computer Systems has 4 distinct maps); (6) the Courses section is
+  stripped (it duplicates the catalog data); (7) the stray EET program "Accelerator Science and Technology"
+  is stripped.
+- Credit totals for manual check: CIS AAS 60-63 / 63-66 / 63-65 (earn 60); Computer Systems BTECH 120-124 x3,
+  120-123 (earn 120); Cybersecurity 114-118 (earn 120-124); Data Science 121-123 (earn 120-124); Dental
+  Hygiene 66-67 (earn 66-67); EET AAS 67-69 (earn 67-69); EET BTECH 131-133 (earn 129-134); Applied
+  Mathematics 117-119 (earn 120); Computer Science AS 59-65 (earn 60); Mathematics Education 119-121 (earn
+  120); the CS minor prints no total.
+- Not committed: the CST, EET and MATH PDFs (large); their tests are skipped when `data/pdfs` is missing. The
+  DENT PDF and its 20 rule texts are fixtures (`tests/fixtures/pdfs/`).
