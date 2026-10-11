@@ -159,6 +159,26 @@ pdfs:  # downloaded by the owner into data/pdfs/; no download URLs are recorded
   - file: "data/pdfs/cunyfirst_student_reference.pdf"
     kind: cunyfirst_howto
     scope_or_department: cuny
+known_data:  # PDFs already parsed into records (data/processed/pdfs/<slug>.json) and validated
+  - file: "data/pdfs/Award_Year_2026_2027_Financial_Aid_Payment_Refund _Calendar.pdf"
+    record: data/processed/pdfs/financial-aid-refund-calendar-2026-2027.json
+    doc_type: aid
+    scope: city_tech
+    aid_year: "2026-2027"
+  - file: "data/pdfs/Fall_2026_Dropping_and_Withdrawing_from_Classes.pdf"
+    record: data/processed/pdfs/dropping-withdrawing-fall-2026.json
+    doc_type: policy
+    scope: city_tech
+    term: Fall 2026
+  - file: "data/pdfs/Special_Circumstances_Flyer_2025_2026_2026_2027.pdf"
+    record: data/processed/pdfs/special-circumstances-flyer.json
+    doc_type: aid
+    scope: city_tech
+    aid_year: "2025-2026 & 2026-2027"
+  - file: "data/pdfs/cunyfirst_student_reference.pdf"
+    record: data/processed/pdfs/cunyfirst-student-reference.json
+    doc_type: howto
+    scope: cuny
 pdfs_skipped:
   - "program-DSCI-BS-*.pdf  # subset of the CST department PDF"
   - "2025-26 financial aid guide PDFs linked from the aid FAQ (out of date)"
