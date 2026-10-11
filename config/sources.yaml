@@ -1,0 +1,150 @@
+# Sources for the crawl. Generated from CLAUDE.md ("Data sources" and "Page status"). Do not add
+# a host or path here without updating CLAUDE.md. Contact email comes from .env, never from this file.
+
+allowed_hosts:
+  - www.citytech.cuny.edu
+  - citytech.catalog.cuny.edu
+  - app.coursedog.com
+
+crawl:
+  min_interval_seconds: 1.0
+  user_agent_template: "CityTechAssistantBot/0.1 (student portfolio project; contact: {email})"
+  contact_email_env: CTA_CONTACT_EMAIL
+  max_redirects: 5
+
+catalog_api:
+  base_url: https://app.coursedog.com/api/v1
+  school: nyt01
+  catalog_id: qPpQUgUy149umoKU2soi
+  origin: https://citytech.catalog.cuny.edu
+  effective_date: "2026-08-28"
+  page_size: 20
+  expected_total: 1445
+  # POST {base_url}/cm/{school}/courses/search/%24filters?catalogId=...&skip=..&limit=..&orderBy=code
+  search_path: /cm/nyt01/courses/search/%24filters
+  # GET {base_url}/nyt01/requirementGroups/<ID>?returnFields=code,catalogDisplayName,descriptionLong
+  rule_path: /nyt01/requirementGroups/{rule_id}
+  rule_return_fields: code,catalogDisplayName,descriptionLong
+  columns: code,name,description,departments,requirementGroup,credits,status,subjectCode,courseNumber,customFields.catalogAttributes,customFields.cuLibartsFlag
+  departments:
+    - id: CST-NYT
+      name: "Computer Systems Technology"
+    - id: MATH-NYT
+      name: "Mathematics"
+    - id: EET-NYT
+      name: "Electrical & Telecommunications Engineering Technology"
+    - id: DENT-NYT
+      name: "Dental Hygiene"
+
+office_pages:  # citytech.cuny.edu HTML, about 24 pages
+  - https://www.citytech.cuny.edu/registrar/academic-calendar.aspx
+  - https://www.citytech.cuny.edu/registrar/faqs.aspx
+  - https://www.citytech.cuny.edu/registrar/grade-policies.aspx
+  - https://www.citytech.cuny.edu/registrar/incomplete.aspx
+  - https://www.citytech.cuny.edu/registrar/readmission.aspx
+  - https://www.citytech.cuny.edu/registrar/epermit.aspx
+  - https://www.citytech.cuny.edu/registrar/applying-graduation.aspx
+  - https://www.citytech.cuny.edu/registrar/course-scheduling.aspx
+  - https://www.citytech.cuny.edu/advisement/six-steps.aspx
+  - https://www.citytech.cuny.edu/advisement/continuing-students.aspx
+  - https://www.citytech.cuny.edu/advisement/degree-checklist.aspx
+  - https://www.citytech.cuny.edu/advisement/gen-ed.aspx
+  - https://www.citytech.cuny.edu/advisement/planner.aspx
+  - https://www.citytech.cuny.edu/advisement/writing-intensive-fall26.aspx
+  - https://www.citytech.cuny.edu/bursar/payment-deadlines.aspx
+  - https://www.citytech.cuny.edu/bursar/payment-plan.aspx
+  - https://www.citytech.cuny.edu/bursar/refund-policy.aspx
+  - https://www.citytech.cuny.edu/financial-aid/financial-payment-calendar.aspx
+  - https://www.citytech.cuny.edu/financial-aid/faqs.aspx
+  - https://www.citytech.cuny.edu/financial-aid/sap.aspx
+  - https://www.citytech.cuny.edu/financial-aid/tap-appeal.aspx
+  - https://www.citytech.cuny.edu/admissions/dates-deadlines.aspx
+  - https://www.citytech.cuny.edu/admissions/tuition-refund.aspx
+  - https://www.citytech.cuny.edu/admissions/tuition-penalty.aspx
+
+department_pages:  # real body text; crawl these
+  CST-NYT:
+    - https://www.citytech.cuny.edu/computer-systems/
+    - https://www.citytech.cuny.edu/computer-systems/advisement.aspx
+    - https://www.citytech.cuny.edu/computer-systems/degrees.aspx
+    - https://www.citytech.cuny.edu/computer-systems/chairperson.aspx
+    - https://www.citytech.cuny.edu/computer-systems/internship-scholarship.aspx
+    - https://www.citytech.cuny.edu/computer-systems/transfer-policies.aspx
+    - https://www.citytech.cuny.edu/computer-systems/student-resources.aspx
+    - https://www.citytech.cuny.edu/computer-systems/tutoring.aspx
+  MATH-NYT:
+    - https://www.citytech.cuny.edu/mathematics/
+    - https://www.citytech.cuny.edu/mathematics/advisement.aspx
+    - https://www.citytech.cuny.edu/mathematics/degrees.aspx
+    - https://www.citytech.cuny.edu/mathematics/accreditation.aspx
+    - https://www.citytech.cuny.edu/mathematics/chairperson.aspx
+    - https://www.citytech.cuny.edu/mathematics/student-resources.aspx
+    - https://www.citytech.cuny.edu/mathematics/faqs.aspx
+    - https://www.citytech.cuny.edu/mathematics/articulation-agreement.aspx
+  EET-NYT:
+    - https://www.citytech.cuny.edu/electrical-telecomm/
+    - https://www.citytech.cuny.edu/electrical-telecomm/advisement.aspx
+    - https://www.citytech.cuny.edu/electrical-telecomm/degrees.aspx
+    - https://www.citytech.cuny.edu/electrical-telecomm/articulation-agreement.aspx
+    - https://www.citytech.cuny.edu/electrical-telecomm/chairperson.aspx
+    - https://www.citytech.cuny.edu/electrical-telecomm/student-resources.aspx
+    - https://www.citytech.cuny.edu/electrical-telecomm/student-hours.aspx
+  DENT-NYT:
+    - https://www.citytech.cuny.edu/dental/
+    - https://www.citytech.cuny.edu/dental/profession.aspx
+    - https://www.citytech.cuny.edu/dental/advisement.aspx
+    - https://www.citytech.cuny.edu/dental/apply.aspx
+    - https://www.citytech.cuny.edu/dental/accreditation.aspx
+    - https://www.citytech.cuny.edu/dental/transfer-students.aspx
+    - https://www.citytech.cuny.edu/dental/dh-progression.aspx
+    - https://www.citytech.cuny.edu/dental/faq.aspx
+    - https://www.citytech.cuny.edu/dental/chairperson.aspx
+    - https://www.citytech.cuny.edu/dental/student-resources.aspx
+    - https://www.citytech.cuny.edu/dental/degrees-after-aas.aspx
+    - https://www.citytech.cuny.edu/dental/clinic.aspx
+
+skip_pages:  # placeholders, JS-loaded or out of scope
+  - course-listing.aspx
+  - directory.aspx
+  - news-events
+  - advisory-committee
+  - research
+  - cuny-2x-tech
+
+not_collected_notes:
+  - admissions/dates-deadlines.aspx is thin; use the calendar PDFs for dates
+  - financial-aid/financial-payment-calendar.aspx only links to PDFs; the PDF is the content
+  - advisement/planner.aspx redirects (302) to http://; follow same-host redirect and normalize to https
+
+pdfs:  # downloaded by the owner into data/pdfs/; no download URLs are recorded
+  - file: "data/pdfs/CST-NYT-2026-09-10-19-16-13.pdf"
+    kind: department
+    scope_or_department: CST-NYT
+  - file: "data/pdfs/MATH-NYT-2026-09-10-19-16-47.pdf"
+    kind: department
+    scope_or_department: MATH-NYT
+  - file: "data/pdfs/EET-NYT-2026-09-10-19-16-28.pdf"
+    kind: department
+    scope_or_department: EET-NYT
+  - file: "data/pdfs/DENT-NYT-2026-09-10-19-16-25.pdf"
+    kind: department
+    scope_or_department: DENT-NYT
+  - file: "data/pdfs/fall_2026.pdf"
+    kind: calendar
+  - file: "data/pdfs/winter_2027.pdf"
+    kind: calendar
+  - file: "data/pdfs/spring_2027.pdf"
+    kind: calendar
+  - file: "data/pdfs/Award_Year_2026_2027_Financial_Aid_Payment_Refund _Calendar.pdf"
+    kind: aid_refund_calendar
+  - file: "data/pdfs/Fall_2026_Dropping_and_Withdrawing_from_Classes.pdf"
+    kind: drop_withdraw_rules
+  - file: "data/pdfs/Special_Circumstances_Flyer_2025_2026_2026_2027.pdf"
+    kind: infographic_type_by_hand
+  - file: "data/pdfs/cunyfirst_student_reference.pdf"
+    kind: cunyfirst_howto
+    scope_or_department: cuny
+pdfs_skipped:
+  - "program-DSCI-BS-*.pdf  # subset of the CST department PDF"
+  - "2025-26 financial aid guide PDFs linked from the aid FAQ (out of date)"
+  - "form PDFs (re-admission, ePermit, graduation application, TAP waiver): record links in fetch log only"
