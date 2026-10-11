@@ -35,3 +35,8 @@ need them are skipped when the files are missing.
 The real refund calendar and the real Dropping and Withdrawing PDF (saved 2026-10-11). The flyer
 (1 MB) and the CUNYfirst guide (1.4 MB) are not committed; tests that need them are skipped when
 `data/pdfs/` is missing.
+
+Added for the department PDFs: `pdfs/DENT-NYT-2026-09-10-19-16-25.pdf` (the real Dental Hygiene
+department PDF) and `pdfs/dent_rules.json` (the real rule lookup text for the 20 rule IDs in its
+degree map notes). The CST, EET and MATH department PDFs are not committed; tests that need them
+are skipped when `data/pdfs/` is missing.

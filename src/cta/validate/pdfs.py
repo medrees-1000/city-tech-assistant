@@ -56,7 +56,7 @@ def markdown_text(md: str) -> str:
                 continue  # the | --- | separator row
             out.append(" ".join(c.replace("\\|", "|") for c in cells))
         else:
-            out.append(re.sub(r"^- ", "", line))
+            out.append(re.sub(r"^\s*- ", "", line))
     return "\n".join(out).replace("**", "")
 
 

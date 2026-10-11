@@ -189,6 +189,8 @@ def write_records(records: list[dict], out_dir: Path) -> None:
         slug = re.sub(r"[^A-Za-z0-9]+", "-", rec["code"] or "unknown").strip("-")
         path = out_dir / "courses" / rec["department"] / f"{slug}_{rec['course_group_id']}.json"
         path.parent.mkdir(parents=True, exist_ok=True)
+        if path.exists():  # keep what other steps added (the programs that list the course)
+            rec["programs"] = json.loads(path.read_text(encoding="utf-8")).get("programs", [])
         path.write_text(json.dumps(rec, indent=1, ensure_ascii=False), encoding="utf-8")
 
 

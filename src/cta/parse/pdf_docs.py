@@ -22,7 +22,7 @@ from cta.parse.html import to_sections
 from cta.settings import ROOT
 
 LIGATURES = {"ﬀ": "ff", "ﬁ": "fi", "ﬂ": "fl", "ﬃ": "ffi", "ﬄ": "ffl"}
-BULLETS = ("•", "", "▪", "", "·", "●")
+BULLETS = ("•", "", "▪", "", "·", "●", "◦")
 END_PUNCT = (".", "!", "?", ",", ";")  # a bold line ending like this is a sentence, not a heading
 TERMINAL = (".", "!", "?", ":", ")", '"', "”")
 LINE_TOLERANCE = 2.5
@@ -43,6 +43,7 @@ class PLine:
     page_height: float = 792.0
     first_word_width: float = 0.0
     margin: float = 0.0  # right edge of the text on this page (set after the page is read)
+    col: str = ""  # column the line was read from (departments PDFs): L, R or F (full width)
 
 
 @dataclass
