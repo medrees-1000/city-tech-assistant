@@ -673,3 +673,31 @@ The EET root "Our Mission" section is tagged Summer 2026 only because an advisem
   "PREREQUISITE OF MAT 1475, MUST NOT HAVE PASSED MAT 2675" (names MAT 1475; MAT 2675 is an exclusion, not a
   prerequisite); MAT 2580: "PRE: MAT1475". MAT 1475 itself: "PRE: MAT 1375 OR Meet the Math Placement for MAT
   1475". Suggested: MAT 1575, MAT 2580, MAT 1475.
+
+## Phase 1, step 11: eval fixes and heading cleanup — 2026-10-11
+
+- q12 changed (the only question text changed): "When does the Winter 2027 session end?", gold source
+  `winter-2027-023` ("End of Winter 2027 Session", Monday 2027-01-25, checked against the row), gold answer
+  "Monday, January 25, 2027"; the note keeps its text and adds that Final Examinations (`winter-2027-022`) is
+  the same day. All 30 questions now resolve.
+- Heading cleanup (`cta.parse.headings`, applied in `to_sections`, so it covers pages, PDFs and departments):
+  link markup is removed from headings and heading paths, and a heading that was a link keeps its URL in the
+  section's `heading_url` (null otherwise, present on every section). Section ids do not change.
+  Headings changed: 11 section headings, in `CST-NYT/degrees` (4), `EET-NYT/degrees` (2), `MATH-NYT/degrees`
+  (4) and `advisement/degree-checklist` ("Sample Course of Study" -> `.../academics/areas-of-study.aspx`). No
+  parent heading had a link, so no other heading path changed. No PDF or department heading had link markup.
+  Link text vs URL: no disagreement found by the hint (a catalog program link's award, such as BTech, must start
+  the end of its slug, such as BT; other links must share a word with the URL). The hint is weak: it cannot tell
+  whether "Computer Systems Technology/BTech" is the right program for `programs/CIB-BT`.
+- New check `heading_markup` (in the metadata area): fails if a heading or a parent heading contains "](".
+  The eval gold-source check now compares headings exactly (no link stripping).
+- `docs/section-index.md` regenerated (534 sections, ids unchanged; 11 headings now plain). All checks pass.
+- Prerequisite trees for q20 and q22 in `docs/eval-review.md` (`cta.eval.questions.prerequisite_tree`): only
+  prerequisites are followed; corequisites, exclusions ("must not have passed") and equivalence notes are
+  listed, not followed; placement, proficiency, score and permission wording stops the walk; a course with no
+  record is marked; a course shown earlier is not expanded again. `gold_sources` are unchanged.
+  - q20, DEN 2400, courses with records: DEN 2400, 2300, 1200, 1100, 1112, 1114, 1217, 1218, 2311, 2315, 2318.
+    No record: BIO 3302, CHEM 1000. Corequisite only: DEN 2413.
+  - q22, MAT 2675, courses with records: MAT 2675, 1575, 1475, 1375, 1275, 1275CO, 2580. Exclusion:
+    MAT 2675 (named in MAT 1575's text). MAT 1275CO's text says it is equivalent to MAT 1275 (an equivalence
+    note, not a prerequisite).

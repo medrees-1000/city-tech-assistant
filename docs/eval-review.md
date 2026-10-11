@@ -302,19 +302,24 @@ Note: Calendar row id to be filled. Date is null in the table; the answer must s
 - calendar last updated: 2026-07-27
 - verified: True
 
-## q12 — **UNRESOLVED**
+## q12
 
-**Question:** When do classes end for the Winter 2027 session?
+**Question:** When does the Winter 2027 session end?
 
 type: time_sensitive | split: dev | department: -
 
-Gold answer in the file: FILL_FROM_CALENDAR
+Gold answer in the file: Monday, January 25, 2027
 
-Note: Winter 2027 starts in December 2026 and ends in January 2027, so the year must resolve per row. If the table has no end-of-classes event, flag it instead of guessing.
+Note: Winter 2027 starts in December 2026 and ends in January 2027, so the year must resolve per row. If the table has no end-of-classes event, flag it instead of guessing. Final Examinations (winter-2027-022) is the same day.
 
-**TODO** — Winter 2027: end of classes (data/calendar/calendar_events.json)
+**winter-2027-023** — Winter 2027: End of Winter 2027 Session (data/calendar/calendar_events.json)
 
-**UNRESOLVED: unresolved (TODO)**
+- term: Winter 2027
+- event: End of Winter 2027 Session
+- date: 2027-01-25
+- weekday as printed: Monday
+- calendar last updated: 2026-07-27
+- verified: True
 
 ## q13
 
@@ -685,20 +690,55 @@ Description: The study of sources, physical and chemical characteristics of mate
 Prerequisite text: Prerequisites: CHEM 1000 or higher & DEN 1200 (C or higher). Corequisites: DEN 2300 & DEN 2311.
 ~~~~
 
-**Suggestion for gold_sources (not in the file): chain below DEN 2400**
+**Prerequisite tree below DEN 2400 (a suggestion; gold_sources are unchanged)**
 
-- DEN 2400 prerequisite text: Prerequisites: DEN 2300, DEN 2311, DEN 2315 & DEN 2318. Corequisites: DEN 2413.
-- Courses it names, each with its own prerequisite text and the courses that names:
-  - DEN 2300: Prerequisites: DEN 1200, DEN 1217, DEN 1218 (all with a grade of C or higher). Corequisites: DEN 2311 & DEN 2318.
-    - names: DEN 1200, DEN 1217, DEN 1218, DEN 2311, DEN 2318
-  - DEN 2311: Prerequisites: DEN 1200, DEN 1217 & DEN 1218 (all with a grade of C or higher) and BIO 3302. Corequisites: DEN 2300 & DEN 2318.
-    - names: DEN 1200, DEN 1217, DEN 1218, BIO 3302, DEN 2300, DEN 2318
-  - DEN 2315: Prerequisites: DEN 1200, DEN 1217 & DEN 1218 (all with a grade of C or higher).
-    - names: DEN 1200, DEN 1217, DEN 1218
-  - DEN 2318: Prerequisites: CHEM 1000 or higher & DEN 1200 (C or higher). Corequisites: DEN 2300 & DEN 2311.
-    - names: CHEM 1000, DEN 1200, DEN 2300, DEN 2311
-  - DEN 2413: Prerequisite: DEN 2300, DEN 2311, DEN 2315 & DEN 2318 all with a grade of C or higher; Corequisite: DEN 2400; Pre- or corequisite: BIO 3524.
-    - names: DEN 2300, DEN 2311, DEN 2315, DEN 2318, DEN 2400, BIO 3524
+- DEN 2400 (Prin Of Dh Care 4): Prerequisites: DEN 2300, DEN 2311, DEN 2315 & DEN 2318. Corequisites: DEN 2413.
+  - prerequisite DEN 2300 (Prin of Dental Hygiene III): Prerequisites: DEN 1200, DEN 1217, DEN 1218 (all with a grade of C or higher). Corequisites: DEN 2311 & DEN 2318.
+    - prerequisite DEN 1200 (Prin of Dental Hygiene Care II): Prerequisites: DEN 1100, DEN 1112, & DEN 1114 (all with a grade of C or higher). Corequisites: DEN 1217 & DEN 1218.
+      - prerequisite DEN 1100 (Prin of Dental Hygiene Care I): Prerequisites: CUNY proficiency in reading, writing and mathematics, department approval required; Corequisite: DEN 1112
+        - placement or proficiency text, walk stops: CUNY proficiency in reading, writing and mathematics, department approval required
+        - corequisite, not followed: DEN 1112
+      - prerequisite DEN 1112 (Oral Anatomy): CUNY proficiency in reading, writing and mathematics; Corequisite of DEN 1100.
+        - placement or proficiency text, walk stops: CUNY proficiency in reading, writing and mathematics
+        - corequisite, not followed: DEN 1100
+      - prerequisite DEN 1114 (Histology and Embryology): DENTAL HYGIENE STUDENTS ONLY
+        - placement or proficiency text, walk stops: DENTAL HYGIENE STUDENTS ONLY
+      - corequisite, not followed: DEN 1217
+      - corequisite, not followed: DEN 1218
+    - prerequisite DEN 1217 (Periodontics): Prerequisites: DEN 1100, DEN 1112, DEN 1114 (all with a grade of C or higher); Corequisites: DEN 1200, DEN 1218
+      - prerequisite DEN 1100: shown elsewhere in this tree
+      - prerequisite DEN 1112: shown elsewhere in this tree
+      - prerequisite DEN 1114: shown elsewhere in this tree
+      - corequisite, not followed: DEN 1200
+      - corequisite, not followed: DEN 1218
+    - prerequisite DEN 1218 (Dental Radiology): Prerequisites: DEN 1100, DEN 1112 & DEN 1114 (all with a grade of C or higher). Corequisites: DEN 1200 & DEN 1217.
+      - prerequisite DEN 1100: shown elsewhere in this tree
+      - prerequisite DEN 1112: shown elsewhere in this tree
+      - prerequisite DEN 1114: shown elsewhere in this tree
+      - corequisite, not followed: DEN 1200
+      - corequisite, not followed: DEN 1217
+    - corequisite, not followed: DEN 2311
+    - corequisite, not followed: DEN 2318
+  - prerequisite DEN 2311 (Oral Pathology): Prerequisites: DEN 1200, DEN 1217 & DEN 1218 (all with a grade of C or higher) and BIO 3302. Corequisites: DEN 2300 & DEN 2318.
+    - prerequisite DEN 1200: shown elsewhere in this tree
+    - prerequisite DEN 1217: shown elsewhere in this tree
+    - prerequisite DEN 1218: shown elsewhere in this tree
+    - prerequisite BIO 3302: **no record**
+    - corequisite, not followed: DEN 2300
+    - corequisite, not followed: DEN 2318
+  - prerequisite DEN 2315 (Pharmacology): Prerequisites: DEN 1200, DEN 1217 & DEN 1218 (all with a grade of C or higher).
+    - prerequisite DEN 1200: shown elsewhere in this tree
+    - prerequisite DEN 1217: shown elsewhere in this tree
+    - prerequisite DEN 1218: shown elsewhere in this tree
+  - prerequisite DEN 2318 (Dental Materials): Prerequisites: CHEM 1000 or higher & DEN 1200 (C or higher). Corequisites: DEN 2300 & DEN 2311.
+    - prerequisite CHEM 1000: **no record**
+    - prerequisite DEN 1200: shown elsewhere in this tree
+    - corequisite, not followed: DEN 2300
+    - corequisite, not followed: DEN 2311
+  - corequisite, not followed: DEN 2413
+
+Courses in the tree with records: DEN 2400, DEN 2300, DEN 1200, DEN 1100, DEN 1112, DEN 1114, DEN 1217, DEN 1218, DEN 2311, DEN 2315, DEN 2318.
+Named but with no record: BIO 3302, CHEM 1000.
 
 ## q21
 
@@ -740,14 +780,27 @@ Description: A continuation of MAT 1575. Topics include parametric curves, parti
 Prerequisite text: Prerequisites of MAT 1575 AND MAT 2580
 ~~~~
 
-**Suggestion for gold_sources (not in the file): chain below MAT 2675**
+**Prerequisite tree below MAT 2675 (a suggestion; gold_sources are unchanged)**
 
-- MAT 2675 prerequisite text: Prerequisites of MAT 1575 AND MAT 2580
-- Courses it names, each with its own prerequisite text and the courses that names:
-  - MAT 1575: PREREQUISITE OF MAT 1475, MUST NOT HAVE PASSED MAT 2675
-    - names: MAT 1475, MAT 2675
-  - MAT 2580: PRE: MAT1475
-    - names: MAT 1475
+- MAT 2675 (Calculus III): Prerequisites of MAT 1575 AND MAT 2580
+  - prerequisite MAT 1575 (Calculus II): PREREQUISITE OF MAT 1475, MUST NOT HAVE PASSED MAT 2675
+    - prerequisite MAT 1475 (Calculus I): PRE: MAT 1375 OR Meet the Math Placement for MAT 1475
+      - prerequisite MAT 1375 (Precalculus): PRE: MAT 1275 or MAT 1275CO OR Meet the Math Placement for MAT 1375
+        - prerequisite MAT 1275 (College Algebra/Trigonometry): CUNY proficiency in mathematics.  High School Math GPA 70 or higher AND complete Algebra 1 OR Algebra 1 Regents score of 75 or higher OR Geometry Regents score of 70 or higher
+          - placement or proficiency text, walk stops: CUNY proficiency in mathematics
+          - placement or proficiency text, walk stops: High School Math GPA 70 or higher AND complete Algebra 1 OR Algebra 1 Regents score of 75 or higher OR Geometry Regents score of 70 or higher
+        - prerequisite MAT 1275CO (College Algebra & Trig w Coreq): CUNY proficiency in mathematics;  MAT 1275CO is equivalent to MAT 1275 for grade replacement purposes
+          - placement or proficiency text, walk stops: CUNY proficiency in mathematics
+          - equivalence note, not a prerequisite: MAT 1275CO
+          - equivalence note, not a prerequisite: MAT 1275
+        - placement or proficiency text, walk stops: Meet the Math Placement for MAT 1375
+      - placement or proficiency text, walk stops: Meet the Math Placement for MAT 1475
+    - exclusion, not a prerequisite: MAT 2675
+  - prerequisite MAT 2580 (Introduction to Linear Algebra): PRE: MAT1475
+    - prerequisite MAT 1475: shown elsewhere in this tree
+
+Courses in the tree with records: MAT 2675, MAT 1575, MAT 1475, MAT 1375, MAT 1275, MAT 1275CO, MAT 2580.
+Named but with no record: none.
 
 ## q23 — **NO GOLD SOURCES**
 
