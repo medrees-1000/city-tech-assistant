@@ -119,3 +119,17 @@ Owner decision: the 8 Active MST/DPT courses (DPT 2309, MST 1101, 1204, 1205, 20
 2405) are kept and flagged `legacy_prefix: true`; the catalog wins. CLAUDE.md updated. 197 records,
 0 failures, 30 warnings, fetch log unchanged. Open: `docs/data-validation.md` (PDF checks) still says
 legacy MST/DPT courses "do not appear in cleaned output"; not edited, owner to confirm wording.
+
+## 2026-10-11: web pages, raw crawl (parser not built yet)
+
+- 59 pages crawled with the fetcher (24 office, 35 department), all returned 200, saved as received
+  under `data/raw/www.citytech.cuny.edu/`, manifest in `data/processed/pages_manifest.json`.
+  `advisement/planner.aspx` returned 200 directly (no redirect seen today; CLAUDE.md says 302).
+- `advisement/writing-intensive-fall26.aspx` returns 200 with an empty main content div.
+- Stray spaces inside emails (`EMilonas @citytech.cuny.edu`) appear on several pages, not one: the
+  CST, MATH and DENT chair pages and five advisement pages (`transferadvisement @...`).
+
+Pending manual items (not automated yet):
+- Chair name, office, phone and email: compare the web page with the department PDF (needs the PDF
+  parser, a later step).
+- Refund pages show which terms they cover; no refund answer for a term the page does not list.
