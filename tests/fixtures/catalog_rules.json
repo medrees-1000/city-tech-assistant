@@ -1,0 +1,52 @@
+{
+ "100001": {
+  "data": {
+   "100001": {
+    "_id": "100001",
+    "code": "100001",
+    "catalogDisplayName": "No prerequisite.",
+    "descriptionLong": "No prerequisite."
+   }
+  }
+ },
+ "100002": {
+  "data": {
+   "100002": {
+    "_id": "100002",
+    "code": "100002",
+    "catalogDisplayName": "Prerequisite: CST 1101 with a C or higher.",
+    "descriptionLong": "Prerequisite: CST 1101 with a C or higher."
+   }
+  }
+ },
+ "100003": {
+  "data": {
+   "100003": {
+    "_id": "100003",
+    "code": "100003",
+    "catalogDisplayName": "Placement.",
+    "descriptionLong": "Placement."
+   }
+  }
+ },
+ "100004": {
+  "data": {
+   "100004": {
+    "_id": "100004",
+    "code": "100004",
+    "catalogDisplayName": "Prerequisite: EET 2101 and MATH 1101.",
+    "descriptionLong": "Prerequisite: EET 2101 and MATH 1101."
+   }
+  }
+ },
+ "100005": {
+  "data": {
+   "100005": {
+    "_id": "100005",
+    "code": "100005",
+    "catalogDisplayName": "Prerequisite: CET 1001.",
+    "descriptionLong": "Prerequisite: CET 1001."
+   }
+  }
+ }
+}

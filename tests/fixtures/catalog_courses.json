@@ -1,0 +1,139 @@
+{
+ "listLength": 6,
+ "limit": 20,
+ "skip": 0,
+ "data": [
+  {
+   "_id": "1-2025-01-01",
+   "code": "CST 1101",
+   "courseGroupId": "1",
+   "courseNumber": "1101",
+   "subjectCode": "CST",
+   "name": "Problem Solving",
+   "description": "A course.",
+   "status": "Active",
+   "credits": {
+    "numberOfCredits": 3
+   },
+   "departments": [
+    {
+     "id": "CST-NYT",
+     "name": "Computer Systems Technology",
+     "displayName": "Computer Systems Technology",
+     "status": "Active"
+    }
+   ],
+   "requirementGroup": "100001"
+  },
+  {
+   "_id": "2-2025-01-01",
+   "code": "CST 2201",
+   "courseGroupId": "2",
+   "courseNumber": "2201",
+   "subjectCode": "CST",
+   "name": "Data Structures",
+   "description": "A course.",
+   "status": "Active",
+   "credits": {
+    "numberOfCredits": 3
+   },
+   "departments": [
+    {
+     "id": "CST-NYT",
+     "name": "Computer Systems Technology",
+     "displayName": "Computer Systems Technology",
+     "status": "Active"
+    }
+   ],
+   "requirementGroup": "100002"
+  },
+  {
+   "_id": "3-2025-01-01",
+   "code": "ENG 1101",
+   "courseGroupId": "3",
+   "courseNumber": "1101",
+   "subjectCode": "ENG",
+   "name": "English Composition",
+   "description": "A course.",
+   "status": "Active",
+   "credits": {
+    "numberOfCredits": 3
+   },
+   "departments": [
+    {
+     "id": "ENG-NYT",
+     "name": "English",
+     "displayName": "English",
+     "status": "Active"
+    }
+   ],
+   "requirementGroup": "100003"
+  },
+  {
+   "_id": "4-2025-01-01",
+   "code": "EET 3672",
+   "courseGroupId": "4",
+   "courseNumber": "3672",
+   "subjectCode": "EET",
+   "name": "Digital Systems",
+   "description": "Shared description.",
+   "status": "Active",
+   "credits": {
+    "numberOfCredits": 3
+   },
+   "departments": [
+    {
+     "id": "EET-NYT",
+     "name": "Electrical Engineering Technology",
+     "displayName": "Electrical Engineering Technology",
+     "status": "Active"
+    }
+   ],
+   "requirementGroup": "100004"
+  },
+  {
+   "_id": "5-2025-01-01",
+   "code": "CET 3672",
+   "courseGroupId": "5",
+   "courseNumber": "3672",
+   "subjectCode": "CET",
+   "name": "Digital Systems",
+   "description": "Shared description.",
+   "status": "Active",
+   "credits": {
+    "numberOfCredits": 3
+   },
+   "departments": [
+    {
+     "id": "CET-NYT",
+     "name": "Construction Engineering Tech",
+     "displayName": "Construction Engineering Tech",
+     "status": "Active"
+    }
+   ],
+   "requirementGroup": "100005"
+  },
+  {
+   "_id": "6-2025-01-01",
+   "code": "MATH 1101",
+   "courseGroupId": "6",
+   "courseNumber": "1101",
+   "subjectCode": "MATH",
+   "name": "Intro Math",
+   "description": "A course.",
+   "status": "Active",
+   "credits": {
+    "numberOfCredits": 3
+   },
+   "departments": [
+    {
+     "id": "MATH-NYT",
+     "name": "Mathematics",
+     "displayName": "Mathematics",
+     "status": "Active"
+    }
+   ],
+   "requirementGroup": null
+  }
+ ]
+}
