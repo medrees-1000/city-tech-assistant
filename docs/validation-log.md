@@ -455,3 +455,62 @@ Part B: records in `data/processed/departments/<dept>/` (git-ignored, like the o
   120); the CS minor prints no total.
 - Not committed: the CST, EET and MATH PDFs (large); their tests are skipped when `data/pdfs` is missing. The
   DENT PDF and its 20 rule texts are fixtures (`tests/fixtures/pdfs/`).
+
+## Phase 1, step 6: fixes from the department review, full validation pass — 2026-10-11
+
+Fixes (all four departments rebuilt with `uv run python -m cta.parse.departments`, 0 findings):
+
+- CUNYfirst guide: the 22 callout lines are kept, as a "Screenshot notes" list at the end of the section
+  they sat under (TASKS & HOLDS 4, SUPPLEMENT FORM 2, AWARDS & DISBURSEMENTS 14, BALANCE 2), in page order,
+  one item per printed line (wrapped callouts are not joined: lines of different callouts can share a
+  baseline, so joining would be a guess). `excluded` is now empty and the record's `note` says the text is
+  laid over screenshots. The character check ignores the label "Screenshot notes".
+- PDF "Chair" block vs the CONTACT US block of each department root page (not chairperson.aspx): all four
+  match on office and phone (CST N-914 / 718-260-5170, DENT A-701 / 718-260-5070, EET V-733 / 718-260-5300,
+  MATH N-711 / 718-260-5380). The PDF prints no email. So the block is the department office contact. It
+  differs from `chairperson.aspx` (CST, DENT, EET: office and phone; MATH: phone), which is a **source
+  mismatch, not a data error**. The Chair section and `chair_pdf` are `embed: false` (never indexed); the web
+  page is the only contact source. The old "web wins" mismatch flags are now this one source-mismatch flag.
+- Tables: columns that are "-" or "No" in every row are dropped per table (88 tables had at least one; names
+  are in each record's `repairs` as `dropped_columns` with the table's heading path; counts of drops:
+  Minimum GPA, Area, Clinical, Criticality 106 each, Notes 51, Minimum Grade 31). No column with any other
+  value is dropped. Rule IDs moved from the cell to `rule_ids` on the semester section (401 IDs, first-seen
+  order); the cell keeps only the resolved text. DENT "ITEM | COST" is promoted to the header
+  (`table_header_promoted` in `repairs`).
+- Semester headings: the PDF header over the row is "Year Semester Actual Credits Progress Credits", so
+  the two numbers are actual and progress credits. Equal numbers show once ("Year 1 Fall (11 credits)", 88
+  headings); different numbers are labelled ("Year 1 Spring (16 actual credits, 18 progress credits)", 18).
+- Same-name degree maps (Cybersecurity): the PDF prints no track or year to tell them apart (both: 114 - 118,
+  effective year "2027 -", no narrative). They differ in two ways: the first has year labels ("Year 1 Fall
+  Semester 1"), the second prints "-" instead of the year; and one card (CST 4726) has progress credits 3 in
+  the first and "3 - 4" in the second, so the Fall Semester 4 row reads 15 - 16 / 15 - 16 against 15 - 16 /
+  15 - 17. They are labelled by the PDF page they start on ("Cybersecurity (PDF page 40)" and "(PDF page 46)"),
+  which is a fact from the PDF, not an invented track. Still flagged for the owner.
+- DENT General Education "Writing Intensive" line: the PDF prints "Writing Intensive" as a label followed by
+  two paragraphs ("Students at New York City College of Technology must complete two courses designated
+  writing intensive (WI) ..." and "Transfer students and those who have earned a prior degree may have part
+  or all of this requirement waived ..."). Both paragraphs were stripped as generic rule text (they are in
+  two or more departments), which left the bare label. The same happens in every program that has the label.
+  Not changed; asked of the owner whether to strip the orphan label or keep the sentences.
+- New checks (tested): no empty table header, no constant "-"/"No" column, no rule ID at the start of a rule
+  cell, every card rule ID is in a section's `rule_ids`, no semester heading ending in two bare numbers,
+  unique degree map labels, the PDF Chair section is `embed: false`.
+
+Full validation pass, `uv run python -m cta.validate` (checks the records on disk against their sources; the
+calendar PDFs are re-read in memory and the table file is not touched):
+
+| Area | Checked | Fail | Accepted | Warnings | Result |
+|---|---|---|---|---|---|
+| courses | 197 courses | 0 | 0 | 30 | PASS |
+| pages | 63 pages, 9 contact records | 0 | 2 | 0 | PASS |
+| pdfs | 4 PDFs | 0 | 0 | 0 | PASS |
+| departments | 15 records in 4 departments | 0 | 0 | 0 | PASS |
+| calendar | 136 events | 0 | 0 | 0 | PASS |
+
+- Nothing fails. The 2 accepted page findings are the known `writing-intensive-fall26.aspx` (200, empty main
+  content) and `writing-intensive.aspx` (404). The 30 course warnings are unchanged: 2 `RLA_CollegeOption`
+  courses without a pathways label and 28 prerequisite codes that are not Active catalog courses.
+- Manual check sheets: `docs/manual-check-programs.md` (open items first: Cybersecurity and Applied
+  Mathematics credit mismatches, the MATH minor's incomplete title) and `docs/manual-check-contacts.md`,
+  both built by `scripts/make_manual_check_docs.py`. One thing to look at while checking contacts: the
+  financial aid page's PHONE HOURS table prints Tuesday as "9:00 PM - 5:00 PM" (left as printed).

@@ -119,9 +119,11 @@ Real body text, crawl these (department root `https://www.citytech.cuny.edu/<dep
 
 Skip: `course-listing.aspx` (only `{{course.Subject}}` placeholders; the catalog API covers
 courses), `directory.aspx` (placeholders), news-events, advisory-committee, research, CUNY 2x Tech.
-Chair name, office, phone and email appear on both the department PDF and `chairperson.aspx`. If
-they differ, prefer the web page and flag the mismatch in the validation log (one page has a
-stray space inside an email address; fix it).
+The PDF "Chair" block is the department office contact (it matches the CONTACT US block of the
+department root page, checked Oct 11, 2026), not the chair's own details, so it differs from
+`chairperson.aspx`. That is a source mismatch, not a data error: the web page is the only contact
+source and the PDF block is stored with `embed: false` (like the page contact blocks), never indexed.
+(One chairperson page has a stray space inside an email address; fix it.)
 
 ### PDF parsing hazards (department PDFs)
 
@@ -140,6 +142,10 @@ stray space inside an email address; fix it).
   invent a term.
 - The file name carries the generation date; keep it in metadata.
 - Catalog wins for course facts (API over PDF if they disagree); the registrar calendar wins for dates.
+- Department records (`data/processed/departments/`): degree map tables drop columns that are "-" or
+  "No" in every row (listed in `repairs`); rule IDs in rule notes moved to `rule_ids` on the section;
+  semester headings read "Year 1 Fall (11 credits)" (the two printed numbers are actual and progress
+  credits; both are labelled when they differ); maps that share a name are labelled with their PDF page.
 - Legacy courses (MST/DPT prefixes): the catalog wins. The 8 that the catalog lists as Active (7 MST,
   1 DPT, all CST) stay in the course records, flagged `legacy_prefix: true`, not dropped.
 
@@ -253,7 +259,8 @@ tests/
 ## Working rules for Claude Code
 
 - Do one phase at a time. Propose a short plan before large changes. Make small commits.
-- Add or update tests with every change. Run `ruff` and `pytest` before finishing.
+- Add or update tests with every change. Run `ruff` and `pytest` before finishing. Run
+  `uv run python -m cta.validate` for every automatic data check in one table.
 - Never invent URLs, dates, policies, or course data. If a fact is not in the data, say so.
 - Do not add dependencies without saying why. Prefer the standard library and boring choices.
 - Secrets live in `.env` (never committed). Keep `.env.example` current.

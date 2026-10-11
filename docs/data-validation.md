@@ -5,6 +5,9 @@ fail the build. Manual checks are done by the owner and recorded at the bottom.
 
 ## Automatic checks
 
+Run them all with `uv run python -m cta.validate` (one pass/fail table per area: courses, pages,
+PDFs, departments, calendar). A missing input is SKIPPED, never a pass.
+
 ### Courses (catalog API)
 - Total from the API equals the number of records downloaded (1,445 before the department filter).
 - After filtering, every course has: code, title, description, credits, department, status = Active.
@@ -20,6 +23,9 @@ fail the build. Manual checks are done by the owner and recorded at the bottom.
 - No replacement characters (`�`), no `{{...}}` placeholders, no repeated rule-dump blocks, no
   "Advisory Commission" or blank-page text left in the cleaned output.
 - Each department PDF yields at least: overview, one program, requirements and one degree map.
+- Department tables: no empty header, no column that is "-" or "No" in every row, no rule ID at the
+  start of a rule notes cell (IDs are in `rule_ids` on the section), no semester heading ending in
+  two bare numbers, and no two degree maps with the same label.
 - "(Inactive)" courses do not appear in cleaned output. Legacy MST/DPT courses are flagged
   (`legacy_prefix`), not dropped.
 
@@ -30,8 +36,10 @@ fail the build. Manual checks are done by the owner and recorded at the bottom.
 
 - Redirects (e.g. `advisement/planner.aspx`) end at a 200 page on the same host.
 - Refund pages show which terms they cover; no refund answer is given for a term the page does not list.
-- Department chair name, office, phone and email match between the department PDF and
-  `chairperson.aspx`. Mismatches are logged, and the web page wins. No stray spaces inside emails.
+- Department chair name, office, phone and email are compared between the department PDF and
+  `chairperson.aspx` (the web page wins). The PDF "Chair" block is the department office contact:
+  it is compared with the root page contact block, stored `embed: false` and never indexed.
+  No stray spaces inside emails.
 
 ### Calendar
 - Every row has event, date (or explicit TBA), term, source PDF and last-updated date.
