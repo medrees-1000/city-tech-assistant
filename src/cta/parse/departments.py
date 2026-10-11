@@ -500,6 +500,29 @@ def fix_tables(blocks: list[Block]) -> tuple[list[Block], list[dict]]:
     return out, repairs
 
 
+WRAPPER_HEADING = "Simple Requirements"
+NO_LEVELS = "(No Requirement Levels)"
+
+
+def drop_wrapper_sections(sections: list[dict], where: str) -> tuple[list[dict], list[dict]]:
+    """Drop the "Simple Requirements" section when its only content is "(No Requirement Levels)".
+    Its child sections stay, and their heading path still shows the wrapper heading."""
+    out: list[dict] = []
+    dropped: list[dict] = []
+    for s in sections:
+        only = s["markdown"].replace("**", "").strip()
+        if s["heading"] == WRAPPER_HEADING and only == NO_LEVELS:
+            dropped.append(
+                {"type": "wrapper_section", "text": NO_LEVELS, "heading": WRAPPER_HEADING,
+                 "where": where}
+            )  # fmt: skip
+        else:
+            out.append(s)
+    if dropped and not any(p["heading"] == WRAPPER_HEADING for s in out for p in s["parents"]):
+        dropped[0]["text"] = f"{WRAPPER_HEADING} {NO_LEVELS}"  # no child keeps the heading
+    return out, dropped
+
+
 def map_signature(m: DegreeMap) -> tuple:
     def card_key(c) -> tuple:
         return (tuple(c.options), c.rule_notes, c.notes, tuple(sorted(c.fields.items())))
@@ -932,7 +955,8 @@ def build_program(
     )
     blocks += map_part
     blocks, table_repairs = fix_tables(blocks)
-    sections = to_sections(blocks)
+    sections, wrappers = drop_wrapper_sections(to_sections(blocks), where)
+    stripped += wrappers
     for s in sections:
         if s["heading"] == "Degree Maps" or any(
             p["heading"] == "Degree Maps" for p in s["parents"]

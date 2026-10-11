@@ -765,3 +765,61 @@ def test_check_empty_sections_leaves_lists_fragments_and_printed_statements_alon
         "A single short section",
     ):
         assert check_no_empty_sections(record(markdown)) == []
+
+
+# ---- step 8: the Simple Requirements wrapper ---------------------------------------------------
+
+
+def wrapper_sections(markdown="**(No Requirement Levels)**"):
+    top = {"level": 1, "heading": "Program"}
+    req = {"level": 2, "heading": "Requirements"}
+    simple = {"level": 3, "heading": "Simple Requirements"}
+    return [
+        {"heading": "Requirements", "level": 2, "parents": [top], "markdown": "Intro"},
+        {"heading": "Simple Requirements", "level": 3, "parents": [top, req], "markdown": markdown},
+        {"heading": "Admission", "level": 4, "parents": [top, req, simple], "markdown": "Text"},
+    ]
+
+
+def test_the_wrapper_is_dropped_when_its_only_content_is_no_requirement_levels():
+    from cta.parse.departments import drop_wrapper_sections
+
+    out, dropped = drop_wrapper_sections(wrapper_sections(), "P")
+    assert [s["heading"] for s in out] == ["Requirements", "Admission"]
+    assert [p["heading"] for p in out[1]["parents"]] == [
+        "Program",
+        "Requirements",
+        "Simple Requirements",
+    ]
+    assert dropped == [
+        {"type": "wrapper_section", "text": "(No Requirement Levels)",
+         "heading": "Simple Requirements", "where": "P"}
+    ]  # fmt: skip
+
+
+def test_the_wrapper_is_kept_when_it_has_other_content():
+    from cta.parse.departments import drop_wrapper_sections
+
+    sections = wrapper_sections("**(No Requirement Levels)**\n\nExtra sentence.")
+    out, dropped = drop_wrapper_sections(sections, "P")
+    assert out == sections and dropped == []
+
+
+def test_a_wrapper_without_children_keeps_its_heading_text_in_the_stripped_entry():
+    from cta.parse.departments import drop_wrapper_sections
+
+    out, dropped = drop_wrapper_sections(wrapper_sections()[:2], "P")
+    assert [s["heading"] for s in out] == ["Requirements"]
+    assert dropped[0]["text"] == "Simple Requirements (No Requirement Levels)"
+
+
+def test_dent_program_has_no_simple_requirements_section_but_children_keep_the_path(dent_build):
+    program = dent_build[0][1]
+    assert not any(s["heading"] == "Simple Requirements" for s in program["sections"])
+    admission = next(s for s in program["sections"] if s["heading"] == "Admission Requirements")
+    assert [p["heading"] for p in admission["parents"]][-2:] == [
+        "Requirements",
+        "Simple Requirements",
+    ]
+    assert [s["type"] for s in program["stripped"]].count("wrapper_section") == 1
+    assert run_department_checks(*dent_build) == []
