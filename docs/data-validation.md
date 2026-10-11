@@ -62,12 +62,17 @@ PDFs, departments, calendar). A missing input is SKIPPED, never a pass.
 ## Manual checks (owner)
 
 1. **Calendar:** check every row of every term against its PDF, then set `verified: true`.
+   **Done 2026-10-11** (owner; all 136 rows, see `docs/validation-log.md`).
 2. **Courses:** pick 20 random courses and compare code, title, credits and prerequisite text with
    the live catalog page. At least 3 per department, plus 2 cross-listed courses.
+   **Not recorded** (sheet: `docs/manual-check-courses.md`).
 3. **Pages:** open 10 random cleaned web pages and confirm no menu junk and no missing sections.
+   **Not recorded.**
 4. **Programs:** for each department, compare the credit total and required course list with the
-   live catalog program page.
+   live catalog program page. **Done 2026-10-11** (owner, `docs/manual-check-programs.md`; the open
+   source facts stay as they are, see the log).
 5. **Contacts:** confirm each office's phone/email in the data against the live page.
+   **Done 2026-10-11** (owner, `docs/manual-check-contacts.md`).
 
 ## Recording results
 

@@ -701,3 +701,30 @@ The EET root "Our Mission" section is tagged Summer 2026 only because an advisem
   - q22, MAT 2675, courses with records: MAT 2675, 1575, 1475, 1375, 1275, 1275CO, 2580. Exclusion:
     MAT 2675 (named in MAT 1575's text). MAT 1275CO's text says it is equivalent to MAT 1275 (an equivalence
     note, not a prerequisite).
+
+## Phase 1, step 12: gold answers merged, manual checks logged, pre-push audit — 2026-10-11
+
+- Gold answers: the 20 reviewed answers (q01-q08, q13-q24; draft kept in `docs/gold-answers-draft.json`) were
+  set in `eval/questions.jsonl` only where the value was exactly "TODO". q09-q12 and q25-q30 were not touched;
+  no question text, type, split or note changed. q24 got the source `page/registrar/applying-graduation#1` (same
+  source and heading as in q01).
+- New check in `cta.eval.questions` and in `python -m cta.validate` (area "eval", not in CI): fails if any
+  question outside q25-q29 has gold_answer "TODO" or "FILL_FROM_CALENDAR", plus the earlier row and gold-source
+  checks. Result: 30 questions, 0 problems; no placeholder left.
+- Manual checks by the owner, 2026-10-11: `docs/manual-check-programs.md` and `docs/manual-check-contacts.md`
+  were checked and are correct (owner's report). The open source facts stay as they are: Cybersecurity (degree
+  maps 114 - 118 vs "Earn at least 120-124 credits") and Applied Mathematics (117 - 119 vs "Earn at least 120")
+  credit totals differ in the catalog printout, and the MATH minor's title is printed as "Computer Science -".
+- `docs/data-validation.md` manual checks: 1 (calendar, 2026-10-11 entry), 4 (programs) and 5 (contacts) are
+  marked done. **No record exists for** 2 (20 random courses; sheet `docs/manual-check-courses.md`, "not done yet"
+  in the earlier entry) and 3 (10 random cleaned pages); they stay open.
+- Pre-push audit (report only, nothing changed):
+  - Tracked files over 500 KB: none. Largest: the Dropping and Withdrawing PDF fixture (283 KB), the Winter 2027
+    calendar PDF fixture (217 KB), the DENT PDF fixture (194 KB), `uv.lock` (144 KB), `docs/section-index.md`
+    (144 KB).
+  - `.env`, `data/raw`, `data/pdfs` and `data/processed` are not tracked, are in `.gitignore`, and appear in no
+    commit on any ref. `.env.example` has `CTA_CONTACT_EMAIL=` with no value.
+  - The value of CTA_CONTACT_EMAIL is in no tracked file and in no commit (`git log --all -S`). Email addresses
+    in tracked files: 67 on citytech.cuny.edu (public office, department and chair contacts, in the test page
+    fixtures, `docs/manual-check-contacts.md`, `docs/eval-review.md`, `docs/validation-log.md` and
+    `eval/questions.jsonl`), and test placeholders (x.edu, example.edu, example.com, b.edu).
