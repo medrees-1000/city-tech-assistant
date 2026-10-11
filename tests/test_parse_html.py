@@ -267,3 +267,10 @@ def test_p_and_table_directly_inside_a_list_are_kept():
     md = rec["sections"][0]["markdown"]
     assert md.split("\n\n")[:3] == ["- one", "stray paragraph", "- two"]
     assert "| H |" in md and "| v |" in md
+
+
+def test_whitespace_between_list_items_keeps_one_list():
+    rec = inline_page(
+        "<h1>A</h1><ul>\n  <li>one</li>\n  <li>two</li>\n</ul><ol>\n<li>x</li>\n<li>y</li>\n</ol>"
+    )
+    assert rec["sections"][0]["markdown"] == "- one\n- two\n\n1. x\n2. y"

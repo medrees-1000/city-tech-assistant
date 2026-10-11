@@ -161,6 +161,8 @@ def list_blocks(lst: Tag, ctx: Ctx) -> list[Block]:
     for ch in lst.children:
         if isinstance(ch, Tag) and ch.name == "li":
             run.append(ch)
+        elif isinstance(ch, NavigableString) and not ch.strip():
+            continue  # whitespace between <li> tags must not split the list
         else:
             flush_run()
             out.extend(blocks([ch], ctx))
