@@ -7,9 +7,11 @@ from cta.eval.questions import (
     CALENDAR,
     GoldData,
     analyze_prerequisite,
+    answer_problems,
     check_all,
     course_codes_in,
     duplicate_ids,
+    eval_findings,
     gold_problem,
     load_gold_data,
     load_questions,
@@ -102,7 +104,7 @@ def test_empty_text_and_malformed_gold_sources_are_problems():
 
 
 def test_duplicate_ids_are_found_across_rows():
-    rows = [good(id="q01"), good(id="q02"), good(id="q01")]
+    rows = [good(id=q, gold_answer="A") for q in ("q01", "q02", "q01")]
     assert duplicate_ids(rows) == {"q01"}
     results = check_all(rows, data())
     assert "id is not unique" in results["q01"] and results["q02"] == []
@@ -321,12 +323,33 @@ def test_review_shows_the_tree_for_q20_and_q22_only(tmp_path):
     assert "Named but with no record: BIO 3302." in text
 
 
+def test_a_placeholder_gold_answer_fails_except_for_the_exempt_abstain_questions():
+    for placeholder in ("TODO", "FILL_FROM_CALENDAR"):
+        assert answer_problems(good(gold_answer=placeholder)) == [
+            f"gold_answer is still {placeholder}"
+        ]
+    assert answer_problems(good(gold_answer="Monday, January 25, 2027")) == []
+    for qid in ("q25", "q26", "q27", "q28", "q29"):
+        assert answer_problems(good(id=qid, gold_answer="TODO")) == []
+    assert answer_problems(good(id="q30", gold_answer="TODO")) != []
+    assert answer_problems(good(id="q24", gold_answer="TODO")) != []
+
+
+def test_check_all_and_the_findings_include_the_placeholder_check():
+    rows = [good(id="q01", gold_answer="TODO"), good(id="q02", gold_answer="A real answer.")]
+    results = check_all(rows, data())
+    assert results["q01"] == ["gold_answer is still TODO"] and results["q02"] == []
+    findings = eval_findings(rows, data())
+    assert [(f.check, f.severity, f.course) for f in findings] == [("eval_question", "fail", "q01")]
+
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.mark.skipif(not (ROOT / "eval" / "questions.jsonl").exists(), reason="no questions file")
 def test_the_real_file_has_30_well_formed_rows_with_unique_ids():
     rows = load_questions()
+    assert [r["id"] for r in rows if answer_problems(r)] == []  # no TODO or FILL_FROM_CALENDAR
     assert [r["id"] for r in rows] == [f"q{n:02d}" for n in range(1, 31)]
     assert all(row_problems(r) == [] for r in rows) and duplicate_ids(rows) == set()
 

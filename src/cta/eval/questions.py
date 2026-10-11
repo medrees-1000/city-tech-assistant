@@ -15,6 +15,7 @@ from pathlib import Path
 
 from cta.index.section_index import load_rows
 from cta.settings import ROOT
+from cta.validate.findings import Finding
 
 QUESTIONS = ROOT / "eval" / "questions.jsonl"
 CALENDAR = "data/calendar/calendar_events.json"
@@ -22,6 +23,8 @@ FIELDS = ("id", "question", "gold_answer", "gold_sources", "type", "department",
 TYPES = ("lookup", "multi_chunk", "time_sensitive", "ambiguous", "unanswerable")
 SPLITS = ("dev", "test")
 DEPARTMENTS = ("CST-NYT", "MATH-NYT", "EET-NYT", "DENT-NYT")
+PLACEHOLDERS = ("TODO", "FILL_FROM_CALENDAR")  # a gold answer still to be written
+ABSTAIN_IDS = ("q25", "q26", "q27", "q28", "q29")  # the owner exempted these from the answer check
 NEEDS_SOURCES = ("lookup", "multi_chunk", "time_sensitive")  # the others may have none
 SECTION_ID = re.compile(r"^(page|pdf|dept)/.+#\d+$")
 COURSE_CODE = re.compile(r"\b([A-Z]{2,5}) ?(\d{3,4}[A-Z]{0,2})\b")
@@ -140,13 +143,20 @@ def question_problems(row: dict, data: GoldData) -> list[str]:
     return problems
 
 
+def answer_problems(row: dict) -> list[str]:
+    """A question outside the exempt abstain questions must have a written gold answer."""
+    if row.get("id") not in ABSTAIN_IDS and row.get("gold_answer") in PLACEHOLDERS:
+        return [f"gold_answer is still {row['gold_answer']}"]
+    return []
+
+
 def check_all(rows: list[dict], data: GoldData) -> dict[str, list[str]]:
     """Problems per question id (an empty list means ok)."""
     dupes = duplicate_ids(rows)
     out: dict[str, list[str]] = {}
     for i, row in enumerate(rows, 1):
         key = str(row.get("id", f"row {i}"))
-        problems = question_problems(row, data)
+        problems = [*question_problems(row, data), *answer_problems(row)]
         if row.get("id") in dupes:
             problems.append("id is not unique")
         out.setdefault(key, []).extend(problems)
@@ -273,6 +283,15 @@ def render_tree(node: dict, indent: int = 0, label: str = "") -> list[str]:
         else:
             lines.append(f"{pad}  - {kind}, not followed: {item['code']}")
     return lines
+
+
+def eval_findings(rows: list[dict], data: GoldData) -> list[Finding]:
+    """The question check as findings (used by cta.validate)."""
+    return [
+        Finding("eval_question", "fail", problem, qid)
+        for qid, problems in check_all(rows, data).items()
+        for problem in problems
+    ]
 
 
 def main() -> int:

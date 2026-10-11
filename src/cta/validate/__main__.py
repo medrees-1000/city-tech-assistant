@@ -1,7 +1,7 @@
 """Run every automatic check of docs/data-validation.md and print one table.
 
 Run: uv run python -m cta.validate
-Areas: courses, pages, PDFs, departments, metadata, calendar. Each area checks the records on
+Areas: courses, pages, PDFs, departments, metadata, calendar, eval. Each area checks the records on
 disk (what would be indexed) against their sources. A missing input (for example a PDF that is
 not committed) is reported as SKIPPED, never as a pass. The exit code is 1 if any check fails.
 """
@@ -141,6 +141,19 @@ def check_metadata() -> Area:
     return area
 
 
+def check_eval() -> Area:
+    from cta.eval.questions import QUESTIONS, eval_findings, load_gold_data, load_questions
+
+    area = Area("eval")
+    if not QUESTIONS.exists() or not (PROCESSED / "pages").exists():
+        area.skipped = "no eval/questions.jsonl or no processed data"
+        return area
+    rows = load_questions()
+    area.findings = eval_findings(rows, load_gold_data())
+    area.checked = f"{len(rows)} questions"
+    return area
+
+
 def check_calendar() -> Area:
     from cta.parse.calendar_build import build_all, load_terms, run_checks
     from cta.validate.calendar import check_verified
@@ -160,7 +173,8 @@ def check_calendar() -> Area:
 
 
 AREAS = [
-    check_courses, check_pages, check_pdfs, check_departments, check_metadata, check_calendar
+    check_courses, check_pages, check_pdfs, check_departments, check_metadata, check_calendar,
+    check_eval,
 ]  # fmt: skip
 
 
