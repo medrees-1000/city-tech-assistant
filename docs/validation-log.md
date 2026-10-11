@@ -72,3 +72,24 @@ Fetch log unchanged (240 rows). 197 records, 0 failures, same 28 warnings.
 - `pathways_category` is null for all 197 records. It is NOT in the raw data: the list request
   asks for only two `customFields` columns (`cuLibartsFlag`, `catalogAttributes`), and neither holds
   a Pathways label. Waiting for the owner's OK before a new crawl to find the column.
+
+## 2026-10-11: Pathways category found, full re-crawl
+
+- 3 extra requests with no `columns` restriction (CST 2406, MAT 2540, CST 1101), logged in the
+  fetch log. The full response has 100+ top-level keys. The Pathways label is the top-level
+  `requirementDesignation`: CST 2406 = "Regular Non-Liberal Arts", CST 1101 = "Regular Liberal
+  Arts", MAT 2540 = "RLA_FC_ScientificWorld" (a code; the readable text
+  "Flexible Core - Scientific World" is in `customFields.catalogRequirementDesignation`).
+- The list request now asks for `requirementDesignation` plus `customFields.cuPathwayFlag`,
+  `cuPathwaysAttribute` and `catalogRequirementDesignation` (the last three are in the raw JSON
+  only, not in the records). Full re-crawl at 2026-10-11T16:39:50Z: 1,445 downloaded, total before
+  and after 1,445, 197 kept (CST 93, MATH 49, EET 43, DENT 12), 0 rule lookups (cache).
+- `pathways_category` = `requirementDesignation` exactly as returned, never derived from the
+  liberal arts flag. Present for all 1,445 raw courses and all 197 records. Values (197 records):
+  Regular Non-Liberal Arts 149, Regular Liberal Arts 23, RLA_FC_ScientificWorld 8,
+  Laboratory Non-Liberal Arts 8, RLA_RC_Mathtcl&QuantveReasng 5, RLA_CollegeOption 2,
+  DLA_RC_Mathtcl&QuantveReasng 2.
+- 17 records (the four coded values plus RLA_CollegeOption) carry a code, not a readable label.
+  Open question for the owner: map codes to labels, or store `catalogRequirementDesignation` too.
+- `extra_fields` check now also requires a non-empty `pathways_category`. Failures: 0.
+  Warnings: the same 28. Fetch log: no gaps (4 robots.txt 404s, everything else 200).

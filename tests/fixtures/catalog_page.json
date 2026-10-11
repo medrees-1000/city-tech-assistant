@@ -30,6 +30,7 @@
     }
    },
    "customFields": {
+    "cuPathwayFlag": false,
     "cuLibartsFlag": true,
     "catalogAttributes": [
      "MEBU - ME_BUSI_1 (Intro Computer Info Sys & Tech)"
@@ -49,6 +50,7 @@
    "effectiveStartDate": "2025-01-25",
    "id": "0378751-2025-01-25",
    "name": "Problem Solving Comp. Program",
+   "requirementDesignation": "Regular Liberal Arts",
    "requirementGroup": "",
    "status": "Active",
    "subjectCode": "CST",
@@ -87,6 +89,7 @@
    },
    "customFields": {
     "catalogAttributes": [],
+    "cuPathwayFlag": false,
     "cuLibartsFlag": false
    },
    "departmentOwnership": [],
@@ -103,6 +106,7 @@
    "effectiveStartDate": "2025-01-25",
    "id": "1503691-2025-01-25",
    "name": "Introduction to Data Science",
+   "requirementDesignation": "Regular Non-Liberal Arts",
    "requirementGroup": "036458",
    "status": "Active",
    "subjectCode": "CST",
@@ -110,6 +114,62 @@
    "alternativeCode": null,
    "globalCourseTitle": "CST 2402 - Introduction to Data Science (3 cr)",
    "orderByKeyForCode": "CST0000002402"
+  },
+  {
+   "_id": "0378911-2025-01-25",
+   "code": "CST 2406",
+   "courseGroupId": "0378911",
+   "courseNumber": "2406",
+   "credits": {
+    "courseCount": 1,
+    "repeatable": false,
+    "numberOfRepeats": 1,
+    "numberOfCredits": 3,
+    "creditHours": {
+     "min": 3,
+     "max": 3,
+     "operator": ""
+    },
+    "contactHours": {
+     "value": 4,
+     "operator": ""
+    },
+    "academicProgressHours": {
+     "value": 3,
+     "operator": ""
+    },
+    "financialAidHours": {
+     "value": 3,
+     "operator": ""
+    }
+   },
+   "customFields": {
+    "cuPathwayFlag": false,
+    "cuLibartsFlag": false,
+    "catalogAttributes": []
+   },
+   "departmentOwnership": [],
+   "departments": [
+    {
+     "id": "CST-NYT",
+     "name": "Computer Systems Tech",
+     "displayName": "Computer Systems Technology",
+     "status": "Active"
+    }
+   ],
+   "description": "An introduction to systems analysis and design concepts and tools, including the three basic phases of the System Development Life Cycle: system analysis, system design and system implementation and maintenance.",
+   "effectiveEndDate": null,
+   "effectiveStartDate": "2025-01-25",
+   "id": "0378911-2025-01-25",
+   "name": "Systems Analysis and Design",
+   "requirementDesignation": "Regular Non-Liberal Arts",
+   "requirementGroup": "014418",
+   "status": "Active",
+   "subjectCode": "CST",
+   "deprecatedCourseGroupId": "FUQC9l2uPd7cUTL8gUbi",
+   "alternativeCode": null,
+   "globalCourseTitle": "CST 2406 - Systems Analysis and Design (3 cr)",
+   "orderByKeyForCode": "CST0000002406"
   },
   {
    "_id": "0379201-2025-01-25",
@@ -140,6 +200,7 @@
     }
    },
    "customFields": {
+    "cuPathwayFlag": false,
     "cuLibartsFlag": false,
     "catalogAttributes": []
    },
@@ -157,6 +218,7 @@
    "effectiveStartDate": "2025-01-25",
    "id": "0379201-2025-01-25",
    "name": "Internship in Computer Systems",
+   "requirementDesignation": "Regular Non-Liberal Arts",
    "requirementGroup": "014763",
    "status": "Active",
    "subjectCode": "CST",
@@ -194,6 +256,7 @@
     }
    },
    "customFields": {
+    "cuPathwayFlag": false,
     "cuLibartsFlag": false,
     "catalogAttributes": []
    },
@@ -210,6 +273,7 @@
    "effectiveStartDate": "2014-06-01",
    "id": "0380301-2014-06-01",
    "name": "Pharmacology",
+   "requirementDesignation": "Regular Non-Liberal Arts",
    "requirementGroup": "014269",
    "status": "Active",
    "subjectCode": "DEN",
@@ -248,6 +312,7 @@
     }
    },
    "customFields": {
+    "cuPathwayFlag": false,
     "cuLibartsFlag": false,
     "catalogAttributes": []
    },
@@ -265,6 +330,7 @@
    "effectiveStartDate": "2025-01-25",
    "id": "1315793-2025-01-25",
    "name": "Actuators & Sensors App",
+   "requirementDesignation": "Regular Non-Liberal Arts",
    "requirementGroup": "027626",
    "status": "Active",
    "subjectCode": "EET",
@@ -301,6 +367,7 @@
     }
    },
    "customFields": {
+    "cuPathwayFlag": false,
     "cuLibartsFlag": false,
     "catalogAttributes": []
    },
@@ -318,6 +385,7 @@
    "effectiveStartDate": "2025-01-25",
    "id": "1315792-2025-01-25",
    "name": "Actuators & Sensors App",
+   "requirementDesignation": "Regular Non-Liberal Arts",
    "requirementGroup": "027627",
    "status": "Active",
    "subjectCode": "CET",
@@ -354,6 +422,7 @@
     }
    },
    "customFields": {
+    "cuPathwayFlag": false,
     "cuLibartsFlag": false,
     "catalogAttributes": []
    },
@@ -371,6 +440,7 @@
    "effectiveStartDate": "2025-01-25",
    "id": "1315791-2025-01-25",
    "name": "Actuators & Sensors App",
+   "requirementDesignation": "Regular Non-Liberal Arts",
    "requirementGroup": "027627",
    "status": "Active",
    "subjectCode": "MECH",
@@ -407,10 +477,13 @@
     }
    },
    "customFields": {
+    "cuPathwayFlag": true,
     "cuLibartsFlag": true,
+    "catalogRequirementDesignation": "Required Core - Mathematical&QuantitativeReasoning",
     "catalogAttributes": [
      "MENR - ME_NURS_4 (Math & Quantitative Reasoning)"
-    ]
+    ],
+    "cuPathwaysAttribute": "RMQ - Required Core - Mathematical&QuantitativeReasoning"
    },
    "departments": [
     {
@@ -425,6 +498,7 @@
    "effectiveStartDate": "2021-03-12",
    "id": "1220031-2021-03-12",
    "name": "Quantitative Reasoning",
+   "requirementDesignation": "RLA_RC_Mathtcl&QuantveReasng",
    "requirementGroup": "018161",
    "status": "Active",
    "subjectCode": "MAT",
@@ -465,10 +539,13 @@
    },
    "customFields": {
     "cuLibartsFlag": true,
+    "cuPathwayFlag": true,
+    "catalogRequirementDesignation": "Flexible Core - Scientific World",
     "catalogAttributes": [
      "UTCO - UT_COSC_5 (Discrete Math Structures)",
      "WRIC - WRIC (Writing Intensive)"
-    ]
+    ],
+    "cuPathwaysAttribute": "FSW - Flexible Core - Scientific World"
    },
    "departmentOwnership": [],
    "departments": [
@@ -485,6 +562,7 @@
    "effectiveStartDate": "2026-08-28",
    "id": "0399131-2026-08-28",
    "name": "Discrete Str and Algorithms II",
+   "requirementDesignation": "RLA_FC_ScientificWorld",
    "requirementGroup": "014206",
    "status": "Active",
    "subjectCode": "MAT",

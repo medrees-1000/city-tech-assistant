@@ -16,7 +16,7 @@ from cta.crawl.fetcher import FetchBlocked
 from cta.settings import load_sources
 from tests.conftest import FIXTURES
 
-CFG = {**load_sources()["catalog_api"], "page_size": 4}  # 9 courses -> 3 pages
+CFG = {**load_sources()["catalog_api"], "page_size": 4}  # 10 courses -> 3 pages
 COURSES = json.loads((FIXTURES / "catalog_page.json").read_text())["data"]
 RULES = json.loads((FIXTURES / "catalog_rules.json").read_text())["data"]
 PILOT = {"CST-NYT", "MATH-NYT", "EET-NYT", "DENT-NYT"}
@@ -60,6 +60,7 @@ def test_keep_departments_drops_other_departments():
     assert codes == [
         "CST 1101",
         "CST 2402",
+        "CST 2406",
         "CST 4900",
         "DEN 2315",
         "EET 3672",
@@ -122,9 +123,9 @@ def test_collect_writes_one_record_per_kept_course(api, tmp_path):
     fetcher, _, _ = api
     summary = collect(fetcher, PILOT_CFG, tmp_path / "processed")
     assert summary["counts_per_department"] == {
-        "CST-NYT": 3, "DENT-NYT": 1, "EET-NYT": 1, "MATH-NYT": 2,
+        "CST-NYT": 4, "DENT-NYT": 1, "EET-NYT": 1, "MATH-NYT": 2,
     }  # fmt: skip
-    assert summary["prereq_styles"] == {"none": 1, "shorthand": 1, "text": 5}
+    assert summary["prereq_styles"] == {"none": 1, "shorthand": 2, "text": 5}
     recs = records_by_code(tmp_path / "processed")
     assert recs["EET 3672"]["prerequisite_text"] == "PRE: EET 3122"
     assert recs["CST 4900"]["prerequisite_text"] == "PRE_CST3500_CST3600"
@@ -162,8 +163,25 @@ def test_extra_fields_come_from_raw_data(api, tmp_path):
     assert cst1101["catalog_attributes"] == ["MEBU - ME_BUSI_1 (Intro Computer Info Sys & Tech)"]
     assert recs["CST 4900"]["contact_hours"] == {"value": 9, "operator": ""}
     assert recs["CST 4900"]["credit_hours"] == {"min": 3, "max": 3, "operator": ""}
-    assert all(r["pathways_category"] is None for r in recs.values())  # not in the raw data
+    assert all(r["pathways_category"] for r in recs.values())
     assert all(r["description"] for r in recs.values())
+
+
+def test_pathways_category_is_the_api_value_unchanged(api, tmp_path):
+    fetcher, _, _ = api
+    collect(fetcher, PILOT_CFG, tmp_path / "processed")
+    recs = records_by_code(tmp_path / "processed")
+    assert recs["CST 2406"]["pathways_category"] == "Regular Non-Liberal Arts"
+    assert recs["CST 1101"]["pathways_category"] == "Regular Liberal Arts"
+    assert recs["MAT 2540"]["pathways_category"] == "RLA_FC_ScientificWorld"  # a code, not renamed
+    # not inferred from the liberal arts flag: the API value decides
+    raw = {c["code"]: c for c in COURSES}
+    for code, rec in recs.items():
+        assert rec["pathways_category"] == raw[code]["requirementDesignation"]
+
+
+def test_list_request_asks_for_the_pathways_column():
+    assert "requirementDesignation" in CFG["columns"].split(",")
 
 
 def test_collect_stops_if_robots_disallows_api(make_fetcher, tmp_path):

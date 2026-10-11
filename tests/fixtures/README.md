@@ -1,6 +1,6 @@
 # Fixtures
 
-- `catalog_page.json`: 9 real courses from the catalog search API (saved 2026-10-11). Only the
+- `catalog_page.json`: 10 real courses from the catalog search API (saved 2026-10-11, after the crawl that added `requirementDesignation`). Only the
   nested `departments` objects were trimmed to `id`, `name`, `displayName`, `status`.
   Includes the cross-listed trio EET 3672 / CET 3672 / MECH 3672, a shorthand rule (CST 4900),
   a course with no rule (CST 1101), and a liberal-arts + writing-intensive course (MAT 2540), and non-pilot courses for the department filter.

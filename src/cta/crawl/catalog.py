@@ -162,8 +162,9 @@ def to_record(course: dict, dept_ids: set[str], rule_text: str | None, fetched_a
         "writing_intensive": None
         if attributes is None
         else any(a.split(" - ")[0] == WRITING_INTENSIVE for a in attributes),
-        # Not in the raw data: the list request only asks for two customFields columns.
-        "pathways_category": None,
+        # The catalog page's Pathways label, kept exactly as the API returns it: a label such as
+        # "Regular Non-Liberal Arts", or a code such as "RLA_FC_ScientificWorld" for some courses.
+        "pathways_category": course.get("requirementDesignation") or None,
         "department": kept[0]["id"],
         "department_name": kept[0].get("name"),
         "all_departments": [d["id"] for d in course["departments"]],

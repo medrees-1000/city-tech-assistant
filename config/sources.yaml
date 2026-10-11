@@ -25,7 +25,7 @@ catalog_api:
   # GET {base_url}/nyt01/requirementGroups/<ID>?returnFields=code,catalogDisplayName,descriptionLong
   rule_path: /nyt01/requirementGroups/{rule_id}
   rule_return_fields: code,catalogDisplayName,descriptionLong
-  columns: code,name,description,departments,requirementGroup,credits,status,subjectCode,courseNumber,customFields.catalogAttributes,customFields.cuLibartsFlag
+  columns: code,name,description,departments,requirementGroup,credits,status,subjectCode,courseNumber,customFields.catalogAttributes,customFields.cuLibartsFlag,requirementDesignation,customFields.cuPathwayFlag,customFields.cuPathwaysAttribute,customFields.catalogRequirementDesignation
   departments:
     - id: CST-NYT
       name: "Computer Systems Technology"

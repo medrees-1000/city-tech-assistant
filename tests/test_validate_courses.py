@@ -14,6 +14,7 @@ def rec(**over) -> dict:
     base = {
         "code": "CST 1101", "title": "T", "description": "D", "credits": 3,
         "department": "CST-NYT", "status": "Active", "rule_id": "100001",
+        "pathways_category": "Regular Non-Liberal Arts",
         "liberal_arts": False, "writing_intensive": False, "catalog_attributes": [],
         "credit_hours": {"min": 3, "max": 3, "operator": ""},
         "contact_hours": {"value": 4, "operator": ""},
@@ -110,8 +111,13 @@ def test_run_course_checks_clean_data_has_no_findings():
     assert run_course_checks([rec()], s, {"CST 1101"}, expected_total=1) == []
 
 
-def test_extra_fields_ok_with_null_pathways_category():
-    assert check_extra_fields([rec(pathways_category=None)]) == []
+def test_extra_fields_ok_for_normal_record():
+    assert check_extra_fields([rec()]) == []
+
+
+def test_missing_or_empty_pathways_category_fails():
+    found = check_extra_fields([rec(pathways_category=None), rec(pathways_category="")])
+    assert [f.severity for f in found] == ["fail", "fail"]
 
 
 def test_extra_fields_fail_on_missing_or_wrong_type():

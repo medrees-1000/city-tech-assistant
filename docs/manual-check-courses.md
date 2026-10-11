@@ -4,7 +4,7 @@ Compare each row with the live catalog page: code, title, credits and prerequisi
 Tick the last column when all four match, and note any difference below the table.
 
 Sample: 20 random courses (seed 2026), at least 3 per department, plus 2 cross-listed ones (same description, different department).
-Data is from the crawl of 2026-10-11T14:59:40+00:00. Prerequisite text is shown exactly as the catalog rule returns it.
+Data is from the crawl of 2026-10-11T16:39:50+00:00. Prerequisite text is shown exactly as the catalog rule returns it.
 
 Catalog page: the URL pattern in CLAUDE.md is `/courses/<courseGroupId>/<slug>`. The slug is
 not stored, so the links below use the courseGroupId only. They are NOT verified; if one does

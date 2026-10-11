@@ -59,13 +59,15 @@ def check_required_fields(records: list[dict]) -> list[Finding]:
 
 
 def check_extra_fields(records: list[dict]) -> list[Finding]:
-    """Fields taken from the raw data: right type, and present. pathways_category may be null."""
+    """Fields taken from the raw data: present and the right type (pathways_category: non-empty)."""
     found = []
     for rec in records:
         bad = [f for f in ("liberal_arts", "writing_intensive") if not isinstance(rec.get(f), bool)]
         if not isinstance(rec.get("catalog_attributes"), list):
             bad.append("catalog_attributes")
         bad += [f for f in ("credit_hours", "contact_hours") if not isinstance(rec.get(f), dict)]
+        if not isinstance(rec.get("pathways_category"), str) or not rec["pathways_category"]:
+            bad.append("pathways_category")
         if bad:
             found.append(
                 Finding("extra_fields", "fail", f"missing or wrong type: {bad}", rec["code"])

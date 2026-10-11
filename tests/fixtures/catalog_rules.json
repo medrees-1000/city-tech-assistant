@@ -35,6 +35,12 @@
    "catalogDisplayName": "PRE: MAT 2440",
    "code": "014206",
    "descriptionLong": "PRE: MAT 2440"
+  },
+  "014418": {
+   "_id": "014418",
+   "catalogDisplayName": "PRE_CST1201_CST1204",
+   "code": "014418",
+   "descriptionLong": "PRE_CST1201_CST1204"
   }
  }
 }
