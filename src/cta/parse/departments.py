@@ -18,6 +18,7 @@ from cta.parse.dept_pdf import (
     COURSE_CODE,
     LEGACY,
     RULE_ID,
+    TERMINAL,
     Block,
     DegreeMap,
     PLine,
@@ -267,23 +268,56 @@ def boilerplate_sentences(trees: dict[str, list[ProgramTree]]) -> set[str]:
     return {s for s, who in seen.items() if len(who) >= 2 and len(s.split()) >= MIN_PROSE_WORDS}
 
 
+LABEL_SMALL_WORDS = {"and", "or", "of", "the", "in", "for", "to", "a"}
+
+
+def is_label(block: Block) -> bool:
+    """A bare label: a short plain paragraph in Title Case with no final punctuation
+    ("Writing Intensive", "Required Common Core")."""
+    kind_, _, text = block
+    words = text.split()
+    return (
+        kind_ == "p"
+        and "\n" not in text
+        and 0 < len(words) <= 6
+        and not fully_bold(text)
+        and not text.endswith(TERMINAL)
+        and all(w[0].isupper() or w.lower() in LABEL_SMALL_WORDS for w in words if w[0].isalpha())
+    )
+
+
 def strip_boilerplate(
     blocks: list[Block], generic: set[str], where: str, stripped: list[dict]
 ) -> list[Block]:
-    out: list[Block] = []
+    """Remove generic rule text. A label whose text under it was all removed is removed as well."""
+    kept: list[Block | None] = []
+    dropped_all: list[bool] = []
     for k, lv, text in blocks:
         if k != "p" or fully_bold(text):
-            out.append((k, lv, text))
+            kept.append((k, lv, text))
+            dropped_all.append(False)
             continue
         keep, drop = [], []
         for s in sentences(text):
             (drop if norm(s) in generic else keep).append(s)
         if drop:
             stripped.append({"type": "rule_dump_text", "text": " ".join(drop), "where": where})
-        if keep:
-            kept = " ".join(keep)
-            out.append((k, lv, kept if drop else text))
-    return out
+        kept.append((k, lv, " ".join(keep) if drop else text) if keep else None)
+        dropped_all.append(not keep)
+    for i, block in enumerate(blocks):
+        if kept[i] is None or not is_label(block):
+            continue
+        j = i + 1
+        while j < len(blocks) and dropped_all[j]:
+            j += 1
+        ends_label = j == len(blocks) or blocks[j][0] == "h" or is_label(blocks[j])
+        if j > i + 1 and ends_label:
+            reason = "all the text under it was stripped as generic rule text"
+            stripped.append(
+                {"type": "empty_label", "text": block[2], "where": where, "reason": reason}
+            )
+            kept[i] = None
+    return [b for b in kept if b is not None]
 
 
 def strip_inactive(items: list, stripped: list[dict], where: str) -> list:

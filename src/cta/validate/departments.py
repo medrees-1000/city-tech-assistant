@@ -9,6 +9,7 @@ import json
 import re
 from collections import Counter
 
+from cta.parse.departments import is_label
 from cta.validate.findings import Finding
 from cta.validate.pdfs import markdown_text, normalize, squash
 
@@ -274,6 +275,23 @@ def check_rule_ids_on_sections(record: dict) -> list[Finding]:
     )
 
 
+def check_no_empty_sections(record: dict) -> list[Finding]:
+    """No section with a heading and no content, and none that ends in a bare label (a short
+    Title Case line such as "Writing Intensive" with nothing under it)."""
+    found = []
+    name = record_label(record)
+    for s in record["sections"]:
+        if s["heading"] and not s["markdown"].strip():
+            found.append(Finding("empty_section", "fail", f"{s['heading']!r} has no content", name))
+            continue
+        blocks = [b for b in s["markdown"].split("\n\n") if b]
+        last = blocks[-1]
+        if len(blocks) > 1 and not last.startswith(("- ", "|")) and is_label(("p", 0, last)):
+            message = f"{s['heading']!r} ends in a bare label {last!r}"
+            found.append(Finding("empty_label", "fail", message, name))
+    return found
+
+
 def check_map_labels(record: dict) -> list[Finding]:
     labels = [m["label"] for m in record.get("program", {}).get("degree_maps", [])]
     return [
@@ -394,6 +412,7 @@ def run_department_checks(records: list[dict], parsed, generic: set[str]) -> lis
             *check_table_format(r),
             *check_rule_ids_on_sections(r),
             *check_map_labels(r),
+            *check_no_empty_sections(r),
         ]
         if r["doc_type"] == "department":
             found += [*check_chair(r), *check_pdf_contact_not_indexed(r)]

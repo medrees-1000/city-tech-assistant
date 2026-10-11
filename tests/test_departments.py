@@ -15,6 +15,7 @@ from cta.parse.departments import (
     file_date,
     fix_table,
     fix_tables,
+    is_label,
     legacy_lines,
     load_root_contact,
     map_blocks,
@@ -33,6 +34,7 @@ from cta.validate.departments import (
     check_characters,
     check_completeness,
     check_map_labels,
+    check_no_empty_sections,
     check_no_markers,
     check_no_rule_dumps,
     check_pdf_contact_not_indexed,
@@ -646,3 +648,120 @@ def test_checks_catch_table_and_rule_id_and_label_and_contact_problems(dent_buil
     assert "pdf_contact_indexed" in names(check_pdf_contact_not_indexed(bad[0]))
     bad = mutate(records, lambda r: r[0]["chair_pdf"].update(embed=True))
     assert "pdf_contact_indexed" in names(check_pdf_contact_not_indexed(bad[0]))
+
+
+# ---- step 7: labels left empty by a stripped rule dump ---------------------------------------
+
+
+def test_is_label_needs_a_short_title_case_plain_paragraph_without_final_punctuation():
+    assert is_label(("p", 0, "Writing Intensive"))
+    assert is_label(("p", 0, "Life and Physical Sciences"))
+    assert not is_label(("p", 0, "**Fulfill ALL of the following requirements:**"))
+    assert not is_label(("p", 0, "or higher Chemistry course"))
+    assert not is_label(("p", 0, "No selection provided"))
+    assert not is_label(("p", 0, "Complete the following courses."))
+    assert not is_label(("list", 0, "- Writing Intensive"))
+    assert not is_label(("p", 0, "One Two Three Four Five Six Seven"))
+
+
+def generic_set():
+    return boilerplate_sentences(
+        {"A": [tree([group(("p", 0, SENT))])], "B": [tree([group(("p", 0, SENT))])]}
+    )
+
+
+def test_a_label_whose_text_was_all_stripped_is_removed_and_recorded():
+    stripped: list[dict] = []
+    blocks = [("p", 0, "Intro text for the group."), ("p", 0, "Writing Intensive"), ("p", 0, SENT)]
+    out = strip_boilerplate(blocks, generic_set(), "W", stripped)
+    assert out == [("p", 0, "Intro text for the group.")]
+    assert [(s["type"], s["text"]) for s in stripped] == [
+        ("rule_dump_text", SENT),
+        ("empty_label", "Writing Intensive"),
+    ]
+    assert "generic rule text" in stripped[1]["reason"]
+
+
+def test_a_label_is_kept_when_a_directive_or_other_content_follows_the_stripped_text():
+    directive = ("p", 0, "**Fulfill ALL of the following requirements:**")
+    for after in (
+        directive,
+        ("list", 0, "- ENG 1101 - English Composition I"),
+        ("p", 0, "Keep me."),
+    ):
+        stripped: list[dict] = []
+        blocks = [("p", 0, "Required Common Core"), ("p", 0, SENT), after]
+        out = strip_boilerplate(blocks, generic_set(), "W", stripped)
+        assert out[0] == ("p", 0, "Required Common Core") and out[-1] == after
+        assert [s["type"] for s in stripped] == ["rule_dump_text"]
+
+
+def test_a_label_directly_followed_by_a_kept_block_is_never_touched():
+    stripped: list[dict] = []
+    blocks = [("p", 0, "Flexible Common Core"), directive_block := ("p", 0, "**Complete ALL:**")]
+    assert strip_boilerplate(blocks, generic_set(), "W", stripped) == blocks and stripped == []
+    assert directive_block
+
+
+def test_two_labels_in_a_row_after_a_dump_remove_only_the_empty_one():
+    stripped: list[dict] = []
+    blocks = [
+        ("p", 0, "College Option"),
+        ("p", 0, SENT),
+        ("p", 0, "Writing Intensive"),
+        ("p", 0, SENT),
+    ]
+    out = strip_boilerplate(blocks, generic_set(), "W", stripped)
+    assert out == []
+    assert [s["text"] for s in stripped if s["type"] == "empty_label"] == [
+        "College Option",
+        "Writing Intensive",
+    ]
+
+
+WI_SENTENCES = (
+    "Students at New York City College of Technology must complete two courses designated writing "
+    "intensive (WI) for the associate level, one from general education requirements and one from "
+    "the major.",
+    "Transfer students and those who have earned a prior degree may have part or all of this "
+    "requirement waived; please consult the Degree Requirements page for additional information.",
+)
+
+
+def test_dent_general_education_no_longer_ends_in_the_writing_intensive_label(dent_build):
+    from cta.parse.departments import build_program, norm
+
+    _, parsed, _ = dent_build  # one department only, so give the generic text the other PDFs share
+    generic = {norm(x) for x in WI_SENTENCES}
+    program = build_program(parsed, parsed.trees[0], generic, RULES.get)
+    general = next(x for x in program["sections"] if x["heading"] == "General Education")
+    assert "Writing Intensive" not in general["markdown"]
+    assert general["markdown"].endswith("noted in the degree map below.")
+    labels = [x for x in program["stripped"] if x["type"] == "empty_label"]
+    assert [x["text"] for x in labels] == ["Writing Intensive"]
+    assert check_no_empty_sections(program) == []
+
+
+def test_check_empty_sections_flags_a_blank_section_and_a_trailing_bare_label(dent_build):
+    records = dent_build[0]
+    assert check_no_empty_sections(records[1]) == []
+    blank = mutate(records, lambda r: r[1]["sections"][0].update(markdown="  "))
+    assert names(check_no_empty_sections(blank[1])) == {"empty_section"}
+    label = mutate(
+        records, lambda r: r[1]["sections"][0].update(markdown="Some text.\n\nWriting Intensive")
+    )
+    assert names(check_no_empty_sections(label[1])) == {"empty_label"}
+
+
+def test_check_empty_sections_leaves_lists_fragments_and_printed_statements_alone():
+    def record(markdown):
+        section = {"heading": "H", "level": 2, "parents": [], "markdown": markdown}
+        return {"department": "D", "doc_type": "program", "title": "T", "sections": [section]}
+
+    for markdown in (
+        "Complete ALL:\n\n- Electrical Engineering Technical Elective",
+        "- CHEM 1000 - Principles\n\nor higher Chemistry course",
+        "Choose one.\n\nNo selection provided",
+        "A single short section",
+    ):
+        assert check_no_empty_sections(record(markdown)) == []
