@@ -24,15 +24,16 @@ def section_rows(record: dict, kind: str, stem: str) -> list[dict]:
     """One row per indexable section of one record. The id counts all sections of the record, so it
     does not change when another section is excluded. Metadata values are as the chunk carries them
     (None stays None; the table shows it as "-")."""
-    values, _ = chunk_metadata(record)
     rows = []
     for n, s in enumerate(record["sections"], 1):
         if s.get("embed") is False:
             continue
+        values, _ = chunk_metadata(record, s)
         rows.append(
             {
                 "id": f"{kind}/{stem}#{n}",
                 **values,
+                "terms": s.get("terms", []),
                 "aid_year": record.get("aid_year"),
                 "heading_path": heading_path(s),
                 "heading": s["heading"],
@@ -103,6 +104,23 @@ def term_cell(row: dict) -> str:
     return f"aid year {row['aid_year']}" if row.get("aid_year") else "-"
 
 
+def terms_counts(rows: list[dict]) -> dict[str, dict[str, int]]:
+    """Per doc_type: sections, sections with `terms`, and sections with more than one term."""
+    out: dict[str, dict[str, int]] = {}
+    for r in rows:
+        e = out.setdefault(
+            r["doc_type"] or "(null)", {"sections": 0, "with_terms": 0, "several": 0}
+        )
+        e["sections"] += 1
+        e["with_terms"] += bool(r["terms"])
+        e["several"] += len(r["terms"]) > 1
+    return dict(sorted(out.items()))
+
+
+def terms_cell(row: dict) -> str:
+    return "; ".join(row["terms"]) if row["terms"] else "-"
+
+
 def show(value: object) -> str:
     return "-" if value is None else str(value)
 
@@ -110,6 +128,7 @@ def show(value: object) -> str:
 def render(rows: list[dict], left_out: dict, events: list[dict], courses: dict[str, int]) -> str:
     per_type = Counter(r["doc_type"] for r in rows)
     nulls = null_counts(rows)
+    with_terms = terms_counts(rows)
     lines = [
         "# Section index",
         "",
@@ -140,6 +159,22 @@ def render(rows: list[dict], left_out: dict, events: list[dict], courses: dict[s
             for t, e in nulls.items()
         ],  # fmt: skip
         "",
+        "## Sections with terms per doc_type",
+        "",
+        "`terms` is filled only from explicit term names (Summer I, Summer II, Summer, Fall,",
+        "Winter, Spring + a year) in a section's heading path or table title; never from body",
+        "text or dates.",
+        "`term` is the single entry when there is exactly one, else null.",
+        "",
+        "| doc_type | sections | with terms | with several terms |",
+        "|---|---|---|---|",
+        *[
+            f"| {t} | {e['sections']} | {e['with_terms']} | {e['several']} |"
+            for t, e in with_terms.items()
+        ],  # fmt: skip
+        f"| total | {len(rows)} | {sum(e['with_terms'] for e in with_terms.values())} | "
+        f"{sum(e['several'] for e in with_terms.values())} |",
+        "",
         "## Sections by source",
     ]
     for source, group in by_source(rows).items():
@@ -152,12 +187,12 @@ def render(rows: list[dict], left_out: dict, events: list[dict], courses: dict[s
             f"term {term_cell(first)}: {len(group)} sections, "
             f"{sum(r['chars'] for r in group)} chars.",
             "",
-            "| id | doc_type | department | scope | term | source | heading path | chars |",
-            "|---|---|---|---|---|---|---|---|",
+            "| id | doc_type | department | scope | term | terms | source | heading path | chars |",
+            "|---|---|---|---|---|---|---|---|---|",
         ]
         for r in group:
             cells = [r["id"], show(r["doc_type"]), show(r["department"]), r["scope"], term_cell(r),
-                     r["source"], r["heading_path"], str(r["chars"])]  # fmt: skip
+                     terms_cell(r), r["source"], r["heading_path"], str(r["chars"])]  # fmt: skip
             lines.append("| " + " | ".join(c.replace("|", "\\|") for c in cells) + " |")
     lines += [
         "",

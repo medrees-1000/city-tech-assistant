@@ -52,7 +52,7 @@ def test_page_rows_have_the_requested_fields_and_stable_ids():
     assert rows[1] == {
         "id": "page/CST-NYT/y#2", "source": "https://x/y.aspx", "doc_type": "department",
         "department": "CST-NYT", "scope": "department", "term": None,
-        "date": "2026-10-11T16:49:30+00:00", "last_updated": None, "aid_year": None,
+        "date": "2026-10-11T16:49:30+00:00", "last_updated": None, "aid_year": None, "terms": [],
         "heading_path": "A > B", "heading": "B", "chars": 3,
     }  # fmt: skip
     assert rows[0]["chars"] == 5
@@ -147,6 +147,20 @@ def test_render_groups_rows_by_source_and_ends_with_the_calendar_and_course_tabl
     assert "**2 sections** in 1 sources" in text and "| department | 2 |" in text
     assert "| department | 2 | 0 | 0 | 0 | 0 | 2 | 0 | 2 |" in text  # the null-count table
     assert text.count("### https://x/y.aspx") == 1
-    row = "| page/CST-NYT/y#2 | department | CST-NYT | department | - | https://x/y.aspx"
+    row = "| page/CST-NYT/y#2 | department | CST-NYT | department | - | - | https://x/y.aspx"
     assert f"{row} | A > B | 3 |" in text
     assert "| Fall 2026 | 1 | a.pdf |" in text and "| total | 4 |" in text
+
+
+def test_terms_counts_and_the_terms_column():
+    from cta.index.section_index import terms_cell, terms_counts
+
+    rows = section_rows(page(), "page", "a")
+    rows[0]["terms"] = ["Fall 2026"]
+    rows[1]["terms"] = ["Fall 2026", "Spring 2027"]
+    assert terms_counts(rows) == {"department": {"sections": 2, "with_terms": 2, "several": 1}}
+    assert terms_cell(rows[0]) == "Fall 2026" and terms_cell(rows[1]) == "Fall 2026; Spring 2027"
+    assert terms_cell({"terms": []}) == "-"
+    text = render(rows, {}, [], {})
+    assert "| department | 2 | 2 | 1 |" in text and "| total | 2 | 2 | 1 |" in text
+    assert "| Fall 2026; Spring 2027 |" in text
