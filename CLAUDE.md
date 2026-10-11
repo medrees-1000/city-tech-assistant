@@ -67,9 +67,15 @@ Skip `program-DSCI-BS-*.pdf`: it is a subset of the CST department PDF.
 
 - `www.citytech.cuny.edu/robots.txt` only disallows `/academics/departments-html/`. Sitemap at
   `/sitemap.xml` has http URLs and junk entries; normalize and filter.
-- Site pages carry a big mega-menu; strip it before chunking. Some pages contain unrendered
-  Angular placeholders like `{{active_alert.title}}` or `{{employee.Email}}`; drop them, and treat a
-  page with only placeholders as "not collected", never as content.
+- Site pages carry a big mega-menu in `header`. The parser reads only the main content
+  (`div.c-layout-sidebar-content`) and the sidebar contact panels, so the menu, alert banner, breadcrumbs
+  and footer are never visited. As of Oct 11, 2026 there are no `{{...}}` placeholders outside the header
+  alert banner on the 59 crawled pages (the `{{course.Subject}}`/`{{employee.Email}}` ones are on the
+  directory and course-listing pages, which stay out of scope). Still drop any `{{...}}` found, and treat
+  a page with only placeholders as "not collected", never as content.
+- Stray spaces inside email addresses (`EMilonas @citytech.cuny.edu`) are in the `mailto:` links on the
+  CST, Math and Dental `chairperson.aspx` pages. Take the address from the `mailto:` link and remove
+  whitespace; the repairs are listed in `docs/validation-log.md`.
 - Department `directory.aspx` pages and the catalog `/faculty` pages are JS-loaded. Not collected.
 - Department pages do give a contact block (email, phone, room, office hours); keep it.
 
@@ -79,8 +85,11 @@ Skip `program-DSCI-BS-*.pdf`: it is a subset of the CST department PDF.
   sit outside the body and are ignored.
 - `admissions/dates-deadlines.aspx` is thin; use the calendar PDFs for dates.
 - `financial-aid/financial-payment-calendar.aspx` is a shell that only links to PDFs; the PDF is the content.
-- `advisement/planner.aspx` answers with a 302 redirect to the `http://` URL. The crawler must
-  follow same-host redirects and normalize to https; don't assume the page is missing.
+- `advisement/planner.aspx` answered with a 302 redirect to the `http://` URL on Oct 9, but returned 200
+  directly on Oct 11. The crawler still follows same-host redirects and normalizes to https; don't
+  assume a page is missing.
+- `advisement/writing-intensive-fall26.aspx` returns 200 with an empty main content div (checked Oct 11).
+  It is recorded as `not_collected` ("main content empty in raw HTML") and fails the non-empty body check.
 - `registrar/academic-calendar.aspx` links 12 PDFs under `/registrar/docs/` (winter, spring,
   summer, fall 2026 and winter, spring 2027, each with a `_meeting_grid.pdf`). Summer 2027 and
   Fall 2027 calendars are not published, so abstain on those terms.

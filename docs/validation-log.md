@@ -133,3 +133,49 @@ Pending manual items (not automated yet):
 - Chair name, office, phone and email: compare the web page with the department PDF (needs the PDF
   parser, a later step).
 - Refund pages show which terms they cover; no refund answer for a term the page does not list.
+
+## 2026-10-11: web pages, parser and checks (first full run)
+
+59 pages crawled and parsed (raw HTML untouched; parsing decodes in memory only). Selectors approved
+by the owner: main `div.c-layout-sidebar-content`; contact panels `div.c-layout-sidebar-menu div.panel`
+whose heading is "CONTACT US" or contains "HOURS"; `p.barTitle` read as a level-2 heading; tables
+that contain headings are layout (their content becomes sections); `owner` comes from the manifest.
+
+Pages per owner (collected / fetched, all HTTP 200): CST-NYT 8/8, MATH-NYT 8/8, EET-NYT 7/7,
+DENT-NYT 12/12; admissions 3/3, advisement 5/6, bursar 3/3, financial-aid 4/4, registrar 8/8.
+Total 58 collected of 59.
+
+Failed checks (1, not fixed):
+- `body_non_empty`: `advisement/writing-intensive-fall26.aspx` returns 200 with an empty main content
+  div. Recorded as `not_collected`, reason "main content empty in raw HTML". Cause not investigated.
+
+Email repairs (3 pages; the address is taken from the `mailto:` link and whitespace removed):
+- `computer-systems/chairperson.aspx`: `EMilonas @citytech.cuny.edu` -> `EMilonas@citytech.cuny.edu`
+- `dental/chairperson.aspx`: `AMatthews @citytech.cuny.edu` -> `AMatthews@citytech.cuny.edu`
+- `mathematics/chairperson.aspx`: `JNatov @citytech.cuny.edu` -> `JNatov@citytech.cuny.edu`
+  (the visible text is also split across elements; the link holds the whole address)
+
+Correction to the earlier entry in this log: I wrote that stray spaces also appear on five
+advisement pages (`transferadvisement @...`). That was wrong. It came from my own text search, which
+joined text nodes with spaces. In the HTML the `mailto:` href is correct
+(`transferadvisement@citytech.cuny.edu`); only the link text is split by a `<br>`. No repair is needed.
+The EET chair email has no space either.
+
+Parser problems found by comparing cleaned text with raw text, and fixed in code (not by editing data):
+- `<p>` and `<table>` elements placed directly inside a `<ul>`/`<ol>` (registrar/faqs,
+  financial-aid/sap) were dropped; they are now kept in order.
+- Footnote markers glued onto words (`Psychology<sup>1</sup>` read as "Psychology1"); now `Psychology^1`.
+- `<button>` text inside a link was dropped (computer-systems root, "Advisement and Tutoring
+  Information"); now kept as link text.
+- Broken markup on `bursar/payment-plan.aspx` (`<tr><tr>...</tr></tr><td>...`) hid the last row of the
+  Fall 2026 table (Aug 25 - Sept 04, 2 payments, Oct - Nov); table cells outside a `<tr>` are now kept.
+- Commented-out HTML is ignored on purpose (for example a stale "Fall 2025 Payment Plan" table on the
+  payment-plan page, and a phone number in the bursar contact panel).
+After these fixes every word in the raw main content (outside comments) appears in the cleaned text.
+
+Pending manual items (not automated):
+- Chair name, office, phone and email: compare the web page with the department PDF (needs the PDF
+  parser, a later step). The web-side check only requires the chair block to be complete and
+  well formed; the department root pages carry the department office contact, not the chair.
+- Refund pages show which terms they cover; no refund answer for a term the page does not list.
+- Manual check 3 (open 10 random cleaned pages and look for menu junk or missing sections).

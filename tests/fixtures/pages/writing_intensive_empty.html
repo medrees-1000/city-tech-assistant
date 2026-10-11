@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<!--[if IE 9]> <html lang="en" class="ie9"> <![endif]-->
+<!--[if !IE]><!-->
+<html lang="en-us">
+<!--<![endif]-->
+<!-- BEGIN HEAD -->
+<head>
+	<title>General Education - Writing Intensive Requirements - City Tech</title>
+	<meta name="robots" content="all" />
+	<meta name="robots" content="index, follow" />
+	<meta name="GOOGLEBOT" content="INDEX, FOLLOW" />
+	<!-- <meta charset="utf-8" /> -->
+<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta content="New York City College of Technology (City Tech) is the designated college of technology of The City University of New York, currently offering both baccalaureate and associate degrees, as well as specialized certificates. New York City College of Technology serves the city and the state by providing technically proficient graduates in the technologies of the arts, business, communications, health and engineering; human services and law-related professions; technical and occupational education; and liberal arts and sciences" name="description" />
+<meta name="keywords" content="City Tech, College of technology, higher education, NYC College of Technology, Entertainment Tech, Hospitality Management, Nursing, City Tech Brooklyn, Environmental Control Technology, Communication Design,  African American Studies, Biological Sciences, Business, Chemistry, Construction Management Technology, Vision Care Technology, Dental Lab Tech, Dental Hygiene, Computer Systems Technology, NYCCT, Admissions, Financial Aid, bookstore, book store, campus store, textbooks, course materials, books, clothing, apparel, gifts, t-shirts, supplies, shop, store, fan gear, open house, CSTEP">
+<meta content="CIS Web Team" name="author" />
+<!-- <meta name="robots" content="noindex,nofollow"> -->
+<meta name="msvalidate.01" content="A75D65E5F5BF70F45CCD0754BD405044" /> 
+<!-- BEGIN GLOBAL MANDATORY STYLES -->
+ <!--<link rel="stylesheet" type="text/css" href="/fonts/Trade_Gothic_Next_Regular.css">-->
+<link href='//fonts.googleapis.com/css?family=Roboto+Condensed:300italic,400italic,700italic,400,300,700&amp;subset=all' rel='stylesheet' type='text/css'>
+<link href="/assets/socicon/socicon.css" rel="stylesheet" type="text/css" />
+<link href="/css/plugins/bootstrap-social.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+<link href="/assets/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+<!-- <link href="/assets/simple-line-icons/simple-line-icons.min.css" rel="stylesheet" type="text/css" /> -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/simple-line-icons/2.2.4/css/simple-line-icons.css" rel="stylesheet" />
+<link href="/css/plugins/animate.min.css" rel="stylesheet" type="text/css" />
+<link href="/assets/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+<!-- END GLOBAL MANDATORY STYLES -->
+<!-- BEGIN: BASE PLUGINS  -->
+<link href="/assets/revo-slider/css/settings.css" rel="stylesheet" type="text/css" />
+<link href="/assets/revo-slider/css/layers.css" rel="stylesheet" type="text/css" />
+<link href="/assets/revo-slider/css/navigation.css" rel="stylesheet" type="text/css" />
+<link href="/assets/cubeportfolio/css/cubeportfolio.min.css" rel="stylesheet" type="text/css" />
+<link href="/assets/owl-carousel/owl.carousel.css" rel="stylesheet" type="text/css" />
+<link href="/assets/owl-carousel/owl.theme.css" rel="stylesheet" type="text/css" />
+<link href="/assets/owl-carousel/owl.transitions.css" rel="stylesheet" type="text/css" />
+<link href="/assets/fancybox/jquery.fancybox.css" rel="stylesheet" type="text/css" />
+<link href="/assets/slider-for-bootstrap/css/slider.css" rel="stylesheet" type="text/css" />
+<!-- END: BASE PLUGINS -->
+<!-- BEGIN THEME STYLES -->
+<link href="/css/base/plugins.css" rel="stylesheet" type="text/css" />
+<link href="/css/base/components.css" id="style_components" rel="stylesheet" type="text/css" />
+<link href="/css/base/themes/blue10.css" rel="stylesheet" id="style_theme" type="text/css" />
+<link href="/css/base/custom.css" rel="stylesheet" type="text/css" />
+<!-- END THEME STYLES -->
+<link rel="shortcut icon" href="/favicon.ico" /> 
+<!-- Cookie Banner Styles-->
+<link rel="stylesheet" href="/css/cookiebanner.css">
+<!-- Google tag (gtag.js) -->
+<!-- Google tag (gtag.js) --> 
+<!-- 
+-->
+	<link rel="stylesheet" href="css/ui-grid.min-4.css" />
+	<link rel="stylesheet" href="css/gen-ed.css" />
+</head>
+<body class="c-layout-header-fixed c-layout-header-mobile-fixed" ng-app='app' ng-controller="CourseController">
+	<!-- BEGIN: LAYOUT/HEADERS/HEADER-1 -->
+	<!-- BEGIN: HEADER -->
+	<a class="skip-nav" href="#content">Skip navigation</a>
+<header class="c-layout-header c-layout-header-2 c-layout-header-dark-mobile c-header-transparent-dark"
+        data-minimize-offset="80" aria-label="Main site header">
+<div class="alertHidden" >
+	<!-- ALERT 1 -->
+	<div class="alert-dismiss-0 alert alert-danger c-bg-{{active_alert.alertType}}" role="alert" ng-if="active_alert.alertDescription.length < 6 || active_alert.alertDescription == NULL">
+		<!-- Cat 100 is Homepage -->
+		<div class="container">						
+			<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
+			<br><strong><span class="c-font-bold c-font-blue c-font-14">{{active_alert.title}}</span></strong>  <br />
+			<span ng-bind-html="active_alert.message" class="c-font-dark">{{active_alert.message}}</span>
+			<span class="lastUpdate">Last updated - {{active_alert.lastUpdated | date:'MMM d, yyyy  h:mma'}}</span>
+		</div>
+	</div>
+	<!-- ALERT 2 -->
+	<div class="alert-dismiss-0 alert alert-danger c-bg-{{active_alert.alertType}}" role="alert" ng-if="active_alert.alertDescription.length > 5  && active_alert.alertDescription != NULL">
+		<div class="container">
+			<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
+			<br><strong><span class="c-font-bold c-font-dark c-font-18">{{active_alert.title}}</strong>  </span><br/>
+			<span ng-bind-html="active_alert.message">{{active_alert.message}}</span> &nbsp;<a href="#" class="" data-toggle="modal" data-target="#alert1">More&nbsp;Info&nbsp;<i class="fa fa-chevron-right"></i></a>
+			<span class="lastUpdate">Last updated - {{active_alert.lastUpdated | date:'MMM d, yyyy  h:mma'}}</span>
+		</div>
+		<!-- MODAL -->
+		<div class="modal fade" id="alert1" tabindex="-1" role="dialog" aria-labelledby="alert1Title" aria-hidden="true">
+			<div class="modal-dialog modal-lg">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+						<h4 class="modal-title" id="alert1Title">{{active_alert.title}}</h4>
+					</div>
+					<div class="modal-body" ng-bind-html="active_alert.alertDescription">{{active_alert.alertDescription}}</div>
+					<div class="modal-footer">
+						<button type="button" class="btn c-btn-dark c-btn-border-2x c-btn-square c-btn-bold c-btn-uppercase" data-dismiss="modal">Close</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+  <!-- Top Bar -->
+  <div class="c-topbar c-topbar-light c-topbar-wLine">
+    <div class="container">
+      <nav class="c-top-menu c-pull-right" aria-label="Top menu">
+        <ul class="c-links c-theme-ul">
+          <li><a href="/prospective">Prospective Students</a></li>
+          <li class="c-divider">/</li>
+          <li><a href="/current-student/">Current Students</a></li>
+          <li class="c-divider">/</li>
+          <li><a href="/faculty-staff">Faculty &amp; Staff</a></li>
+          <li class="c-divider">/</li>
+          <li><a href="/alumni">Alumni &amp; Friends</a></li>
+          <li class="c-divider">/</li>
+          <li><a href="/foundation">Donate</a></li>
+          <li class="c-divider">/</li>
+          <li><a href="https://citytech.event.cuny.edu/upcoming">Events</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+  <!-- Navbar -->
+  <div class="c-navbar" role="navigation" aria-label="Primary navigation">
+    <div class="container">
+      <div class="c-navbar-wrapper clearfix">
+        <!-- Brand -->
+        <div class="c-brand c-pull-left">
+          <a href="/" class="c-logo">
+            <img src="/images/logos/citytech_cuny_logo.png" alt="City Tech Logo" class="c-desktop-logo">
+            <img src="/images/logos/citytech_cuny_logo.png" alt="City Tech Logo Inverse" class="c-desktop-logo-inverse">
+            <img src="/images/logos/citytech_cuny_logo.png" alt="City Tech Logo Mobile" class="c-mobile-logo">
+          </a>
+          <button class="c-hor-nav-toggler c-bg-yellow" type="button" data-target=".c-mega-menu"
+                  aria-label="Toggle main menu">
+            <span class="c-line c-bg-dark"></span>
+            <span class="c-line c-bg-dark"></span>
+            <span class="c-line c-bg-dark"></span>
+          </button>
+        </div>
+        <!-- Quick Search -->
+        <form name="googleFormSearch" onsubmit="if (this.q.value === '') return false;"
+              id="searchbox_015249438177587670361:t91glt8xdds"
+              action="//www.citytech.cuny.edu/search.aspx"
+              class="c-quick-search" aria-label="Site search">
+          <input type="text" name="q" value="" class="form-control" placeholder="Type to search..."
+                 autocomplete="off" aria-label="Search" />
+          <span class="c-theme-link close-search" tabindex="0">&times;</span>
+        </form>
+        <!-- Mega Menu -->
+        <nav class="c-mega-menu c-pull-right c-mega-menu-dark c-mega-menu-dark-mobile c-fonts-uppercase c-fonts-bold"
+             aria-label="Main site navigation">
+          <ul class="nav navbar-nav c-theme-nav">
+            <!-- About Us -->
+            <li class="c-menu-type-classic dropdown">
+              <a href="/about-us" class="c-link dropdown-toggle" id="aboutus" aria-haspopup="true" aria-expanded="false">
+                About Us
+                <span class="c-arrow c-toggler"></span>
+              </a>
+              <ul class="dropdown-menu c-menu-type-classic c-pull-left" aria-labelledby="aboutus">
+				<li><a href="/about-us/mission.aspx">Our Mission</a></li>
+                <li><a href="/about-us/facts.aspx">College Facts</a></li>
+                <li><a href="/about-us/leadership.aspx">College Leadership</a></li>
+                <li><a href="/collegecouncil/">College Council</a></li>
+                <li><a href="/communications/">Office of Communications</a></li>
+                <li><a href="/about-us/partnerships.aspx">Partnerships</a></li>
+                <li><a href="/about-us/directions.aspx">Directions &amp; Map</a></li>
+                <li><a href="/public-safety/emergency.aspx" class="c-font-red">Emergency Preparedness</a></li>
+              </ul>
+            </li>
+            <!-- Admissions -->
+            <li class="c-menu-type-classic dropdown">
+              <a href="/admissions/" class="c-link dropdown-toggle" id="admissions" aria-haspopup="true" aria-expanded="false">
+                Admissions
+                <span class="c-arrow c-toggler"></span>
+              </a>
+              <ul class="dropdown-menu c-menu-type-classic c-pull-left" aria-labelledby="admissions">
+                <li><a href="/admissions/index.aspx#how-to-apply">Apply</a></li>
+                <li><a href="/admissions/tuition-general.aspx">Tuition &amp; Fees</a></li>
+                <li><a href="/financial-aid">Financial Aid</a></li>
+                <li><a href="/admissions/dates-deadlines.aspx">Dates &amp; Deadlines</a></li>
+                <li><a href="/admissions/docs/viewbook.pdf">View Book</a></li>
+              </ul>
+            </li>
+            <!-- Academics -->
+            <li class="c-menu-type-classic dropdown">
+              <a href="/academics/" class="c-link dropdown-toggle" id="academics" aria-haspopup="true" aria-expanded="false">
+                Academics
+                <span class="c-arrow c-toggler"></span>
+              </a>
+              <ul class="dropdown-menu c-menu-type-classic c-pull-left" aria-labelledby="academics">
+                <li><a href="/advisement/">Academic Advising</a></li>
+                <li><a href="/registrar/academic-calendar.aspx">Academic Calendar</a></li>
+                <li><a href="/academics/academic-departments.aspx">Academic Departments</a></li>
+				<li><a href="/academics/academic-catalog.aspx">College Catalog</a></li>
+                <li><a href="/academics/areas-of-study.aspx">Degrees &amp; Areas of Study</a></li>
+                <li><a href="https://www.citytech.cuny.edu/academic-integrity/">Academic Integrity</a></li>
+                <li><a href="/academics/academic-catalog.aspx">College Catalog</a></li>
+                <li><a href="/continuinged/">Continuing Education</a></li>
+                <li><a href="https://library.citytech.cuny.edu">Library</a></li>
+                <li><a href="/research/">Research</a></li>
+				<li>
+					<a href="https://globalsearch.cuny.edu/CFGlobalSearchTool/search.jsp">Schedule of Classes</a>
+				</li>
+              </ul>
+            </li>
+            <!-- Campus Life -->
+            <li class="c-menu-type-classic dropdown">
+              <a href="#" class="c-link dropdown-toggle" id="campuslife" aria-haspopup="true" aria-expanded="false">
+                Campus Life
+                <span class="c-arrow c-toggler"></span>
+              </a>
+              <ul class="dropdown-menu c-menu-type-classic c-pull-left" aria-labelledby="campuslife">
+                <li><a href="/star/">Scheduling Testing Advisement Registration</a></li>
+                <li><a href="/student-services/">Student Services</a></li>
+                <li><a href="/counseling/">Wellness & Counseling</a></li>
+                <li><a href="/student-life/">Student Life</a></li>
+                <li><a href="/sga">Student Government</a></li>
+                <li><a href="/public-safety/">Campus Safety</a></li>
+              </ul>
+            </li>
+            <li>
+							<a href="javascript:;" class="c-link dropdown-toggle c-toggler" id="quicklinks">Quicklinks
+								<span class="c-arrow"></span>
+							</a>
+							<ul class="dropdown-menu c-menu-type-mega c-menu-type-fullwidth" style="min-width: auto"
+								aria-labelledby="quicklinks">
+								<li>
+									<ul class="dropdown-menu c-menu-type-inline">
+										<li>
+											<div class="ql_menu">Logins</div>
+										</li>
+										<li>
+											<a href="https://home.cunyfirst.cuny.edu">CUNYfirst</a>
+										</li>
+										<li>
+											<a href="https://cuny-accommodate.symplicity.com/">CUNY Accommodate</a>
+										</li>
+										<li>
+											<a href="https://login.microsoftonline.com/">Faculty/Staff
+												Email</a>
+										</li>
+										<li>
+											<a href="https://login.microsoftonline.com/login.srf?wa=wsignin1.0&rpsnv=4&ct=1458047477&rver=6.6.6556.0&wp=MBI_SSL&wreply=https%3a%2f%2foutlook.office365.com%2fowa%2f%3frealm%3dmail.citytech.cuny.edu&id=260563&whr=mail.citytech.cuny.edu&CBCXT=out&msafed=0">Student Email</a>
+										</li>
+										<li>
+											<a href="https://www.citytech.cuny.edu/eparse/">ePARSE</a>
+										</li>
+										<li>
+											<a href="https://cunyithelp.cuny.edu/csp">CIS Ticketing System - CUNY IT Help</a>
+										</li>
+										<li>
+											<a href="https://degreeworks.cuny.edu">DegreeWorks</a>
+										</li>
+										<li>
+											<a href="https://brightspace.cuny.edu/">Brightspace</a>
+										</li>
+										<li>
+											<a href="https://citytech-cuny.campus.eab.com">Faculty/Staff Navigate Login</a>
+										</li>
+										<li>
+											<a href="https://prassist.citytech.cuny.edu/">Part-time Employment / Time and Leave System</a>
+										</li>
+										<li>
+											<a href="https://archibus.cuny.edu/archibus">B&G Work Order System (department designee) </a>
+										</li>
+										<li>
+											<a href="https://www.cuny.edu/about/administration/offices/procurement-services/cuny-buy/">CUNY Buy </a>
+										</li>
+									</ul>
+								</li>
+								<li>
+									<ul class="dropdown-menu c-menu-type-inline">
+										<li>
+											<div class="ql_menu">Helpful Links</div>
+										</li>
+										<li>
+											<a href="/advisement/" role="menuitem">Academic Advising</a>
+										</li>
+										<li>
+											<a href="/registrar/academic-calendar.aspx">Academic
+												Calendar</a>
+										</li>
+										<li>
+											<a href="https://cuny.coursedog.com/#/login?continue=/">Academic Scheduling Platform | Coursedog</a>
+										</li>
+											<li>
+											<a href="https://www.citytech.cuny.edu/ai/">AI Resources Hub</a>
+										</li>
+										<li>
+											<a href="/bookstore/">Bookstore</a>
+										</li>
+										<li><a href="/academics/academic-catalog.aspx">College
+												Catalog</a></li>
+										<li>
+											<a href="https://library.citytech.cuny.edu/">Library</a>
+										</li>
+										<li>
+											<a href="https://openlab.citytech.cuny.edu/">OpenLab</a>
+										</li>
+										<li>
+											<a href="/atol/" target="_blank" role="menuitem">Academic Technologies and
+												Online Learning (AtoL)</a>
+										</li>
+										<li>
+											<a href="http://facultycommons.citytech.cuny.edu/">Faculty Commons</a>
+										</li>
+										<li>
+											<a href="http://it.citytech.cuny.edu">Technology Services</a>
+										</li>
+										<li>
+											<a href="/public-safety/emergency.aspx" class="c-font-red">Emergency Preparedness</a>
+										</li>
+									</ul>
+								</li>
+								<li>
+									<ul class="dropdown-menu c-menu-type-inline">
+										<li>
+											<div class="ql_menu">Information For</div>
+										</li>
+										<li><a href="/prospective" class="c-link">Prospective Students</a></li>
+										<li><a href="/current-student" class="c-link">Current Students</a></li>
+										<li><a href="/faculty-staff" class="c-link">Faculty &amp; Staff</a></li>
+										<li><a href="/alumni" class="c-link">Alumni &amp; Friends</a></li>
+									</ul>
+								</li>
+								<li>
+									<ul class="dropdown-menu c-menu-type-inline">
+										<li>
+											<div class="ql_menu">About Us</div>
+										</li>
+										<li>
+											<a href="/offices-services/">Offices &amp; Services</a>
+										</li>
+										<li>
+											<a href="/collegecouncil/">College Council</a>
+										</li>
+										<li>
+											<a href="/directory/" >Directory</a>
+										</li>
+										<li>
+											<a href="/about-us/directions.aspx">Directions &amp; Map
+														</a>
+										</li>
+										<!-- <li>
+													<a href="https://goo.gl/maps/mmgqg1v7jwm" target="_blank"><i class="icon-pointer c-theme-font"></i> 300 Jay Street, Brooklyn, NY 11201</a>
+												</li>
+												<li>
+													<a href="tel:718-260-5500"><i class="icon-call-end c-theme-font"></i> 718-260-5500</a>
+												</li> -->
+									</ul>
+								</li>
+							</ul>
+						</li>
+            <li>
+							<form name="googleFormSearch"
+								onsubmit="if (this.q.value === '') return false; else return true;"
+								id="searchbox_015249438177587670361:t91glt8xdds"
+								action="//www.citytech.cuny.edu/search.aspx" class="c-mobi-search">
+								<!-- <input type="hidden" name="cx" value="015249438177587670361:t91glt8xdds" /> -->
+								<!-- <input type="hidden" name="cof" value="FORID:11" /> -->
+								<input type="text" name="q" value="" onfocus="input_txt_focus(this,def_val)"
+									onblur="input_txt_blur(this,def_val)" class="form-control"
+									placeholder="Type to search..." autocomplete="off" aria-label="Search" />
+							</form>
+						</li>
+						<li class="c-search-toggler-wrapper c-menu-type-classic">
+							<a class="c-btn-icon c-search-toggler" href="#" aria-label="Search">
+								<i class="fa fa-search"></i>
+							</a>
+						</li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</header>
+<a name="content"></a>
+	<!-- END: HEADER -->
+	<!-- END: LAYOUT/HEADERS/HEADER-1 -->
+	<!-- BEGIN: PAGE CONTAINER -->
+	<div class="c-layout-page c-lv2-page">
+		<div class="lv2banner">
+			<div class="container">
+				<div class="page-title-ct">Academic Advising</div>
+			</div>
+		</div>
+		<!-- BEGIN: PAGE CONTENT -->
+		<!-- BEGIN: LAYOUT/BREADCRUMBS/BREADCRUMBS-1 -->
+		<div class="c-layout-breadcrumbs-1 c-fonts-uppercase c-fonts-bold c-bordered c-bordered-both">
+			<div class="container">
+				<ul class="c-page-breadcrumbs c-theme-nav c-pull-left c-fonts-regular">
+					<li>
+						<a href="/"><i class="glyphicon glyphicon-home"></i></a>
+					</li>
+					<li>/</li>
+					<li>
+						<a href="/academics" aria-label="Academics">Academics</a>
+					</li>
+					<li>/</li>
+					<li>
+						<a href="./" aria-label="Academic Support">Academic Advising</a>
+					</li>
+					<li>/</li>
+					<li>
+						<a href="gen-ed.aspx">General Education</a>
+					</li>
+					<li>/</li>
+					<li>
+						<a href="#" aria-label="Writing Intensive Requirements">Writing Intensive Requirements</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<!-- END: LAYOUT/BREADCRUMBS/BREADCRUMBS-1 -->
+		<div class="container">
+			<div class="c-layout-sidebar-content c-padding-20"></div>
+			<!-- BEGIN: PAGE CONTENT -->
+				<h1 class="c-font c-left-font-bold c-border-bottom c-border-blue-1">Fall 2026 - Writing Intensive Courses</h1>
+				<p>Students at New York City College of Technology must complete two courses designated writing intensive (WI) for the associate level, one from general education requirements (GenEd) and one from the major; and two additional courses designated WI for the baccalaureate level, one from GenEd and one from the major.</p>
+				<p>Some courses can be offered either as writing intensive or not, so the section number matters!</p>
+				<p>The list below includes all WI courses for the current semester. To refer to a list of WI courses and section numbers from past semester, please refer to the <a href="writing-intensive-archive.aspx">archive page.</a> To see how transferred credits affect WI credit, look at the general education overview.</p>
+				<hr />
+				<p><em>Filtering tips:</em> You can type the course name in the empty box under "Course Name" column to check for Pathways compatibility. Alternatively, click on any column header except "Writing Intensive" to sort the courses accordingly.</p>
+				<div id="wi" ui-grid="gridOptions" class="grid c-margin-t-30 cbp loading" ui-grid-resize-columns ui-grid-pagination></div>
+			<!-- END: PAGE CONTENT -->
+		</div>
+		<!-- END: PAGE CONTENT -->
+	</div>
+	<!-- END: PAGE CONTAINER -->
+	<!-- BEGIN: LAYOUT/FOOTERS/FOOTER-5 -->
+	<a name="footer"></a>
+<footer class="c-layout-footer c-layout-footer-3"  role="contentinfo">
+  <div class="c-prefooter" style="background-color:#1F2E30;">
+    <div class="container">
+      <div class="row">
+        <!-- About Us -->
+        <div class="col-md-6 col-sm-12">
+          <div class="col-sm-6 col-xs-12">
+            <div class="c-container c-first">
+              <div class="c-content-title-1">
+                <div class="c-font-uppercase c-font-bold c-font-white">About Us</div>
+              </div>
+              <ul class="c-links c-font-white">
+                <li><a href="/about-us/mission.aspx">Our Mission</a></li>
+                <li><a href="/about-us/policies.aspx">Facts &amp; Policies</a></li>
+                <li><a href="/about-us/leadership.aspx">College Leadership</a></li>
+                <li><a href="/about-us/partnerships.aspx">Partnerships</a></li>
+                <li><a href="/foundation/">Foundation</a></li>
+                <li><a href="/alumni/">Alumni & Friends</a></li>
+                <li><a href="/news">City Tech News</a></li>
+                <li><a href="/directory/">Directory</a></li>
+                <li><a href="/about-us/directions.aspx">Directions &amp; Map</a></li>
+                <li><a href="http://www.facebook.com/pages/New-York-City-College-of-Technology-City-Tech-News/138483227619">Ask us on Facebook!</a></li>
+              </ul>
+            </div>
+          </div>
+          <!-- Academics -->
+          <div class="col-sm-6 col-xs-12">
+            <div class="c-container c-font-white">
+              <div class="c-content-title-1">
+                <div class="c-font-uppercase c-font-bold c-font-grey">Academics</div>
+              </div>
+              <ul class="c-links c-font-white" >
+                <li><a href="/advisement/">Academic Advising</a></li>
+                <li><a href="/academics/areas-of-study.aspx">Degrees &amp; Areas of Study</a></li>
+                <li><a href="/academics/honors-scholarships.aspx">Honors and Scholarships</a></li>
+                <li><a href="/academics/special-programs.aspx">Special Programs</a></li>
+                <li><a href="/ce/">Continuing Education</a></li>
+                <li><a href="/registrar/academic-calendar.aspx">Academic Calendar</a></li>
+                <li><a href="https://citytech.catalog.cuny.edu/">College Catalog</a></li>
+                <li><a href="/gen-ed">General Education</a></li>
+                <li><a href="/research/">Research</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <!-- Helpful Links -->
+        <div class="col-md-6 col-sm-12">
+          <div class="col-sm-6 col-xs-12">
+            <div class="c-container">
+              <div class="c-content-title-1">
+                <div class="c-font-uppercase c-font-bold c-font-white">Helpful Links</div>
+              </div>
+              <ul class="c-links c-font-white">
+                <li><a href="/bookstore/">Bookstore</a></li>
+                <li><a href="https://it.citytech.cuny.edu">Technology Services</a></li>
+                <li><a href="https://library.citytech.cuny.edu/">Library</a></li>
+                <li><a href="https://openlab.citytech.cuny.edu/">OpenLab</a></li>
+                <li><a href="/atol/">Academic Technologies and Online Learning</a></li>
+                <li><a href="http://facultycommons.citytech.cuny.edu/">Faculty Commons</a></li>
+                <li><a href="/public-safety/">Public Safety</a></li>
+                <li><a href="http://www.citytech.cuny.edu/consumer-info/">Student Consumer Information</a></li>
+              </ul>
+            </div>
+          </div>
+          <!-- Logins -->
+          <div class="col-sm-6 col-xs-12">
+            <div class="c-container c-last">
+              <div class="c-content-title-1">
+                <div class="c-font-uppercase c-font-bold c-font-white">Logins</div>
+              </div>
+              <ul class="c-links c-font-white">
+                <li><a href="https://ssologin.cuny.edu/">CUNYfirst</a></li>
+                <li><a href="https://login.microsoftonline.com/">Faculty/Staff Email</a></li>
+                <li><a href="https://login.microsoftonline.com/">Student Email</a></li>
+                <li><a href="https://cunyithelp.cuny.edu/csp">CUNY IT Help</a></li>
+                <li><a href="https://brightspace.cuny.edu/">Brightspace</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+<div class="c-postfooter">
+	<div class="container">
+		<div class="row">
+			<!-- Contact Info -->
+			<div class="col-md-4 col-sm-12 c-col">
+				<p class="c-font-white">
+					2026 &copy; New York City College of Technology <br>
+					300 Jay St, Brooklyn, NY 11201
+				</p>
+			</div>
+			<!-- Follow Us -->
+			<div class="col-md-4 col-sm-12 c-col followUs">
+				<div class="c-font-sbold c-font-18 c-margin-b-10 c-font-white">
+					Follow Us
+				</div>
+				<ul class="c-socials c-center">
+					<li>
+						<a href="https://www.linkedin.com/school/citytechcuny/" target="_blank">
+							<span class="sr-only">City Tech LinkedIn</span>
+							<i class="icon-social-linkedin" title="LinkedIn" aria-hidden="true"></i>
+						</a>
+					</li>
+					<li>
+						<a href="https://www.instagram.com/citytechcuny/" target="_blank">
+							<span class="sr-only">City Tech Instagram</span>
+							<i class="icon-social-instagram" title="Instagram" aria-hidden="true"></i>
+						</a>
+					</li>
+					<li>
+						<a href="https://www.youtube.com/user/NewYorkCityTech/videos" target="_blank">
+							<span class="sr-only">City Tech YouTube</span>
+							<i class="icon-social-youtube" title="YouTube" aria-hidden="true"></i>
+						</a>
+					</li>
+					<li>
+						<a href="https://www.facebook.com/citytechcuny" target="_blank">
+							<span class="sr-only">City Tech Facebook</span>
+							<i class="icon-social-facebook" title="Facebook" aria-hidden="true"></i>
+						</a>
+					</li>
+				</ul>
+			</div>
+			<!-- CUNY Logo -->
+			<div class="col-md-4 col-sm-12 c-col cuny-logo">
+				<a href="http://www.cuny.edu/" target="_blank" aria-label="CUNY Website">
+					<img src="https://www.citytech.cuny.edu/images/logos/cuny_logotype_RGB_white.png?nocache=1767299626228"
+						alt="CUNY Logo" width="220" height="60">
+				</a>
+			</div>
+		</div>
+	</div>
+</div>
+	<!-- END: LAYOUT/FOOTERS/FOOTER-5 -->
+	<!-- BEGIN: LAYOUT/BASE/BOTTOM -->
+	<!-- BEGIN: CORE PLUGINS -->
+<!-- END: CORE PLUGINS -->
+<!-- BEGIN: LAYOUT PLUGINS -->
+<!-- END: LAYOUT PLUGINS -->
+<!-- BEGIN: THEME SCRIPTS -->
+<!-- END: THEME SCRIPTS -->
+<!-- Moves banner title below breadcrumb -->
+	<!-- END: LAYOUT/BASE/BOTTOM -->
+</body>
+</html>

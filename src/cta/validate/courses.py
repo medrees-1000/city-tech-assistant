@@ -8,10 +8,10 @@ import json
 import re
 import sys
 from collections import Counter
-from dataclasses import dataclass
 from pathlib import Path
 
 from cta.settings import ROOT, load_sources
+from cta.validate.findings import Finding
 
 REQUIRED_FIELDS = ("code", "title", "description", "credits", "department", "status")
 RULE_ID = re.compile(r"\b\d{6}\b")
@@ -19,14 +19,6 @@ RULE_ID = re.compile(r"\b\d{6}\b")
 # Also matches inside shorthand such as PRE_CST3500_CST3600.
 COURSE_CODE = re.compile(r"(?<![A-Za-z0-9])([A-Z]{2,5}) ?(\d{3,4})([A-Z]{0,2})(?![A-Za-z0-9])")
 MAX_COUNT_CHANGE = 3  # "a few courses"
-
-
-@dataclass
-class Finding:
-    check: str
-    severity: str  # "fail" or "warning"
-    message: str
-    course: str | None = None
 
 
 def check_totals(summary: dict, expected_total: int) -> list[Finding]:

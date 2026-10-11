@@ -9,3 +9,13 @@
   MECH 3672 have no rule here because the crawl only looked up rules for kept courses.
 - `rule_shorthand_full.json`: the full, unrestricted rule response for 014763 (CST 4900).
 - `page.html`, `robots_disallow.txt`: small hand-written crawler fixtures.
+
+## pages/
+
+Real pages from the 2026-10-11 crawl with only `<script>` and `<style>` blocks and blank lines
+removed (the header, mega-menu, alert banner, sidebar and footer are kept, so the tests prove they
+are left out): `bursar_refund_policy`, `admissions_tuition_refund`, `math_faqs`, `cst_chairperson`
+(spaces inside the mailto link), `math_chairperson`, `writing_intensive_empty` (empty main div) and
+`advisement_six_steps` (email link text split by a `<br>`, correct href) and
+`bursar_payment_plan` (malformed table markup: a row whose cells sit outside any `<tr>`).
+`placeholders_only.html` is hand-written: no real page is placeholder-only today.
