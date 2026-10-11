@@ -70,8 +70,8 @@ Skip `program-DSCI-BS-*.pdf`: it is a subset of the CST department PDF.
 - Site pages carry a big mega-menu in `header`. The parser reads only the main content
   (`div.c-layout-sidebar-content`) and the sidebar contact panels, so the menu, alert banner, breadcrumbs
   and footer are never visited. As of Oct 11, 2026 there are no `{{...}}` placeholders outside the header
-  alert banner on the 59 crawled pages (the `{{course.Subject}}`/`{{employee.Email}}` ones are on the
-  directory and course-listing pages, which stay out of scope). Still drop any `{{...}}` found, and treat
+  alert banner on the 59 crawled pages (the directory and course-listing pages hold placeholders and
+  stay out of scope). Still drop any `{{...}}` found, and treat
   a page with only placeholders as "not collected", never as content.
 - Stray spaces inside email addresses (`EMilonas @citytech.cuny.edu`) are in the `mailto:` links on the
   CST, Math and Dental `chairperson.aspx` pages. Take the address from the `mailto:` link and remove
