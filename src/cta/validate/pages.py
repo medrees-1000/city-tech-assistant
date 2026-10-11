@@ -11,9 +11,12 @@ import json
 import re
 import sys
 from collections import Counter
+from pathlib import Path
 from urllib.parse import urlsplit
 
-from cta.parse.html import is_login_url
+from bs4 import BeautifulSoup
+
+from cta.parse.html import PANELS, is_login_url
 from cta.settings import ROOT
 from cta.validate.findings import Finding
 
@@ -24,6 +27,7 @@ CHAIR_FIELDS = ("name", "role", "room", "phone", "email")
 LINK = re.compile(r"\[[^\]]*\]\((https?://[^)\s]+)\)")
 MAX_QUERY = 100
 WI_FALL26 = "https://www.citytech.cuny.edu/advisement/writing-intensive-fall26.aspx"
+TIME = re.compile(r"\d{1,2}:\d{2}\s*[AaPp]\.?[Mm]\.?")
 WI_PLAIN = "https://www.citytech.cuny.edu/advisement/writing-intensive.aspx"
 # Known and accepted by the owner (2026-10-11). (check, URL) -> reason. Still reported every run.
 ACCEPTED = {
@@ -205,6 +209,66 @@ def check_contacts(contacts: list[dict]) -> list[Finding]:
     ]
 
 
+def squash_time(t: str) -> str:
+    return re.sub(r"[\s.]", "", t).upper()
+
+
+def raw_hours(html: str) -> list[dict]:
+    """Sidebar panels (the selector the contact blocks use) that print hours: HOURS in the heading
+    or a clock time in the visible text (HTML comments are not visible, so they do not count)."""
+    found = []
+    for panel in BeautifulSoup(html, "html.parser").select(PANELS):
+        if panel.find_parent(class_="panel"):
+            continue
+        head = panel.select_one(".panel-heading")
+        heading = head.get_text(" ", strip=True) if head else next(panel.stripped_strings, "")
+        times = TIME.findall(panel.get_text(" ", strip=True))
+        if "hours" in heading.lower() or times:
+            found.append({"heading": heading, "times": [squash_time(t) for t in times]})
+    return found
+
+
+def load_raw(manifest: list[dict], raw_root: Path) -> dict[str, str]:
+    """The saved raw HTML of every fetched page, by its URL."""
+    return {
+        e["url"]: (raw_root / e["saved_as"]).read_text(encoding="utf-8", errors="replace")
+        for e in manifest
+        if e.get("saved_as") and e.get("status") == 200
+    }
+
+
+def check_hours_stored(
+    manifest: list[dict], raw: dict[str, str], contacts: list[dict]
+) -> list[Finding]:
+    """If the raw HTML of any page of an owner has an hours panel, the owner's contact record has
+    hours, and every clock time printed in those panels is in the stored hours."""
+    owner_of = {e["url"]: e["owner"] for e in manifest}
+    printed: dict[str, set[str]] = {}
+    for url, html in raw.items():
+        for panel in raw_hours(html):
+            printed.setdefault(owner_of[url], set()).update(panel["times"])
+    by_owner = {c["owner"]: c for c in contacts}
+    found = []
+    for owner, times in sorted(printed.items()):
+        stored = " ".join(h["markdown"] for h in (by_owner.get(owner) or {}).get("hours", []))
+        if not stored:
+            found.append(
+                Finding("hours_missing", "fail", "the page prints hours, none stored", owner)
+            )
+            continue
+        have = {squash_time(t) for t in TIME.findall(stored)}
+        if times - have:
+            found.append(
+                Finding(
+                    "hours_incomplete",
+                    "fail",
+                    f"times printed, not stored: {sorted(times - have)}",
+                    owner,
+                )
+            )
+    return found
+
+
 def check_known_404s(log: list[dict]) -> list[Finding]:
     """A page the owner accepted as a 404 must still be a 404 (the latest fetch-log row decides)."""
     found = []
@@ -240,7 +304,11 @@ def email_repairs(records: list[dict]) -> dict[str, list[dict]]:
 
 
 def run_page_checks(
-    manifest: list[dict], records: list[dict], log: list[dict], contacts: list[dict] | None = None
+    manifest: list[dict],
+    records: list[dict],
+    log: list[dict],
+    contacts: list[dict] | None = None,
+    raw: dict[str, str] | None = None,
 ) -> list[Finding]:
     return apply_accepted(
         [
@@ -255,6 +323,7 @@ def run_page_checks(
             *check_index_flags(records),
             *check_contacts(contacts or []),
             *check_known_404s(log),
+            *(check_hours_stored(manifest, raw, contacts or []) if raw is not None else []),
         ]
     )
 
@@ -282,7 +351,8 @@ def main() -> int:
         json.loads(p.read_text(encoding="utf-8"))
         for p in sorted((processed / "contacts").glob("*.json"))
     ]
-    findings = run_page_checks(manifest, records, log, contacts)
+    raw = load_raw(manifest, ROOT / "data" / "raw")
+    findings = run_page_checks(manifest, records, log, contacts, raw)
     for k, v in counts_per_owner(records).items():
         print(f"{k:28} {v}")
     for f in findings:

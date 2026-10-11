@@ -163,3 +163,46 @@ def test_sources_yaml_decisions():
         "doc_type": "advisement_contacts",
         "note": "lists staff emails",
     }
+
+
+FIN_AID = (
+    "300 Jay Street\n\nPhone: 718-260-5700\n\nIN-PERSON HOURS\n\n"
+    "|  |  |\n| --- | --- |\n| Tuesday | 9:00 PM - 5:00 PM |\n\n"
+    "PHONE HOURS\n\nPhone Number: 718-260-5700\n\n"
+    "|  |  |\n| --- | --- |\n| Monday | 9:00 AM - 5:00 PM |\n\n"
+    "FAFSA: 002696\n\nTAP: 1405"
+)
+
+
+def test_hours_inside_the_contact_panel_run_from_the_first_hours_line_to_the_last_table():
+    from cta.parse.pages import hours_part
+
+    part = hours_part(FIN_AID)
+    assert part.startswith("IN-PERSON HOURS") and part.endswith("| Monday | 9:00 AM - 5:00 PM |")
+    assert "PHONE HOURS" in part and "FAFSA" not in part and "300 Jay" not in part
+    assert "9:00 PM - 5:00 PM" in part  # a typo on the page stays as printed
+    assert hours_part("300 Jay Street\n\nPhone: 718-260-5700") is None
+
+
+def test_hours_entries_take_hours_panels_and_the_hours_part_of_contact_us():
+    from cta.parse.pages import hours_entries
+
+    panels = [
+        {"heading": "CONTACT US", "markdown": FIN_AID},
+        {"heading": "OFFICE HOURS", "markdown": "Monday: 9:00 AM - 7:00 PM"},
+        {"heading": "ANNOUNCEMENTS", "markdown": "10:00 AM party"},
+    ]
+    out = hours_entries(panels)
+    assert [(h["heading"], h["where"]) for h in out] == [
+        ("CONTACT US (hours part)", "inside the CONTACT US panel"),
+        ("OFFICE HOURS", "panel"),
+    ]
+    assert all(h["embed"] is False for h in out)
+    assert hours_entries([{"heading": "CONTACT US", "markdown": "no hours here"}]) == []
+
+
+def test_the_contact_record_has_an_hours_field():
+    recs = [collected("x", [{"heading": "OFFICE HOURS", "markdown": "9:00 AM - 5:00 PM"}], "u1")]
+    c = build_contacts(recs)["x"]
+    assert c["hours"][0]["heading"] == "OFFICE HOURS"
+    assert build_contacts([collected("y", CONTACT, "u1")])["y"]["hours"] == []

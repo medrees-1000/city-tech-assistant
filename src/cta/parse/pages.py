@@ -5,6 +5,7 @@ Reads data/processed/pages_manifest.json and the raw HTML. No network.
 """
 
 import json
+import re
 from collections import Counter
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -64,6 +65,35 @@ def panel_list(contact: dict) -> list[dict]:
     return [{"heading": p["heading"], "markdown": p["markdown"]} for p in contact["panels"]]
 
 
+HOURS_HEADING = re.compile(r"^[A-Z0-9 &/-]*HOURS$")  # "IN-PERSON HOURS", "WEB-LAB HOURS"
+
+
+def hours_part(markdown: str) -> str | None:
+    """The hours inside a CONTACT US panel: from the first "... HOURS" line to the last table (the
+    hours are in tables), as printed. What follows (the FAFSA and TAP school codes) is not hours."""
+    blocks = markdown.split("\n\n")
+    start = next((i for i, b in enumerate(blocks) if HOURS_HEADING.match(b)), None)
+    if start is None:
+        return None
+    tables = [i for i in range(start, len(blocks)) if blocks[i].startswith("|")]
+    end = tables[-1] + 1 if tables else len(blocks)
+    return "\n\n".join(blocks[start:end])
+
+
+def hours_entries(panels: list[dict]) -> list[dict]:
+    """Hours as printed: every panel with HOURS in its heading, and the hours part of CONTACT US.
+    Not typo-fixed. embed false like the rest of the contact data."""
+    out = []
+    for p in panels:
+        if "hours" in p["heading"].lower():
+            out.append({"heading": p["heading"], "markdown": p["markdown"], "where": "panel",
+                        "embed": False})  # fmt: skip
+        elif p["heading"].lower() == "contact us" and (md := hours_part(p["markdown"])):
+            out.append({"heading": f"{p['heading']} (hours part)", "markdown": md,
+                        "where": "inside the CONTACT US panel", "embed": False})  # fmt: skip
+    return out
+
+
 def build_contacts(records: list[dict]) -> dict[str, dict]:
     """One contact record per owner from the collected pages' contact panels.
 
@@ -89,6 +119,7 @@ def build_contacts(records: list[dict]) -> dict[str, dict]:
             "panels": panel_list(best["contact"]),
             "emails": best["contact"]["emails"],
             "phones": best["contact"]["phones"],
+            "hours": hours_entries(panel_list(best["contact"])),
             "source_pages": best["pages"],
             "fetched_at": max(r["fetched_at"] for r in pages),
             "consistent": len(ranked) == 1,

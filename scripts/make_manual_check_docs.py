@@ -20,6 +20,41 @@ OPEN_ITEMS = {
 }
 
 
+def raw_hours_by_owner() -> dict[str, bool]:
+    """Does the raw HTML of any page of the owner have an hours panel? (same check as validation)"""
+    from cta.validate.pages import load_raw, raw_hours
+
+    manifest = json.loads((PROCESSED / "pages_manifest.json").read_text(encoding="utf-8"))
+    owner_of = {e["url"]: e["owner"] for e in manifest}
+    found: dict[str, bool] = {e["owner"]: False for e in manifest}
+    for url, html in load_raw(manifest, ROOT / "data" / "raw").items():
+        found[owner_of[url]] = found[owner_of[url]] or bool(raw_hours(html))
+    return found
+
+
+def hours_text(entries: list[dict]) -> str:
+    """The stored hours as printed, on one line per entry (table rows become 'Day time')."""
+    out = []
+    for h in entries:
+        rows = []
+        for line in h["markdown"].split("\n"):
+            if line.startswith("|"):
+                cells = [c.strip() for c in line.strip("|").split("|")]
+                if any(cells) and not all(set(c) <= {"-"} for c in cells):
+                    rows.append(" ".join(cells))
+            elif line.strip():
+                rows.append(line.strip())
+        out.append(f"{h['heading']}: " + "; ".join(rows))
+    return "<br>".join(out)
+
+
+def cell_hours(text: str) -> str:
+    """A table cell; text marked "@@" keeps its <br> line breaks."""
+    if text.startswith("@@"):
+        return text[2:].replace("|", "\\|")
+    return cell(text)
+
+
 def cell(text: str) -> str:
     return text.replace("|", "\\|").replace("\n", " ")
 
@@ -94,9 +129,11 @@ def contacts_doc() -> str:
         "",
         "## Office and department contact blocks",
         "",
-        "| Owner | Kind | Room / address | Phone | Email | Source URL (first of N pages) | Result |",
-        "|---|---|---|---|---|---|---|",
+        "| Owner | Kind | Room / address | Phone | Email | Hours | Source URL (first of N pages) "
+        "| Result |",
+        "|---|---|---|---|---|---|---|---|",
     ]
+    printed = raw_hours_by_owner()
     for path in sorted((PROCESSED / "contacts").glob("*.json")):
         c = json.loads(path.read_text(encoding="utf-8"))
         panel = next((p for p in c["panels"] if p["heading"] == "CONTACT US"), c["panels"][0])
@@ -112,22 +149,29 @@ def contacts_doc() -> str:
             place or "-",
             ", ".join(c["phones"]) or "-",
             ", ".join(c["emails"]) or "-",
+            "@@" + (hours_text(c["hours"]) if c["hours"] else
+                    "NOT STORED (printed on the page)" if printed.get(c["owner"]) else "none printed"),
             f"{c['source_pages'][0]} ({n} pages)",
             "",
         ]
-        lines.append("| " + " | ".join(cell(x) for x in row) + " |")
+        lines.append("| " + " | ".join(cell_hours(x) for x in row) + " |")
     lines += [
         "",
         "## Department chairs (chairperson.aspx)",
         "",
-        "| Department | Name | Role | Room | Phone | Email | Source URL | Result |",
-        "|---|---|---|---|---|---|---|---|",
+        "| Department | Name | Role | Room | Phone | Email | Hours | Source URL | Result |",
+        "|---|---|---|---|---|---|---|---|---|",
     ]
     for path in sorted((PROCESSED / "pages").glob("*-NYT/chairperson.json")):
         r = json.loads(path.read_text(encoding="utf-8"))
         ch = r["chair"] or {}
+        hours = (
+            "department hours, see the department row above (none for the chair)"
+            if printed.get(r["owner"])
+            else "none printed"
+        )
         row = [r["owner"], ch.get("name"), ch.get("role"), ch.get("room"), ch.get("phone"),
-               ch.get("email"), r["final_url"], ""]  # fmt: skip
+               ch.get("email"), hours, r["final_url"], ""]  # fmt: skip
         lines.append("| " + " | ".join(cell(str(x or "-")) if x != "" else "" for x in row) + " |")
     lines += [
         "",

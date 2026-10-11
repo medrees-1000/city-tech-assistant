@@ -232,3 +232,60 @@ def test_accepted_404_must_stay_a_404():
 def test_accepted_list_has_exactly_the_two_known_pages():
     assert sorted(ACCEPTED) == [("body_non_empty", WI_FALL26), ("known_404", WI_PLAIN)]
     assert all("known and accepted" in reason for reason in ACCEPTED.values())
+
+
+def panel(heading, body):
+    return (
+        f'<div class="panel"><div class="panel-heading">{heading}</div>'
+        f'<div class="panel-body">{body}</div></div>'
+    )
+
+
+def page(*panels, tail=""):
+    side = f'<div class="c-layout-sidebar-menu">{"".join(panels)}</div>'
+    return f"<html><body>{side}{tail}</body></html>"
+
+
+HOURS_PAGE = page(panel("CONTACT US", "Phone"), panel("OFFICE HOURS", "Monday: 9:00 AM - 7:00 PM"))
+NO_HOURS_PAGE = page(
+    panel("CONTACT US", "Phone"),
+    panel("CLINIC", "practicum hours"),
+    tail="<!-- <p>Open 9:00 AM - 5:00 PM</p> -->",
+)
+HOURS_MANIFEST = [
+    {"url": "u1", "owner": "cst", "status": 200},
+    {"url": "u2", "owner": "dent", "status": 200},
+]
+
+
+def test_raw_hours_finds_panels_by_heading_or_clock_time_and_ignores_comments():
+    from cta.validate.pages import raw_hours
+
+    assert raw_hours(HOURS_PAGE) == [{"heading": "OFFICE HOURS", "times": ["9:00AM", "7:00PM"]}]
+    assert raw_hours(NO_HOURS_PAGE) == []
+    inside = HOURS_PAGE.replace("OFFICE HOURS", "CONTACT US")
+    assert [p["heading"] for p in raw_hours(inside)] == ["CONTACT US"]  # only the one with times
+
+
+def test_hours_check_fails_when_a_page_prints_hours_and_the_record_has_none():
+    from cta.validate.pages import check_hours_stored
+
+    raw = {"u1": HOURS_PAGE, "u2": NO_HOURS_PAGE}
+    none_stored = [{"owner": "cst", "hours": []}, {"owner": "dent", "hours": []}]
+    found = check_hours_stored(HOURS_MANIFEST, raw, none_stored)
+    assert [(f.check, f.course) for f in found] == [("hours_missing", "cst")]  # dent prints none
+    stored = [{"owner": "cst", "hours": [{"markdown": "Monday: 9:00 AM - 7:00 PM"}]}]
+    assert check_hours_stored(HOURS_MANIFEST, raw, stored) == []
+    short = [{"owner": "cst", "hours": [{"markdown": "Monday: 9:00 AM"}]}]
+    assert [f.check for f in check_hours_stored(HOURS_MANIFEST, raw, short)] == ["hours_incomplete"]
+    assert check_hours_stored(HOURS_MANIFEST, raw, [])[0].check == "hours_missing"
+
+
+def test_a_typo_on_the_page_must_be_stored_as_printed():
+    from cta.validate.pages import check_hours_stored
+
+    page = HOURS_PAGE.replace("9:00 AM", "9:00 PM")
+    fixed = [{"owner": "cst", "hours": [{"markdown": "Monday: 9:00 AM - 7:00 PM"}]}]
+    assert [f.check for f in check_hours_stored(HOURS_MANIFEST[:1], {"u1": page}, fixed)] == [
+        "hours_incomplete"
+    ]
