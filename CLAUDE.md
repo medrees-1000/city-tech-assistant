@@ -212,8 +212,14 @@ tests/
 ## Data rules
 
 - Every chunk carries: `source_url` (or `source_file`), `doc_type`
-  (policy|calendar|catalog_course|program|department|faq|aid), `department`, `scope`
+  (policy|calendar|catalog_course|program|department|faq|aid|howto|contacts), `department`, `scope`
   (cuny|city_tech|department), `term` (when relevant), `fetched_at` (or file date), `last_updated`.
+  `department`, `term` and `last_updated` may be null (central offices and CUNY-wide documents have no
+  department; web pages print no term or update date); the other fields may not.
+  The allowed `doc_type` list is `doc_types` in `config/sources.yaml`. Page records get theirs from
+  the path rules in `page_doc_types` there (first match wins; a page no rule covers is flagged, never
+  guessed). `contacts` is the staff-email list page (`advisement/virtual-advisors.aspx`), not the
+  per-owner contact records, which are never embedded.
 - Chunk by heading/section, not fixed size. Keep tables as markdown.
 - A table stays in the same chunk as the intro text above it (for example "see the following table:").
   When chunking, merge a section's tables with their parent section's text (`merge_tables_into_parents`

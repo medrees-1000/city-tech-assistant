@@ -561,3 +561,39 @@ policy 9). Five page records are left out (index false or not collected). The PD
 
 Full validation after the step: courses PASS (30 warnings), pages PASS (2 accepted), pdfs PASS, departments
 PASS, calendar PASS.
+
+## Phase 1, step 8: metadata completeness before indexing — 2026-10-11
+
+- Allowed doc_type list (`doc_types` in `config/sources.yaml`): policy, calendar, catalog_course, program,
+  department, faq, aid, howto, contacts. `advisement_contacts` is now `contacts` (only
+  `advisement/virtual-advisors.aspx`). CLAUDE.md and docs/data-validation.md are updated.
+- Page doc_type by rules (`page_doc_types` in `config/sources.yaml`, path pattern, first match wins): the
+  academic calendar -> calendar; virtual-advisors -> contacts; any `faqs.aspx` and the dental `faq.aspx` -> faq
+  (before the owner rules); registrar, bursar, admissions -> policy; financial-aid -> aid; advisement ->
+  howto; the four department folders -> department. Result on the 63 pages: department 33, policy 12, howto 9,
+  faq 4, aid 3, contacts 1, calendar 1. **Pages no rule covers: none.** (A page with no rule keeps
+  `doc_type: null` and is flagged: a fail if it has sections to embed, a warning if it is not indexed.)
+  Note for the owner: `financial-aid/financial-payment-calendar.aspx` is `aid`, not `calendar`; only
+  `registrar/academic-calendar.aspx` was named as calendar.
+- Page records now carry `department` (the owner for department pages, null for central offices), `scope`
+  (department or city_tech), `term` (null) and `last_updated` (null). PDF records got `department: null`;
+  department records got `last_updated: null`.
+- The "Simple Requirements" wrapper section was dropped from the 11 program records (its only content was
+  "(No Requirement Levels)"; listed in `stripped` as `wrapper_section`). Child sections are unchanged, so their
+  heading path still reads "... > Requirements > Simple Requirements > ...". Program sections went from 232
+  to 221.
+- New check (`cta.validate.metadata`, area "metadata" in `cta.validate`): every section with embed true has
+  source_url or source_file, an allowed doc_type, scope, and a fetch or file date, and its record has a key
+  for department, term and last_updated (null allowed for those three; a department record must name its
+  department). A missing key, a null where it is not allowed, a doc_type outside the list, or a page with no
+  doc_type fails. Tested with deliberately broken records.
+- `docs/section-index.md` regenerated: 534 sections (aid 28, calendar 3, contacts 20, department 116, faq 67,
+  howto 32, policy 47, program 221) and a table of null counts per field and doc_type. Nulls that are
+  allowed: department is null for aid 28, calendar 3, contacts 20, faq 25 (the registrar and financial aid
+  FAQs), howto 32, policy 47; term is null for 525 of 534 (only the 9 sections of the Fall 2026 dropping and
+  withdrawing PDF have one; the two aid-year PDFs show their aid year in the table but `term` stays null);
+  last_updated is null for 527 (only the 7 sections of the refund calendar PDF print "Updated 06/08/2026").
+  source, doc_type, scope and date are never null.
+
+Full validation: courses PASS (30 warnings), pages PASS (2 accepted), pdfs PASS, departments PASS, metadata
+PASS (534 sections in 82 records), calendar PASS.

@@ -41,6 +41,14 @@ PDFs, departments, calendar). A missing input is SKIPPED, never a pass.
   it is compared with the root page contact block, stored `embed: false` and never indexed.
   No stray spaces inside emails.
 
+### Metadata (before indexing)
+- Every section with embed true carries `source_url` or `source_file`, `doc_type` (one of the allowed
+  list in `config/sources.yaml`), `department` (null allowed for central offices and CUNY-wide
+  documents), `scope`, `term` (null allowed where none is printed), `fetched_at` or a file date, and
+  `last_updated` (null allowed). A missing key fails; a null where null is not allowed fails.
+- Every page record has a `doc_type` from the `page_doc_types` rules; a page no rule covers is
+  flagged. `docs/section-index.md` shows the null count per field and doc_type.
+
 ### Calendar
 - Every row has event, date (or explicit TBA), term, source PDF and last-updated date.
 - Dates fall inside the term's expected range, and the weekday matches the date for the right year.
