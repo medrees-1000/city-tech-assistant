@@ -129,3 +129,37 @@ def test_merge_manifest_adds_and_replaces_by_url(tmp_path):
     merged = merge_manifest(path, [{"url": "a", "status": 200}, {"url": "c", "status": 200}])
     assert [(e["url"], e["status"]) for e in merged] == [("a", 200), ("b", 200), ("c", 200)]
     assert json.loads(path.read_text()) == merged
+
+
+def test_page_metadata_adds_doc_type_and_note_and_no_index_overrides_index(tmp_path):
+    raw = tmp_path / "raw_root" / "raw"
+    raw.mkdir(parents=True)
+    shutil.copy(PAGES / "bursar_refund_policy.html", raw / "a.html")
+    e = entry("/bursar/refund-policy.aspx", "a")
+    e["saved_as"] = "raw/a.html"
+    meta = {e["url"]: {"doc_type": "advisement_contacts", "note": "lists staff emails"}}
+    rec = record_for(e, tmp_path / "raw_root", None, meta)
+    assert rec["doc_type"] == "advisement_contacts" and rec["note"] == "lists staff emails"
+    assert rec["index"] is True  # kept for indexing
+    plain = record_for(e, tmp_path / "raw_root")
+    assert plain["doc_type"] is None and plain["note"] is None
+
+
+def test_sources_yaml_decisions():
+    from cta.settings import load_sources
+
+    src = load_sources()
+    base = "https://www.citytech.cuny.edu"
+    assert src["no_index_pages"][f"{base}/advisement/interdisciplinary.aspx"] == (
+        "class-section tables per term, out of scope"
+    )
+    assert set(src["no_index_pages"]) == {
+        f"{base}/advisement/interdisciplinary.aspx",
+        f"{base}/registrar/course-scheduling.aspx",
+        f"{base}/electrical-telecomm/articulation-agreement.aspx",
+        f"{base}/mathematics/articulation-agreement.aspx",
+    }
+    assert src["page_metadata"][f"{base}/advisement/virtual-advisors.aspx"] == {
+        "doc_type": "advisement_contacts",
+        "note": "lists staff emails",
+    }

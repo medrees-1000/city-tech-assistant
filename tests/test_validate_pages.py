@@ -1,10 +1,15 @@
 from cta.validate.pages import (
+    ACCEPTED,
+    WI_FALL26,
+    WI_PLAIN,
+    apply_accepted,
     check_bodies,
     check_chairs,
     check_cleaned_text,
     check_contacts,
     check_hashes_and_log,
     check_index_flags,
+    check_known_404s,
     check_links,
     check_redirects,
     check_sections,
@@ -12,6 +17,7 @@ from cta.validate.pages import (
     counts_per_owner,
     email_repairs,
     run_page_checks,
+    unexpected_failures,
 )
 
 U = "https://www.citytech.cuny.edu/a.aspx"
@@ -148,15 +154,20 @@ def test_counts_per_owner():
     }
 
 
-def test_run_page_checks_clean_data():
-    assert run_page_checks([manifest_entry()], [record()], [log_row()]) == []
+WI_404 = log_row(url=WI_PLAIN, status=404, content_hash="x")
+
+
+def test_run_page_checks_clean_data_has_only_the_accepted_404():
+    found = run_page_checks([manifest_entry()], [record()], [log_row(), WI_404])
+    assert [(f.check, f.severity, bool(f.accepted)) for f in found] == [("known_404", "fail", True)]
+    assert unexpected_failures(found) == []
 
 
 def md(text):
     return record(sections=[{"heading": "H", "level": 1, "markdown": text}])
 
 
-def test_login_links_fail_and_long_query_urls_warn():
+def test_login_links_and_kept_long_query_urls_fail():
     sso = md("[x](https://ssologin.cuny.edu/cuny.html?a=1)")
     path = md("[x](https://www.citytech.cuny.edu/login/)")
     frag = md("[x](https://cuny.coursedog.com/#/login?continue=1)")
@@ -165,7 +176,7 @@ def test_login_links_fail_and_long_query_urls_warn():
     assert [f.check for f in check_links([pdf])] == ["login_links"]
     long_q = md("[x](https://example.com/p?" + "a=1&" * 30 + ")")
     found = check_links([long_q, md("[ok](https://example.com/p?a=1)")])
-    assert [(f.check, f.severity) for f in found] == [("long_urls", "warning")]
+    assert [(f.check, f.severity) for f in found] == [("long_urls", "fail")]  # should be stripped
 
 
 def test_empty_sections_fail():
@@ -187,3 +198,37 @@ def test_inconsistent_contacts_warn():
     ok = {"owner": "bursar", "consistent": True}
     bad = {"owner": "x", "consistent": False}
     assert [(f.check, f.severity) for f in check_contacts([ok, bad])] == [("contacts", "warning")]
+
+
+def test_empty_writing_intensive_fall26_page_is_reported_but_accepted():
+    r = record(source_url=WI_FALL26, status="not_collected", sections=[], index=False,
+               index_reason="not collected: main content empty in raw HTML",
+               reason="main content empty in raw HTML")  # fmt: skip
+    found = run_page_checks([manifest_entry(url=WI_FALL26)], [r], [log_row(url=WI_FALL26), WI_404])
+    body = next(f for f in found if f.check == "body_non_empty")
+    assert body.severity == "fail" and "known and accepted" in body.accepted  # still reported
+    assert unexpected_failures(found) == []
+
+
+def test_the_same_failure_on_another_page_is_not_accepted():
+    r = record(status="not_collected", sections=[], reason="main content empty in raw HTML",
+               index=False, index_reason="not collected")  # fmt: skip
+    found = run_page_checks([manifest_entry()], [r], [log_row(), WI_404])
+    assert [f.check for f in unexpected_failures(found)] == ["body_non_empty"]
+
+
+def test_accepted_404_must_stay_a_404():
+    assert check_known_404s([WI_404])[0].accepted is None  # accepting happens in apply_accepted
+    assert [f.check for f in apply_accepted(check_known_404s([WI_404]))] == ["known_404"]
+    changed = check_known_404s(
+        [log_row(url=WI_PLAIN, status=404), log_row(url=WI_PLAIN, status=200)]
+    )
+    assert [f.check for f in changed] == ["known_404_changed"]
+    assert [f.check for f in unexpected_failures(apply_accepted(changed))] == ["known_404_changed"]
+    never = check_known_404s([log_row()])
+    assert [f.check for f in unexpected_failures(apply_accepted(never))] == ["known_404_changed"]
+
+
+def test_accepted_list_has_exactly_the_two_known_pages():
+    assert sorted(ACCEPTED) == [("body_non_empty", WI_FALL26), ("known_404", WI_PLAIN)]
+    assert all("known and accepted" in reason for reason in ACCEPTED.values())

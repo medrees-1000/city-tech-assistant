@@ -111,6 +111,12 @@ no_index_pages:  # crawled and parsed, kept as records, but index: false. Reason
   "https://www.citytech.cuny.edu/registrar/course-scheduling.aspx": "describes the Coursedog scheduling platform and links to training PDFs and a login page; class scheduling is out of scope"
   "https://www.citytech.cuny.edu/electrical-telecomm/articulation-agreement.aspx": "only a list of links to articulation agreement PDFs; the agreements themselves are not collected"
   "https://www.citytech.cuny.edu/mathematics/articulation-agreement.aspx": "only a list of links to articulation agreement PDFs; the agreements themselves are not collected"
+  "https://www.citytech.cuny.edu/advisement/interdisciplinary.aspx": "class-section tables per term, out of scope"
+
+page_metadata:  # extra fields copied into a page record
+  "https://www.citytech.cuny.edu/advisement/virtual-advisors.aspx":
+    doc_type: advisement_contacts
+    note: "lists staff emails"
 
 skip_pages:  # placeholders, JS-loaded or out of scope
   - course-listing.aspx

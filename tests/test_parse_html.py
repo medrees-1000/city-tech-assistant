@@ -392,3 +392,36 @@ def test_academic_calendar_style_tabs_without_content_are_dropped():
         '<div class="tab-pane" id="a"><p>one</p></div><div class="tab-pane" id="b"></div>'
     )
     assert headings(rec) == [(2, "2026")] and rec["sections"][0]["markdown"] == "one"
+
+
+def test_query_strings_over_100_characters_are_stripped_and_the_text_kept():
+    long_q = "x=" + "a" * 120
+    rec = inline_page(
+        f'<h1>A</h1><p><a href="https://teams.microsoft.com/l/meetup-join/1/0?{long_q}">'
+        "Join us</a> "
+        f'<a href="/p.aspx?id={"b" * 50}">short</a></p>'
+        f'<p><a href="/docs/form.pdf?{long_q}">Form</a></p>'
+    )
+    md = rec["sections"][0]["markdown"]
+    assert "[Join us](https://teams.microsoft.com/l/meetup-join/1/0)" in md
+    assert f"?id={'b' * 50}" in md  # a query of 100 characters or less is kept
+    assert long_q not in md
+    assert rec["pdf_links"] == [
+        {"url": "https://www.citytech.cuny.edu/docs/form.pdf", "text": "Form"}
+    ]
+    assert rec["stripped_urls"] == [
+        {"url": "https://teams.microsoft.com/l/meetup-join/1/0", "query_length": len(long_q)},
+        {"url": "https://www.citytech.cuny.edu/docs/form.pdf", "query_length": len(long_q)},
+    ]
+
+
+def test_query_of_exactly_100_characters_is_kept():
+    q = "q=" + "a" * 98
+    rec = inline_page(f'<h1>A</h1><p><a href="/p.aspx?{q}">t</a></p>')
+    assert q in rec["sections"][0]["markdown"] and rec["stripped_urls"] == []
+
+
+def test_real_pages_have_no_long_queries_left():
+    rec = parse("advisement_gen_ed", "/advisement/gen-ed.aspx", owner="advisement")
+    assert rec["stripped_urls"] == []
+    assert rec["doc_type"] is None and rec["note"] is None

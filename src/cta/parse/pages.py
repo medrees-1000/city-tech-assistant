@@ -18,10 +18,16 @@ def slug_of(url: str) -> str:
     return last.removesuffix(".aspx") if "." in last else "index"
 
 
-def record_for(entry: dict, raw_root: Path, no_index: dict[str, str] | None = None) -> dict:
+def record_for(
+    entry: dict,
+    raw_root: Path,
+    no_index: dict[str, str] | None = None,
+    metadata: dict[str, dict] | None = None,
+) -> dict:
     """One manifest entry -> one page record. owner/kind come from the manifest.
 
-    no_index maps a URL to the reason the page is kept but not indexed (index: false)."""
+    no_index maps a URL to the reason the page is kept but not indexed (index: false).
+    metadata maps a URL to extra fields for the record (doc_type, note)."""
     meta = {
         "source_url": entry["url"],
         "final_url": entry["final_url"],
@@ -39,6 +45,7 @@ def record_for(entry: dict, raw_root: Path, no_index: dict[str, str] | None = No
     if entry["url"] in (no_index or {}):
         rec["index"] = False
         rec["index_reason"] = no_index[entry["url"]]
+    rec.update((metadata or {}).get(entry["url"], {}))
     return rec
 
 
@@ -94,11 +101,15 @@ def build_contacts(records: list[dict]) -> dict[str, dict]:
 
 
 def build_pages(
-    manifest: list[dict], raw_root: Path, out_dir: Path, no_index: dict[str, str] | None = None
+    manifest: list[dict],
+    raw_root: Path,
+    out_dir: Path,
+    no_index: dict[str, str] | None = None,
+    metadata: dict[str, dict] | None = None,
 ) -> list[dict]:
     records = []
     for entry in manifest:
-        rec = record_for(entry, raw_root, no_index)
+        rec = record_for(entry, raw_root, no_index, metadata)
         path = out_dir / "pages" / rec["owner"] / f"{slug_of(rec['source_url'])}.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(rec, indent=1, ensure_ascii=False), encoding="utf-8")
@@ -113,8 +124,11 @@ def build_pages(
 def main() -> None:
     processed = ROOT / "data" / "processed"
     manifest = json.loads((processed / "pages_manifest.json").read_text(encoding="utf-8"))
-    no_index = load_sources().get("no_index_pages", {})
-    records = build_pages(manifest, ROOT / "data" / "raw", processed, no_index)
+    sources = load_sources()
+    no_index = sources.get("no_index_pages", {})
+    records = build_pages(
+        manifest, ROOT / "data" / "raw", processed, no_index, sources.get("page_metadata", {})
+    )
     collected = sum(r["status"] == "collected" for r in records)
     indexed = sum(r["index"] for r in records)
     print(f"{len(records)} pages parsed, {collected} collected, {indexed} to index")

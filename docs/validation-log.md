@@ -230,3 +230,37 @@ admissions 3/3, advisement 9/10, bursar 3/3, financial-aid 4/4, registrar 8/8.
      out of scope in CLAUDE.md, so this needs an owner decision (for example `index: false`).
    - writing-intensive: 404. Not added. The URL is linked from advisement/gen-ed and advisement/six-steps.
      Cause not investigated.
+
+## 2026-10-11: owner decisions on the page review (rebuilt from saved raw data, no new crawl)
+
+Pages: 63, 62 collected, 58 `index: true`. Page checks: **0 unexpected failures, 2 accepted, 0 warnings**.
+
+Decisions applied:
+1. advisement/interdisciplinary: `index: false`, `index_reason` "class-section tables per term, out of
+   scope". The record is kept.
+2. advisement/virtual-advisors: `index: true`, `doc_type: "advisement_contacts"`, `note: "lists staff
+   emails"` (set from `page_metadata` in sources.yaml; every record now has `doc_type` and `note`, null
+   by default).
+3. `index_reason` for course-scheduling and the two articulation pages unchanged; `parents` kept.
+4. Query strings over 100 characters are stripped from links (link text kept; also in `pdf_links`) and
+   the stripped URLs are listed in each record's `stripped_urls`. 8 links on 2 pages (5 distinct URLs):
+   electrical-telecomm/student-hours: Teams meeting link (query 125 characters, 3 times);
+   electrical-telecomm/student-resources: careerbuilder.com (119), careerrookie.com (164, twice) and
+   jobs.volt.com (271, a link the earlier check did not list). The `long_urls` warning is gone; the check
+   now fails if any such query is kept (it found none).
+5. Known and accepted (reported every run, with the reason, in `ACCEPTED` in `cta/validate/pages.py`):
+   - `advisement/writing-intensive-fall26.aspx`: not_collected, 200 with an empty main content div
+     (check `body_non_empty`). Cause not investigated.
+   - `advisement/writing-intensive.aspx`: known 404, linked from gen-ed and six-steps; not in
+     sources.yaml. Check `known_404` reads the latest fetch-log row; if it ever stops being a 404 the check
+     `known_404_changed` fails. Cause not investigated.
+   The same failure on any other page is still an unexpected failure.
+6. Chunking rule for tables added to CLAUDE.md "Data rules": a table stays in the same chunk as the intro
+   text above it. `merge_tables_into_parents` (`src/cta/parse/sections.py`) merges a section that contains a
+   table into its parent section. On financial-aid/sap the 13 sections become 11 units: the intro ("the
+   following table...") plus the Associate and Baccalaureate tables form one unit. Both SAP tables were
+   checked by the owner against the live page.
+
+Source typo, left as printed (not changed): financial-aid "PHONE HOURS" table says
+"Tuesday | 9:00 PM - 5:00 PM"; it should presumably be AM. It is in the financial-aid contact record and in
+the contact panel of each of the 4 financial-aid pages.

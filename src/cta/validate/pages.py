@@ -1,6 +1,8 @@
 """Automatic web-page checks from docs/data-validation.md ("Web pages").
 
 Run: uv run python -m cta.validate.pages
+Findings the owner has accepted (ACCEPTED below) are still printed, with the reason, but do not
+count as unexpected failures.
 Pending manual items (not here): chair details vs the department PDF; refund pages show which
 terms they cover.
 """
@@ -21,6 +23,18 @@ PLACEHOLDER = re.compile(r"\{\{.*?\}\}")
 CHAIR_FIELDS = ("name", "role", "room", "phone", "email")
 LINK = re.compile(r"\[[^\]]*\]\((https?://[^)\s]+)\)")
 MAX_QUERY = 100
+WI_FALL26 = "https://www.citytech.cuny.edu/advisement/writing-intensive-fall26.aspx"
+WI_PLAIN = "https://www.citytech.cuny.edu/advisement/writing-intensive.aspx"
+# Known and accepted by the owner (2026-10-11). (check, URL) -> reason. Still reported every run.
+ACCEPTED = {
+    ("body_non_empty", WI_FALL26): "known and accepted: returns 200 with an empty main content div;"
+    " the page is kept as not_collected; cause not investigated",
+    (
+        "known_404",
+        WI_PLAIN,
+    ): "known and accepted: returns 404 although gen-ed and six-steps link to it;"
+    " not collected; cause not investigated",
+}
 
 
 def page_text(rec: dict) -> str:
@@ -140,7 +154,7 @@ def check_chairs(records: list[dict]) -> list[Finding]:
 
 
 def check_links(records: list[dict]) -> list[Finding]:
-    """No login links anywhere; a URL whose query string is over 100 characters is a warning."""
+    """No login links, and no link keeps a query string over 100 characters (both are removed)."""
     found = []
     for r in records:
         urls = LINK.findall(page_text(r)) + [link["url"] for link in r["pdf_links"]]
@@ -150,8 +164,8 @@ def check_links(records: list[dict]) -> list[Finding]:
                     Finding("login_links", "fail", f"login link kept: {url[:80]}", r["source_url"])
                 )
             elif len(urlsplit(url).query) > MAX_QUERY:
-                msg = f"query string of {len(urlsplit(url).query)} characters: {url[:80]}"
-                found.append(Finding("long_urls", "warning", msg, r["source_url"]))
+                msg = f"query string of {len(urlsplit(url).query)} characters kept: {url[:80]}"
+                found.append(Finding("long_urls", "fail", msg, r["source_url"]))
     return found
 
 
@@ -191,6 +205,35 @@ def check_contacts(contacts: list[dict]) -> list[Finding]:
     ]
 
 
+def check_known_404s(log: list[dict]) -> list[Finding]:
+    """A page the owner accepted as a 404 must still be a 404 (the latest fetch-log row decides)."""
+    found = []
+    for check, url in ACCEPTED:
+        if check != "known_404":
+            continue
+        rows = [r for r in log if r["url"] == url and r["status"] is not None]
+        if not rows:
+            found.append(
+                Finding("known_404_changed", "fail", "accepted URL was never fetched", url)
+            )
+        elif rows[-1]["status"] == 404:
+            found.append(Finding("known_404", "fail", "returns 404", url))
+        else:
+            msg = f"now returns {rows[-1]['status']}; revisit the accepted list"
+            found.append(Finding("known_404_changed", "fail", msg, url))
+    return found
+
+
+def apply_accepted(findings: list[Finding]) -> list[Finding]:
+    for f in findings:
+        f.accepted = ACCEPTED.get((f.check, f.course))
+    return findings
+
+
+def unexpected_failures(findings: list[Finding]) -> list[Finding]:
+    return [f for f in findings if f.severity == "fail" and not f.accepted]
+
+
 def email_repairs(records: list[dict]) -> dict[str, list[dict]]:
     """Pages where an email address had to be repaired (for the validation log)."""
     return {r["source_url"]: r["email_repairs"] for r in records if r["email_repairs"]}
@@ -199,18 +242,21 @@ def email_repairs(records: list[dict]) -> dict[str, list[dict]]:
 def run_page_checks(
     manifest: list[dict], records: list[dict], log: list[dict], contacts: list[dict] | None = None
 ) -> list[Finding]:
-    return [
-        *check_status(manifest),
-        *check_redirects(manifest),
-        *check_bodies(records),
-        *check_hashes_and_log(manifest, log),
-        *check_cleaned_text(records),
-        *check_chairs(records),
-        *check_links(records),
-        *check_sections(records),
-        *check_index_flags(records),
-        *check_contacts(contacts or []),
-    ]
+    return apply_accepted(
+        [
+            *check_status(manifest),
+            *check_redirects(manifest),
+            *check_bodies(records),
+            *check_hashes_and_log(manifest, log),
+            *check_cleaned_text(records),
+            *check_chairs(records),
+            *check_links(records),
+            *check_sections(records),
+            *check_index_flags(records),
+            *check_contacts(contacts or []),
+            *check_known_404s(log),
+        ]
+    )
 
 
 def counts_per_owner(records: list[dict]) -> dict[str, dict[str, int]]:
@@ -240,12 +286,19 @@ def main() -> int:
     for k, v in counts_per_owner(records).items():
         print(f"{k:28} {v}")
     for f in findings:
-        print(f"[{f.severity.upper()}] {f.check} {f.course}: {f.message}")
+        label = "ACCEPTED" if f.accepted else f.severity.upper()
+        extra = f" ({f.accepted})" if f.accepted else ""
+        print(f"[{label}] {f.check} {f.course}: {f.message}{extra}")
     for url, reps in email_repairs(records).items():
         print(f"[REPAIRED] {url}: {reps}")
-    fails = sum(f.severity == "fail" for f in findings)
-    print(f"{len(records)} pages, {fails} failures, {len(findings) - fails} warnings")
-    return 1 if fails else 0
+    unexpected = unexpected_failures(findings)
+    accepted = sum(1 for f in findings if f.accepted)
+    warnings = sum(f.severity == "warning" for f in findings)
+    print(
+        f"{len(records)} pages, {len(unexpected)} unexpected failures, "
+        f"{accepted} accepted, {warnings} warnings"
+    )
+    return 1 if unexpected else 0
 
 
 if __name__ == "__main__":

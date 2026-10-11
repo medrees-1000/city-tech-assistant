@@ -8,7 +8,7 @@ list and footer are never visited, so nothing has to be "stripped" from them.
 import re
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
-from urllib.parse import unquote, urljoin, urlsplit
+from urllib.parse import unquote, urljoin, urlsplit, urlunsplit
 
 from bs4 import BeautifulSoup, NavigableString, Tag
 from bs4.element import PreformattedString
@@ -22,6 +22,7 @@ EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 PHONE = re.compile(r"\b\d{3}[-.]\d{3}[-.]\d{4}\b")
 ROOM = re.compile(r"\([A-Z]{1,3}-\d+\)")  # e.g. Namm Hall 1000 (N-1000)
 
+MAX_QUERY = 100  # a longer query string is dropped from a link (tracking or meeting parameters)
 BREAK = "\x00"  # stands for <br> until whitespace is collapsed
 HEADINGS = ["h1", "h2", "h3", "h4", "h5", "h6"]
 SKIP = {"script", "style", "noscript", "iframe", "form", "svg", "img", "input", "select"}
@@ -37,6 +38,7 @@ class Ctx:
     base_url: str
     email_repairs: list[dict] = field(default_factory=list)
     placeholders_removed: int = 0
+    stripped_urls: list[dict] = field(default_factory=list)  # links whose long query was dropped
     tab_labels: dict[str, str] = field(default_factory=dict)  # pane id -> tab title
     tab_level: int = 2  # heading level used for tab titles
     last_level: int = 1  # level of the most recent heading
@@ -104,6 +106,14 @@ def is_login_url(url: str) -> bool:
     )
 
 
+def strip_long_query(url: str) -> tuple[str, int]:
+    """(url without its query string if the query is over MAX_QUERY characters, query length)."""
+    parts = urlsplit(url)
+    if len(parts.query) > MAX_QUERY:
+        return urlunsplit(parts._replace(query="")), len(parts.query)
+    return url, len(parts.query)
+
+
 def link_markdown(a: Tag, ctx: Ctx) -> str:
     href = (a.get("href") or "").strip()
     if href.lower().startswith("mailto:"):
@@ -114,6 +124,9 @@ def link_markdown(a: Tag, ctx: Ctx) -> str:
     url = absolute(href, ctx.base_url)
     if is_login_url(url):
         return text  # keep the link text, drop the login link
+    url, query_length = strip_long_query(url)
+    if query_length > MAX_QUERY:
+        ctx.stripped_urls.append({"url": url, "query_length": query_length})
     return f"[{text}]({url})" if text else ""
 
 
@@ -382,7 +395,7 @@ def pdf_links(main: Tag, base: str) -> list[dict]:
     for a in main.find_all("a", href=True):
         href = a["href"].strip()
         if urlsplit(href).path.lower().endswith(".pdf"):
-            url = absolute(href, base)
+            url = strip_long_query(absolute(href, base))[0]
             if url not in seen and not is_login_url(url):
                 seen.add(url)
                 found.append({"url": url, "text": " ".join(a.get_text(" ").split())})
@@ -391,7 +404,8 @@ def pdf_links(main: Tag, base: str) -> list[dict]:
 
 def not_collected(meta: dict, reason: str, title: str | None = None) -> dict:
     return {**meta, "title": title, "status": "not_collected", "reason": reason,
-            "index": False, "index_reason": f"not collected: {reason}", "sections": [],
+            "index": False, "index_reason": f"not collected: {reason}", "doc_type": None,
+            "note": None, "stripped_urls": [], "sections": [],
             "contact": {"embed": False, "panels": [], "emails": [], "phones": []}, "chair": None,
             "pdf_links": [], "email_repairs": []}  # fmt: skip
 
@@ -423,6 +437,9 @@ def parse_page(html: bytes, meta: dict) -> dict:
         "reason": "",
         "index": True,
         "index_reason": None,
+        "doc_type": None,
+        "note": None,
+        "stripped_urls": ctx.stripped_urls,
         "sections": sections,
         "contact": contact_block(soup, ctx),
         "chair": chair,
