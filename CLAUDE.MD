@@ -40,6 +40,7 @@ class meeting grid PDFs (optional later).
 | Drop/withdraw rules and aid effects | `Fall_2026_Dropping_and_Withdrawing_from_Classes.pdf` | parse, chunk by section |
 | Special circumstances contact | `Special_Circumstances_Flyer_...pdf` (infographic) | type the few facts by hand |
 | 24 office pages and about 35 department pages (incl. chair and contact blocks) | citytech.cuny.edu HTML | crawl, follow same-host redirects |
+| How-to for viewing aid and holds in CUNYfirst | `cunyfirst_student_reference.pdf` (CUNY-wide) | parse, chunk by section, scope=cuny |
 
 Skip `program-DSCI-BS-*.pdf`: it is a subset of the CST department PDF.
 
