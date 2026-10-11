@@ -11,7 +11,7 @@ code simple, small, and well tested.
 
 Central offices (about 24 pages, crawled as HTML):
 - Registrar `/registrar/*`: academic-calendar, faqs, grade-policies, incomplete, readmission, epermit, applying-graduation, course-scheduling
-- Advisement `/advisement/*`: six-steps, continuing-students, degree-checklist, gen-ed, planner, writing-intensive-fall26
+- Advisement `/advisement/*`: six-steps, continuing-students, degree-checklist, gen-ed, planner, writing-intensive-fall26, required-core, flexible-core, virtual-advisors, interdisciplinary
 - Bursar `/bursar/*`: payment-deadlines, payment-plan, refund-policy
 - Financial aid `/financial-aid/*`: financial-payment-calendar, faqs, sap, tap-appeal
 - Admissions: `dates-deadlines`, `tuition-refund`, `tuition-penalty`
@@ -88,6 +88,12 @@ Skip `program-DSCI-BS-*.pdf`: it is a subset of the CST department PDF.
 - `advisement/planner.aspx` answered with a 302 redirect to the `http://` URL on Oct 9, but returned 200
   directly on Oct 11. The crawler still follows same-host redirects and normalizes to https; don't
   assume a page is missing.
+- `advisement/writing-intensive.aspx` (linked from gen-ed and six-steps) returns 404 (checked Oct 11); not collected.
+- `advisement/required-core`, `flexible-core` and `virtual-advisors` return real body text; `interdisciplinary`
+  does too, but most of it is class-section tables per term (days, rooms, instructors), which is out of scope
+  (open decision). Tab panes are in the HTML, not JS-loaded; the parser labels each pane with its tab title.
+- Login links (`ssologin.cuny.edu`, or "login" in the path or fragment) are removed from the cleaned text and
+  `pdf_links`; the link text stays. Pages marked `index: false` (`no_index_pages` in sources.yaml) are kept as records.
 - `advisement/writing-intensive-fall26.aspx` returns 200 with an empty main content div (checked Oct 11).
   It is recorded as `not_collected` ("main content empty in raw HTML") and fails the non-empty body check.
 - `registrar/academic-calendar.aspx` links 12 PDFs under `/registrar/docs/` (winter, spring,

@@ -179,3 +179,54 @@ Pending manual items (not automated):
   well formed; the department root pages carry the department office contact, not the chair.
 - Refund pages show which terms they cover; no refund answer for a term the page does not list.
 - Manual check 3 (open 10 random cleaned pages and look for menu junk or missing sections).
+
+## 2026-10-11: page review (rebuilt from saved raw HTML; 5 new fetches)
+
+Pages: 63 in the manifest (28 office + 35 department), 62 collected, 59 `index: true`. Checks: 1 failure
+(the empty writing-intensive-fall26 page, unchanged), 4 warnings (`long_urls`), 0 other findings.
+Pages per owner (collected / fetched): CST-NYT 8/8, MATH-NYT 8/8, EET-NYT 7/7, DENT-NYT 12/12,
+admissions 3/3, advisement 9/10, bursar 3/3, financial-aid 4/4, registrar 8/8.
+
+1. Login links removed (link text kept) from markdown and `pdf_links`: 7 links on 6 pages
+   (`ssologin.cuny.edu` on degree-checklist, gen-ed (2), planner, six-steps, registrar/faqs; one
+   `cuny.coursedog.com/#/login` link on registrar/course-scheduling). No `pdf_links` entry was a login
+   link. New checks: `login_links` (fail) and `long_urls` (warning, query string over 100 characters).
+   URLs with a query over 100 characters that remain (4 distinct, not removed, owner to decide): a
+   Teams meeting link on electrical-telecomm/student-hours (125 chars, 3 times on the page) and three job
+   listing links with tracking parameters on electrical-telecomm/student-resources (careerbuilder.com
+   119, careerrookie.com 164 twice). The 348- and 122-character `ssologin.cuny.edu` URLs are gone.
+2. Contacts: `data/processed/contacts/<owner>.json`, one per owner (9). Panels are identical on every
+   collected page of each owner (`consistent: true` everywhere). The only different page,
+   writing-intensive-fall26, has no sidebar and is not collected. Per-page `contact.embed` is false.
+   Parser fixes found on the way: panels nested inside another panel are no longer processed twice, and
+   panels whose title is plain text (no heading element) are read by their first line. The financial-aid
+   hours (in-person, zoom, phone, web-lab, work-study) were being dropped and are now in the contact
+   record, inside the CONTACT US panel body. `check_contacts` warns if panels differ.
+3. Empty sections dropped (check `empty_sections`, 0 found). Added `parents` to each section (the
+   headings above it, for example the FAQ category above a question) so dropping empty headings does not
+   lose context; `render_markdown` prints them. Headings with no text under them and no child sections
+   disappear completely (5 `h` headings: registrar/applying-graduation "Congratulations! You are almost
+   at the finish line!", financial-aid/sap "Financial Aid Suspension and SAP Appeal Process",
+   mathematics/student-resources "Academic Resources", electrical-telecomm/ "Annual Enrollment and
+   Graduation Data", dental/advisement "How to Apply for the Dental Hygiene Program"; plus a few labels:
+   computer-systems/tutoring "Areas of Expertise", electrical-telecomm/student-resources tab titles
+   "Industry Partners" and "Links", dental/profession "Overview"). Their content, if any, was not text.
+   Nested lists: a `<ul>` placed directly inside a `<ul>` is now the children of the previous item
+   (advisement/gen-ed, College Option). Also fixed: an unclosed `<p class="barTitle">` on financial-aid/sap
+   swallowed the paragraphs after it into one heading; that would have been dropped as an empty section
+   (132 words), now only its leading text is the heading. Tab panes (6 pages) get their tab title as a
+   heading, and a header row drawn with `<strong>` is the table header.
+4. `index` and `index_reason` on every record. `index: false`: registrar/course-scheduling,
+   electrical-telecomm/articulation-agreement, mathematics/articulation-agreement (reasons are in
+   sources.yaml `no_index_pages`, written by me from what the pages contain: owner to confirm), and the
+   not-collected page ("not collected: main content empty in raw HTML"). Records are kept.
+5. Five fetches (advisement/*.aspx), all in the fetch log:
+   - required-core: 200, real text (3 tab panes, one table each). Added.
+   - flexible-core: 200, real text (5 tab panes, one table each). Added.
+   - virtual-advisors: 200, real text (advisement by department, 10 PDF links). Added. It lists advisor
+     names and email addresses (staff, not students).
+   - interdisciplinary: 200, real text, but about 11,700 words, mostly class-section tables per term
+     (section numbers, days/times, rooms, instructors). Added as asked; class schedules and sections are
+     out of scope in CLAUDE.md, so this needs an owner decision (for example `index: false`).
+   - writing-intensive: 404. Not added. The URL is linked from advisement/gen-ed and advisement/six-steps.
+     Cause not investigated.
