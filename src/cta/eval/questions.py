@@ -163,24 +163,116 @@ def course_codes_in(text: str | None) -> list[str]:
     return found
 
 
-def prerequisite_chain(code: str, data: GoldData) -> dict:
-    """The prerequisite text of a course, the courses it names, and for each of those its own
-    prerequisite text and the courses that names (one level further). A suggestion for
-    gold_sources; nothing is written to the file."""
+MODE = re.compile(
+    r"(?P<pre_or_co>pre[\s/-]*(?:or\s+)?co-?requisites?)|(?P<co>co-?requisites?)"
+    r"|(?P<pre>\bpre(?:requisites?)?\b)",
+    re.I,
+)
+CLAUSE = re.compile(r"\s*[&;.]\s*")
+PHRASE = re.compile(r"\s+(?:or(?!\s+higher)|and)\s+", re.I)  # "or higher" is not a list "or"
+FINE = re.compile(r"\s*,\s*")
+EXCLUSION = re.compile(r"\b(?:must not|may not|cannot|not have passed)\b", re.I)
+EQUIVALENT = re.compile(r"\bequivalent\b", re.I)
+PLACEMENT = re.compile(
+    r"\bplacement\b|proficien|regents|\bscore\b|\bGPA\b|high school|permission|approval"
+    r"|students only|\bdepartment\b",
+    re.I,
+)
+KIND_OF = {"pre": "prerequisite", "co": "corequisite", "pre_or_co": "pre- or corequisite"}
 
-    def record(c: str) -> dict | None:
-        found = data.courses.get(c)
-        return found[0] if found else None
 
-    first = record(code)
-    level1 = []
-    for c in course_codes_in(first["prerequisite_text"] if first else None):
-        rec = record(c)
-        text = rec["prerequisite_text"] if rec else None
-        level1.append({"code": c, "in_catalog": rec is not None, "prerequisite_text": text,
-                       "names": course_codes_in(text)})  # fmt: skip
-    return {"code": code, "prerequisite_text": first["prerequisite_text"] if first else None,
-            "named": level1}  # fmt: skip
+def analyze_prerequisite(text: str | None) -> list[dict]:
+    """The parts of prerequisite text, in order. {kind, code} for a named course: prerequisite,
+    corequisite, pre- or corequisite, exclusion ("must not have passed") or equivalence. {kind:
+    "placement", text} for placement, proficiency or permission wording (the walk stops there)."""
+    text = text or ""
+    marks = list(MODE.finditer(text))
+    spans = [(marks[i].start(), marks[i + 1].start() if i + 1 < len(marks) else len(text),
+              marks[i].lastgroup) for i in range(len(marks))]  # fmt: skip
+    if not marks or marks[0].start() > 0:
+        spans.insert(0, (0, marks[0].start() if marks else len(text), "pre"))
+    items: list[dict] = []
+    for start, end, mode in spans:
+        for clause in CLAUSE.split(text[start:end]):
+            clause = MODE.sub("", clause, count=1).strip(" :-()")
+            if clause and not course_codes_in(clause):
+                if PLACEMENT.search(clause):  # wording only, no course: one stop, kept whole
+                    items.append({"kind": "placement", "text": clause})
+                continue
+            for phrase in PHRASE.split(clause):
+                for piece in FINE.split(phrase):
+                    codes = course_codes_in(piece)
+                    if PLACEMENT.search(piece) and not EQUIVALENT.search(piece):
+                        items.append({"kind": "placement", "text": piece.strip(" :-()")})
+                    elif EXCLUSION.search(piece):
+                        items += [{"kind": "exclusion", "code": c} for c in codes]
+                    elif EQUIVALENT.search(piece):
+                        items += [{"kind": "equivalence", "code": c} for c in codes]
+                    else:
+                        items += [{"kind": KIND_OF[mode], "code": c} for c in codes]
+    return items
+
+
+def prerequisite_tree(code: str, data: GoldData, seen: set[str] | None = None) -> dict:
+    """The whole prerequisite chain of a course as a tree. Only prerequisites are followed.
+    Corequisites and exclusions are listed, not followed; placement wording stops the walk; a
+    course with no record (for example outside the four departments) is marked. A course already
+    shown higher up or earlier is not expanded again."""
+    seen = seen if seen is not None else set()
+    seen.add(code)
+    found = data.courses.get(code)
+    text = found[0]["prerequisite_text"] if found else None
+    title = found[0]["title"].strip() if found else None
+    node = {"code": code, "record": bool(found), "title": title, "text": text, "items": []}
+    for item in analyze_prerequisite(text):
+        if item["kind"] == "prerequisite":
+            if item["code"] in seen:
+                node["items"].append({**item, "node": None, "expanded_elsewhere": True})
+            else:
+                node["items"].append({**item, "node": prerequisite_tree(item["code"], data, seen)})
+        else:
+            node["items"].append(item)
+    return node
+
+
+def tree_courses(node: dict) -> list[str]:
+    """Codes of the courses in the tree that have a record, in the order they are first shown."""
+    out = [node["code"]] if node["record"] else []
+    for item in node["items"]:
+        if item.get("node"):
+            out += [c for c in tree_courses(item["node"]) if c not in out]
+    return out
+
+
+def tree_without_records(node: dict) -> list[str]:
+    out = [] if node["record"] else [node["code"]]
+    for item in node["items"]:
+        if item.get("node"):
+            out += [c for c in tree_without_records(item["node"]) if c not in out]
+    return out
+
+
+def render_tree(node: dict, indent: int = 0, label: str = "") -> list[str]:
+    pad = "  " * indent
+    if not node["record"]:
+        return [f"{pad}- {label}{node['code']}: **no record**"]
+    shown = f"{pad}- {label}{node['code']} ({node['title']})"
+    lines = [f"{shown}: {node['text']}" if node["text"] else f"{shown}: no prerequisite text"]
+    for item in node["items"]:
+        kind = item["kind"]
+        if kind == "placement":
+            lines.append(f"{pad}  - placement or proficiency text, walk stops: {item['text']}")
+        elif kind == "prerequisite" and item.get("node"):
+            lines += render_tree(item["node"], indent + 1, "prerequisite ")
+        elif kind == "prerequisite":
+            lines.append(f"{pad}  - prerequisite {item['code']}: shown elsewhere in this tree")
+        elif kind == "exclusion":
+            lines.append(f"{pad}  - exclusion, not a prerequisite: {item['code']}")
+        elif kind == "equivalence":
+            lines.append(f"{pad}  - equivalence note, not a prerequisite: {item['code']}")
+        else:
+            lines.append(f"{pad}  - {kind}, not followed: {item['code']}")
+    return lines
 
 
 def main() -> int:

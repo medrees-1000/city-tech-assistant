@@ -6,15 +6,19 @@ import pytest
 from cta.eval.questions import (
     CALENDAR,
     GoldData,
+    analyze_prerequisite,
     check_all,
     course_codes_in,
     duplicate_ids,
     gold_problem,
     load_gold_data,
     load_questions,
-    prerequisite_chain,
+    prerequisite_tree,
     question_problems,
+    render_tree,
     row_problems,
+    tree_courses,
+    tree_without_records,
 )
 from cta.eval.review import render
 
@@ -170,14 +174,103 @@ def test_course_codes_in_text_include_codes_written_without_a_space():
     assert course_codes_in(None) == [] and course_codes_in("CUNY proficiency in English") == []
 
 
-def test_prerequisite_chain_lists_named_courses_and_what_they_name():
-    chain = prerequisite_chain("DEN 2400", data())
-    assert chain["prerequisite_text"].startswith("Prerequisites: DEN 2300")
-    assert [c["code"] for c in chain["named"]] == ["DEN 2300", "DEN 2315", "DEN 2413"]
-    assert chain["named"][0]["names"] == ["DEN 1200"]
-    assert chain["named"][1]["prerequisite_text"] is None
-    assert chain["named"][2]["in_catalog"] is False
-    assert prerequisite_chain("ZZZ 1", data())["prerequisite_text"] is None
+def kinds(text):
+    return [(i["kind"], i.get("code") or i.get("text")) for i in analyze_prerequisite(text)]
+
+
+def test_prerequisite_text_is_split_into_prerequisites_corequisites_and_stops():
+    full = "Prerequisites: DEN 2300, DEN 2311, DEN 2315 & DEN 2318. Corequisites: DEN 2413."
+    assert kinds(full) == [
+        ("prerequisite", "DEN 2300"), ("prerequisite", "DEN 2311"), ("prerequisite", "DEN 2315"),
+        ("prerequisite", "DEN 2318"), ("corequisite", "DEN 2413"),
+    ]  # fmt: skip
+    mixed = (
+        "Prerequisite: DEN 2300 all with a grade of C; Corequisite: DEN 2400; "
+        "Pre- or corequisite: BIO 3524."
+    )
+    assert kinds(mixed) == [
+        ("prerequisite", "DEN 2300"), ("corequisite", "DEN 2400"),
+        ("pre- or corequisite", "BIO 3524"),
+    ]  # fmt: skip
+    assert kinds("Pre/corequisite: MAT 1190 or MAT 1190CO or higher") == [
+        ("pre- or corequisite", "MAT 1190"), ("pre- or corequisite", "MAT 1190CO"),
+    ]  # fmt: skip
+    assert kinds("PRE: MAT1475") == [("prerequisite", "MAT 1475")]
+    assert kinds("Prerequisites of MAT 1575 AND MAT 2580") == [
+        ("prerequisite", "MAT 1575"), ("prerequisite", "MAT 2580"),
+    ]  # fmt: skip
+    assert kinds(None) == [] and kinds("") == []
+
+
+def test_exclusion_equivalence_and_placement_text_are_not_prerequisites():
+    assert kinds("PREREQUISITE OF MAT 1475, MUST NOT HAVE PASSED MAT 2675") == [
+        ("prerequisite", "MAT 1475"), ("exclusion", "MAT 2675"),
+    ]  # fmt: skip
+    assert kinds("PRE: MAT 1375 OR Meet the Math Placement for MAT 1475") == [
+        ("prerequisite", "MAT 1375"), ("placement", "Meet the Math Placement for MAT 1475"),
+    ]  # fmt: skip
+    proficiency = "CUNY proficiency in reading, writing and mathematics; Corequisite of DEN 1100."
+    assert kinds(proficiency) == [
+        ("placement", "CUNY proficiency in reading, writing and mathematics"),
+        ("corequisite", "DEN 1100"),
+    ]  # fmt: skip
+    assert kinds("MAT 1275CO is equivalent to MAT 1275 for grade replacement purposes") == [
+        ("equivalence", "MAT 1275CO"), ("equivalence", "MAT 1275"),
+    ]  # fmt: skip
+    assert kinds("DENTAL HYGIENE STUDENTS ONLY") == [("placement", "DENTAL HYGIENE STUDENTS ONLY")]
+    assert kinds("Algebra 1 Regents score of 75 or higher OR Geometry Regents score of 70") == [
+        ("placement", "Algebra 1 Regents score of 75 or higher OR Geometry Regents score of 70")
+    ]  # fmt: skip
+
+
+def chain_data():
+    d = data()
+    d.courses["DEN 2315"] = [course("DEN 2315", "Prerequisites: DEN 1200 & BIO 3302.")]
+    d.courses["DEN 2300"] = [course("DEN 2300", "Prerequisites: DEN 1200. Corequisites: DEN 2413.")]
+    d.courses["DEN 1200"] = [
+        course("DEN 1200", "CUNY proficiency in English; MUST NOT HAVE PASSED DEN 9000")
+    ]
+    return d
+
+
+def test_the_tree_follows_prerequisites_only_and_marks_the_rest():
+    tree = prerequisite_tree("DEN 2400", chain_data())
+    assert [(i["kind"], i["code"]) for i in tree["items"]] == [
+        ("prerequisite", "DEN 2300"), ("prerequisite", "DEN 2315"), ("corequisite", "DEN 2413"),
+    ]  # fmt: skip
+    den2300 = tree["items"][0]["node"]
+    assert [i["kind"] for i in den2300["items"]] == ["prerequisite", "corequisite"]
+    den1200 = den2300["items"][0]["node"]
+    assert [(i["kind"], i.get("code") or i["text"]) for i in den1200["items"]] == [
+        ("placement", "CUNY proficiency in English"), ("exclusion", "DEN 9000"),
+    ]  # fmt: skip
+    den2315 = tree["items"][1]["node"]
+    assert den2315["items"][0] == {"kind": "prerequisite", "code": "DEN 1200", "node": None,
+                                   "expanded_elsewhere": True}  # fmt: skip
+    assert den2315["items"][1]["node"]["record"] is False  # BIO 3302 has no record
+
+
+def test_tree_lists_courses_with_and_without_records_and_renders_the_marks():
+    tree = prerequisite_tree("DEN 2400", chain_data())
+    assert tree_courses(tree) == ["DEN 2400", "DEN 2300", "DEN 1200", "DEN 2315"]
+    assert tree_without_records(tree) == ["BIO 3302"]
+    text = "\n".join(render_tree(tree))
+    assert "- DEN 2400 (T DEN 2400): Prerequisites: DEN 2300 & DEN 2315." in text
+    assert "  - corequisite, not followed: DEN 2413" in text
+    assert "- prerequisite BIO 3302: **no record**" in text
+    assert "placement or proficiency text, walk stops: CUNY proficiency in English" in text
+    assert "exclusion, not a prerequisite: DEN 9000" in text
+    assert "prerequisite DEN 1200: shown elsewhere in this tree" in text
+
+
+def test_a_cycle_through_prerequisites_does_not_loop():
+    d = GoldData()
+    d.courses = {
+        "AAA 100": [course("AAA 100", "PRE: BBB 200")],
+        "BBB 200": [course("BBB 200", "PRE: AAA 100")],
+    }
+    tree = prerequisite_tree("AAA 100", d)
+    assert tree["items"][0]["node"]["items"][0]["expanded_elsewhere"] is True
 
 
 def test_load_questions_reads_lines_and_names_the_bad_line(tmp_path):
@@ -218,12 +311,14 @@ def test_review_marks_empty_and_unresolved_questions_and_shows_gold_text(tmp_pat
     assert "Prerequisite text: Prerequisites: DEN 2300 & DEN 2315" in text
 
 
-def test_review_shows_the_chain_for_q20_and_q22_only(tmp_path):
-    d = data()
+def test_review_shows_the_tree_for_q20_and_q22_only(tmp_path):
     src = [{"id": "catalog:DEN 2400", "source": "catalog_course", "heading": "DEN 2400"}]
-    text = render([good(id="q20", gold_sources=src), good(id="q21", gold_sources=src)], d)
-    assert text.count("Suggestion for gold_sources (not in the file)") == 1
-    assert "DEN 2300: Prerequisites: DEN 1200" in text and "names: DEN 1200" in text
+    text = render(
+        [good(id="q20", gold_sources=src), good(id="q21", gold_sources=src)], chain_data()
+    )
+    assert text.count("Prerequisite tree below DEN 2400") == 1
+    assert "Courses in the tree with records: DEN 2400, DEN 2300, DEN 1200, DEN 2315." in text
+    assert "Named but with no record: BIO 3302." in text
 
 
 ROOT = Path(__file__).resolve().parents[1]

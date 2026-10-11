@@ -10,7 +10,10 @@ from cta.eval.questions import (
     CALENDAR,
     GoldData,
     gold_problem,
-    prerequisite_chain,
+    prerequisite_tree,
+    render_tree,
+    tree_courses,
+    tree_without_records,
 )
 
 CHAINED = ("q20", "q22")  # chained prerequisites: also show a suggestion, not written to the file
@@ -67,19 +70,16 @@ def source_block(src: dict, data: GoldData) -> list[str]:
 
 
 def chain_block(code: str, data: GoldData) -> list[str]:
-    chain = prerequisite_chain(code, data)
-    lines = [
-        f"**Suggestion for gold_sources (not in the file): chain below {code}**",
+    tree = prerequisite_tree(code, data)
+    with_records = tree_courses(tree)
+    return [
+        f"**Prerequisite tree below {code} (a suggestion; gold_sources are unchanged)**",
         "",
-        f"- {code} prerequisite text: {chain['prerequisite_text']}",
-        "- Courses it names, each with its own prerequisite text and the courses that names:",
+        *render_tree(tree),
+        "",
+        f"Courses in the tree with records: {', '.join(with_records)}.",
+        f"Named but with no record: {', '.join(tree_without_records(tree)) or 'none'}.",
     ]
-    for c in chain["named"]:
-        where = "" if c["in_catalog"] else " (not in the catalog data)"
-        lines.append(f"  - {c['code']}{where}: {c['prerequisite_text'] or 'no prerequisite text'}")
-        if c["names"]:
-            lines.append(f"    - names: {', '.join(c['names'])}")
-    return lines
 
 
 def render(rows: list[dict], data: GoldData) -> str:
