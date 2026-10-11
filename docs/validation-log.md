@@ -277,8 +277,8 @@ be parsed.
 - Events per term: Fall 2026 55 (page 1: 45, page 2: 10), Winter 2027 26 (page 1), Spring 2027 55
   (page 1: 44, page 2: 11). Summer 2027 and Fall 2027: no rows, status "abstain".
 - `pdf_last_updated` from the printed text: Fall "9/15/26" (2026-09-15), Winter and Spring "7/27/26"
-  (2026-07-27). The PDF metadata dates differ (for example Fall ModDate 2026-09-15, Winter 2026-08-28);
-  the printed text is used.
+  (2026-07-27). The PDF metadata ModDate is 2026-09-15 for Fall (same as printed) and 2026-08-28 for
+  Winter and Spring (later than the printed date); the printed text is used, as agreed.
 - Rows are rebuilt from character positions: the cell borders are thin rectangles and each character
   belongs to the cell holding its center (the stream order is not reading order, and a few words such as
   "Friday" change font mid-word).
