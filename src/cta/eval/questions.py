@@ -24,7 +24,6 @@ SPLITS = ("dev", "test")
 DEPARTMENTS = ("CST-NYT", "MATH-NYT", "EET-NYT", "DENT-NYT")
 NEEDS_SOURCES = ("lookup", "multi_chunk", "time_sensitive")  # the others may have none
 SECTION_ID = re.compile(r"^(page|pdf|dept)/.+#\d+$")
-LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
 COURSE_CODE = re.compile(r"\b([A-Z]{2,5}) ?(\d{3,4}[A-Z]{0,2})\b")
 
 
@@ -37,12 +36,6 @@ def load_questions(path: Path = QUESTIONS) -> list[dict]:
             except json.JSONDecodeError as e:
                 raise ValueError(f"{path.name} line {n}: not valid JSON ({e})") from e
     return rows
-
-
-def plain(heading: str) -> str:
-    """A heading without markdown link markup: "[CIS/AAS](https://...)" -> "CIS/AAS". Some stored
-    headings carry the link; the gold file gives the visible text."""
-    return LINK.sub(r"\1", heading)
 
 
 def row_problems(row: dict) -> list[str]:
@@ -110,7 +103,7 @@ def gold_problem(src: dict, data: GoldData) -> str | None:
             return f"{sid} is not a section in the index (embed true)"
         if row["source"] != source:
             return f"{sid}: source is {row['source']!r}, the file says {source!r}"
-        if plain(row["heading_path"]) != heading:
+        if row["heading_path"] != heading:
             return f"{sid}: heading path is {row['heading_path']!r}, the file says {heading!r}"
         return None
     if sid.startswith("catalog:"):

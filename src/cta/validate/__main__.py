@@ -121,6 +121,7 @@ def check_departments() -> Area:
 
 
 def check_metadata() -> Area:
+    from cta.validate.headings import run_heading_checks
     from cta.validate.metadata import embedded_sections, load_records, run_metadata_checks
     from cta.validate.terms import run_term_checks
 
@@ -133,6 +134,7 @@ def check_metadata() -> Area:
     area.findings = [
         *run_metadata_checks(records, sources["doc_types"]),
         *run_term_checks(records, sources["refund_pages"]),
+        *run_heading_checks(records),
     ]
     sections = sum(len(embedded_sections(r)) for r in records)
     area.checked = f"{sections} sections to embed in {len(records)} records"

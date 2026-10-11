@@ -12,7 +12,6 @@ from cta.eval.questions import (
     gold_problem,
     load_gold_data,
     load_questions,
-    plain,
     prerequisite_chain,
     question_problems,
     row_problems,
@@ -114,16 +113,12 @@ def test_section_gold_source_must_exist_with_the_same_source_and_heading():
     assert "heading path is" in gold_problem({**ok, "heading": "FAQs > Other"}, d)
 
 
-def test_a_stored_heading_with_link_markup_matches_its_visible_text():
+def test_a_heading_with_link_markup_does_not_match_its_visible_text():
     d = data()
-    d.sections["page/a/b#1"] = {
-        **SECTION,
-        "id": "page/a/b#1",
-        "heading_path": "Degrees > [CIS/AAS](https://c/p)",
-    }
+    stored = "Degrees > [CIS/AAS](https://c/p)"
+    d.sections["page/a/b#1"] = {**SECTION, "id": "page/a/b#1", "heading_path": stored}
     src = {"id": "page/a/b#1", "source": SECTION["source"], "heading": "Degrees > CIS/AAS"}
-    assert gold_problem(src, d) is None
-    assert plain("A > [B](http://x) and [C](y)") == "A > B and C"
+    assert "heading path is" in gold_problem(src, d)  # the index is expected to be clean
 
 
 def test_catalog_gold_source_must_match_a_course_code():
@@ -244,6 +239,6 @@ def test_the_real_file_has_30_well_formed_rows_with_unique_ids():
 @pytest.mark.skipif(
     not (ROOT / "data" / "processed" / "pages").exists(), reason="no processed data"
 )
-def test_the_real_gold_sources_resolve_except_the_open_todo():
+def test_every_real_gold_source_resolves():
     results = check_all(load_questions(), load_gold_data())
-    assert {q: p for q, p in results.items() if p} == {"q12": ["unresolved (TODO)"]}
+    assert {q: p for q, p in results.items() if p} == {}

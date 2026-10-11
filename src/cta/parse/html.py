@@ -13,6 +13,8 @@ from urllib.parse import unquote, urljoin, urlsplit, urlunsplit
 from bs4 import BeautifulSoup, NavigableString, Tag
 from bs4.element import PreformattedString
 
+from cta.parse.headings import clean_heading
+
 MAIN = "div.c-layout-sidebar-content"
 PANELS = "div.c-layout-sidebar-menu div.panel"
 
@@ -307,7 +309,9 @@ def table_markdown(table: Tag, ctx: Ctx) -> str:
 
 def to_sections(found: list[Block]) -> list[dict]:
     """Split blocks by heading. Sections with no text are dropped; `parents` keeps the headings
-    above a section (for example the FAQ category above a question)."""
+    above a section (for example the FAQ category above a question).
+
+    Headings are stored without link markup; if a heading was a link its URL is `heading_url`."""
     sections: list[dict] = []
     stack: list[dict] = []  # open headings, outermost first
     cur: dict | None = None
@@ -315,25 +319,27 @@ def to_sections(found: list[Block]) -> list[dict]:
     def push() -> None:
         if cur and cur["parts"]:
             sections.append({"heading": cur["heading"], "level": cur["level"],
-                             "parents": cur["parents"],
+                             "parents": cur["parents"], "heading_url": cur["url"],
                              "markdown": "\n\n".join(cur["parts"])})  # fmt: skip
 
-    for kind, level, text in found:
+    for kind, level, raw in found:
         if kind == "h":
             push()
+            text, url = clean_heading(raw)
             while stack and stack[-1]["level"] >= level:
                 stack.pop()
             cur = {
                 "heading": text,
                 "level": level,
                 "parents": [dict(h) for h in stack],
+                "url": url,
                 "parts": [],
             }
             stack.append({"level": level, "heading": text})
         else:
             if cur is None:
-                cur = {"heading": None, "level": 0, "parents": [], "parts": []}
-            cur["parts"].append(text)
+                cur = {"heading": None, "level": 0, "parents": [], "url": None, "parts": []}
+            cur["parts"].append(raw)
     push()
     return sections
 
