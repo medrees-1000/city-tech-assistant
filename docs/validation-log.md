@@ -728,3 +728,10 @@ The EET root "Our Mission" section is tagged Summer 2026 only because an advisem
     in tracked files: 67 on citytech.cuny.edu (public office, department and chair contacts, in the test page
     fixtures, `docs/manual-check-contacts.md`, `docs/eval-review.md`, `docs/validation-log.md` and
     `eval/questions.jsonl`), and test placeholders (x.edu, example.edu, example.com, b.edu).
+
+## Manual checks 2 and 3 recorded — 2026-10-11
+
+The owner reports that manual check 2 (20 random courses against the live catalog pages, sheet
+`docs/manual-check-courses.md`) and manual check 3 (10 random cleaned web pages, no menu junk and no missing
+sections) were done before 2026-10-11. The exact date was not recorded. `docs/data-validation.md` marks both
+done. All five manual checks are now done (1, 4 and 5 are recorded in earlier entries).
