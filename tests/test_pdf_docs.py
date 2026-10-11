@@ -563,3 +563,26 @@ def test_the_screenshot_notes_label_is_not_counted_as_printed_text():
     record = {"title": "T", "excluded": [], "sections": [section]}
     text = record_text(record)
     assert "one" in text and "Screenshot" not in text
+
+
+def test_refund_calendar_sections_are_tagged_by_the_refund_rule(refund):
+    got = {
+        s["heading"].split(":")[0].split(" (")[0]: (s["terms"], s["term"])
+        for s in refund["sections"]
+    }
+    schedule = "Summer 2026, Fall 2026, and Spring 2027 Refund Schedule"
+    assert got[schedule] == (["Summer 2026", "Fall 2026", "Spring 2027"], None)
+    assert got["Fall Book Advance Refund Dates"] == (["Fall 2026"], "Fall 2026")
+    assert got["Fall Refund Date"] == (["Fall 2026"], "Fall 2026")
+    assert got["Spring Book Advance Refund Dates"] == (["Spring 2027"], "Spring 2027")
+    assert got["Spring Refund Date"] == (["Spring 2027"], "Spring 2027")
+    assert got["Attendance"] == ([], None)
+    assert got["Financial Aid"] == (
+        [],
+        None,
+    )  # body only
+
+
+def test_every_dropping_and_withdrawing_section_is_fall_2026(dropping):
+    assert [s["terms"] for s in dropping["sections"]] == [["Fall 2026"]] * 9
+    assert {s["term"] for s in dropping["sections"]} == {"Fall 2026"}

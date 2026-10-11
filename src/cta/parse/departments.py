@@ -35,6 +35,7 @@ from cta.parse.dept_pdf import (
 )
 from cta.parse.html import to_sections
 from cta.parse.pdf_docs import Repairs, table_markdown
+from cta.parse.terms import tag_terms
 from cta.settings import ROOT
 
 DEPARTMENTS = {
@@ -1007,6 +1008,7 @@ def finalize(record: dict, ligatures: list[dict]) -> dict:
     repairs: list[dict] = []
     out = repair_strings(record, repairs, record.get("title", ""))
     out["repairs"] = [*record.get("repairs", []), *repairs, *ligatures]
+    tag_terms(out)
     return out
 
 

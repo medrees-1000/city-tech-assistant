@@ -19,6 +19,7 @@ from pathlib import Path
 import pdfplumber
 
 from cta.parse.html import to_sections
+from cta.parse.terms import resolve_refund_seasons, tag_terms
 from cta.settings import ROOT
 
 LIGATURES = {"ﬀ": "ff", "ﬁ": "fi", "ﬂ": "fl", "ﬃ": "ffi", "ﬄ": "ffl"}
@@ -443,7 +444,7 @@ def finish(record: dict, blocks: list[Block], excluded: list[dict], repairs: Rep
         key = tuple(sorted(item.items()))
         counts[key] = counts.get(key, 0) + 1
     record["repairs"] = [{**dict(k), "count": n} for k, n in counts.items()]
-    return record
+    return tag_terms(record)
 
 
 def is_page_number(line: PLine) -> bool:
@@ -507,7 +508,8 @@ def parse_refund_calendar(path: Path) -> dict:
         "scope": "city_tech",
         "aid_year": "2026-2027",
     }
-    return parse_flow_pdf(path, meta, FlowConfig(exclude=refund_calendar_exclude), tables=True)
+    record = parse_flow_pdf(path, meta, FlowConfig(exclude=refund_calendar_exclude), tables=True)
+    return resolve_refund_seasons(record)
 
 
 def parse_dropping_withdrawing(path: Path) -> dict:

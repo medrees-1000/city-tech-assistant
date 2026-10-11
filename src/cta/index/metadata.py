@@ -17,8 +17,9 @@ def first_present(record: dict, keys: tuple[str, ...]) -> tuple[bool, object]:
     return bool(present), next((record[k] for k in present if record[k] is not None), None)
 
 
-def chunk_metadata(record: dict) -> tuple[dict, list[str]]:
-    """(the seven metadata values, the fields the record has no key for)."""
+def chunk_metadata(record: dict, section: dict | None = None) -> tuple[dict, list[str]]:
+    """(the seven metadata values, the fields the record has no key for). A section's own `term`
+    (the one entry of its `terms`, else null) replaces the record's term."""
     values: dict = {}
     missing: list[str] = []
     candidates = {
@@ -35,6 +36,10 @@ def chunk_metadata(record: dict) -> tuple[dict, list[str]]:
         values[field] = value
         if not found:
             missing.append(field)
+    if section is not None and "term" in section:
+        values["term"] = section["term"]
+        if "term" in missing:
+            missing.remove("term")
     return values, missing
 
 

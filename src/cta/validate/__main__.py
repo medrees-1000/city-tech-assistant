@@ -122,13 +122,18 @@ def check_departments() -> Area:
 
 def check_metadata() -> Area:
     from cta.validate.metadata import embedded_sections, load_records, run_metadata_checks
+    from cta.validate.terms import run_term_checks
 
     area = Area("metadata")
     records = load_records(PROCESSED)
     if not records:
         area.skipped = "no page, PDF or department records"
         return area
-    area.findings = run_metadata_checks(records, load_sources()["doc_types"])
+    sources = load_sources()
+    area.findings = [
+        *run_metadata_checks(records, sources["doc_types"]),
+        *run_term_checks(records, sources["refund_pages"]),
+    ]
     sections = sum(len(embedded_sections(r)) for r in records)
     area.checked = f"{sections} sections to embed in {len(records)} records"
     return area

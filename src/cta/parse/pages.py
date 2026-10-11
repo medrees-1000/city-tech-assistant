@@ -12,6 +12,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from cta.parse.html import not_collected, parse_page
+from cta.parse.terms import covered_terms, tag_terms
 from cta.settings import ROOT, load_sources
 
 
@@ -32,6 +33,7 @@ def record_for(
     no_index: dict[str, str] | None = None,
     metadata: dict[str, dict] | None = None,
     doc_rules: list[dict] | None = None,
+    refund_pages: list[str] | None = None,
 ) -> dict:
     """One manifest entry -> one page record. owner/kind come from the manifest.
 
@@ -61,6 +63,9 @@ def record_for(
     rec["term"] = None  # web pages print no term
     rec["last_updated"] = None  # nor a last-updated date
     rec.update((metadata or {}).get(entry["url"], {}))
+    tag_terms(rec)
+    if entry["url"] in (refund_pages or []):
+        rec.update(covered_terms(rec))  # what the page names; nothing is assumed
     return rec
 
 
@@ -152,10 +157,11 @@ def build_pages(
     no_index: dict[str, str] | None = None,
     metadata: dict[str, dict] | None = None,
     doc_rules: list[dict] | None = None,
+    refund_pages: list[str] | None = None,
 ) -> list[dict]:
     records = []
     for entry in manifest:
-        rec = record_for(entry, raw_root, no_index, metadata, doc_rules)
+        rec = record_for(entry, raw_root, no_index, metadata, doc_rules, refund_pages)
         path = out_dir / "pages" / rec["owner"] / f"{slug_of(rec['source_url'])}.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(rec, indent=1, ensure_ascii=False), encoding="utf-8")
@@ -179,6 +185,7 @@ def main() -> None:
         no_index,
         sources.get("page_metadata", {}),
         sources.get("page_doc_types", []),
+        sources.get("refund_pages", []),
     )
     collected = sum(r["status"] == "collected" for r in records)
     indexed = sum(r["index"] for r in records)

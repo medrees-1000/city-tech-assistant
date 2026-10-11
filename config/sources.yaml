@@ -131,6 +131,10 @@ page_doc_types:  # URL path pattern -> doc_type for page records. The first rule
   - {path: "/electrical-telecomm/*", doc_type: department}
   - {path: "/dental/*", doc_type: department}
 
+refund_pages:  # their records store covered_terms: every term their headings and tables name
+  - "https://www.citytech.cuny.edu/bursar/refund-policy.aspx"
+  - "https://www.citytech.cuny.edu/admissions/tuition-refund.aspx"
+
 page_metadata:  # extra fields copied into a page record
   "https://www.citytech.cuny.edu/advisement/virtual-advisors.aspx":
     note: "lists staff emails"
