@@ -9,6 +9,8 @@ import json
 from collections import Counter
 from pathlib import Path
 
+from cta.index.metadata import FIELDS, chunk_metadata
+
 
 def heading_path(section: dict) -> str:
     """Parents then heading, outermost first ("Program > Requirements > General Education")."""
@@ -20,7 +22,9 @@ def heading_path(section: dict) -> str:
 
 def section_rows(record: dict, kind: str, stem: str) -> list[dict]:
     """One row per indexable section of one record. The id counts all sections of the record, so it
-    does not change when another section is excluded."""
+    does not change when another section is excluded. Metadata values are as the chunk carries them
+    (None stays None; the table shows it as "-")."""
+    values, _ = chunk_metadata(record)
     rows = []
     for n, s in enumerate(record["sections"], 1):
         if s.get("embed") is False:
@@ -28,33 +32,14 @@ def section_rows(record: dict, kind: str, stem: str) -> list[dict]:
         rows.append(
             {
                 "id": f"{kind}/{stem}#{n}",
-                "doc_type": record.get("doc_type") or "page",
-                "department": record_department(record),
-                "scope": record_scope(record),
-                "term": record_term(record),
-                "source": record.get("source_url") or record["source_file"],
+                **values,
+                "aid_year": record.get("aid_year"),
                 "heading_path": heading_path(s),
                 "heading": s["heading"],
                 "chars": len(s["markdown"]),
             }
         )
     return rows
-
-
-def record_department(record: dict) -> str:
-    if "department" in record:
-        return record["department"]
-    return record["owner"] if record.get("kind") == "department" else "-"
-
-
-def record_scope(record: dict) -> str:
-    if "scope" in record:
-        return record["scope"]
-    return "department" if record.get("kind") == "department" else "city_tech"
-
-
-def record_term(record: dict) -> str:
-    return record.get("term") or record.get("aid_year") or "-"
 
 
 def is_indexable(record: dict) -> bool:
@@ -99,8 +84,32 @@ def course_counts(processed: Path) -> dict[str, int]:
     return {p.name: len(list(p.glob("*.json"))) for p in folders}
 
 
+def null_counts(rows: list[dict]) -> dict[str, dict]:
+    """Per doc_type: the number of sections and, for each metadata field, how many are null."""
+    out: dict[str, dict] = {}
+    for r in rows:
+        entry = out.setdefault(
+            r["doc_type"] or "(null)", {"sections": 0, **dict.fromkeys(FIELDS, 0)}
+        )
+        entry["sections"] += 1
+        for f in FIELDS:
+            entry[f] += r[f] is None
+    return dict(sorted(out.items()))
+
+
+def term_cell(row: dict) -> str:
+    if row["term"]:
+        return row["term"]
+    return f"aid year {row['aid_year']}" if row.get("aid_year") else "-"
+
+
+def show(value: object) -> str:
+    return "-" if value is None else str(value)
+
+
 def render(rows: list[dict], left_out: dict, events: list[dict], courses: dict[str, int]) -> str:
     per_type = Counter(r["doc_type"] for r in rows)
+    nulls = null_counts(rows)
     lines = [
         "# Section index",
         "",
@@ -109,7 +118,7 @@ def render(rows: list[dict], left_out: dict, events: list[dict], courses: dict[s
         "The id is `<kind>/<record>#<section number>`; it does not change when a section is left",
         "out. Chars is the length of the section's markdown. Chunking may merge a section's tables",
         "into its parent section (`merge_tables_into_parents`), so a chunk can exceed a row.",
-        "Pages have no `doc_type` yet and show as `page`. Term is `-` where none is printed.",
+        "`-` means null. Term is null where none is printed; aid-year documents show the year.",
         "",
         f"**{len(rows)} sections** in {len(by_source(rows))} sources. "
         f"Records left out: {left_out or 'none'} (index false or not collected).",
@@ -117,6 +126,19 @@ def render(rows: list[dict], left_out: dict, events: list[dict], courses: dict[s
         "| doc_type | sections |",
         "|---|---|",
         *[f"| {t} | {n} |" for t, n in sorted(per_type.items())],
+        "",
+        "## Null counts per field and doc_type",
+        "",
+        "Sections whose metadata field is null. Null is allowed for department (central offices,",
+        "CUNY-wide documents), term and last_updated. `date` is the fetch date or the file date.",
+        "`catalog_course` has no sections here: a course is one chunk of its own record.",
+        "",
+        "| group (doc_type) | sections | " + " | ".join(FIELDS) + " |",
+        "|---|---|" + "---|" * len(FIELDS),
+        *[
+            f"| {t} | {e['sections']} | " + " | ".join(str(e[f]) for f in FIELDS) + " |"
+            for t, e in nulls.items()
+        ],  # fmt: skip
         "",
         "## Sections by source",
     ]
@@ -126,15 +148,16 @@ def render(rows: list[dict], left_out: dict, events: list[dict], courses: dict[s
             "",
             f"### {source}",
             "",
-            f"{first['doc_type']}, department {first['department']}, scope {first['scope']}, "
-            f"term {first['term']}: {len(group)} sections, {sum(r['chars'] for r in group)} chars.",
+            f"{first['doc_type']}, department {show(first['department'])}, scope {first['scope']}, "
+            f"term {term_cell(first)}: {len(group)} sections, "
+            f"{sum(r['chars'] for r in group)} chars.",
             "",
             "| id | doc_type | department | scope | term | source | heading path | chars |",
             "|---|---|---|---|---|---|---|---|",
         ]
         for r in group:
-            cells = [r["id"], r["doc_type"], r["department"], r["scope"], r["term"], r["source"],
-                     r["heading_path"], str(r["chars"])]  # fmt: skip
+            cells = [r["id"], show(r["doc_type"]), show(r["department"]), r["scope"], term_cell(r),
+                     r["source"], r["heading_path"], str(r["chars"])]  # fmt: skip
             lines.append("| " + " | ".join(c.replace("|", "\\|") for c in cells) + " |")
     lines += [
         "",
