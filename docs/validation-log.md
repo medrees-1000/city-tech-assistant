@@ -597,3 +597,35 @@ PASS, calendar PASS.
 
 Full validation: courses PASS (30 warnings), pages PASS (2 accepted), pdfs PASS, departments PASS, metadata
 PASS (534 sections in 82 records), calendar PASS.
+
+## Phase 1, step 9: term tags on sections — 2026-10-11
+
+- Every section of every page, PDF and department record now has `terms` (list, may be empty) and `term`
+  (the entry when there is exactly one, else null). 557 sections in all records: 42 have terms, 30 of them
+  among the 534 sections to embed (aid 5, contacts 4, department 4, policy 17; one section has several
+  terms). Terms come only from the heading path and the header row of tables; the rule is in
+  `docs/decisions.md`.
+- Refund calendar PDF (rule written in docs/decisions.md): the schedule section -> Summer 2026, Fall 2026,
+  Spring 2027 (term null); "Fall Book Advance Refund Dates" and "Fall Refund Date" -> Fall 2026; "Spring Book
+  Advance Refund Dates" and "Spring Refund Date" -> Spring 2027, each with `terms_source`. The other two
+  sections (Attendance; "Financial Aid ... Refund Dates", whose body mentions Summer 2026) have none.
+- Dropping and Withdrawing PDF: all 9 sections ["Fall 2026"] (the title heading is in every heading path).
+- Refund pages, `covered_terms` (from headings and tables, not assumed):
+  - `bursar/refund-policy.aspx`: Summer I 2026, Summer II 2026, Fall 2026 (headings "Summer Session I 2026
+    Refund Policy", "... II ...", "Fall 2026 Refund Policy"). Its intro section has no term.
+  - `admissions/tuition-refund.aspx`: **none**. The table is the generic CUNY schedule and says "Fall and
+    Spring" and "Summer Session" with no year, so no section is tagged. `seasons_without_year` is Fall,
+    Spring, Summer Session. This page cannot be used to answer a question about a named term.
+- Things to know: the EET advisement page, the EET root page and `virtual-advisors.aspx` have a table titled
+  "Summer 2026 Advisement Schedule", while the same page has "Fall 2026 Advisement Schedule" headings;
+  `EET student-hours.aspx` is titled "Fall 2024"; the 12 `interdisciplinary.aspx` sections carry Spring
+  2022 to Spring 2026 terms (that page is not indexed). All are as printed.
+- New checks (`cta.validate.terms`, in the metadata area): `terms` is a list; each entry has the term form;
+  a section whose heading path or table title names a term has it; a term in no heading needs a stated source;
+  `term` is consistent; a refund page has `covered_terms` that include every section term. Tested with
+  deliberately broken records. `docs/section-index.md` has a terms column and a count per doc_type.
+- The section's own `term` now replaces the record's term in the metadata null counts (term is null for
+  505 of 534 sections; 29 have exactly one term and 1 has several).
+
+Full validation: courses PASS (30 warnings), pages PASS (2 accepted), pdfs PASS, departments PASS, metadata
+PASS (534 sections, 82 records), calendar PASS.

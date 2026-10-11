@@ -49,6 +49,11 @@ PDFs, departments, calendar). A missing input is SKIPPED, never a pass.
 - Every page record has a `doc_type` from the `page_doc_types` rules; a page no rule covers is
   flagged. `docs/section-index.md` shows the null count per field and doc_type.
 
+- Term tags: every section has `terms`, a list; each entry is a season name plus a year ("Fall 2026",
+  "Summer I 2026"); a section whose heading path or table title names a term has it in `terms`; a term
+  in no heading is allowed only with a stated source (the refund calendar rule, docs/decisions.md);
+  `term` is the entry when there is exactly one, else null. Refund pages store `covered_terms`.
+
 ### Calendar
 - Every row has event, date (or explicit TBA), term, source PDF and last-updated date.
 - Dates fall inside the term's expected range, and the weekday matches the date for the right year.

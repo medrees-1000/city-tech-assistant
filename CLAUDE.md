@@ -216,6 +216,8 @@ tests/
   (cuny|city_tech|department), `term` (when relevant), `fetched_at` (or file date), `last_updated`.
   `department`, `term` and `last_updated` may be null (central offices and CUNY-wide documents have no
   department; web pages print no term or update date); the other fields may not.
+  Every section also has `terms` (explicit term names from its heading path or table title only;
+  `term` is the single entry, else null; see `docs/decisions.md`).
   The allowed `doc_type` list is `doc_types` in `config/sources.yaml`. Page records get theirs from
   the path rules in `page_doc_types` there (first match wins; a page no rule covers is flagged, never
   guessed). `contacts` is the staff-email list page (`advisement/virtual-advisors.aspx`), not the
