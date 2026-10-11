@@ -403,8 +403,8 @@ Part A (follow-ups on step 4, nothing changed):
   can also search by the status of the award ..." (2 lines) and "Use the dropdown menu to view information by
   term or for the entire academic year" (5 lines); p8 "Use the drop-down menu to view information by term"
   (2 lines); p14 "Choose the term you wish to view then click the go button to view." (2 lines). Plain
-  labels, not instructions: p3 "You can filter your to do list by type and by college"; p6 "This option will
-  only show when your aid has been packaged at the college for the indicated academic year". Kept excluded
+  labels, not instructions (5 lines): p3 "You can filter your to do list by type and by college"; p6 "This
+  option will only show when your aid has been packaged at the college for the indicated academic year". Kept excluded
   until the owner decides.
 - b) Dropping and Withdrawing vs `calendar_events.json` (Fall 2026): Sept 3 certification date = fall-2026-010
   (and 011 "last day to drop without a grade of WD"): match. WD window Sept 4-17 = fall-2026-013 (Sept 4, WD
