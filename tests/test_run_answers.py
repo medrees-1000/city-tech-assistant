@@ -298,9 +298,13 @@ def test_label_rule_v2_all_gold_in_top5_is_a_generation_error():
 def test_rubric_is_versioned_and_in_the_prompt():
     from cta.eval import rubric
 
-    assert rubric.RUBRIC_VERSION == 2
+    assert rubric.RUBRIC_VERSION == 3
     assert "NOT required" in rubric.JUDGE_INSTRUCTIONS
     assert "even if it is likely\n  true" in rubric.JUDGE_INSTRUCTIONS
+    # v3: faithfulness is judged against the shown sources only, and absence statements are checked
+    assert "Never use outside knowledge" in rubric.JUDGE_INSTRUCTIONS
+    assert "is indeed absent from the\n  numbered sources" in rubric.JUDGE_INSTRUCTIONS
+    assert "when X is in fact in the numbered sources" in rubric.JUDGE_INSTRUCTIONS
     msgs = ra.judge_messages("normal", question(), ans())
     assert msgs[0]["content"] == rubric.JUDGE_INSTRUCTIONS
 
@@ -309,7 +313,7 @@ def test_rubric_is_versioned_and_in_the_prompt():
 def test_rubric_version_is_stored_in_the_run_config(conn):
     run_id = ra.start_run(conn, "t", "dev", CFG, {"rejudge_of": "x"})
     config = conn.execute("SELECT config FROM eval_runs WHERE id = %s", (run_id,)).fetchone()[0]
-    assert config["rubric_version"] == 2 and config["rejudge_of"] == "x"
+    assert config["rubric_version"] == 3 and config["rejudge_of"] == "x"
 
 
 def test_verdict_changes_lists_only_changed_questions():

@@ -1,10 +1,13 @@
 """The judge rubric. One file, versioned: the version is stored in every eval run's config.
 
 Version 1 (the first dev run, `baseline-dev`) required the facts of the gold answer; version 2 asks
-for what the question asks for. The version 1 wording is in git history (commit 4beb454).
+for what the question asks for. Version 3 (Phase 3, step 1b) changes only the faithfulness part: it
+is judged against the numbered sources shown, never outside knowledge, and "the sources do not
+contain X" is faithful when X really is absent from those sources (the q22 and q40 findings in
+docs/decisions.md). Older wording is in git history (v1 in commit 4beb454, v2 in 08cc8df).
 """
 
-RUBRIC_VERSION = 2
+RUBRIC_VERSION = 3
 
 JUDGE_INSTRUCTIONS = """\
 You grade answers given by a student-help assistant. You see the question, a reference answer
@@ -21,12 +24,15 @@ the question does not ask for; those are NOT required.
 A reply that starts with "ABSTAIN:" gives no facts. Grade it "incorrect", unless the gold answer
 says that abstaining is acceptable.
 
-faithfulness: using only the numbered sources (not your own knowledge), check every claim in the
-answer against them.
-- "yes": every claim is stated in the sources. An "ABSTAIN:" reply is faithful.
+faithfulness: check every claim in the answer against the numbered sources shown to the assistant,
+and only against them. Never use outside knowledge, not even to decide that a claim is true.
+- "yes": every claim is stated in the sources. A statement that the sources do not contain
+  something (for example "the sources do not state X") is faithful if X is indeed absent from the
+  numbered sources. An "ABSTAIN:" reply is faithful.
 - "partly": at least one claim is an inference or goes beyond the sources, even if it is likely
   true.
-- "no": a claim contradicts the sources or has no support in them.
+- "no": a claim contradicts the sources or has no support in them. This includes saying that the
+  sources do not contain X when X is in fact in the numbered sources.
 
 Reply with JSON only, in this form:
 {"correctness": "correct|partial|incorrect", "correctness_reason": "one sentence",

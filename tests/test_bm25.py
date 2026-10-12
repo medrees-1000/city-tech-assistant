@@ -1,4 +1,4 @@
-"""BM25 keyword side (Phase 3, step 1b): pure scoring on hand-made chunks, and the database parts."""
+"""BM25 keyword side (Phase 3, step 1b): pure scoring on hand-made chunks, and the database."""
 
 import copy
 import math
