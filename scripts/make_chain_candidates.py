@@ -26,6 +26,7 @@ CONTACTS = ROOT / "data" / "processed" / "contacts"
 QUESTIONS = ROOT / "eval" / "questions.jsonl"
 OUT = ROOT / "docs" / "chain-candidates.md"
 MAX_DEPTH = 4
+FIRST_NUMBER = 76  # the id after q75, the highest question before this step; fixed so a re-run after the merge keeps the ids
 NO_RECORD = "no record in the catalog data of the four departments"
 
 EXPANSION = """\
@@ -211,6 +212,18 @@ def unparsed_gold(root: Node, contact: str) -> str:
     )
 
 
+def coreq_gold(root: Node, coreq: str) -> str:
+    """The catalog text word for word, then one sentence: the named course is a corequisite (taken at
+    the same time) and the other conditions are CUNY proficiency and department approval."""
+    if coreq not in root.parsed.codes:
+        raise ValueError(f"{coreq} is not named in the text of {root.code}")
+    text = (root.record["prerequisite_text"] or "").strip()
+    return (
+        f"{root.code} ({root.record['title'].strip()}): the catalog text is \"{text}\". {coreq} is named as a "
+        "corequisite (taken at the same time); the other conditions are CUNY proficiency and department approval."
+    )
+
+
 def control_gold(root: Node) -> str:
     r = root.record
     credits = r["credits"]
@@ -238,9 +251,9 @@ SPECS: list[dict] = [
     {"category": "cross-listed course (same description under two codes)", "kind": "chain", "root": "CST 2304", "split": "dev", "type": "lookup",
      "question": "What are the prerequisites for CST 2304?",
      "note": "CST 2304 and CST 1204 share a title and a description but have separate records and rules; the question names CST 2304, whose record lists no prerequisite. The answer must not borrow CST 1204's rule."},
-    {"category": "truncated or shorthand prerequisite text", "kind": "unparsed", "root": "CST 3508", "split": "test", "type": "ambiguous",
+    {"category": "truncated or shorthand prerequisite text", "kind": "unparsed", "root": "CST 3508", "split": "test", "type": "unanswerable",
      "question": "What do I need to take before CST 3508?",
-     "note": "The text is shorthand and cut off ('...MAT13'). Gold = the verbatim text plus 'cannot be determined from the catalog text, contact the department' and the CST department contact. Type ambiguous (alternative: unanswerable)."},
+     "note": "The text is shorthand and cut off ('...MAT13'). Gold = the verbatim text plus 'cannot be determined from the catalog text, contact the department' and the CST department contact. Type unanswerable (owner edit, 2026-10-12); following the convention of the existing unanswerable questions the gold_sources list is empty. Reference record, not a gold source: catalog:CST 3508."},
     {"category": "unknown course code", "kind": "abstain", "root": "CST 4999", "split": "dev", "type": "unanswerable", "contact": "CST-NYT",
      "question": "What are the prerequisites for CST 4999?",
      "note": "No record with this code exists in the catalog data (Active courses of the four departments). Gold ABSTAIN with the CST department contact. Please confirm in the catalog that no such course exists."},
@@ -250,12 +263,12 @@ SPECS: list[dict] = [
     {"category": "course named by title only", "kind": "chain", "root": "CST 3504", "split": "dev", "type": "multi_chunk",
      "question": "What do I need to take before Database Design?",
      "note": "The title 'Database Design' belongs to one record only (CST 3504). Shares CST 1204, CST 1100 and CST 1101 with the q40 chain."},
-    {"category": "corequisite cycle and non-course conditions", "kind": "chain", "root": "DEN 1100", "split": "test", "type": "multi_chunk",
+    {"category": "corequisite cycle and non-course conditions", "kind": "coreq", "root": "DEN 1100", "coreq": "DEN 1112", "split": "test", "type": "multi_chunk",
      "question": "What do I need before DEN 1100?",
-     "note": "DEN 1100 names DEN 1112 as a corequisite and DEN 1112 names DEN 1100: a cycle. The text also has non-course conditions (CUNY proficiency, department approval). The simple rule expands the corequisite like a prerequisite; the owner should decide what the gold should say about corequisites."},
+     "note": "DEN 1100 names DEN 1112 as a corequisite and DEN 1112 names DEN 1100: a cycle. The text also has non-course conditions (CUNY proficiency, department approval). The simple rule expands the corequisite like a prerequisite. Gold (owner edit, 2026-10-12): the catalog text word for word, then one sentence saying DEN 1112 is named as a corequisite (taken at the same time) and the other conditions are CUNY proficiency and department approval; gold_sources stay catalog:DEN 1100 and catalog:DEN 1112."},
     {"category": "boundary control, not a chain question", "kind": "control", "root": "MAT 2440", "split": "dev", "type": "lookup", "tags": [],
      "question": "What is MAT 2440 about, and how many credits is it?",
-     "note": "A normal lookup about one course (description and credits); the router should not send it to the chain tool."},
+     "note": "A normal lookup about one course (description and credits); the router should not send it to the chain tool. Spacing: the raw catalog description of MAT 2440 itself reads '...flow charting.SATISFIES FLEXIBLE CORE- SCIENTIFIC WORLD' with no space after the period (checked in the raw JSON); the generator does not join two fields here, so the gold keeps the catalog text verbatim."},
 ]  # fmt: skip
 
 
@@ -285,7 +298,9 @@ def build(records: dict[str, dict], first_number: int, contacts: Path = CONTACTS
             gold, sources = chain_gold(nodes), gold_sources(nodes)
         elif kind == "unparsed":
             dept = nodes[0].record["department"]
-            gold, sources = unparsed_gold(nodes[0], contact_line(dept, contacts)), gold_sources(nodes)
+            gold = unparsed_gold(nodes[0], contact_line(dept, contacts))  # unanswerable: no gold sources
+        elif kind == "coreq":
+            gold, sources = coreq_gold(nodes[0], spec["coreq"]), gold_sources(nodes)
         elif kind == "control":
             gold, sources = control_gold(nodes[0]), gold_sources(nodes)
         else:
@@ -430,12 +445,20 @@ def render(records: dict[str, dict], rules: dict, first_number: int, existing: d
     ]
     for c in items:
         out += render_candidate(c, records, rules, existing)
+    basis = (
+        "checked by script against raw JSON (verify_chain_candidates.py); owner delegated review to assistant "
+        "recommendations 2026-10-12; owner has not compared against the live site"
+    )
+    decisions = {"q82": "edit (type unanswerable)", "q86": "edit (gold sentence)", "q87": "edit (see note)"}
     out += [
-        "## Checklist for the owner",
+        "## Checklist",
         "",
-        "| id | chain courses match the catalog (yes/no) | question natural (yes/no) | keep / edit / drop |",
-        "|---|---|---|---|",
-    ] + [f"| {c['id']} | | | |" for c in items]
+        "Review of 2026-10-12: the owner delegated the review to the assistant's recommendations and did not compare against the live catalog site; "
+        "the independent check is `scripts/verify_chain_candidates.py` (raw saved catalog JSON, not the expansion code above).",
+        "",
+        "| id | chain courses match the catalog (yes/no) | question natural (yes/no) | keep / edit / drop | basis |",
+        "|---|---|---|---|---|",
+    ] + [f"| {c['id']} | yes (raw JSON, by script) | yes (assistant recommendation) | {decisions.get(c['id'], 'keep')} | {basis} |" for c in items]
     out += ["", "## What looked inconsistent in the data (not fixed)", ""] + data_notes(records, rules) + [""]
     return "\n".join(out)
 
@@ -443,7 +466,7 @@ def render(records: dict[str, dict], rules: dict, first_number: int, existing: d
 def main() -> int:
     records = load_records()
     rules = json.loads(RULES.read_text(encoding="utf-8"))
-    OUT.write_text(render(records, rules, highest_question_number() + 1, existing_chain_sources()), encoding="utf-8")
+    OUT.write_text(render(records, rules, FIRST_NUMBER, existing_chain_sources()), encoding="utf-8")
     print(f"wrote {OUT.relative_to(ROOT)}")
     return 0
 

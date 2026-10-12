@@ -209,15 +209,15 @@ def test_output_is_deterministic_and_lists_the_owner_checklist(tmp_path):
     rules = json.loads(mcc.RULES.read_text())
     first = mcc.render(records, rules, 76, existing)
     assert first == mcc.render(records, rules, 76, existing)
-    assert (
-        "## Checklist for the owner" in first
-        and "| q76 | | | |" in first
-        and "| q87 | | | |" in first
-    )
+    assert "## Checklist" in first and "| q76 | yes (raw JSON, by script)" in first
+    assert "| q87 | yes (raw JSON, by script)" in first
+    assert "q82 | yes (raw JSON, by script) | yes (assistant recommendation) | edit (type unanswerable)" in first
 
 
 def test_the_real_candidates_cover_the_categories_and_ids_continue_after_the_highest():
-    assert mcc.highest_question_number() == 75
+    assert (
+        mcc.FIRST_NUMBER == 76 and mcc.highest_question_number() >= 75
+    )  # q75 before the merge, q87 after
     items = mcc.build(mcc.load_records(), 76)
     assert [c["id"] for c in items] == [f"q{n}" for n in range(76, 88)] and len(items) == 12
     assert (
@@ -225,7 +225,7 @@ def test_the_real_candidates_cover_the_categories_and_ids_continue_after_the_hig
         and sum(c["split"] == "test" for c in items) == 5
     )
     by_kind = {c["spec"]["kind"] for c in items}
-    assert by_kind == {"chain", "unparsed", "abstain", "control"}
+    assert by_kind == {"chain", "unparsed", "abstain", "control", "coreq"}
     control = next(c for c in items if c["spec"]["kind"] == "control")
     assert control["tags"] == [] and all("chain" in c["tags"] for c in items if c is not control)
     assert {c["spec"]["root"].split(" ")[0] for c in items} >= {"CST", "MAT", "EET", "DEN"}
@@ -252,3 +252,37 @@ def test_the_control_uses_one_record_only_as_gold_source():
     items = mcc.build(mcc.load_records(), 76)
     control = next(c for c in items if c["spec"]["kind"] == "control")
     assert control["sources"] == ["catalog:MAT 2440"] and len(control["nodes"]) == 1
+
+
+def test_q82_is_unanswerable_with_no_gold_sources_and_q86_gold_is_the_text_then_one_sentence():
+    items = {c["id"]: c for c in mcc.build(mcc.load_records(), 76)}
+    q82, q86 = items["q82"], items["q86"]
+    assert q82["spec"]["type"] == "unanswerable" and q82["sources"] == []
+    assert (
+        q82["gold"].endswith("contact the department: compsystech@citytech.cuny.edu, 718-260-5170.")
+        or "TODO" in q82["gold"]
+    )
+    assert q86["sources"] == ["catalog:DEN 1100", "catalog:DEN 1112"]
+    assert q86["gold"] == (
+        'DEN 1100 (Prin of Dental Hygiene Care I): the catalog text is "Prerequisites: CUNY proficiency in reading, '
+        'writing and mathematics, department approval required; Corequisite: DEN 1112". DEN 1112 is named as a '
+        "corequisite (taken at the same time); the other conditions are CUNY proficiency and department approval."
+    )
+    assert "loop" not in q86["gold"].lower() and "cycle" not in q86["gold"].lower()
+
+
+def test_coreq_gold_requires_the_course_to_be_named_in_the_text():
+    node = mcc.expand(
+        "AA 1001",
+        recs(rec("AA 1001", "Prerequisites: proficiency; Corequisite: BB 1001"), rec("BB 1001")),
+    )[0]
+    assert "BB 1001 is named as a corequisite (taken at the same time)" in mcc.coreq_gold(
+        node, "BB 1001"
+    )
+    with pytest.raises(ValueError):
+        mcc.coreq_gold(node, "CC 1001")
+
+
+def test_q87_keeps_the_catalog_description_verbatim_including_its_own_missing_space():
+    items = {c["id"]: c for c in mcc.build(mcc.load_records(), 76)}
+    assert "flow charting.SATISFIES FLEXIBLE CORE- SCIENTIFIC WORLD" in items["q87"]["gold"]

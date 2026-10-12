@@ -222,10 +222,10 @@ Catalog page: the raw data has the courseGroupId (above) but no page slug, so no
 ## q82 — truncated or shorthand prerequisite text
 
 - **Question:** What do I need to take before CST 3508?
-- **Type:** ambiguous  |  **Tags:** chain  |  **Proposed split:** test
+- **Type:** unanswerable  |  **Tags:** chain  |  **Proposed split:** test
 - **Root:** CST 3508  |  **Chain depth:** 0  |  **Courses in the chain:** 1
-- **Gold sources:** `catalog:CST 3508`
-- **Note:** The text is shorthand and cut off ('...MAT13'). Gold = the verbatim text plus 'cannot be determined from the catalog text, contact the department' and the CST department contact. Type ambiguous (alternative: unanswerable).
+- **Gold sources:** (none)
+- **Note:** The text is shorthand and cut off ('...MAT13'). Gold = the verbatim text plus 'cannot be determined from the catalog text, contact the department' and the CST department contact. Type unanswerable (owner edit, 2026-10-12); following the convention of the existing unanswerable questions the gold_sources list is empty. Reference record, not a gold source: catalog:CST 3508.
 - **FLAGS:**
   - CST 3508: UNPARSED (shorthand text)
 
@@ -307,16 +307,14 @@ Catalog page: the raw data has the courseGroupId (above) but no page slug, so no
 - **Type:** multi_chunk  |  **Tags:** chain  |  **Proposed split:** test
 - **Root:** DEN 1100  |  **Chain depth:** 1  |  **Courses in the chain:** 2
 - **Gold sources:** `catalog:DEN 1100`, `catalog:DEN 1112`
-- **Note:** DEN 1100 names DEN 1112 as a corequisite and DEN 1112 names DEN 1100: a cycle. The text also has non-course conditions (CUNY proficiency, department approval). The simple rule expands the corequisite like a prerequisite; the owner should decide what the gold should say about corequisites.
+- **Note:** DEN 1100 names DEN 1112 as a corequisite and DEN 1112 names DEN 1100: a cycle. The text also has non-course conditions (CUNY proficiency, department approval). The simple rule expands the corequisite like a prerequisite. Gold (owner edit, 2026-10-12): the catalog text word for word, then one sentence saying DEN 1112 is named as a corequisite (taken at the same time) and the other conditions are CUNY proficiency and department approval; gold_sources stay catalog:DEN 1100 and catalog:DEN 1112.
 - **FLAGS:**
   - DEN 1100: corequisite wording (the simple rule expands it like a prerequisite)
   - DEN 1112: corequisite wording (the simple rule expands it like a prerequisite)
 
 **Draft gold answer (built from the records; DRAFT: owner must check against the catalog):**
 
-> Draft chain for DEN 1100 (Prin of Dental Hygiene Care I), built from the catalog records:
-> Level 0 - DEN 1100 (Prin of Dental Hygiene Care I): catalog text "Prerequisites: CUNY proficiency in reading, writing and mathematics, department approval required; Corequisite: DEN 1112"; course codes named: DEN 1112; conditions (not courses): Prerequisites: CUNY proficiency in reading, writing and mathematics, department approval required.
-> Level 1 - DEN 1112 (Oral Anatomy): catalog text "CUNY proficiency in reading, writing and mathematics; Corequisite of DEN 1100."; course codes named: DEN 1100; conditions (not courses): CUNY proficiency in reading, writing and mathematics.
+> DEN 1100 (Prin of Dental Hygiene Care I): the catalog text is "Prerequisites: CUNY proficiency in reading, writing and mathematics, department approval required; Corequisite: DEN 1112". DEN 1112 is named as a corequisite (taken at the same time); the other conditions are CUNY proficiency and department approval.
 
 Records as stored:
 
@@ -333,7 +331,7 @@ Catalog page: the raw data has the courseGroupId (above) but no page slug, so no
 - **Type:** lookup  |  **Tags:** (none)  |  **Proposed split:** dev
 - **Root:** MAT 2440  |  **Chain depth:** 0  |  **Courses in the chain:** 1
 - **Gold sources:** `catalog:MAT 2440`
-- **Note:** A normal lookup about one course (description and credits); the router should not send it to the chain tool.
+- **Note:** A normal lookup about one course (description and credits); the router should not send it to the chain tool. Spacing: the raw catalog description of MAT 2440 itself reads '...flow charting.SATISFIES FLEXIBLE CORE- SCIENTIFIC WORLD' with no space after the period (checked in the raw JSON); the generator does not join two fields here, so the gold keeps the catalog text verbatim.
 - **FLAGS:**
   - MAT 2440: OR branch (any one of the alternatives; the draft lists all of them)
 
@@ -349,22 +347,24 @@ Records as stored:
 
 Catalog page: the raw data has the courseGroupId (above) but no page slug, so no URL is given; search the catalog by course code.
 
-## Checklist for the owner
+## Checklist
 
-| id | chain courses match the catalog (yes/no) | question natural (yes/no) | keep / edit / drop |
-|---|---|---|---|
-| q76 | | | |
-| q77 | | | |
-| q78 | | | |
-| q79 | | | |
-| q80 | | | |
-| q81 | | | |
-| q82 | | | |
-| q83 | | | |
-| q84 | | | |
-| q85 | | | |
-| q86 | | | |
-| q87 | | | |
+Review of 2026-10-12: the owner delegated the review to the assistant's recommendations and did not compare against the live catalog site; the independent check is `scripts/verify_chain_candidates.py` (raw saved catalog JSON, not the expansion code above).
+
+| id | chain courses match the catalog (yes/no) | question natural (yes/no) | keep / edit / drop | basis |
+|---|---|---|---|---|
+| q76 | yes (raw JSON, by script) | yes (assistant recommendation) | keep | checked by script against raw JSON (verify_chain_candidates.py); owner delegated review to assistant recommendations 2026-10-12; owner has not compared against the live site |
+| q77 | yes (raw JSON, by script) | yes (assistant recommendation) | keep | checked by script against raw JSON (verify_chain_candidates.py); owner delegated review to assistant recommendations 2026-10-12; owner has not compared against the live site |
+| q78 | yes (raw JSON, by script) | yes (assistant recommendation) | keep | checked by script against raw JSON (verify_chain_candidates.py); owner delegated review to assistant recommendations 2026-10-12; owner has not compared against the live site |
+| q79 | yes (raw JSON, by script) | yes (assistant recommendation) | keep | checked by script against raw JSON (verify_chain_candidates.py); owner delegated review to assistant recommendations 2026-10-12; owner has not compared against the live site |
+| q80 | yes (raw JSON, by script) | yes (assistant recommendation) | keep | checked by script against raw JSON (verify_chain_candidates.py); owner delegated review to assistant recommendations 2026-10-12; owner has not compared against the live site |
+| q81 | yes (raw JSON, by script) | yes (assistant recommendation) | keep | checked by script against raw JSON (verify_chain_candidates.py); owner delegated review to assistant recommendations 2026-10-12; owner has not compared against the live site |
+| q82 | yes (raw JSON, by script) | yes (assistant recommendation) | edit (type unanswerable) | checked by script against raw JSON (verify_chain_candidates.py); owner delegated review to assistant recommendations 2026-10-12; owner has not compared against the live site |
+| q83 | yes (raw JSON, by script) | yes (assistant recommendation) | keep | checked by script against raw JSON (verify_chain_candidates.py); owner delegated review to assistant recommendations 2026-10-12; owner has not compared against the live site |
+| q84 | yes (raw JSON, by script) | yes (assistant recommendation) | keep | checked by script against raw JSON (verify_chain_candidates.py); owner delegated review to assistant recommendations 2026-10-12; owner has not compared against the live site |
+| q85 | yes (raw JSON, by script) | yes (assistant recommendation) | keep | checked by script against raw JSON (verify_chain_candidates.py); owner delegated review to assistant recommendations 2026-10-12; owner has not compared against the live site |
+| q86 | yes (raw JSON, by script) | yes (assistant recommendation) | edit (gold sentence) | checked by script against raw JSON (verify_chain_candidates.py); owner delegated review to assistant recommendations 2026-10-12; owner has not compared against the live site |
+| q87 | yes (raw JSON, by script) | yes (assistant recommendation) | edit (see note) | checked by script against raw JSON (verify_chain_candidates.py); owner delegated review to assistant recommendations 2026-10-12; owner has not compared against the live site |
 
 ## What looked inconsistent in the data (not fixed)
 
