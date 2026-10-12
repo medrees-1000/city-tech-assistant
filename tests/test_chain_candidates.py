@@ -211,7 +211,10 @@ def test_output_is_deterministic_and_lists_the_owner_checklist(tmp_path):
     assert first == mcc.render(records, rules, 76, existing)
     assert "## Checklist" in first and "| q76 | yes (raw JSON, by script)" in first
     assert "| q87 | yes (raw JSON, by script)" in first
-    assert "q82 | yes (raw JSON, by script) | yes (assistant recommendation) | edit (type unanswerable)" in first
+    assert (
+        "q82 | yes (raw JSON, by script) | yes (assistant recommendation) | edit (type unanswerable)"
+        in first
+    )
 
 
 def test_the_real_candidates_cover_the_categories_and_ids_continue_after_the_highest():
@@ -286,3 +289,75 @@ def test_coreq_gold_requires_the_course_to_be_named_in_the_text():
 def test_q87_keeps_the_catalog_description_verbatim_including_its_own_missing_space():
     items = {c["id"]: c for c in mcc.build(mcc.load_records(), 76)}
     assert "flow charting.SATISFIES FLEXIBLE CORE- SCIENTIFIC WORLD" in items["q87"]["gold"]
+
+
+# ---- the merged rows (step 4b-1) ----
+
+
+def file_rows():
+    rows = [
+        json.loads(line)
+        for line in mcc.QUESTIONS.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    return {r["id"]: r for r in rows if 76 <= int(r["id"][1:]) <= 87}
+
+
+def test_the_merged_rows_equal_the_generated_rows_and_use_the_existing_fields():
+    built = {r["id"]: r for r in mcc.question_rows(mcc.load_records())}
+    merged = file_rows()
+    assert sorted(merged) == sorted(built) and len(merged) == 12
+    assert merged == built
+    for row in merged.values():
+        assert set(row) <= {
+            "id",
+            "question",
+            "gold_answer",
+            "gold_sources",
+            "type",
+            "department",
+            "split",
+            "note",
+            "tags",
+        }
+        for src in row["gold_sources"]:
+            assert src["source"] == "catalog_course" and src["id"] == f"catalog:{src['heading']}"
+
+
+def test_the_merged_splits_tags_types_and_departments_follow_the_decisions():
+    rows = file_rows()
+    dev = {"q76", "q77", "q79", "q81", "q83", "q85", "q87"}
+    assert {i for i, r in rows.items() if r["split"] == "dev"} == dev
+    assert {i for i, r in rows.items() if r["split"] == "test"} == {
+        "q78",
+        "q80",
+        "q82",
+        "q84",
+        "q86",
+    }
+    assert "tags" not in rows["q87"] and all(
+        r["tags"] == ["chain"] for i, r in rows.items() if i != "q87"
+    )
+    assert rows["q82"]["type"] == "unanswerable" and rows["q82"]["gold_sources"] == []
+    assert rows["q83"]["gold_answer"] == rows["q84"]["gold_answer"] == "ABSTAIN"
+    assert (
+        rows["q83"]["department"] == "CST-NYT" and rows["q84"]["department"] is None
+    )  # as q27 and q29
+    assert [g["id"] for g in rows["q86"]["gold_sources"]] == [
+        "catalog:DEN 1100",
+        "catalog:DEN 1112",
+    ]
+    assert rows["q86"]["department"] == "DENT-NYT" and rows["q87"]["department"] == "MATH-NYT"
+
+
+def test_the_74_rows_before_the_merge_are_unchanged_and_the_12_are_appended():
+    import subprocess
+
+    old = subprocess.run(
+        ["git", "show", "6056c00:eval/questions.jsonl"], capture_output=True, text=True, cwd=ROOT
+    )
+    if old.returncode != 0:
+        pytest.skip("history not available")
+    before = old.stdout.splitlines()
+    now = mcc.QUESTIONS.read_text(encoding="utf-8").splitlines()
+    assert len(before) == 74 and now[:74] == before and len(now) == 86

@@ -71,7 +71,9 @@ def test_the_old_baseline_questions_are_all_still_dev_and_unchanged_in_number():
     baseline = json.loads((ROOT / "eval/results/baseline-dev-60.json").read_text())
     ids = {r["id"] for r in baseline["per_question"]}
     dev = {q["id"] for q in load_questions() if q["split"] == "dev"}
-    assert len(ids) == 40 and ids <= dev and len(dev - ids) == 8
+    assert (
+        len(ids) == 40 and ids <= dev and len(dev - ids) == 15
+    )  # 8 calendar (4a-1) + 7 chain (4b-1)
 
 
 # ---- selecting questions, recording the set ----

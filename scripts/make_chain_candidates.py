@@ -312,6 +312,41 @@ def build(records: dict[str, dict], first_number: int, contacts: Path = CONTACTS
     return out
 
 
+# ---- the eval rows (step 4b-1) ----
+
+ROW_NOTE = (
+    " Gold built mechanically from the catalog records (scripts/make_chain_candidates.py) and checked against the "
+    "raw catalog JSON by scripts/verify_chain_candidates.py on 2026-10-12; the owner delegated the review to the "
+    "assistant's recommendations and has not compared it with the live catalog site."
+)
+
+
+def question_row(c: dict, records: dict[str, dict]) -> dict:
+    """The eval/questions.jsonl row of a candidate (same fields as the existing course questions)."""
+    spec, root = c["spec"], c["spec"]["root"]
+    dept = records[root]["department"] if root in records else spec.get("contact")
+    row = {
+        "id": c["id"],
+        "question": spec["question"],
+        "gold_answer": c["gold"],
+        "gold_sources": [
+            {"id": src, "source": "catalog_course", "heading": src.removeprefix("catalog:")}
+            for src in c["sources"]
+        ],
+        "type": spec["type"],
+        "department": dept if dept in ("CST-NYT", "MATH-NYT", "EET-NYT", "DENT-NYT") else None,
+        "split": c["split"],
+        "note": spec["note"] + ROW_NOTE,
+    }
+    if c["tags"]:
+        row["tags"] = c["tags"]
+    return row
+
+
+def question_rows(records: dict[str, dict], first_number: int = FIRST_NUMBER) -> list[dict]:
+    return [question_row(c, records) for c in build(records, first_number)]
+
+
 # ---- the file ----
 
 

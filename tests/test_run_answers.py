@@ -395,10 +395,11 @@ def test_new_questions_are_classified_as_intended():
     }
 
 
-def test_chain_tags_are_exactly_the_five_chain_questions():
+def test_chain_tags_are_exactly_the_chain_questions():
     qs = real_questions()
     tagged = sorted(q for q, row in qs.items() if "chain" in row.get("tags", []))
-    assert tagged == ["q20", "q22", "q39", "q40", "q41"]
+    # the five of Phase 3 step 0, then q76 to q86 of step 4b-1 (q87 is the non-chain control)
+    assert tagged == ["q20", "q22", "q39", "q40", "q41"] + [f"q{n}" for n in range(76, 87)]
 
 
 def test_chain_row_is_separate_and_all_row_is_unchanged():
