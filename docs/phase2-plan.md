@@ -1,6 +1,11 @@
 # Phase 2 plan: chunk, embed, vector-only baseline
 
-Status: plan only (2026-10-11). No code, no installs, no containers started. Everything here is for the owner
+**Where we are (2026-10-12):** plan approved with changes (applied below). Step 1 done (see section g); next is
+step 2 (Docker and schema), which needs the owner to start the container. Nothing paid or called so far.
+A new session: read this file, `config/models.yaml`, `docs/decisions.md`, then continue at the first step not
+marked done.
+
+Original status: plan only (2026-10-11). No code, no installs, no containers started. Everything here is for the owner
 to approve or change. Scope is CLAUDE.md Phase 2: "chunk, embed, vector-only RAG; record metrics". Not in scope:
 hybrid search, reranker, term filtering, LangGraph, FastAPI, UI (Phases 3 and 4).
 
@@ -84,6 +89,11 @@ request_logs
   latency_ms int
 ```
 
+**Personal data in logs.** `cta.redact.redact()` (written in step 1, tested) replaces emails, SSN-like numbers,
+phone numbers and 8-digit CUNY EMPLIDs with `[EMAIL]`, `[SSN]`, `[PHONE]`, `[ID]`. Every place that stores a
+question (`request_logs.question`, `eval_runs.per_question`, result files) must call it first; the same text is
+then what the model sees only if the caller chooses, but the stored copy is always redacted.
+
 No vector index in Phase 2: with 619 rows an exact cosine scan is instant and gives exact recall for the
 baseline. An HNSW index is a Phase 3 or 4 decision. The vector column is tied to the model's dimension
 (1536 for the proposed model); the loader refuses to mix models and re-embeds everything if the configured model
@@ -103,26 +113,37 @@ characters): 619 chunks, 565,287 characters = **about 141,000 tokens at 4 charac
 (markdown tables and codes are denser). Step 3 adds tiktoken and replaces the estimate with an exact count
 before anything is sent.
 
-**Proposal**
-- Embedding: `text-embedding-3-small` (1536 dimensions).
-- Chat (answers): `gpt-4o-mini`. A judge for the eval can be set separately and defaults to the same model.
-  `gpt-4.1-mini` is the one-step-up alternative if citation discipline is weak.
+**Models (checked 2026-10-12; approved change: do not rely on memory).** Pages read on 2026-10-12, none of which
+prints its own date: `developers.openai.com/api/docs/pricing` (newest entry mentioned: July 30, 2026),
+`.../models`, `.../models/gpt-6-luna`, `.../models/gpt-5.6-terra`, `.../guides/embeddings`, and
+`.../deprecations` (newest entry 2026-10-01). `platform.openai.com/docs/*` now redirects there. Prices are USD per
+1M tokens, standard tier.
 
-List prices per 1M tokens, from OpenAI's pages (the search results show no page date, so I will re-check the
-live pricing page when I write the config; prices live in config, not in code):
-text-embedding-3-small $0.02; gpt-4o-mini $0.15 input, $0.60 output; gpt-4.1-mini $0.40 input, $1.60 output.
+| Role | Model | Price (in / cached / out) | Input limit | Note |
+|---|---|---|---|---|
+| Embedding (pick) | `text-embedding-3-small` | $0.02 / - / - | 8,192 tokens, 1,536 dims | not deprecated; no newer embedding model on the pages |
+| Embedding (alt.) | `text-embedding-3-large` | $0.13 | 8,192, 3,072 dims | 6.5x the cost; only if retrieval is weak |
+| Answers (pick) | `gpt-6-luna` | $0.10 / $0.01 / $0.50 | 1.05M context, 128K output | the models page lists it as the efficient high-volume model; cheaper than gpt-4o-mini |
+| Judge (pick) | `gpt-5.6-terra` | $2.00 / $0.20 / $12.00 | 1.05M, 128K output | "balances intelligence and cost", mini tier of the earlier GPT-5 family; a different and stronger model than the answer model |
+| Not chosen | `gpt-4o-mini` | $0.15 / $0.075 / $0.60 | | still listed and not deprecated, but older; only kept in the price table |
+| Not chosen | `gpt-4.1-mini` | $0.40 / $0.10 / $1.60 | | not deprecated; `gpt-4.1-nano` shuts down 2026-10-23 and `gpt-5-mini-2025-08-07` on 2026-12-11 (both avoided) |
+| Not chosen | `gpt-6.1-sol` | $2.00 / $0.10 / $10.00 | | on the pricing page only; I did not read its model page, so it is a candidate judge, not a pick |
 
-| What | Tokens | Cost |
-|---|---|---|
-| Embed everything once | 141k to 188k | $0.003 to $0.004 |
-| Re-embed everything 10 times | up to 1.9M | under $0.04 |
-| One answer, k=5 (about 2,200 in, 250 out) | | about $0.0005 (gpt-4o-mini), $0.0013 (gpt-4.1-mini) |
-| Dev answers (20 questions) | | about $0.01 |
-| LLM judge, correctness and faithfulness, about 16 dev answers x 2 calls x 3k tokens | about 100k in | about $0.02 (4o-mini), $0.06 (4.1-mini) |
-| Whole baseline (embed, retrieval at k 1/3/5/10, dev answers, judge) | | **under $0.15** |
+Open point for step 8: the Luna and Terra model pages list `reasoning.effort` and do not say whether `temperature`
+and `top_p` are accepted. The config keeps 0.1 / 0.3 and `reasoning_effort: none`, marked "not confirmed"; step 8
+checks with one real call before relying on them, and records the result in `docs/decisions.md`.
 
-**Swapping** (nothing hard-coded): `config/models.yaml` holds the defaults (embedding model and dimensions,
-chat model, judge model, temperature, top_p, `max_chunk_tokens`, prices per model, `eval.max_cost_usd`); `.env`
+**Cost with the picks** (embedding unchanged: 141k to 188k tokens, about $0.003 to $0.004 once):
+
+| What | Cost |
+|---|---|
+| One answer, k=5 (about 2,200 in, 250 out) on `gpt-6-luna` | about $0.0003 |
+| Dev answers (20 questions) | about $0.006 |
+| Judge, about 16 answers x 2 calls x 3k tokens in, 300 out, on `gpt-5.6-terra` | about $0.20 |
+| Whole baseline (embed, retrieval, dev answers, judge, 8 reviewed verdicts included) | **under $0.35**, well under `eval.max_cost_usd` ($1) |
+
+**Swapping** (nothing hard-coded): `config/models.yaml` holds the defaults (embedding model, chat model, judge model, temperature, top_p,
+`max_chunk_tokens`, a price table with dimensions per model, `eval.max_cost_usd`; written in step 1); `.env`
 overrides with `CTA_EMBEDDING_MODEL`, `CTA_CHAT_MODEL`, `CTA_JUDGE_MODEL`; secrets only in `.env`:
 `OPENAI_API_KEY`, `POSTGRES_PASSWORD` (and `DATABASE_URL` if the defaults do not fit). `.env.example` lists the
 keys without values. Loaded by `cta.settings` (existing module). Models not in the price table are refused, so
@@ -133,13 +154,15 @@ a swap needs a price entry and cost is never shown as zero by accident.
 - Retrieval: embed the question, `ORDER BY embedding <=> query LIMIT k` over all chunks of all kinds. Cosine
   similarity, **no filters**, k in {1, 3, 5, 10}. Retrieve 10 once and slice for the smaller k.
 - Answers use k = 5 (config), one model call per question.
+- **Prompt layout (for provider prompt caching later):** static instructions first, then the numbered sources,
+  then today's date and the question last. Nothing that changes per request goes before the sources.
 - Prompt rules (CLAUDE.md "Answer behavior"): answer only from the numbered sources; cite the source URL or file
   after every factual claim; today's date is in the prompt (config `eval.today` = 2026-10-11 for
   reproducible runs, real date otherwise); if the sources do not cover the question, say "I don't know" and give
   the office contact from the sources; no advice or judgment (state the rules and the deadline); when a source
   states a term, say which term it is (the Phase 3 term rule in `docs/decisions.md` comes later; the baseline
   only passes `terms` along in the source header); calendar questions are not answerable in the baseline (no
-  calendar tool until Phase 3), and that is recorded, not hidden. `temperature` 0.1 and `top_p` 0.3.
+  calendar tool until Phase 3), and that is recorded, not hidden. `temperature` 0.1 and `top_p` 0.3 (if the model accepts them; see the open point above).
 - Abstain rule, one parameter: if the top-1 cosine similarity is below `abstain_threshold`, do not call the chat
   model; return a fixed "I don't know" message plus the contact from the best-scoring contact chunk (one extra
   query restricted to `kind = 'contact'`, used only for this message). The threshold is chosen once by reading
@@ -156,6 +179,14 @@ a swap needs a price entry and cost is never shown as zero by accident.
 | answer correctness, faithfulness | **dev split only**, answerable questions with a written gold answer | LLM-judged: correctness against `gold_answer`, faithfulness against the retrieved chunks |
 | cost per request, latency | every request | from the API usage fields and a timer |
 
+- **Judge:** a different and stronger model than the answer model (`judge_model`). In step 9 I print 8 judge
+  verdicts (question, gold answer, answer, verdict, reason) for the owner to check by hand, and log how many the
+  owner agrees with in `docs/validation-log.md`; the judge numbers are reported with that agreement rate.
+- **Failure labels (step 9):** every failed question gets exactly one of: `retrieval miss` (gold source not in
+  the top 10), `ranking miss` (in the top 10 but not in the top 5 used for the answer), `generation error` (gold
+  source in the top 5 but the answer is wrong or unfaithful), `abstention error` (abstained when it should have
+  answered, or answered when it should have abstained), `not supported yet` (calendar and prerequisite-chain
+  questions; Phase 3 tools). The counts per label go in the results table.
 - Splits: retrieval metrics are computed for dev and test separately and both are saved, but every decision (k,
   threshold, prompt) uses dev only. The 10 test questions are run for answers once, at the end of Phase 2, only
   when the owner says so.
@@ -197,7 +228,7 @@ or changed.
 
 ## g) Ordered steps (one commit per step; what I show after each)
 
-1. **Config and settings.** `config/models.yaml`, `.env.example` keys, settings loader with env overrides and
+1. **DONE (see hash below). Config and settings.** `config/models.yaml`, `.env.example` keys, settings loader with env overrides and
    a price table, tests. Show: the resolved config (secrets hidden).
 2. **Docker and schema.** Fill `docker-compose.yml`, `db/migrations/001_init.sql`, `cta.index.db migrate`,
    tests that run when the database is up. You start the container. Show: `docker compose ps`, the table list.
@@ -220,7 +251,29 @@ or changed.
    failures with their retrieved chunks, and what I think the main weakness is. Then stop; Phase 3 starts from
    the baseline numbers.
 
-Each step runs `ruff`, `pytest` and `python -m cta.validate` before its commit.
+Each step runs `ruff`, `pytest` and `python -m cta.validate` before its commit. When a step is finished,
+its line above is marked DONE with the commit hash, and "Where we are" at the top is updated.
+
+Step 1 (done 2026-10-12): `config/models.yaml`, `cta.settings.load_models` / `secret_status` / `cost_usd`,
+`.env.example` keys, `cta.redact`, tests (`tests/test_settings_models.py`). Commit: STEP1_HASH.
+
+## Roadmap after the baseline (no code; Phase 3 and later)
+
+Each experiment changes one thing and is compared with `eval/results/baseline.json` (dev only; test is not used
+for tuning).
+
+1. Hybrid search: fill `tsv` (Postgres full-text) and fuse with the vector ranking by reciprocal rank fusion.
+2. Term and department filters (soft term rule from `docs/decisions.md`; department filter only when the
+   question names one).
+3. A reranker over the top 20 to 30.
+4. A router with tools: calendar lookup, prerequisite chain, contacts, program credits. This clears most of the
+   `not supported yet` failures.
+5. Guardrails: input scope check, personal-data handling, indirect prompt injection (retrieved text is data),
+   and an output citation check (every cited source must be one of the retrieved chunks).
+6. LangSmith tracing alongside our own `request_logs` (not instead of them).
+7. Caching: an embedding cache and an exact response cache keyed by question + date + data version. No semantic
+   cache (a near-match could return a wrong-term answer).
+8. HNSW index decision, only when row count or latency justifies it (619 rows today: exact scan is fine).
 
 ## Decisions I need from you
 

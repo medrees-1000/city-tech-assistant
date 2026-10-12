@@ -1,0 +1,67 @@
+# Models, prices and run limits for Phase 2 (baseline RAG).
+# Prices are USD per 1M tokens (standard tier, input <= 272K tokens), read on 2026-10-12 from
+#   https://developers.openai.com/api/docs/pricing          (no page date; newest entry July 30, 2026)
+#   https://developers.openai.com/api/docs/models           (no page date)
+#   https://developers.openai.com/api/docs/models/gpt-6-luna and .../gpt-5.6-terra (no page date)
+#   https://developers.openai.com/api/docs/guides/embeddings (no page date)
+#   https://developers.openai.com/api/docs/deprecations     (newest entry 2026-10-01)
+# Override the three model names with CTA_EMBEDDING_MODEL, CTA_CHAT_MODEL, CTA_JUDGE_MODEL in .env.
+# A model that is not in `models` below is refused, so cost is never silently zero.
+
+embedding_model: text-embedding-3-small
+chat_model: gpt-6-luna          # answers
+judge_model: gpt-5.6-terra      # eval judge: stronger than the answer model, on purpose
+
+answer:
+  # Not confirmed: the model pages do not say whether temperature/top_p are accepted
+  # (they list reasoning.effort only). Step 8 must check this against a real call before using them.
+  temperature: 0.1
+  top_p: 0.3
+  reasoning_effort: none
+  k: 5
+
+max_chunk_tokens: 6000          # the loader fails instead of truncating (embedding limit is 8192)
+
+eval:
+  today: "2026-10-11"           # fixed date for reproducible runs
+  k_values: [1, 3, 5, 10]
+  max_cost_usd: 1.0             # a real run aborts if the estimate is higher
+
+models:
+  text-embedding-3-small:
+    kind: embedding
+    input: 0.02
+    dimensions: 1536
+    max_input_tokens: 8192
+  text-embedding-3-large:
+    kind: embedding
+    input: 0.13
+    dimensions: 3072
+    max_input_tokens: 8192
+  gpt-6-luna:
+    kind: chat
+    input: 0.10
+    cached_input: 0.01
+    output: 0.50
+    context_tokens: 1050000
+  gpt-5.6-terra:
+    kind: chat
+    input: 2.00
+    cached_input: 0.20
+    output: 12.00
+    context_tokens: 1050000
+  gpt-6.1-sol:
+    kind: chat
+    input: 2.00
+    cached_input: 0.10
+    output: 10.00
+  gpt-4.1-mini:
+    kind: chat
+    input: 0.40
+    cached_input: 0.10
+    output: 1.60
+  gpt-4o-mini:
+    kind: chat
+    input: 0.15
+    cached_input: 0.075
+    output: 0.60
