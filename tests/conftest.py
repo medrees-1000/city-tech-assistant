@@ -63,7 +63,8 @@ def conn():
     with c:
         c.execute(f"CREATE SCHEMA {schema}")
         c.execute(f"SET search_path TO {schema}, public")
-        c.execute(db.migration_files()[0].read_text(encoding="utf-8"))
+        for path in db.migration_files():
+            c.execute(path.read_text(encoding="utf-8"))
         c.commit()
         try:
             yield c
