@@ -43,3 +43,23 @@ never excluded.
 - The vector column is `vector(1536)`. Changing the embedding model to one with other dimensions needs a new
   migration and a full re-embed.
 - Connection errors print a fixed message, because the driver message can contain connection details.
+
+## Chunk builder (Oct 12, 2026)
+
+- Counts match the plan: 619 chunks (413 section, 197 course, 9 contact), 121 sections merged into a parent.
+  Exact tokens (cl100k_base, the encoding of text-embedding-3-small): 136,297 in total, max 2,138 per chunk,
+  so nothing needs splitting and the one-time embedding cost is about $0.0027.
+- A merged chunk takes the id of the parent section; the table sections are listed in `merged_section_ids`, so
+  eval labels at section level still resolve. Section ids count all sections of the record, including
+  `embed: false` ones, so they match `docs/section-index.md`.
+- A merged chunk's `terms` is the union of the parent's and the merged tables' terms (a table titled "Fall 2026
+  Payment Due Dates" under a general heading makes the chunk a Fall 2026 chunk); `term` is the single entry,
+  else null. Terms still come only from headings and table titles.
+- Course prerequisites: `text` rules are embedded as printed. A shorthand rule (40 courses, e.g.
+  `PRE_CST1100`) is embedded as printed with the note "shorthand as printed in the catalog, not expanded":
+  never guessed. A course with no rule says "none listed in the catalog".
+- Contact chunks use every panel of the owner record (address, email, hours) and cite the first source page of
+  that owner. Departments are named from the course records (`department_name`); offices as "<Name> office".
+- `content_hash` = sha256(text + embedding model + dimensions); `meta_hash` = sha256 of the id and the
+  metadata fields in sorted-key JSON. Tokens are counted with tiktoken; the encoding file is cached in
+  `.cache/tiktoken` (git-ignored).

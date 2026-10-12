@@ -1,0 +1,22 @@
+{
+ "code": "CST 1100",
+ "title": "Intro",
+ "description": "A course.",
+ "credits": 3,
+ "department": "CST-NYT",
+ "department_name": "Computer Systems Technology",
+ "prereq_style": "text",
+ "prerequisite_text": "Prerequisites: CST 1000.",
+ "fetched_at": "2026-10-11T00:00:00+00:00",
+ "programs": [
+  {
+   "department": "CST-NYT",
+   "program": "Computer Systems - BTech",
+   "slug": "s",
+   "in": [
+    "degree map",
+    "requirements"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,14 @@
+{
+ "owner": "CST-NYT",
+ "kind": "department",
+ "panels": [
+  {
+   "heading": "CONTACT US",
+   "markdown": "N-914"
+  }
+ ],
+ "source_pages": [
+  "https://www.citytech.cuny.edu/cs/"
+ ],
+ "fetched_at": "2026-10-11T00:00:00+00:00"
+}

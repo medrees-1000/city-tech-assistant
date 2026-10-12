@@ -1,0 +1,14 @@
+{
+ "owner": "bursar",
+ "kind": "office",
+ "panels": [
+  {
+   "heading": "CONTACT US",
+   "markdown": "Room 1\n\nb@x.edu"
+  }
+ ],
+ "source_pages": [
+  "https://www.citytech.cuny.edu/bursar/a.aspx"
+ ],
+ "fetched_at": "2026-10-11T00:00:00+00:00"
+}

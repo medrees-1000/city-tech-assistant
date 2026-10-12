@@ -1,0 +1,22 @@
+{
+ "code": "CST 1205",
+ "title": "Intro",
+ "description": "A course.",
+ "credits": 3,
+ "department": "CST-NYT",
+ "department_name": "Computer Systems Technology",
+ "prereq_style": "shorthand",
+ "prerequisite_text": "PRE_CST1100",
+ "fetched_at": "2026-10-11T00:00:00+00:00",
+ "programs": [
+  {
+   "department": "CST-NYT",
+   "program": "Computer Systems - BTech",
+   "slug": "s",
+   "in": [
+    "degree map",
+    "requirements"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,22 @@
+{
+ "code": "EET 3672",
+ "title": "Intro",
+ "description": "A course.",
+ "credits": 3,
+ "department": "CST-NYT",
+ "department_name": "Computer Systems Technology",
+ "prereq_style": "none",
+ "prerequisite_text": null,
+ "fetched_at": "2026-10-11T00:00:00+00:00",
+ "programs": [
+  {
+   "department": "CST-NYT",
+   "program": "Computer Systems - BTech",
+   "slug": "s",
+   "in": [
+    "degree map",
+    "requirements"
+   ]
+  }
+ ]
+}

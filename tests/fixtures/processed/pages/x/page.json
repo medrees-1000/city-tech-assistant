@@ -1,0 +1,57 @@
+{
+ "source_url": "https://www.citytech.cuny.edu/x/page.aspx",
+ "fetched_at": "2026-10-11T00:00:00+00:00",
+ "status": "collected",
+ "index": true,
+ "doc_type": "policy",
+ "department": null,
+ "scope": "city_tech",
+ "term": null,
+ "last_updated": null,
+ "sections": [
+  {
+   "heading": "Deadlines",
+   "level": 1,
+   "parents": [],
+   "heading_url": null,
+   "markdown": "See the following table:",
+   "terms": [],
+   "term": null
+  },
+  {
+   "heading": "Fall 2026 Dates",
+   "level": 2,
+   "parents": [
+    {
+     "heading": "Deadlines",
+     "level": 1
+    }
+   ],
+   "heading_url": null,
+   "markdown": "| a | b |\n| --- | --- |\n| 1 | 2 |",
+   "terms": [
+    "Fall 2026"
+   ],
+   "term": "Fall 2026"
+  },
+  {
+   "heading": "Other",
+   "level": 1,
+   "parents": [],
+   "heading_url": null,
+   "markdown": "Plain text.",
+   "terms": [],
+   "term": null
+  },
+  {
+   "heading": "Hidden contact",
+   "level": 1,
+   "parents": [],
+   "heading_url": null,
+   "markdown": "secret",
+   "terms": [],
+   "term": null,
+   "embed": false
+  }
+ ]
+}

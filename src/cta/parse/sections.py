@@ -31,4 +31,5 @@ def merge_tables_into_parents(sections: list[dict]) -> list[dict]:
         title = f"{'#' * max(s['level'], 1)} {s['heading']}" if s["heading"] else ""
         target["markdown"] += "\n\n" + "\n\n".join(x for x in (title, s["markdown"]) if x)
         target["merged"].append(s["heading"])
+        target.setdefault("merged_keys", []).append(s.get("key"))  # caller's ids, if it set any
     return units
