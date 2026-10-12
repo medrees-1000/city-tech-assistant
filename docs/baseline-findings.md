@@ -253,3 +253,20 @@ Router on (a classifier sends calendar questions to a calendar lookup whose date
 | cost per request (answer incl. router and rerank, no judge) | $0.00068 | $0.00058 (calendar answers skip retrieval, rerank and the answer call; the classifier adds $0.00003 to the others) |
 
 The old system answers none of the 8 new calendar dev questions (it abstains on all 8). The calendar tool answers 7 of 8 with exactly the gold rows in every run (q63 is the exception). Classifier accuracy against the gold intent: 45/48.
+
+## Router with selector v2 on the 48-question dev set, 3 runs, scoring v2, rubric v3 (Phase 3 step 4a-2, 2026-10-12)
+
+Router on, selector v2 (all-calendar pool), refined gold (q33, q63), against the stored reranker-on runs of step 3b on the 40 common questions. **Kept** by its pre-registered rule. Experiment 4a (selector v1, old gold) was rejected and stays so.
+
+| | before (3b arm ON, 40 questions) | router + selector v2 (48 questions, 3 runs) | 4a (v1, for reference) |
+|---|---|---|---|
+| calendar-only dev questions correct (13) | not scored by rows | 12, 12, 13 | 10, 10, 10 (old gold) |
+| wrong calendar rows stated | - | 0, 0, 0 | 2, 1, 1 |
+| correct share, 26 judged | 0.692 (0.654 to 0.731) | 0.679 (0.654 to 0.692) | 0.667 |
+| faithfulness yes | 0.923 | 0.949 | 0.949 |
+| abstention accuracy / wrongly abstained | 1.000 / 3 | 1.000 / 2 | 1.000 / 2 |
+| citation rate / invalid citations | 1.000 / 0 | 1.000 / 0 | 1.000 / 0 |
+| median total latency: calendar route / other route | about 3.0 s (all) | 1.9 to 2.1 s / 3.8 to 4.1 s | 1.8 to 1.9 s / 3.8 to 4.0 s |
+| selector input (median prompt tokens) | - | 4,412 | 1,649 |
+
+q37 ("register next spring"), a wrong row in 4a, is correct in all three runs because the registration rows (in the Fall 2026 calendar) are in the pool. q75 (Thanksgiving, three rows) is complete in one run of three. Details: `docs/step4a2-selector-v2-results.md`.

@@ -407,3 +407,10 @@ Reason for both: owner decision after the 4a run; the 4a result is not changed (
 | q63 | `gold_sources`: `winter-2027-004`; no extra | `gold_sources`: `winter-2027-004` (required); `calendar_acceptable_extra`: `["winter-2027-005"]` ("Classes begin") |
 
 `docs/calendar-same-date.md` was generated before this change and is left as it was (its v1 column is the 4a scoring with the old gold).
+
+## Router on, selector v2 (Oct 12, 2026; step 4a-2 result)
+
+- Experiment 4a-2 (selector v2) passed its pre-registered rule, so `router.mode` is `"on"` and `router.selector` is `2` by default (`config/models.yaml`; `CTA_ROUTER_MODE=off` / `--router off` restores the old pipeline, `CTA_ROUTER_SELECTOR=1` / `--selector 1` the 4a selector). Tests pin the router off except in the router tests.
+- The 4a result is unchanged (REJECT, v1 scoring, old gold). The 4a-2 pass is on a refined gold and a changed selector; most of the improvement from 10 to 12 of 13 comes from the gold change (q33, q63), and q37 is the selector's own gain. The graph is unchanged; selector v2 is a pool and prompt change.
+- The unsupported-term path keeps the 4a selector; `calendar_scoring` 1 stays available and every calendar-only record stores both verdicts.
+- Known remaining limitations: "next semester" resolves to the current term; q75 (several same-day-type rows) varies between runs; the classifier sends q09, q13 and q30 to the calendar node (q13 falls through to retrieve, the others are answered correctly there).

@@ -42,3 +42,7 @@ graph TD;
 `calendar`, `other`, `abstain` (the calendar node refused), `calendar_fallthrough` (the calendar node found no row and retrieve answered). The `router` column holds the classifier and selector tokens, cost and latency, the invalid ids and the weekday mismatches.
 
 Steps 4b (prerequisite chain) and 4c (contact lookup) add tool nodes next to `calendar`.
+
+## Selector versions (step 4a-2)
+
+The graph above is unchanged. The calendar node's selector has two versions (`router.selector`, default 2): version 1 chooses from the rows of the resolved term; version 2 (default) chooses from the rows of all three calendars, each line showing its term, with a stricter prompt, so a question like "register next spring" can use rows that sit in the Fall 2026 calendar. The unsupported-term path always uses version 1. The renderer names each row's own calendar in its source line.
