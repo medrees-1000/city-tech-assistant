@@ -735,3 +735,11 @@ The owner reports that manual check 2 (20 random courses against the live catalo
 `docs/manual-check-courses.md`) and manual check 3 (10 random cleaned web pages, no menu junk and no missing
 sections) were done before 2026-10-11. The exact date was not recorded. `docs/data-validation.md` marks both
 done. All five manual checks are now done (1, 4 and 5 are recorded in earlier entries).
+
+## HTML entities decoded, new `entities` check — 2026-10-12
+
+- Scan of `data/processed` (pages, PDFs, courses, contacts, departments): entities in 4 course records only
+  (EET 3222 `&rsquo;`, EET 4112 `&rsquo;`, EET 4202 `&amp;`, EET 4212 `&amp;`). No other doc type affected.
+- Fix in `cta.crawl.catalog.to_record` (`html.unescape`); courses rebuilt from raw with `--from-raw`; only those 4
+  files changed. New `entities` area in `python -m cta.validate` (292 records, 0 failures). Loader: 4 chunks
+  changed, 614 tokens, $0.00001. Dev retrieval metrics unchanged (`baseline-retrieval-dev-v2`).

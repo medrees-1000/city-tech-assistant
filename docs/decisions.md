@@ -181,3 +181,53 @@ answered the aid part and said the sources do not state the grade after Sept 17 
 degree, citing [1][2]. The made-up off-topic question got a model "ABSTAIN:" (top-1 0.623 passed the threshold).
 No invalid citations. Obvious problems noticed: the model writes markdown bold in some answers; a course
 description in `catalog:EET 4112` contains the raw HTML entity `&rsquo;` (a Phase 1 cleaning gap, not fixed here).
+
+## HTML entities in catalog text (Oct 12, 2026)
+
+A scan of all processed JSON found entities in exactly 4 records, all course records (doc type `catalog_course`) of
+the EET department: `&rsquo;` in EET 3222 and EET 4112, `&amp;` in EET 4202 and EET 4212. No page, PDF, contact or
+department record had any. Decoded with `html.unescape` in `cta.crawl.catalog.to_record` (title, description,
+prerequisite text, department name) and rebuilt with `python -m cta.crawl.catalog --from-raw` (no network). New
+validate area `entities` fails on any remaining `&name;` or `&#123;` in `data/processed`. The loader re-embedded 4
+chunks (614 tokens, $0.00001). Dev retrieval re-run as `baseline-retrieval-dev-v2`: no metric moved (the retrieved
+lists differ only in lower ranks of q21). `baseline-retrieval-dev` stays the comparison point.
+
+## Judge and answer-run rules (Oct 12, 2026)
+
+- Judge model `gpt-5.6-terra`. Probed: `temperature` 0 is rejected with default reasoning ("Only the default (1)
+  value is supported"), but accepted with `reasoning_effort: none`; JSON response format is accepted. The judge
+  runs at temperature 0 with reasoning off (`judge:` in `config/models.yaml`). It sees the question, the gold
+  answer, the answer text and the exact numbered sources the answerer was shown, never the model name or any
+  reasoning. A reply that is not valid JSON is retried once, then the question is recorded as "judge failed".
+- Gold rules: `ABSTAIN` gold needs no judge (correct if the answer starts with "ABSTAIN:"); `CLARIFY` gold is not
+  judged and counts as "not supported yet"; `NO ADVICE` gold is judged only on "gives advice yes/no"; a question
+  whose gold sources are all calendar events is judged but reported separately as "not supported yet".
+- Correctness and faithfulness shares use the questions with a normal gold answer (n = 15 on dev). The NO ADVICE
+  question, the ABSTAIN questions and the "not supported yet" ones are reported on their own lines.
+- Failure label, one per question that is not fully correct, by the earliest failing stage: not supported yet;
+  abstention error (an ABSTAIN-gold question that was answered); retrieval miss (no scorable gold source in the
+  top 10); ranking miss (some in the top 10, none in the top 5); abstention error (it abstained); generation error.
+  With several gold sources, "in the top k" means at least one is. A gold answer that explicitly allows abstaining
+  (q15) is left to the judge.
+- Latency: "total" is the whole `answer()` call (retrieval plus chat), judge time is not included; the chat call
+  is timed alone. Every dev query embedding was a cache hit, so no embedding latency is in these numbers. Cost per
+  request is answer plus judge; the answer cost is an upper bound (no cached-input discount).
+- Judge-check selection rule (fixed before the run, written in `docs/judge-check.md`): up to 2 with faithfulness
+  partly/no, then partial/incorrect in id order until 4, then correct in id order until 8. This run had no
+  faithfulness "partly" or "no", so it picked q01, q04, q12, q15 (not correct) and q03, q05, q06, q08 (correct).
+
+## Dev baseline, answers (Oct 12, 2026, run `baseline-dev`; not yet checked by the owner)
+
+Retrieval is identical to `baseline-retrieval-dev` (hit rate 0.941 @3/5/10, recall 0.838, MRR 0.814, n = 17).
+Answers: correctness on normal gold n = 15: correct 0.67, partial 0.27 (4 of 15), incorrect 0.07; faithfulness n =
+15: yes 1.00; NO ADVICE n = 1 correct; abstention accuracy 2/2 (q27 by the threshold, q28 by the model); wrongly
+abstained 1 of 16 answerable (q15); citation rate 16/16, 0 invalid citations; 0 judge failures. Cost $0.087 for
+20 requests ($0.0039 answers + $0.083 judge); latency median 1,179 ms, p95 2,351 ms (n = 20); chat call alone
+median 1,201 ms, p95 2,447 ms (n = 18). Failure labels: generation error 4 (q01, q04, q16, q22), retrieval miss 1
+(q15), not supported yet 2 (q12 calendar, q24 CLARIFY).
+Things to look at (not conclusions): the partial grades are mostly "omits detail that the gold answer lists but the
+question did not ask for" (q04 asked only for credits); that may be the judge being strict about gold completeness.
+q15's gold allows abstaining, the judge still graded it incorrect, and its label is "retrieval miss" because the
+gold chunk is not in the top 10. q22 is a chained-prerequisite question: the plan lists those as "not supported
+yet", but the rule used here labels it generation error (the owner's rule for this step names only calendar-only
+and CLARIFY).

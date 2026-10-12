@@ -1,0 +1,1426 @@
+{
+ "label": "baseline-dev",
+ "split": "dev",
+ "retrieval": {
+  "n": 17,
+  "recall@1": 0.5490196078431373,
+  "precision@1": 0.7058823529411765,
+  "hit@1": 0.7058823529411765,
+  "recall@3": 0.8382352941176471,
+  "precision@3": 0.39215686274509803,
+  "hit@3": 0.9411764705882353,
+  "recall@5": 0.8382352941176471,
+  "precision@5": 0.23529411764705882,
+  "hit@5": 0.9411764705882353,
+  "recall@10": 0.8382352941176471,
+  "precision@10": 0.11764705882352941,
+  "hit@10": 0.9411764705882353,
+  "mrr": 0.8137254901960784
+ },
+ "excluded_from_retrieval": [
+  "q12",
+  "q27",
+  "q28"
+ ],
+ "answers": {
+  "correctness": {
+   "n": 15,
+   "correct": 0.6666666666666666,
+   "partial": 0.26666666666666666,
+   "incorrect": 0.06666666666666667
+  },
+  "faithfulness": {
+   "n": 15,
+   "yes": 1.0,
+   "partly": 0.0,
+   "no": 0.0
+  },
+  "no_advice_correct": {
+   "n": 1,
+   "correct": 1.0,
+   "partial": 0.0,
+   "incorrect": 0.0
+  },
+  "abstention_accuracy": {
+   "n": 2,
+   "share": 1.0
+  },
+  "wrongly_abstained": {
+   "n": 16,
+   "share": 0.0625
+  },
+  "citation_rate": {
+   "n": 16,
+   "share": 1.0,
+   "invalid_citations": 0
+  },
+  "judge_failed": 0,
+  "cost": {
+   "n": 20,
+   "per_request_usd": 0.00436208,
+   "answer_usd": 0.0039216,
+   "judge_usd": 0.08332
+  },
+  "latency_ms": {
+   "n": 20,
+   "total_median": 1179.0,
+   "total_p95": 2351,
+   "chat_n": 18,
+   "chat_median": 1201.0,
+   "chat_p95": 2447,
+   "query_cache_hits": 20
+  }
+ },
+ "failure_labels": {
+  "generation error": 4,
+  "not supported yet": 2,
+  "retrieval miss": 1
+ },
+ "per_question": [
+  {
+   "id": "q01",
+   "type": "lookup",
+   "department": null,
+   "gold_kind": "normal",
+   "retrieved": [
+    {
+     "id": "page/registrar/applying-graduation#2",
+     "similarity": 0.7103
+    },
+    {
+     "id": "page/registrar/applying-graduation#3",
+     "similarity": 0.6775
+    },
+    {
+     "id": "page/registrar/applying-graduation#7",
+     "similarity": 0.6647
+    },
+    {
+     "id": "page/registrar/applying-graduation#6",
+     "similarity": 0.6595
+    },
+    {
+     "id": "page/registrar/readmission#4",
+     "similarity": 0.6529
+    },
+    {
+     "id": "page/registrar/readmission#1",
+     "similarity": 0.6486
+    },
+    {
+     "id": "page/registrar/readmission#5",
+     "similarity": 0.6288
+    },
+    {
+     "id": "page/advisement/gen-ed#3",
+     "similarity": 0.6176
+    },
+    {
+     "id": "page/admissions/dates-deadlines#1",
+     "similarity": 0.5994
+    },
+    {
+     "id": "page/advisement/gen-ed#2",
+     "similarity": 0.5817
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    4
+   ],
+   "invalid_citations": [],
+   "correctness": "partial",
+   "correctness_reason": "It correctly explains applying through CUNYfirst, the alternate portal process, and deadline consequences, but omits the key recommendation to check the Degree Audit with an advisor and the graduation eligibility requirements.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All factual claims in the answer are supported by sources [1] and [4].",
+   "judge_status": "ok",
+   "label": "generation error",
+   "label_reason": "It correctly explains applying through CUNYfirst, the alternate portal process, and deadline consequences, but omits the key recommendation to check the Degree Audit with an advisor and the graduation eligibility requirements.",
+   "answer_cost": 0.00018820000000000002,
+   "judge_cost": 0.004324,
+   "latency_ms": 1671,
+   "chat_ms": 1662,
+   "cache_hit": true
+  },
+  {
+   "id": "q03",
+   "type": "lookup",
+   "department": "DENT-NYT",
+   "gold_kind": "normal",
+   "retrieved": [
+    {
+     "id": "page/DENT-NYT/faq#18",
+     "similarity": 0.8474
+    },
+    {
+     "id": "catalog:DEN 2300",
+     "similarity": 0.6544
+    },
+    {
+     "id": "catalog:DEN 2413",
+     "similarity": 0.654
+    },
+    {
+     "id": "page/DENT-NYT/faq#19",
+     "similarity": 0.6468
+    },
+    {
+     "id": "dept/DENT-NYT/program-dental-hygiene-aas#13",
+     "similarity": 0.6454
+    },
+    {
+     "id": "catalog:DEN 1200",
+     "similarity": 0.6421
+    },
+    {
+     "id": "page/DENT-NYT/faq#29",
+     "similarity": 0.63
+    },
+    {
+     "id": "dept/DENT-NYT/program-dental-hygiene-aas#10",
+     "similarity": 0.6299
+    },
+    {
+     "id": "page/DENT-NYT/dh-progression#1",
+     "similarity": 0.6247
+    },
+    {
+     "id": "catalog:DEN 1100",
+     "similarity": 0.6185
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It correctly answers that DEN courses cannot be taken part-time in the clinical program and includes the full-time status, 7\u201311 credit range, and in-person requirement.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "Every factual claim is directly supported by source [1].",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0002469,
+   "judge_cost": 0.005662,
+   "latency_ms": 1210,
+   "chat_ms": 1202,
+   "cache_hit": true
+  },
+  {
+   "id": "q04",
+   "type": "lookup",
+   "department": "DENT-NYT",
+   "gold_kind": "normal",
+   "retrieved": [
+    {
+     "id": "dept/DENT-NYT/program-dental-hygiene-aas#12",
+     "similarity": 0.7544
+    },
+    {
+     "id": "dept/DENT-NYT/program-dental-hygiene-aas#11",
+     "similarity": 0.7096
+    },
+    {
+     "id": "dept/DENT-NYT/program-dental-hygiene-aas#8",
+     "similarity": 0.6977
+    },
+    {
+     "id": "dept/DENT-NYT/overview#4",
+     "similarity": 0.6965
+    },
+    {
+     "id": "dept/DENT-NYT/program-dental-hygiene-aas#10",
+     "similarity": 0.6877
+    },
+    {
+     "id": "dept/DENT-NYT/program-dental-hygiene-aas#9",
+     "similarity": 0.6794
+    },
+    {
+     "id": "dept/DENT-NYT/program-dental-hygiene-aas#3",
+     "similarity": 0.6773
+    },
+    {
+     "id": "dept/DENT-NYT/program-dental-hygiene-aas#1",
+     "similarity": 0.6752
+    },
+    {
+     "id": "dept/DENT-NYT/program-dental-hygiene-aas#13",
+     "similarity": 0.6675
+    },
+    {
+     "id": "dept/DENT-NYT/program-dental-hygiene-aas#6",
+     "similarity": 0.6528
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "partial",
+   "correctness_reason": "It correctly gives the required total of 66\u201367 credits but omits the associated liberal-arts and residency requirements stated in the gold answer.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "The stated 66\u201367-credit requirement is directly supported by source [1].",
+   "judge_status": "ok",
+   "label": "generation error",
+   "label_reason": "It correctly gives the required total of 66\u201367 credits but omits the associated liberal-arts and residency requirements stated in the gold answer.",
+   "answer_cost": 0.0002449,
+   "judge_cost": 0.005838,
+   "latency_ms": 815,
+   "chat_ms": 807,
+   "cache_hit": true
+  },
+  {
+   "id": "q05",
+   "type": "lookup",
+   "department": "CST-NYT",
+   "gold_kind": "normal",
+   "retrieved": [
+    {
+     "id": "dept/CST-NYT/overview#5",
+     "similarity": 0.6788
+    },
+    {
+     "id": "catalog:CST 4900",
+     "similarity": 0.6582
+    },
+    {
+     "id": "page/CST-NYT/internship-scholarship#1",
+     "similarity": 0.658
+    },
+    {
+     "id": "dept/CST-NYT/overview#2",
+     "similarity": 0.6441
+    },
+    {
+     "id": "page/CST-NYT/student-resources#9",
+     "similarity": 0.642
+    },
+    {
+     "id": "page/CST-NYT/index#1",
+     "similarity": 0.6366
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-information-systems-aas#4",
+     "similarity": 0.631
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-systems-btech#5",
+     "similarity": 0.6163
+    },
+    {
+     "id": "dept/CST-NYT/overview#3",
+     "similarity": 0.6123
+    },
+    {
+     "id": "catalog:MAT 2900",
+     "similarity": 0.5999
+    }
+   ],
+   "first_gold_rank": 3,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    2,
+    3,
+    5
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "The answer accurately describes the CST internship program, its requirements and alternatives, and adds source-supported details about associate and catalog internship options.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All factual claims, including credits, prerequisites, hours, supervision requirements, associate option, and CST 4905 alternative, are supported by the cited sources.",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.000329,
+   "judge_cost": 0.006112,
+   "latency_ms": 2456,
+   "chat_ms": 2447,
+   "cache_hit": true
+  },
+  {
+   "id": "q06",
+   "type": "lookup",
+   "department": "CST-NYT",
+   "gold_kind": "normal",
+   "retrieved": [
+    {
+     "id": "dept/CST-NYT/overview#4",
+     "similarity": 0.6985
+    },
+    {
+     "id": "page/CST-NYT/degrees#2",
+     "similarity": 0.6016
+    },
+    {
+     "id": "page/CST-NYT/index#1",
+     "similarity": 0.5946
+    },
+    {
+     "id": "dept/CST-NYT/overview#2",
+     "similarity": 0.5854
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-systems-btech#2",
+     "similarity": 0.5705
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-systems-btech#3",
+     "similarity": 0.5653
+    },
+    {
+     "id": "page/MATH-NYT/degrees#2",
+     "similarity": 0.5522
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-systems-btech#8",
+     "similarity": 0.5481
+    },
+    {
+     "id": "dept/CST-NYT/overview#3",
+     "similarity": 0.5452
+    },
+    {
+     "id": "page/CST-NYT/student-resources#9",
+     "similarity": 0.533
+    }
+   ],
+   "first_gold_rank": 2,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It identifies the same four degree programs and degree types as the gold answer, with program abbreviations included.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All factual claims about the four programs and their degree types are directly supported by source [1].",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0001751,
+   "judge_cost": 0.00392,
+   "latency_ms": 1061,
+   "chat_ms": 1051,
+   "cache_hit": true
+  },
+  {
+   "id": "q08",
+   "type": "lookup",
+   "department": null,
+   "gold_kind": "normal",
+   "retrieved": [
+    {
+     "id": "pdf/cunyfirst-student-reference#8",
+     "similarity": 0.8209
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#1",
+     "similarity": 0.6569
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#9",
+     "similarity": 0.6473
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#3",
+     "similarity": 0.6022
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#7",
+     "similarity": 0.5786
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#4",
+     "similarity": 0.5493
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#5",
+     "similarity": 0.5442
+    },
+    {
+     "id": "page/financial-aid/faqs#3",
+     "similarity": 0.5386
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#2",
+     "similarity": 0.5237
+    },
+    {
+     "id": "page/registrar/faqs#2",
+     "similarity": 0.5201
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "The answer accurately gives the required CUNYfirst navigation steps and PDF/pop-up guidance from the gold answer.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "Every factual claim is directly supported by source [1].",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0002285,
+   "judge_cost": 0.005108,
+   "latency_ms": 1217,
+   "chat_ms": 1209,
+   "cache_hit": true
+  },
+  {
+   "id": "q09",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "normal",
+   "retrieved": [
+    {
+     "id": "page/financial-aid/sap#12",
+     "similarity": 0.8132
+    },
+    {
+     "id": "page/financial-aid/sap#7",
+     "similarity": 0.6275
+    },
+    {
+     "id": "page/financial-aid/faqs#8",
+     "similarity": 0.6053
+    },
+    {
+     "id": "page/financial-aid/sap#6",
+     "similarity": 0.5897
+    },
+    {
+     "id": "page/financial-aid/sap#8",
+     "similarity": 0.5827
+    },
+    {
+     "id": "page/financial-aid/sap#10",
+     "similarity": 0.5474
+    },
+    {
+     "id": "page/financial-aid/sap#9",
+     "similarity": 0.5434
+    },
+    {
+     "id": "page/financial-aid/sap#11",
+     "similarity": 0.5429
+    },
+    {
+     "id": "page/financial-aid/sap#4",
+     "similarity": 0.5085
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#4",
+     "similarity": 0.4829
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "The answer exactly matches the Fall 2026 SAP appeal deadline in the gold answer.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "Source [1] explicitly lists the Fall 2026 deadline as Friday, November 13, 2026.",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0001436,
+   "judge_cost": 0.003632,
+   "latency_ms": 1031,
+   "chat_ms": 1021,
+   "cache_hit": true
+  },
+  {
+   "id": "q12",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "calendar_only",
+   "retrieved": [
+    {
+     "id": "page/registrar/academic-calendar#3",
+     "similarity": 0.5419
+    },
+    {
+     "id": "page/bursar/refund-policy#2",
+     "similarity": 0.523
+    },
+    {
+     "id": "page/bursar/refund-policy#3",
+     "similarity": 0.4985
+    },
+    {
+     "id": "page/bursar/payment-deadlines#1",
+     "similarity": 0.4609
+    },
+    {
+     "id": "page/registrar/academic-calendar#2",
+     "similarity": 0.455
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#3",
+     "similarity": 0.4523
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#6",
+     "similarity": 0.4362
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#8",
+     "similarity": 0.4286
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#2",
+     "similarity": 0.4282
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#7",
+     "similarity": 0.4254
+    }
+   ],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "below_threshold",
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "incorrect",
+   "correctness_reason": "The answer abstains instead of providing the Winter 2027 session end date, Monday, January 25, 2027.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "The response makes no factual claim beyond its inability to find the information, so it does not assert anything unsupported by the provided sources.",
+   "judge_status": "ok",
+   "label": "not supported yet",
+   "label_reason": "calendar-only gold",
+   "answer_cost": 0.0,
+   "judge_cost": 0.004456,
+   "latency_ms": 9,
+   "chat_ms": 0,
+   "cache_hit": true
+  },
+  {
+   "id": "q13",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "normal",
+   "retrieved": [
+    {
+     "id": "page/bursar/payment-deadlines#1",
+     "similarity": 0.6694
+    },
+    {
+     "id": "page/bursar/refund-policy#4",
+     "similarity": 0.5528
+    },
+    {
+     "id": "page/admissions/tuition-penalty#3",
+     "similarity": 0.5257
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#4",
+     "similarity": 0.513
+    },
+    {
+     "id": "page/admissions/tuition-penalty#1",
+     "similarity": 0.5007
+    },
+    {
+     "id": "page/bursar/refund-policy#2",
+     "similarity": 0.4919
+    },
+    {
+     "id": "page/bursar/refund-policy#3",
+     "similarity": 0.4908
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#3",
+     "similarity": 0.4878
+    },
+    {
+     "id": "page/bursar/payment-plan#1",
+     "similarity": 0.4844
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#5",
+     "similarity": 0.4798
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "The answer accurately gives all four Fall 2026 payment deadlines based on initial registration date, matching the gold answer.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "Every stated deadline and condition is directly supported by source [1].",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.000206,
+   "judge_cost": 0.004666,
+   "latency_ms": 1287,
+   "chat_ms": 1276,
+   "cache_hit": true
+  },
+  {
+   "id": "q14",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "normal",
+   "retrieved": [
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#5",
+     "similarity": 0.6702
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#3",
+     "similarity": 0.664
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#4",
+     "similarity": 0.6634
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#2",
+     "similarity": 0.6374
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#7",
+     "similarity": 0.6353
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#6",
+     "similarity": 0.6253
+    },
+    {
+     "id": "page/financial-aid/financial-payment-calendar#1",
+     "similarity": 0.5899
+    },
+    {
+     "id": "page/financial-aid/faqs#4",
+     "similarity": 0.5895
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#1",
+     "similarity": 0.5858
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#7",
+     "similarity": 0.5286
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It accurately gives the October 5, 2026 main Fall refund date and explains that later refunds are issued weekly as eligibility is established.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All factual claims are directly supported by source [1].",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.00019130000000000001,
+   "judge_cost": 0.004482,
+   "latency_ms": 1148,
+   "chat_ms": 1136,
+   "cache_hit": true
+  },
+  {
+   "id": "q15",
+   "type": "time_sensitive",
+   "department": "EET-NYT",
+   "gold_kind": "normal",
+   "retrieved": [
+    {
+     "id": "dept/EET-NYT/program-electrical-engineering-technology-btech#6",
+     "similarity": 0.6057
+    },
+    {
+     "id": "dept/EET-NYT/program-electrical-engineering-technology-aas#5",
+     "similarity": 0.6028
+    },
+    {
+     "id": "dept/EET-NYT/program-electrical-engineering-technology-aas#9",
+     "similarity": 0.6027
+    },
+    {
+     "id": "dept/EET-NYT/program-electrical-engineering-technology-btech#10",
+     "similarity": 0.5939
+    },
+    {
+     "id": "catalog:EET 2000",
+     "similarity": 0.5923
+    },
+    {
+     "id": "page/EET-NYT/index#1",
+     "similarity": 0.5882
+    },
+    {
+     "id": "contact:EET-NYT",
+     "similarity": 0.584
+    },
+    {
+     "id": "dept/EET-NYT/overview#3",
+     "similarity": 0.5834
+    },
+    {
+     "id": "dept/EET-NYT/overview#2",
+     "similarity": 0.5768
+    },
+    {
+     "id": "catalog:EET 4120",
+     "similarity": 0.5613
+    }
+   ],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "The sources do not list the Electrical Engineering Technology department\u2019s student hours.",
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "incorrect",
+   "correctness_reason": "Although abstention is acceptable, the answer incorrectly says no student-hours information is listed rather than noting that the available page is labeled Fall 2024 and is not current.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "The supplied sources do not provide any specific student-hours schedule, so the abstention claim is supported by the provided materials.",
+   "judge_status": "ok",
+   "label": "retrieval miss",
+   "label_reason": "no gold source in the top 10",
+   "answer_cost": 0.0004578,
+   "judge_cost": 0.0103,
+   "latency_ms": 927,
+   "chat_ms": 917,
+   "cache_hit": true
+  },
+  {
+   "id": "q16",
+   "type": "multi_chunk",
+   "department": null,
+   "gold_kind": "normal",
+   "retrieved": [
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#5",
+     "similarity": 0.7323
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#4",
+     "similarity": 0.7305
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#6",
+     "similarity": 0.6636
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#3",
+     "similarity": 0.653
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#1",
+     "similarity": 0.6345
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#8",
+     "similarity": 0.6342
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#7",
+     "similarity": 0.6281
+    },
+    {
+     "id": "page/financial-aid/faqs#9",
+     "similarity": 0.5905
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#9",
+     "similarity": 0.5639
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#1",
+     "similarity": 0.5598
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "partial",
+   "correctness_reason": "It correctly says that a WD drop from September 4\u201317 still counts for financial-aid enrollment status, but omits key requested details such as the WD grade explanation and TAP consequences.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All factual claims made are supported by source [1], including the stated date range, WD grade, continued enrollment-status treatment, and lack of information about dates after September 17.",
+   "judge_status": "ok",
+   "label": "generation error",
+   "label_reason": "It correctly says that a WD drop from September 4\u201317 still counts for financial-aid enrollment status, but omits key requested details such as the WD grade explanation and TAP consequences.",
+   "answer_cost": 0.00015780000000000001,
+   "judge_cost": 0.004336,
+   "latency_ms": 1210,
+   "chat_ms": 1200,
+   "cache_hit": true
+  },
+  {
+   "id": "q18",
+   "type": "multi_chunk",
+   "department": null,
+   "gold_kind": "normal",
+   "retrieved": [
+    {
+     "id": "page/advisement/gen-ed#1",
+     "similarity": 0.6351
+    },
+    {
+     "id": "page/advisement/gen-ed#8",
+     "similarity": 0.5933
+    },
+    {
+     "id": "page/advisement/gen-ed#3",
+     "similarity": 0.5165
+    },
+    {
+     "id": "page/advisement/gen-ed#6",
+     "similarity": 0.4791
+    },
+    {
+     "id": "page/advisement/gen-ed#2",
+     "similarity": 0.4772
+    },
+    {
+     "id": "page/registrar/faqs#8",
+     "similarity": 0.4666
+    },
+    {
+     "id": "dept/EET-NYT/program-electrical-engineering-technology-aas#9",
+     "similarity": 0.4572
+    },
+    {
+     "id": "page/registrar/faqs#14",
+     "similarity": 0.4496
+    },
+    {
+     "id": "dept/MATH-NYT/program-computer-science-as#9",
+     "similarity": 0.4487
+    },
+    {
+     "id": "page/registrar/faqs#12",
+     "similarity": 0.4471
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    2
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "The answer accurately states the CUNY Pathways transfer rules and the writing-intensive requirements by transferred-credit range, including the prior-bachelor's exception.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All factual claims are supported by sources [1] and [2], including the WI distribution requirements that are stated in the prose of source [1].",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0004264,
+   "judge_cost": 0.008102,
+   "latency_ms": 2351,
+   "chat_ms": 2341,
+   "cache_hit": true
+  },
+  {
+   "id": "q19",
+   "type": "multi_chunk",
+   "department": null,
+   "gold_kind": "normal",
+   "retrieved": [
+    {
+     "id": "page/financial-aid/sap#8",
+     "similarity": 0.6957
+    },
+    {
+     "id": "page/financial-aid/sap#7",
+     "similarity": 0.6813
+    },
+    {
+     "id": "page/financial-aid/sap#9",
+     "similarity": 0.64
+    },
+    {
+     "id": "page/financial-aid/sap#6",
+     "similarity": 0.5788
+    },
+    {
+     "id": "page/financial-aid/faqs#8",
+     "similarity": 0.5716
+    },
+    {
+     "id": "page/financial-aid/sap#12",
+     "similarity": 0.5427
+    },
+    {
+     "id": "page/financial-aid/sap#10",
+     "similarity": 0.5351
+    },
+    {
+     "id": "page/financial-aid/sap#11",
+     "similarity": 0.4927
+    },
+    {
+     "id": "page/financial-aid/sap#4",
+     "similarity": 0.4379
+    },
+    {
+     "id": "page/financial-aid/sap#13",
+     "similarity": 0.421
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    2,
+    3
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "The answer accurately gives the required ProVerifier+ submission process, current-semester enrollment requirement, personal-statement contents, and supporting-documentation examples from the gold answer.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "Every factual claim is directly supported by sources [1], [2], and [3].",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.000198,
+   "judge_cost": 0.004232,
+   "latency_ms": 1555,
+   "chat_ms": 1548,
+   "cache_hit": true
+  },
+  {
+   "id": "q21",
+   "type": "lookup",
+   "department": "EET-NYT",
+   "gold_kind": "normal",
+   "retrieved": [
+    {
+     "id": "catalog:EET 2261",
+     "similarity": 0.6746
+    },
+    {
+     "id": "catalog:EET 3672",
+     "similarity": 0.6496
+    },
+    {
+     "id": "catalog:EET 2271",
+     "similarity": 0.6484
+    },
+    {
+     "id": "catalog:EET 4112",
+     "similarity": 0.6393
+    },
+    {
+     "id": "catalog:EET 3572",
+     "similarity": 0.6363
+    },
+    {
+     "id": "catalog:EET 2220",
+     "similarity": 0.6337
+    },
+    {
+     "id": "catalog:EET 1102",
+     "similarity": 0.6334
+    },
+    {
+     "id": "catalog:EET 2000",
+     "similarity": 0.6332
+    },
+    {
+     "id": "catalog:EET 3212",
+     "similarity": 0.6313
+    },
+    {
+     "id": "catalog:EET 3102",
+     "similarity": 0.63
+    }
+   ],
+   "first_gold_rank": 2,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    2
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "The answer correctly identifies EET 3122 as the sole prerequisite for EET 3672.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "Source [2] explicitly lists the prerequisite as \"PRE: EET 3122.\"",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0001085,
+   "judge_cost": 0.00302,
+   "latency_ms": 1084,
+   "chat_ms": 1074,
+   "cache_hit": true
+  },
+  {
+   "id": "q22",
+   "type": "multi_chunk",
+   "department": "MATH-NYT",
+   "gold_kind": "normal",
+   "retrieved": [
+    {
+     "id": "page/MATH-NYT/faqs#10",
+     "similarity": 0.6582
+    },
+    {
+     "id": "catalog:MAT 2675",
+     "similarity": 0.6482
+    },
+    {
+     "id": "catalog:MAT 1475",
+     "similarity": 0.6103
+    },
+    {
+     "id": "catalog:MAT 1375",
+     "similarity": 0.5937
+    },
+    {
+     "id": "catalog:MAT 2630",
+     "similarity": 0.5872
+    },
+    {
+     "id": "catalog:MAT 1575",
+     "similarity": 0.5731
+    },
+    {
+     "id": "page/MATH-NYT/student-resources#7",
+     "similarity": 0.5668
+    },
+    {
+     "id": "page/MATH-NYT/student-resources#1",
+     "similarity": 0.5588
+    },
+    {
+     "id": "catalog:MAT 4050",
+     "similarity": 0.5559
+    },
+    {
+     "id": "catalog:MAT 2680",
+     "similarity": 0.545
+    }
+   ],
+   "first_gold_rank": 2,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    2
+   ],
+   "invalid_citations": [],
+   "correctness": "partial",
+   "correctness_reason": "It correctly states that Calculus III requires the prerequisites of both MAT 1575 and MAT 2580, but it omits the actual prerequisite courses and their prerequisite chain requested by the question.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "The claim is directly supported by source [2], which lists MAT 2675 prerequisites as the prerequisites of MAT 1575 and MAT 2580.",
+   "judge_status": "ok",
+   "label": "generation error",
+   "label_reason": "It correctly states that Calculus III requires the prerequisites of both MAT 1575 and MAT 2580, but it omits the actual prerequisite courses and their prerequisite chain requested by the question.",
+   "answer_cost": 0.000144,
+   "judge_cost": 0.004308,
+   "latency_ms": 906,
+   "chat_ms": 895,
+   "cache_hit": true
+  },
+  {
+   "id": "q24",
+   "type": "ambiguous",
+   "department": null,
+   "gold_kind": "clarify",
+   "retrieved": [
+    {
+     "id": "page/registrar/applying-graduation#1",
+     "similarity": 0.5909
+    },
+    {
+     "id": "page/advisement/gen-ed#3",
+     "similarity": 0.559
+    },
+    {
+     "id": "dept/MATH-NYT/program-mathematics-education-bs#10",
+     "similarity": 0.5559
+    },
+    {
+     "id": "dept/MATH-NYT/program-computer-science#6",
+     "similarity": 0.5188
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-systems-btech#9",
+     "similarity": 0.5162
+    },
+    {
+     "id": "dept/CST-NYT/program-cybersecurity-bs#10",
+     "similarity": 0.5096
+    },
+    {
+     "id": "page/advisement/degree-checklist#1",
+     "similarity": 0.5034
+    },
+    {
+     "id": "dept/MATH-NYT/program-applied-mathematics-bs#9",
+     "similarity": 0.501
+    },
+    {
+     "id": "page/financial-aid/sap#1",
+     "similarity": 0.4993
+    },
+    {
+     "id": "dept/MATH-NYT/program-computer-science-as#8",
+     "similarity": 0.4971
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    2,
+    3
+   ],
+   "invalid_citations": [],
+   "correctness": null,
+   "faithfulness": null,
+   "correctness_reason": null,
+   "faithfulness_reason": null,
+   "judge_status": "not judged",
+   "label": "not supported yet",
+   "label_reason": "CLARIFY question",
+   "answer_cost": 0.0001795,
+   "judge_cost": 0.0,
+   "latency_ms": 1271,
+   "chat_ms": 1260,
+   "cache_hit": true
+  },
+  {
+   "id": "q27",
+   "type": "unanswerable",
+   "department": "CST-NYT",
+   "gold_kind": "abstain",
+   "retrieved": [
+    {
+     "id": "page/CST-NYT/tutoring#2",
+     "similarity": 0.5403
+    },
+    {
+     "id": "page/CST-NYT/tutoring#1",
+     "similarity": 0.492
+    },
+    {
+     "id": "catalog:CST 2403",
+     "similarity": 0.4774
+    },
+    {
+     "id": "dept/CST-NYT/program-cybersecurity-bs#20",
+     "similarity": 0.474
+    },
+    {
+     "id": "catalog:CST 4801",
+     "similarity": 0.4612
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-information-systems-aas#19",
+     "similarity": 0.4597
+    },
+    {
+     "id": "catalog:CST 1100",
+     "similarity": 0.4577
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-information-systems-aas#14",
+     "similarity": 0.4574
+    },
+    {
+     "id": "catalog:CST 1215",
+     "similarity": 0.4559
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-information-systems-aas#9",
+     "similarity": 0.4556
+    }
+   ],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "below_threshold",
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0,
+   "judge_cost": 0.0,
+   "latency_ms": 7,
+   "chat_ms": 0,
+   "cache_hit": true
+  },
+  {
+   "id": "q28",
+   "type": "unanswerable",
+   "department": "MATH-NYT",
+   "gold_kind": "abstain",
+   "retrieved": [
+    {
+     "id": "catalog:MAT 1475",
+     "similarity": 0.5951
+    },
+    {
+     "id": "catalog:MAT 1372",
+     "similarity": 0.5779
+    },
+    {
+     "id": "catalog:MAT 1575",
+     "similarity": 0.5663
+    },
+    {
+     "id": "catalog:MAT 1272",
+     "similarity": 0.545
+    },
+    {
+     "id": "catalog:MAT 2675",
+     "similarity": 0.5355
+    },
+    {
+     "id": "catalog:MAT 2571",
+     "similarity": 0.5269
+    },
+    {
+     "id": "catalog:MEDU 1021",
+     "similarity": 0.5209
+    },
+    {
+     "id": "catalog:MAT 2580",
+     "similarity": 0.5203
+    },
+    {
+     "id": "catalog:MAT 3075",
+     "similarity": 0.5195
+    },
+    {
+     "id": "catalog:MAT 1275CO",
+     "similarity": 0.5194
+    }
+   ],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "The sources do not list who is teaching MAT 1475 this semester.",
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0001416,
+   "judge_cost": 0.0,
+   "latency_ms": 802,
+   "chat_ms": 795,
+   "cache_hit": true
+  },
+  {
+   "id": "q30",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "no_advice",
+   "retrieved": [
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#4",
+     "similarity": 0.6659
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#3",
+     "similarity": 0.6256
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#5",
+     "similarity": 0.6239
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#6",
+     "similarity": 0.5798
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#1",
+     "similarity": 0.5762
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#2",
+     "similarity": 0.5703
+    },
+    {
+     "id": "page/bursar/refund-policy#4",
+     "similarity": 0.5083
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#8",
+     "similarity": 0.5058
+    },
+    {
+     "id": "page/bursar/refund-policy#1",
+     "similarity": 0.5026
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#7",
+     "similarity": 0.4974
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    2
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "The answer only states the consequences and rules for dropping by September 3 without recommending whether the student should drop the class.",
+   "faithfulness": null,
+   "faithfulness_reason": null,
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0001545,
+   "judge_cost": 0.000822,
+   "latency_ms": 1248,
+   "chat_ms": 1240,
+   "cache_hit": true
+  }
+ ],
+ "git": {
+  "commit": "4beb454",
+  "dirty": false
+ }
+}

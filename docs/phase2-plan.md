@@ -1,12 +1,11 @@
 # Phase 2 plan: chunk, embed, vector-only baseline
 
-**Where we are (2026-10-12):** steps 1 to 8 done. `uv run python -m cta.answer "question"` answers with
-citations (`--dry-run` shows the prompt and the estimated cost); the abstain threshold is 0.59 (dev only); every
-request is written to `request_logs` (redacted, with a cache-hit flag). Six first answers were run (dev questions
-and one made-up one), total $0.0009. The test split has still never been run or read. Next is step 9
-(LLM-judged metrics and the baseline run: dry run with the cost first, 8 judge verdicts for the owner to check,
-failure labels, then `--final` on test only when the owner says so). A new session: read this file,
-`config/models.yaml`, `docs/decisions.md`, then continue at the first step not marked done.
+**Where we are (2026-10-12):** steps 1 to 8 done; **step 9 part A done** (dev baseline: `eval/results/baseline-dev.json`,
+`eval_runs` id 3, label `baseline-dev`). Waiting for the owner to fill in `docs/judge-check.md` (8 judge verdicts,
+"My verdict" lines) and say how many they agree with. **Part B (the test split, `--split test --final`) has NOT been
+run and no test question has been read**; it starts only after the owner replies. After part B: README-ready results
+table and failure analysis, then Phase 2 is closed. A new session: read this file, `config/models.yaml`,
+`docs/decisions.md`, `docs/judge-check.md`, then continue at the first item not done.
 
 Original status: plan only (2026-10-11). No code, no installs, no containers started. Everything here is for the owner
 to approve or change. Scope is CLAUDE.md Phase 2: "chunk, embed, vector-only RAG; record metrics". Not in scope:
@@ -249,7 +248,7 @@ or changed.
    informs the abstain threshold.
 8. **DONE (7a9265f). Answers, abstain rule, logs.** Prompt, threshold (decision recorded in `docs/decisions.md`), `request_logs`.
    Show: answers for four dev questions, with citations, an abstention, and the cost lines.
-9. **LLM-judged metrics and the baseline run.** Dry run with the cost, then (with your yes) the dev run; save the
+9. **PART A DONE (4beb454); part B waits for the owner. LLM-judged metrics and the baseline run.** Dry run with the cost, then (with your yes) the dev run; save the
    baseline, write the `docs/validation-log.md` entry, README-ready results table. Show: all metrics, the
    failures with their retrieved chunks, and what I think the main weakness is. Then stop; Phase 3 starts from
    the baseline numbers.
@@ -290,6 +289,11 @@ retrieval: 20 dev questions, 17 scored (q12 calendar-only, q27 and q28 no gold s
 Step 8 (done 2026-10-12): `cta.answer` (prompt, threshold, parsing, logging), migration `002` (`request_logs.query_cache_hit`),
 shared retry helper (`with_retries`; `EmbeddingError` renamed `ApiError`), `tests/test_answer.py`. Settings probe:
 one call, all three accepted. Threshold 0.59. First answers: see `docs/decisions.md`. Commit: 7a9265f.
+
+Step 9 part A (done 2026-10-12): data fix for HTML entities (`72f04fe`: 4 EET course records, 4 chunks re-embedded for
+$0.00001, retrieval metrics did not move), `cta.eval.run_answers` (answer, judge, failure labels, judge-check export),
+`tests/test_run_answers.py`. Dev run `baseline-dev`: 20 questions, $0.087 in total. Commit: 4beb454. Part B not run.
+
 
 ## Roadmap after the baseline (no code; Phase 3 and later)
 
