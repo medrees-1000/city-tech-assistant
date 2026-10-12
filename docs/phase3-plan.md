@@ -1,9 +1,9 @@
 # Phase 3 plan: improve the baseline, one measured change at a time
 
-**Where we are (2026-10-12):** step 0 is DONE (d7a0ddb). The eval set is 60 questions (40 dev, 20 test; `chain` tag on q20, q22, q39, q40,
-q41), and the frozen baseline was run on the 40 dev questions as `baseline-dev-60`: **`eval/results/baseline-dev-60.json` is the
-comparison file for the Phase 3 experiments** (results in `docs/baseline-findings.md`, section "40-question dev baseline"). The test
-split has not been run on the new questions. Next is step 1 (hybrid search); no experiment has started.
+**Where we are (2026-10-12):** step 0 is done (60 questions, comparison file `eval/results/baseline-dev-60.json`). **Step 1 (hybrid search) was
+run and REJECTED by the pre-registered rule** (retrieval MRR 0.789 to 0.710, recall@5 0.775 to 0.743; details and follow-up ideas in
+`docs/experiments.md`). The default stays `retrieval.mode: vector`; the hybrid code is kept behind the switch. Next is step 2 (department and
+term filters), or a second hybrid variant if the owner prefers; no test split has been run on the new questions.
 
 Starting point: `docs/baseline-findings.md` (Phase 2: dev `eval/results/baseline.json`, test `eval/results/baseline-final.json`; Phase 3 comparison: `eval/results/baseline-dev-60.json`).
 The baseline is vector-only search, k = 5, `gpt-6-luna`, judge `gpt-5.6-terra` with rubric v2, abstain threshold 0.59.
@@ -35,7 +35,7 @@ Failures are those in `docs/baseline-findings.md`. "Should fix" is a hypothesis 
 | Step | Change | Should fix |
 |---|---|---|
 | 0 (done) | Grow the eval set (about 30 owner-reviewed questions: calendar, chained prerequisites, cross-listed courses, abstain and advice cases, ambiguous, more department lookups), then re-run the frozen baseline on the new set. | Nothing: it makes the measurements meaningful. Dev has 20 questions and test 10, and only 17 and 5 of them are retrieval-scored. |
-| 1 | Hybrid search: fill `chunks.tsv`, full-text search, reciprocal rank fusion with the vector ranking. | q15 (the page says "ETET", the question says "Electrical Engineering Technology"), q07 (department-name words); course-code questions that rank 2 (q21, q22). |
+| 1 (done: rejected) | Hybrid search: fill `chunks.tsv`, full-text search, reciprocal rank fusion with the vector ranking. | q15 (the page says "ETET", the question says "Electrical Engineering Technology"), q07 (department-name words); course-code questions that rank 2 (q21, q22). |
 | 2 | Department and term filters (soft term rule from `docs/decisions.md`; a department filter only when the question names one). | q15 (department and the "Fall 2024" label that must be stated), q07 (overview chunks outrank the degrees page). |
 | 3 | Reranker over the top 20 to 30. | q07 (gold at ranks 4 and 8) and the rank-2 and rank-3 cases (q05, q06, q21, q22). It cannot help q01 or q15, whose gold chunk is not retrieved. |
 | 4 | Router with tools (LangGraph): calendar lookup, prerequisite chain, contact lookup. | Calendar: q11, q12 and the new calendar questions. Chain: q20, q22 and the new chain questions. Contact: q15 (abstain with the department contact). |

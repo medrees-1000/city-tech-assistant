@@ -1,0 +1,854 @@
+{
+ "label": "vector-v0-dev",
+ "split": "dev",
+ "retrieve_k": 10,
+ "n_scored": 30,
+ "excluded": [
+  "q12",
+  "q27",
+  "q28",
+  "q31",
+  "q33",
+  "q34",
+  "q36",
+  "q37",
+  "q44",
+  "q45"
+ ],
+ "metrics": {
+  "n": 30,
+  "recall@1": 0.48777777777777775,
+  "precision@1": 0.7,
+  "hit@1": 0.7,
+  "recall@3": 0.735,
+  "precision@3": 0.37777777777777777,
+  "hit@3": 0.8666666666666667,
+  "recall@5": 0.775,
+  "precision@5": 0.24000000000000002,
+  "hit@5": 0.9,
+  "recall@10": 0.8283333333333334,
+  "precision@10": 0.13,
+  "hit@10": 0.9333333333333333,
+  "mrr": 0.7892063492063492
+ },
+ "metrics_chain": {
+  "n": 3,
+  "recall@1": 0.1,
+  "precision@1": 0.6666666666666666,
+  "hit@1": 0.6666666666666666,
+  "recall@3": 0.43333333333333335,
+  "precision@3": 0.3333333333333333,
+  "hit@3": 1.0,
+  "recall@5": 0.5,
+  "precision@5": 0.26666666666666666,
+  "hit@5": 1.0,
+  "recall@10": 0.5333333333333333,
+  "precision@10": 0.16666666666666669,
+  "hit@10": 1.0,
+  "mrr": 0.8333333333333334
+ },
+ "by_type": {
+  "ambiguous": {
+   "n": 2,
+   "recall@1": 0.5,
+   "precision@1": 0.5,
+   "hit@1": 0.5,
+   "recall@3": 1.0,
+   "precision@3": 0.5,
+   "hit@3": 1.0,
+   "recall@5": 1.0,
+   "precision@5": 0.30000000000000004,
+   "hit@5": 1.0,
+   "recall@10": 1.0,
+   "precision@10": 0.15000000000000002,
+   "hit@10": 1.0,
+   "mrr": 0.75
+  },
+  "lookup": {
+   "n": 14,
+   "recall@1": 0.5,
+   "precision@1": 0.5714285714285714,
+   "hit@1": 0.5714285714285714,
+   "recall@3": 0.6964285714285714,
+   "precision@3": 0.2857142857142857,
+   "hit@3": 0.7857142857142857,
+   "recall@5": 0.7678571428571429,
+   "precision@5": 0.18571428571428572,
+   "hit@5": 0.8571428571428571,
+   "recall@10": 0.8392857142857143,
+   "precision@10": 0.1,
+   "hit@10": 0.9285714285714286,
+   "mrr": 0.691156462585034
+  },
+  "multi_chunk": {
+   "n": 8,
+   "recall@1": 0.32916666666666666,
+   "precision@1": 0.875,
+   "hit@1": 0.875,
+   "recall@3": 0.725,
+   "precision@3": 0.5416666666666666,
+   "hit@3": 1.0,
+   "recall@5": 0.75,
+   "precision@5": 0.35000000000000003,
+   "hit@5": 1.0,
+   "recall@10": 0.7625,
+   "precision@10": 0.1875,
+   "hit@10": 1.0,
+   "mrr": 0.9375
+  },
+  "time_sensitive": {
+   "n": 4,
+   "recall@1": 0.625,
+   "precision@1": 0.75,
+   "hit@1": 0.75,
+   "recall@3": 0.75,
+   "precision@3": 0.3333333333333333,
+   "hit@3": 0.75,
+   "recall@5": 0.75,
+   "precision@5": 0.2,
+   "hit@5": 0.75,
+   "recall@10": 0.75,
+   "precision@10": 0.1,
+   "hit@10": 0.75,
+   "mrr": 0.75
+  },
+  "unanswerable": {
+   "n": 2,
+   "recall@1": 0.75,
+   "precision@1": 1.0,
+   "hit@1": 1.0,
+   "recall@3": 0.75,
+   "precision@3": 0.3333333333333333,
+   "hit@3": 1.0,
+   "recall@5": 0.75,
+   "precision@5": 0.2,
+   "hit@5": 1.0,
+   "recall@10": 1.0,
+   "precision@10": 0.15000000000000002,
+   "hit@10": 1.0,
+   "mrr": 1.0
+  }
+ },
+ "by_department": {
+  "(none)": {
+   "n": 16,
+   "recall@1": 0.6458333333333334,
+   "precision@1": 0.875,
+   "hit@1": 0.875,
+   "recall@3": 0.84375,
+   "precision@3": 0.4375,
+   "hit@3": 0.9375,
+   "recall@5": 0.90625,
+   "precision@5": 0.275,
+   "hit@5": 1.0,
+   "recall@10": 0.9375,
+   "precision@10": 0.14375000000000002,
+   "hit@10": 1.0,
+   "mrr": 0.91875
+  },
+  "CST-NYT": {
+   "n": 4,
+   "recall@1": 0.07500000000000001,
+   "precision@1": 0.5,
+   "hit@1": 0.5,
+   "recall@3": 0.3875,
+   "precision@3": 0.3333333333333333,
+   "hit@3": 1.0,
+   "recall@5": 0.4375,
+   "precision@5": 0.25,
+   "hit@5": 1.0,
+   "recall@10": 0.4625,
+   "precision@10": 0.15000000000000002,
+   "hit@10": 1.0,
+   "mrr": 0.7083333333333334
+  },
+  "DENT-NYT": {
+   "n": 4,
+   "recall@1": 0.625,
+   "precision@1": 0.75,
+   "hit@1": 0.75,
+   "recall@3": 0.75,
+   "precision@3": 0.3333333333333333,
+   "hit@3": 0.75,
+   "recall@5": 0.75,
+   "precision@5": 0.2,
+   "hit@5": 0.75,
+   "recall@10": 0.75,
+   "precision@10": 0.1,
+   "hit@10": 0.75,
+   "mrr": 0.75
+  },
+  "EET-NYT": {
+   "n": 3,
+   "recall@1": 0.0,
+   "precision@1": 0.0,
+   "hit@1": 0.0,
+   "recall@3": 0.3333333333333333,
+   "precision@3": 0.1111111111111111,
+   "hit@3": 0.3333333333333333,
+   "recall@5": 0.3333333333333333,
+   "precision@5": 0.06666666666666667,
+   "hit@5": 0.3333333333333333,
+   "recall@10": 0.6666666666666666,
+   "precision@10": 0.06666666666666667,
+   "hit@10": 0.6666666666666666,
+   "mrr": 0.21428571428571427
+  },
+  "MATH-NYT": {
+   "n": 3,
+   "recall@1": 0.5,
+   "precision@1": 0.6666666666666666,
+   "hit@1": 0.6666666666666666,
+   "recall@3": 1.0,
+   "precision@3": 0.4444444444444444,
+   "hit@3": 1.0,
+   "recall@5": 1.0,
+   "precision@5": 0.26666666666666666,
+   "hit@5": 1.0,
+   "recall@10": 1.0,
+   "precision@10": 0.13333333333333333,
+   "hit@10": 1.0,
+   "mrr": 0.8333333333333334
+  }
+ },
+ "per_question": [
+  {
+   "id": "q01",
+   "type": "lookup",
+   "department": null,
+   "first_rank": 1,
+   "tags": [],
+   "retrieval_ms": 19.0,
+   "retrieved_ids": [
+    "page/registrar/applying-graduation#2",
+    "page/registrar/applying-graduation#3",
+    "page/registrar/applying-graduation#7",
+    "page/registrar/applying-graduation#6",
+    "page/registrar/readmission#4",
+    "page/registrar/readmission#1",
+    "page/registrar/readmission#5",
+    "page/advisement/gen-ed#3",
+    "page/admissions/dates-deadlines#1",
+    "page/advisement/gen-ed#2"
+   ]
+  },
+  {
+   "id": "q03",
+   "type": "lookup",
+   "department": "DENT-NYT",
+   "first_rank": 1,
+   "tags": [],
+   "retrieval_ms": 17.8,
+   "retrieved_ids": [
+    "page/DENT-NYT/faq#18",
+    "catalog:DEN 2300",
+    "catalog:DEN 2413",
+    "page/DENT-NYT/faq#19",
+    "dept/DENT-NYT/program-dental-hygiene-aas#13",
+    "catalog:DEN 1200",
+    "page/DENT-NYT/faq#29",
+    "dept/DENT-NYT/program-dental-hygiene-aas#10",
+    "page/DENT-NYT/dh-progression#1",
+    "catalog:DEN 1100"
+   ]
+  },
+  {
+   "id": "q04",
+   "type": "lookup",
+   "department": "DENT-NYT",
+   "first_rank": 1,
+   "tags": [],
+   "retrieval_ms": 16.0,
+   "retrieved_ids": [
+    "dept/DENT-NYT/program-dental-hygiene-aas#12",
+    "dept/DENT-NYT/program-dental-hygiene-aas#11",
+    "dept/DENT-NYT/program-dental-hygiene-aas#8",
+    "dept/DENT-NYT/overview#4",
+    "dept/DENT-NYT/program-dental-hygiene-aas#10",
+    "dept/DENT-NYT/program-dental-hygiene-aas#9",
+    "dept/DENT-NYT/program-dental-hygiene-aas#3",
+    "dept/DENT-NYT/program-dental-hygiene-aas#1",
+    "dept/DENT-NYT/program-dental-hygiene-aas#13",
+    "dept/DENT-NYT/program-dental-hygiene-aas#6"
+   ]
+  },
+  {
+   "id": "q05",
+   "type": "lookup",
+   "department": "CST-NYT",
+   "first_rank": 3,
+   "tags": [],
+   "retrieval_ms": 15.8,
+   "retrieved_ids": [
+    "dept/CST-NYT/overview#5",
+    "catalog:CST 4900",
+    "page/CST-NYT/internship-scholarship#1",
+    "dept/CST-NYT/overview#2",
+    "page/CST-NYT/student-resources#9",
+    "page/CST-NYT/index#1",
+    "dept/CST-NYT/program-computer-information-systems-aas#4",
+    "dept/CST-NYT/program-computer-systems-btech#5",
+    "dept/CST-NYT/overview#3",
+    "catalog:MAT 2900"
+   ]
+  },
+  {
+   "id": "q06",
+   "type": "lookup",
+   "department": "CST-NYT",
+   "first_rank": 2,
+   "tags": [],
+   "retrieval_ms": 14.9,
+   "retrieved_ids": [
+    "dept/CST-NYT/overview#4",
+    "page/CST-NYT/degrees#2",
+    "page/CST-NYT/index#1",
+    "dept/CST-NYT/overview#2",
+    "dept/CST-NYT/program-computer-systems-btech#2",
+    "dept/CST-NYT/program-computer-systems-btech#3",
+    "page/MATH-NYT/degrees#2",
+    "dept/CST-NYT/program-computer-systems-btech#8",
+    "dept/CST-NYT/overview#3",
+    "page/CST-NYT/student-resources#9"
+   ]
+  },
+  {
+   "id": "q08",
+   "type": "lookup",
+   "department": null,
+   "first_rank": 1,
+   "tags": [],
+   "retrieval_ms": 16.7,
+   "retrieved_ids": [
+    "pdf/cunyfirst-student-reference#8",
+    "pdf/cunyfirst-student-reference#1",
+    "pdf/cunyfirst-student-reference#9",
+    "pdf/cunyfirst-student-reference#3",
+    "pdf/cunyfirst-student-reference#7",
+    "pdf/cunyfirst-student-reference#4",
+    "pdf/cunyfirst-student-reference#5",
+    "page/financial-aid/faqs#3",
+    "pdf/cunyfirst-student-reference#2",
+    "page/registrar/faqs#2"
+   ]
+  },
+  {
+   "id": "q09",
+   "type": "time_sensitive",
+   "department": null,
+   "first_rank": 1,
+   "tags": [],
+   "retrieval_ms": 15.2,
+   "retrieved_ids": [
+    "page/financial-aid/sap#12",
+    "page/financial-aid/sap#7",
+    "page/financial-aid/faqs#8",
+    "page/financial-aid/sap#6",
+    "page/financial-aid/sap#8",
+    "page/financial-aid/sap#10",
+    "page/financial-aid/sap#9",
+    "page/financial-aid/sap#11",
+    "page/financial-aid/sap#4",
+    "pdf/financial-aid-refund-calendar-2026-2027#4"
+   ]
+  },
+  {
+   "id": "q13",
+   "type": "time_sensitive",
+   "department": null,
+   "first_rank": 1,
+   "tags": [],
+   "retrieval_ms": 15.8,
+   "retrieved_ids": [
+    "page/bursar/payment-deadlines#1",
+    "page/bursar/refund-policy#4",
+    "page/admissions/tuition-penalty#3",
+    "pdf/financial-aid-refund-calendar-2026-2027#4",
+    "page/admissions/tuition-penalty#1",
+    "page/bursar/refund-policy#2",
+    "page/bursar/refund-policy#3",
+    "pdf/financial-aid-refund-calendar-2026-2027#3",
+    "page/bursar/payment-plan#1",
+    "pdf/dropping-withdrawing-fall-2026#5"
+   ]
+  },
+  {
+   "id": "q14",
+   "type": "time_sensitive",
+   "department": null,
+   "first_rank": 1,
+   "tags": [],
+   "retrieval_ms": 16.1,
+   "retrieved_ids": [
+    "pdf/financial-aid-refund-calendar-2026-2027#5",
+    "pdf/financial-aid-refund-calendar-2026-2027#3",
+    "pdf/financial-aid-refund-calendar-2026-2027#4",
+    "pdf/financial-aid-refund-calendar-2026-2027#2",
+    "pdf/financial-aid-refund-calendar-2026-2027#7",
+    "pdf/financial-aid-refund-calendar-2026-2027#6",
+    "page/financial-aid/financial-payment-calendar#1",
+    "page/financial-aid/faqs#4",
+    "pdf/financial-aid-refund-calendar-2026-2027#1",
+    "pdf/cunyfirst-student-reference#7"
+   ]
+  },
+  {
+   "id": "q15",
+   "type": "time_sensitive",
+   "department": "EET-NYT",
+   "first_rank": null,
+   "tags": [],
+   "retrieval_ms": 17.0,
+   "retrieved_ids": [
+    "dept/EET-NYT/program-electrical-engineering-technology-btech#6",
+    "dept/EET-NYT/program-electrical-engineering-technology-aas#5",
+    "dept/EET-NYT/program-electrical-engineering-technology-aas#9",
+    "dept/EET-NYT/program-electrical-engineering-technology-btech#10",
+    "catalog:EET 2000",
+    "page/EET-NYT/index#1",
+    "contact:EET-NYT",
+    "dept/EET-NYT/overview#3",
+    "dept/EET-NYT/overview#2",
+    "catalog:EET 4120"
+   ]
+  },
+  {
+   "id": "q16",
+   "type": "multi_chunk",
+   "department": null,
+   "first_rank": 1,
+   "tags": [],
+   "retrieval_ms": 14.8,
+   "retrieved_ids": [
+    "pdf/dropping-withdrawing-fall-2026#5",
+    "pdf/dropping-withdrawing-fall-2026#4",
+    "pdf/dropping-withdrawing-fall-2026#6",
+    "pdf/dropping-withdrawing-fall-2026#3",
+    "pdf/dropping-withdrawing-fall-2026#1",
+    "pdf/dropping-withdrawing-fall-2026#8",
+    "pdf/dropping-withdrawing-fall-2026#7",
+    "page/financial-aid/faqs#9",
+    "pdf/dropping-withdrawing-fall-2026#9",
+    "pdf/financial-aid-refund-calendar-2026-2027#1"
+   ]
+  },
+  {
+   "id": "q18",
+   "type": "multi_chunk",
+   "department": null,
+   "first_rank": 1,
+   "tags": [],
+   "retrieval_ms": 15.1,
+   "retrieved_ids": [
+    "page/advisement/gen-ed#1",
+    "page/advisement/gen-ed#8",
+    "page/advisement/gen-ed#3",
+    "page/advisement/gen-ed#6",
+    "page/advisement/gen-ed#2",
+    "page/registrar/faqs#8",
+    "dept/EET-NYT/program-electrical-engineering-technology-aas#9",
+    "page/registrar/faqs#14",
+    "dept/MATH-NYT/program-computer-science-as#9",
+    "page/registrar/faqs#12"
+   ]
+  },
+  {
+   "id": "q19",
+   "type": "multi_chunk",
+   "department": null,
+   "first_rank": 1,
+   "tags": [],
+   "retrieval_ms": 16.5,
+   "retrieved_ids": [
+    "page/financial-aid/sap#8",
+    "page/financial-aid/sap#7",
+    "page/financial-aid/sap#9",
+    "page/financial-aid/sap#6",
+    "page/financial-aid/faqs#8",
+    "page/financial-aid/sap#12",
+    "page/financial-aid/sap#10",
+    "page/financial-aid/sap#11",
+    "page/financial-aid/sap#4",
+    "page/financial-aid/sap#13"
+   ]
+  },
+  {
+   "id": "q21",
+   "type": "lookup",
+   "department": "EET-NYT",
+   "first_rank": 2,
+   "tags": [],
+   "retrieval_ms": 15.3,
+   "retrieved_ids": [
+    "catalog:EET 2261",
+    "catalog:EET 3672",
+    "catalog:EET 2271",
+    "catalog:EET 4112",
+    "catalog:EET 3572",
+    "catalog:EET 2220",
+    "catalog:EET 1102",
+    "catalog:EET 2000",
+    "catalog:EET 3212",
+    "catalog:EET 3102"
+   ]
+  },
+  {
+   "id": "q22",
+   "type": "multi_chunk",
+   "department": "MATH-NYT",
+   "first_rank": 2,
+   "tags": [
+    "chain"
+   ],
+   "retrieval_ms": 14.4,
+   "retrieved_ids": [
+    "page/MATH-NYT/faqs#10",
+    "catalog:MAT 2675",
+    "catalog:MAT 1475",
+    "catalog:MAT 1375",
+    "catalog:MAT 2630",
+    "catalog:MAT 1575",
+    "page/MATH-NYT/student-resources#7",
+    "page/MATH-NYT/student-resources#1",
+    "catalog:MAT 4050",
+    "catalog:MAT 2680"
+   ]
+  },
+  {
+   "id": "q24",
+   "type": "ambiguous",
+   "department": null,
+   "first_rank": 1,
+   "tags": [],
+   "retrieval_ms": 15.0,
+   "retrieved_ids": [
+    "page/registrar/applying-graduation#1",
+    "page/advisement/gen-ed#3",
+    "dept/MATH-NYT/program-mathematics-education-bs#10",
+    "dept/MATH-NYT/program-computer-science#6",
+    "dept/CST-NYT/program-computer-systems-btech#9",
+    "dept/CST-NYT/program-cybersecurity-bs#10",
+    "page/advisement/degree-checklist#1",
+    "dept/MATH-NYT/program-applied-mathematics-bs#9",
+    "page/financial-aid/sap#1",
+    "dept/MATH-NYT/program-computer-science-as#8"
+   ]
+  },
+  {
+   "id": "q30",
+   "type": "unanswerable",
+   "department": null,
+   "first_rank": 1,
+   "tags": [],
+   "retrieval_ms": 14.9,
+   "retrieved_ids": [
+    "pdf/dropping-withdrawing-fall-2026#4",
+    "pdf/dropping-withdrawing-fall-2026#3",
+    "pdf/dropping-withdrawing-fall-2026#5",
+    "pdf/dropping-withdrawing-fall-2026#6",
+    "pdf/dropping-withdrawing-fall-2026#1",
+    "pdf/dropping-withdrawing-fall-2026#2",
+    "page/bursar/refund-policy#4",
+    "pdf/dropping-withdrawing-fall-2026#8",
+    "page/bursar/refund-policy#1",
+    "pdf/dropping-withdrawing-fall-2026#7"
+   ]
+  },
+  {
+   "id": "q39",
+   "type": "multi_chunk",
+   "department": "CST-NYT",
+   "first_rank": 1,
+   "tags": [
+    "chain"
+   ],
+   "retrieval_ms": 15.4,
+   "retrieved_ids": [
+    "catalog:CST 3602",
+    "catalog:CST 2402",
+    "catalog:CST 3604",
+    "dept/CST-NYT/program-data-science-bs#8",
+    "dept/CST-NYT/program-data-science-bs#9",
+    "catalog:CST 3613",
+    "catalog:CST 3607",
+    "catalog:CST 3650",
+    "catalog:CST 3508",
+    "catalog:CST 3512"
+   ]
+  },
+  {
+   "id": "q40",
+   "type": "multi_chunk",
+   "department": "CST-NYT",
+   "first_rank": 1,
+   "tags": [
+    "chain"
+   ],
+   "retrieval_ms": 19.0,
+   "retrieved_ids": [
+    "catalog:CST 3613",
+    "catalog:CST 3615",
+    "catalog:CST 4714",
+    "catalog:CST 3504",
+    "catalog:CST 1204",
+    "catalog:CST 3601",
+    "catalog:CST 4706",
+    "catalog:CST 3608",
+    "catalog:CST 3604",
+    "catalog:MST 1204"
+   ]
+  },
+  {
+   "id": "q42",
+   "type": "lookup",
+   "department": "MATH-NYT",
+   "first_rank": 1,
+   "tags": [],
+   "retrieval_ms": 15.3,
+   "retrieved_ids": [
+    "catalog:MAT 1190CO",
+    "catalog:MAT 1190",
+    "catalog:MAT 1275CO",
+    "catalog:MAT 1272",
+    "dept/CST-NYT/program-computer-information-systems-aas#19",
+    "catalog:MAT 1475",
+    "page/MATH-NYT/student-resources#2",
+    "dept/CST-NYT/program-computer-information-systems-aas#9",
+    "page/advisement/required-core#2",
+    "dept/CST-NYT/program-computer-information-systems-aas#14"
+   ]
+  },
+  {
+   "id": "q47",
+   "type": "unanswerable",
+   "department": null,
+   "first_rank": 1,
+   "tags": [],
+   "retrieval_ms": 15.5,
+   "retrieved_ids": [
+    "page/registrar/incomplete#1",
+    "pdf/dropping-withdrawing-fall-2026#1",
+    "pdf/dropping-withdrawing-fall-2026#3",
+    "pdf/dropping-withdrawing-fall-2026#8",
+    "page/financial-aid/faqs#9",
+    "page/registrar/grade-policies#1",
+    "pdf/dropping-withdrawing-fall-2026#7",
+    "pdf/dropping-withdrawing-fall-2026#6",
+    "pdf/dropping-withdrawing-fall-2026#5",
+    "pdf/dropping-withdrawing-fall-2026#9"
+   ]
+  },
+  {
+   "id": "q49",
+   "type": "ambiguous",
+   "department": null,
+   "first_rank": 2,
+   "tags": [],
+   "retrieval_ms": 16.5,
+   "retrieved_ids": [
+    "page/registrar/applying-graduation#4",
+    "page/registrar/epermit#2",
+    "page/registrar/epermit#1",
+    "page/registrar/grade-policies#2",
+    "page/advisement/gen-ed#8",
+    "page/registrar/faqs#8",
+    "page/advisement/gen-ed#7",
+    "page/registrar/faqs#7",
+    "page/MATH-NYT/student-resources#3",
+    "page/advisement/flexible-core#5"
+   ]
+  },
+  {
+   "id": "q51",
+   "type": "multi_chunk",
+   "department": "DENT-NYT",
+   "first_rank": 1,
+   "tags": [],
+   "retrieval_ms": 17.7,
+   "retrieved_ids": [
+    "page/DENT-NYT/faq#25",
+    "page/DENT-NYT/faq#24",
+    "page/DENT-NYT/apply#2",
+    "page/DENT-NYT/faq#18",
+    "page/DENT-NYT/dh-progression#1",
+    "page/DENT-NYT/faq#27",
+    "page/DENT-NYT/faq#21",
+    "page/DENT-NYT/advisement#1",
+    "dept/DENT-NYT/program-dental-hygiene-aas#8",
+    "page/DENT-NYT/apply#1"
+   ]
+  },
+  {
+   "id": "q52",
+   "type": "lookup",
+   "department": "DENT-NYT",
+   "first_rank": null,
+   "tags": [],
+   "retrieval_ms": 18.0,
+   "retrieved_ids": [
+    "page/DENT-NYT/faq#8",
+    "page/DENT-NYT/apply#1",
+    "page/DENT-NYT/advisement#1",
+    "dept/DENT-NYT/program-dental-hygiene-aas#10",
+    "page/DENT-NYT/faq#16",
+    "page/DENT-NYT/dh-progression#1",
+    "dept/DENT-NYT/program-dental-hygiene-aas#8",
+    "page/DENT-NYT/profession#2",
+    "page/DENT-NYT/apply#3",
+    "page/DENT-NYT/faq#7"
+   ]
+  },
+  {
+   "id": "q53",
+   "type": "lookup",
+   "department": null,
+   "first_rank": 5,
+   "tags": [],
+   "retrieval_ms": 16.8,
+   "retrieved_ids": [
+    "page/financial-aid/faqs#7",
+    "page/financial-aid/tap-appeal#2",
+    "page/financial-aid/tap-appeal#1",
+    "page/DENT-NYT/faq#10",
+    "page/advisement/continuing-students#1",
+    "pdf/dropping-withdrawing-fall-2026#5",
+    "page/registrar/applying-graduation#4",
+    "page/financial-aid/faqs#3",
+    "page/registrar/applying-graduation#7",
+    "page/DENT-NYT/faq#2"
+   ]
+  },
+  {
+   "id": "q54",
+   "type": "lookup",
+   "department": "MATH-NYT",
+   "first_rank": 1,
+   "tags": [],
+   "retrieval_ms": 16.3,
+   "retrieved_ids": [
+    "page/MATH-NYT/faqs#12",
+    "page/MATH-NYT/faqs#8",
+    "page/MATH-NYT/faqs#9",
+    "page/MATH-NYT/faqs#2",
+    "page/MATH-NYT/faqs#7",
+    "dept/MATH-NYT/program-mathematics-education-bs#8",
+    "page/advisement/required-core#2",
+    "page/MATH-NYT/faqs#1",
+    "page/MATH-NYT/faqs#10",
+    "dept/MATH-NYT/overview#3"
+   ]
+  },
+  {
+   "id": "q56",
+   "type": "lookup",
+   "department": "EET-NYT",
+   "first_rank": 7,
+   "tags": [],
+   "retrieval_ms": 16.8,
+   "retrieved_ids": [
+    "dept/EET-NYT/overview#2",
+    "catalog:EET 2000",
+    "dept/EET-NYT/overview#3",
+    "page/EET-NYT/chairperson#1",
+    "dept/EET-NYT/program-electrical-engineering-technology-btech#6",
+    "dept/EET-NYT/program-electrical-engineering-technology-aas#5",
+    "page/EET-NYT/student-resources#14",
+    "page/EET-NYT/index#1",
+    "dept/EET-NYT/program-electrical-engineering-technology-btech#2",
+    "page/advisement/virtual-advisors#15"
+   ]
+  },
+  {
+   "id": "q57",
+   "type": "lookup",
+   "department": null,
+   "first_rank": 1,
+   "tags": [],
+   "retrieval_ms": 15.7,
+   "retrieved_ids": [
+    "page/registrar/readmission#4",
+    "page/registrar/readmission#1",
+    "page/registrar/readmission#5",
+    "page/registrar/readmission#3",
+    "page/admissions/dates-deadlines#1",
+    "page/advisement/gen-ed#2",
+    "page/EET-NYT/student-resources#20",
+    "page/CST-NYT/transfer-policies#1",
+    "page/financial-aid/tap-appeal#1",
+    "dept/CST-NYT/program-computer-systems-btech#5"
+   ]
+  },
+  {
+   "id": "q58",
+   "type": "lookup",
+   "department": null,
+   "first_rank": 1,
+   "tags": [],
+   "retrieval_ms": 14.3,
+   "retrieved_ids": [
+    "page/registrar/faqs#11",
+    "page/registrar/faqs#1",
+    "page/registrar/faqs#6",
+    "page/registrar/faqs#2",
+    "page/registrar/faqs#4",
+    "page/registrar/faqs#12",
+    "page/registrar/faqs#8",
+    "page/registrar/faqs#9",
+    "page/registrar/faqs#5",
+    "page/registrar/faqs#10"
+   ]
+  },
+  {
+   "id": "q59",
+   "type": "multi_chunk",
+   "department": null,
+   "first_rank": 1,
+   "tags": [],
+   "retrieval_ms": 16.4,
+   "retrieved_ids": [
+    "page/admissions/tuition-penalty#3",
+    "page/admissions/tuition-penalty#1",
+    "page/bursar/payment-deadlines#1",
+    "page/admissions/tuition-penalty#2",
+    "page/bursar/refund-policy#1",
+    "page/financial-aid/faqs#9",
+    "page/bursar/payment-plan#1",
+    "page/MATH-NYT/faqs#12",
+    "pdf/dropping-withdrawing-fall-2026#6",
+    "page/financial-aid/faqs#4"
+   ]
+  }
+ ],
+ "cost": {
+  "usd": 0.0,
+  "api_calls": 0,
+  "cache_hits": 40
+ },
+ "retrieval_mode": "vector",
+ "retrieval_latency_ms": {
+  "n": 40,
+  "median": 15.78132199938409,
+  "p95": 18.037112000456546
+ },
+ "git": {
+  "commit": "0026373",
+  "dirty": false
+ },
+ "config": {
+  "embedding_model": "text-embedding-3-small",
+  "ks": [
+   1,
+   3,
+   5,
+   10
+  ],
+  "retrieve_k": 10,
+  "git_dirty": false,
+  "retrieval": {
+   "mode": "vector",
+   "candidates": 20,
+   "rrf_k": 60
+  },
+  "filters": "none"
+ }
+}

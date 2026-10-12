@@ -306,3 +306,13 @@ code at the time of the re-judge); its labels were later recomputed by `--relabe
   Metrics were not affected.
 - Known scoring limit: a NO ADVICE gold passes when the answer abstains (q47 on dev). Fixing it belongs with the CLARIFY scoring in step 5;
   until then NO ADVICE results are read with that caveat.
+
+## Hybrid search code stays, switched off (Oct 12, 2026; Phase 3 step 1)
+
+- Experiment 1 was rejected by the rule written beforehand (`docs/experiments.md`). Default `retrieval.mode` stays `vector`, so the frozen baseline is
+  reproduced exactly (the vector run matches `baseline-dev-60`).
+- Kept in the repository, off by default: migration 003 (`chunks.tsv` generated column with the `english` configuration, GIN index; the loader never
+  writes it and `load --dry-run` still shows 0 changes), `retrieval.mode` with `CTA_RETRIEVAL_MODE`, `--mode` on the search and eval commands, reciprocal rank
+  fusion, `cta.eval.compare` (applies the rule), retrieval time recorded per question. A further hybrid variant can reuse all of it.
+- The abstain threshold is applied to `Search.top_vector_similarity` (the best cosine in the vector list) in both modes. In vector mode this is the same value as
+  before (the top-1 similarity), so the threshold decisions and all baseline numbers are unchanged.
