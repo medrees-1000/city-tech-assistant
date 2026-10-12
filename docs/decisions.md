@@ -29,3 +29,17 @@ If none of the terms tagged on a retrieved section matches the term the question
 term when none is named), the answer states the term printed on the source (for example "this page lists
 Fall 2024 hours") or abstains with the office contact. Term filtering is soft: a section with no terms is
 never excluded.
+
+## Database setup (Oct 12, 2026)
+
+- Image `pgvector/pgvector:0.8.7-pg17`: Postgres 17 (current major with long support left) and the newest
+  pgvector tag listed on Docker Hub on this date. The tag is pinned so a pull never changes the database
+  version. Moving to a newer tag is a deliberate edit of `docker-compose.yml`.
+- The container publishes `127.0.0.1:5432` only. A host Postgres was already using 5432; the owner stopped it.
+- `schema_migrations` is created by `cta.index.db migrate`, not by a migration file (a migration could not
+  record itself before its own table exists). Each migration runs in one transaction with its record, so a
+  failed one leaves nothing half-applied. Migration files are applied in file-name order and never edited after
+  they have run; a schema change is a new numbered file.
+- The vector column is `vector(1536)`. Changing the embedding model to one with other dimensions needs a new
+  migration and a full re-embed.
+- Connection errors print a fixed message, because the driver message can contain connection details.

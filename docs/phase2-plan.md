@@ -1,9 +1,9 @@
 # Phase 2 plan: chunk, embed, vector-only baseline
 
-**Where we are (2026-10-12):** plan approved with changes (applied below). Step 1 done (see section g); next is
-step 2 (Docker and schema), which needs the owner to start the container. Nothing paid or called so far.
-A new session: read this file, `config/models.yaml`, `docs/decisions.md`, then continue at the first step not
-marked done.
+**Where we are (2026-10-12):** steps 1 and 2 done. The Docker database is running (`docker compose up -d`),
+`001_init.sql` is applied, all tables are empty. Next is step 3 (chunk builder, no network; adds tiktoken).
+Nothing paid or called so far. A new session: read this file, `config/models.yaml`, `docs/decisions.md`, then
+continue at the first step not marked done.
 
 Original status: plan only (2026-10-11). No code, no installs, no containers started. Everything here is for the owner
 to approve or change. Scope is CLAUDE.md Phase 2: "chunk, embed, vector-only RAG; record metrics". Not in scope:
@@ -230,7 +230,7 @@ or changed.
 
 1. **DONE (132ffb7). Config and settings.** `config/models.yaml`, `.env.example` keys, settings loader with env overrides and
    a price table, tests. Show: the resolved config (secrets hidden).
-2. **Docker and schema.** Fill `docker-compose.yml`, `db/migrations/001_init.sql`, `cta.index.db migrate`,
+2. **DONE (fb7b842). Docker and schema.** Fill `docker-compose.yml`, `db/migrations/001_init.sql`, `cta.index.db migrate`,
    tests that run when the database is up. You start the container. Show: `docker compose ps`, the table list.
 3. **Chunk builder (no network).** Pure functions for the three chunk kinds, hashes, `--dry-run` report; add
    tiktoken. Show: chunk counts per kind and doc_type, exact token total, the 10 longest chunks, three sample
@@ -256,6 +256,10 @@ its line above is marked DONE with the commit hash, and "Where we are" at the to
 
 Step 1 (done 2026-10-12): `config/models.yaml`, `cta.settings.load_models` / `secret_status` / `cost_usd`,
 `.env.example` keys, `cta.redact`, tests (`tests/test_settings_models.py`). Commit: 132ffb7.
+
+Step 2 (done 2026-10-12): image `pgvector/pgvector:0.8.7-pg17`, `db/migrations/001_init.sql`, `cta.index.db` (`migrate`,
+`status`), `tests/test_db.py` (2 integration tests, skipped when Postgres is down). Commit: fb7b842. The plan's
+`schema_version` table is named `schema_migrations` (owner request). Dependencies added: `psycopg[binary]`, `pgvector`.
 
 ## Roadmap after the baseline (no code; Phase 3 and later)
 
