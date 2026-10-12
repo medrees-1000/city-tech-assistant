@@ -132,3 +132,6 @@ Owner vs judge on these 8 items (correctness / faithfulness):
 |---|---|---|---|
 | v1, run `baseline-dev` | 6 / 8 | 7 / 8 | q04 correctness (partial vs correct), q15 correctness (incorrect vs partial), q03 faithfulness (yes vs partly) |
 | v2, run `baseline-dev-judge-v2` (re-judged from the stored answers) | 7 / 8 | 7 / 8 | q15 correctness (incorrect vs partial), q03 faithfulness (yes vs partly) |
+| v3, run `baseline-dev-60-v3` (re-judged from the stored answers) | 6 / 8 | 7 / 8 | q01 correctness (correct vs partial), q15 correctness (incorrect vs partial), q03 faithfulness (yes vs partly) |
+
+The v3 row was computed on 2026-10-12 from `eval/results/baseline-dev-60-v3.json` against the owner verdicts above (no model call; `python -m cta.eval.judge_sheet --agreement`). Disagreements of v3 with the owner: q01 correctness (v3 correct, owner partial), q15 correctness (v3 incorrect, owner partial), q03 faithfulness (v3 yes, owner partly). The owner verdicts and the v1 and v2 rows are unchanged.
