@@ -228,7 +228,7 @@ or changed.
 
 ## g) Ordered steps (one commit per step; what I show after each)
 
-1. **DONE (see hash below). Config and settings.** `config/models.yaml`, `.env.example` keys, settings loader with env overrides and
+1. **DONE (132ffb7). Config and settings.** `config/models.yaml`, `.env.example` keys, settings loader with env overrides and
    a price table, tests. Show: the resolved config (secrets hidden).
 2. **Docker and schema.** Fill `docker-compose.yml`, `db/migrations/001_init.sql`, `cta.index.db migrate`,
    tests that run when the database is up. You start the container. Show: `docker compose ps`, the table list.
@@ -255,7 +255,7 @@ Each step runs `ruff`, `pytest` and `python -m cta.validate` before its commit. 
 its line above is marked DONE with the commit hash, and "Where we are" at the top is updated.
 
 Step 1 (done 2026-10-12): `config/models.yaml`, `cta.settings.load_models` / `secret_status` / `cost_usd`,
-`.env.example` keys, `cta.redact`, tests (`tests/test_settings_models.py`). Commit: STEP1_HASH.
+`.env.example` keys, `cta.redact`, tests (`tests/test_settings_models.py`). Commit: 132ffb7.
 
 ## Roadmap after the baseline (no code; Phase 3 and later)
 
