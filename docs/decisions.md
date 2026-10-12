@@ -63,3 +63,16 @@ never excluded.
 - `content_hash` = sha256(text + embedding model + dimensions); `meta_hash` = sha256 of the id and the
   metadata fields in sorted-key JSON. Tokens are counted with tiktoken; the encoding file is cached in
   `.cache/tiktoken` (git-ignored).
+
+## Embedding loader (Oct 12, 2026)
+
+- The loader needs `--yes` for any write, not only for embedding: without it, metadata-only updates and stale
+  deletions are previewed too. A run with nothing to change prints the report and needs no flag.
+- The OpenAI client is created with `max_retries=0`; `cta.index.embed` retries itself (3 retries, waits of 1, 2
+  and 4 seconds, only for 429, 5xx and connection errors) so the rule is in our code and tested. Error messages
+  never contain the key.
+- The cost shown before a run is the tiktoken estimate; the cost printed after is from the API's reported
+  usage. On the first load they were equal (136,297 tokens).
+- `openai` 3.x depends on `httpx2` (the pydantic-org successor of httpx, openai requires it since 3.0.0 of
+  2026-08-12). It is a transitive dependency and not named in `pyproject.toml`.
+- Loader tests run in a throwaway schema (created and dropped per test), because the loader really commits.
