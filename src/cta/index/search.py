@@ -247,7 +247,7 @@ def search_reranked(
     )  # fmt: skip
     outcome = reranker.rerank(
         question, first.results, cfg, client_factory=client_factory, max_cost=rerank_limit,
-        cache_path=cache_path.with_name("rerank.json"),
+        cache_path=Path(cfg["rerank"].get("cache_path") or cache_path.with_name("rerank.json")),
     )  # fmt: skip
     results = [
         first.results[i] | {"rank": new_rank, "first_stage_rank": first.results[i]["rank"]}

@@ -204,6 +204,7 @@ def evaluate_question(q: dict, ans: Answer, top10: list[dict], judge_call) -> di
         else:
             label, reason = label_failure(kind, q, ans, top10, verdict)
     gold = scorable_gold(q)
+    rerank = getattr(ans.search, "rerank", None)  # None when the reranker was off
     return {
         "id": q["id"],
         "type": q["type"],
@@ -229,6 +230,9 @@ def evaluate_question(q: dict, ans: Answer, top10: list[dict], judge_call) -> di
         if hasattr(ans.search, "retrieval_ms")
         else None,
         "cache_hit": ans.search.cache_hit,
+        "rerank_cost": rerank.cost if rerank else 0.0,
+        "rerank_ms": round(rerank.ms, 1) if rerank else 0.0,
+        "rerank_failed": bool(rerank and rerank.failed),
     }
 
 
@@ -469,8 +473,12 @@ def print_report(
 def estimate_run(conn, questions: list[dict], cfg: dict, today: date, count) -> tuple[float, list]:
     """(estimated dollars for answers + judge, per-question lines). Calls no chat model."""
     total, lines = 0.0, []
+    # The estimate never calls the reranker (a paid call that would fill the run's own score
+    # cache): it counts the prompt of the first-stage top 5 and adds a flat reranker allowance.
+    plain = {**cfg, "retrieval": {**cfg["retrieval"], "rerank": "off"}}
+    extra = RERANK_ESTIMATE_PER_QUESTION if cfg["retrieval"]["rerank"] != "off" else 0.0
     for q in questions:
-        a = answer(conn, q["question"], today, cfg=cfg, dry_run=True, log=False)
+        a = answer(conn, q["question"], today, cfg=plain, dry_run=True, log=False)
         chat = estimate_cost(a.prompt, cfg, count) if a.prompt else 0.0
         kind = gold_kind(q)
         judge_cost = 0.0
@@ -478,7 +486,7 @@ def estimate_run(conn, questions: list[dict], cfg: dict, today: date, count) -> 
             msgs = judge_messages(kind, q, a)
             tokens = sum(count(m["content"]) for m in msgs) + JUDGE_ESTIMATE_ANSWER_TOKENS
             judge_cost = cost_usd(cfg, cfg["judge_model"], tokens, JUDGE_ESTIMATE_OUTPUT_TOKENS)
-        total += chat + judge_cost + a.search.cost
+        total += chat + judge_cost + a.search.cost + extra
         lines.append(
             f"{q['id']:5}{kind:14} chat ${chat:.5f}  judge ${judge_cost:.5f}  "
             f"{'(threshold abstain, no chat call)' if not a.prompt else ''}"
@@ -521,21 +529,64 @@ def finish_run(
     conn.commit()
 
 
+class BudgetStop(Exception):
+    """The next question could take the step past its spend allowance."""
+
+
+# Labels of the runs that count against the step 3b allowance (docs/decisions.md).
+STEP_3B_LABELS = (
+    "baseline-dev-60-v3", "off-run2", "off-run3", "on-run1", "on-run2", "on-run3", "judge-repeat",
+)  # fmt: skip
+# Rough cost of the reranker calls per question, used only in the estimate (measured in experiment 3
+# at about $0.0005 per question; doubled here).
+RERANK_ESTIMATE_PER_QUESTION = 0.001
+
+
+def spent_so_far(conn, labels: tuple[str, ...] = STEP_3B_LABELS) -> float:
+    """Dollars already spent by the finished runs with these labels (eval_runs.cost.usd)."""
+    rows = conn.execute(
+        "SELECT coalesce(sum((cost->>'usd')::float), 0) FROM eval_runs WHERE label = ANY(%s)",
+        (list(labels),),
+    )
+    return rows.fetchone()[0]
+
+
 def run(
-    conn, questions, label, split, cfg, client_factory=make_client, out=print, judge_check=False
+    conn,
+    questions,
+    label,
+    split,
+    cfg,
+    client_factory=make_client,
+    out=print,
+    judge_check=False,
+    budget: float | None = None,
 ) -> dict:
     today = date.fromisoformat(cfg["eval"]["today"])
     run_id = start_run(conn, label, split, cfg)
     judge_call = make_judge_call(cfg, client_factory())
     qs = {q["id"]: q for q in questions}
     records, top10s, texts = [], {}, {}
+    spent = priciest = 0.0
     for q in questions:
+        if budget is not None and spent + priciest > budget:
+            conn.execute(
+                "UPDATE eval_runs SET config = config || %s WHERE id = %s",
+                (Jsonb({"status": "stopped: budget"}), run_id),
+            )
+            conn.commit()
+            raise BudgetStop(
+                f"stopped before {q['id']}: spent ${spent:.4f} of the ${budget:.4f} allowance and "
+                f"the dearest question so far cost ${priciest:.4f}; nothing saved"
+            )
         ans = answer(
             conn, q["question"], today, cfg=cfg, client_factory=client_factory, run_id=run_id
         )
         top10 = search(conn, q["question"], 10, cfg=cfg, client_factory=client_factory).results
         top10s[q["id"]], texts[q["id"]] = top10, ans.text
         records.append(evaluate_question(q, ans, top10, judge_call))
+        priciest = max(priciest, records[-1]["answer_cost"] + records[-1]["judge_cost"])
+        spent += records[-1]["answer_cost"] + records[-1]["judge_cost"]
         out(
             f"  {q['id']} done: correctness {records[-1]['correctness']}, "
             f"label {records[-1]['label']}"
@@ -580,17 +631,43 @@ def no_api() -> None:
     raise ApiError("a re-judge must not call the embedding or answer API")
 
 
+RERANK_CACHE_DIR = ROOT / "data" / "cache"
+
+
+def rerank_cache_file(label: str) -> str:
+    """The reranker's score cache of the run with this label (one file per run, not committed)."""
+    return str(RERANK_CACHE_DIR / f"rerank-{label}.json")
+
+
+def stored_config(cfg: dict, stored: dict, label: str) -> dict:
+    """cfg with the reranker set as the stored run had it (a run made before the switch existed was
+    off), so that a re-judge shows the judge the sources the answerer saw. An ON run is read back
+    from its own score cache, never from the API."""
+    mode = (stored.get("retrieval") or {}).get("rerank", "off")
+    pinned = {**cfg, "retrieval": {**cfg["retrieval"], "rerank": mode}}
+    if mode != "off":
+        pinned["rerank"] = {**cfg["rerank"], "cache_path": rerank_cache_file(label)}
+    return pinned
+
+
+def find_run(conn, label: str) -> tuple[int, str, dict]:
+    """(id, split, config) of the newest eval run with this label."""
+    row = conn.execute(
+        "SELECT id, split, config FROM eval_runs WHERE label = %s ORDER BY id DESC LIMIT 1",
+        (label,),
+    ).fetchone()
+    if row is None:
+        raise ValueError(f"no eval run labelled {label}")
+    return row
+
+
 def load_stored(conn, old_label: str, cfg: dict):
     """(questions, answers, top10s, old records) of a finished run, rebuilt from request_logs, the
     chunks table and the run's results file. Raises if the sources the answerer saw have changed."""
     old = json.loads((RESULTS / f"{old_label}.json").read_text(encoding="utf-8"))
     log_label = old.get("rejudge_of") or old_label  # a re-judge reuses the original run's logs
-    run_row = conn.execute(
-        "SELECT id, split FROM eval_runs WHERE label = %s ORDER BY id DESC LIMIT 1", (log_label,)
-    ).fetchone()
-    if run_row is None:
-        raise ValueError(f"no eval run labelled {log_label}")
-    run_id, split = run_row
+    run_id, split, stored = find_run(conn, log_label)
+    cfg = stored_config(cfg, stored, log_label)
     old_records = {r["id"]: r for r in old["per_question"]}
     logs = {
         r[0]: r[1:]
@@ -641,8 +718,8 @@ def verdict_changes(old_records: list[dict], new_records: list[dict]) -> list[st
         if (o["correctness"], o["faithfulness"]) != (r["correctness"], r["faithfulness"]):
             lines.append(
                 f"{r['id']}: correctness {o['correctness']} -> {r['correctness']}, faithfulness "
-                f"{o['faithfulness']} -> {r['faithfulness']}\n    v2 correctness: "
-                f"{r['correctness_reason']}\n    v2 faithfulness: {r['faithfulness_reason']}"
+                f"{o['faithfulness']} -> {r['faithfulness']}\n    new correctness: "
+                f"{r['correctness_reason']}\n    new faithfulness: {r['faithfulness_reason']}"
             )
     return lines
 
@@ -652,6 +729,8 @@ def rejudge(conn, old_label: str, label: str, cfg: dict, out=print) -> dict:
     split = old["split"]
     markers = ("[EMAIL]", "[PHONE]", "[SSN]", "[ID]")
     redacted = [q["id"] for q in questions if any(m in answers[q["id"]].text for m in markers)]
+    log_label = old.get("rejudge_of") or old_label
+    cfg = stored_config(cfg, find_run(conn, log_label)[2], log_label)
     run_id = start_run(conn, label, split, cfg, {"rejudge_of": old_label})
     judge_call = make_judge_call(cfg, make_client())
     records = [
@@ -663,10 +742,10 @@ def rejudge(conn, old_label: str, label: str, cfg: dict, out=print) -> dict:
     out(f"re-judge of {old_label} with rubric v{RUBRIC_VERSION}; stored answers containing a "
         f"redaction marker: {redacted or 'none'}")  # fmt: skip
     print_report(records, agg, retrieval, excluded, out, retrieval_chain)
-    out("\nv1 (baseline-dev) vs v2")
+    out(f"\nbefore ({old_label}) vs after (rubric v{RUBRIC_VERSION})")
     for name, options in (("correctness", CORRECTNESS), ("faithfulness", FAITHFULNESS)):
-        out(f"  {name:13} v1 {fmt_share(old['answers'][name], options)}")
-        out(f"  {'':13} v2 {fmt_share(agg[name], options)}")
+        out(f"  {name:13} before {fmt_share(old['answers'][name], options)}")
+        out(f"  {'':13} after  {fmt_share(agg[name], options)}")
     changes = verdict_changes(old["per_question"], records)
     out(f"\nVerdicts that changed ({len(changes)}):")
     for line in changes:
@@ -716,6 +795,9 @@ def main_rejudge(args, cfg: dict) -> int:
             )
             if total > cap:
                 print("refused: estimate is above eval.max_cost_usd")
+                return 1
+            if args.budget is not None and total > args.budget - spent_so_far(conn):
+                print("refused: estimate is above the remaining step allowance")
                 return 1
             if args.dry_run or not args.yes:
                 print("dry run: nothing called" if args.dry_run else "nothing was run; add --yes")
@@ -767,6 +849,14 @@ def main(argv: list[str]) -> int:
         "--mode", choices=("vector", "hybrid", "hybrid_bm25"), help="override retrieval.mode"
     )
     p.add_argument("--dept-filter", choices=("off", "on"), help="override retrieval.dept_filter")
+    p.add_argument(
+        "--rerank", choices=("off", "pool_a", "pool_b"), help="override retrieval.rerank"
+    )
+    p.add_argument(
+        "--budget", type=float, metavar="USD",
+        help="total allowance of a multi-run step (docs/decisions.md): what the step's earlier "
+        "runs cost is subtracted; the run refuses to start or stops by itself if it would not fit",
+    )  # fmt: skip
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--yes", action="store_true")
     args = p.parse_args(argv[1:])
@@ -781,6 +871,8 @@ def main(argv: list[str]) -> int:
         cfg["retrieval"]["mode"] = args.mode
     if args.dept_filter:
         cfg["retrieval"]["dept_filter"] = args.dept_filter
+    if args.rerank:
+        cfg["retrieval"]["rerank"] = args.rerank
     if args.relabel:
         with connect() as conn:
             print(relabel(conn, args.relabel, cfg))
@@ -792,6 +884,8 @@ def main(argv: list[str]) -> int:
         return main_rejudge(args, cfg)
     questions = [q for q in load_questions() if q["split"] == args.split]
     today = date.fromisoformat(cfg["eval"]["today"])
+    if cfg["retrieval"]["rerank"] != "off":  # each run makes its own reranker calls
+        cfg["rerank"] = {**cfg["rerank"], "cache_path": rerank_cache_file(args.label)}
     try:
         with connect() as conn:
             total, lines = estimate_run(conn, questions, cfg, today, token_counter())
@@ -801,6 +895,13 @@ def main(argv: list[str]) -> int:
             if total > cap:
                 print("refused: estimate is above eval.max_cost_usd")
                 return 1
+            remaining = None
+            if args.budget is not None:
+                remaining = args.budget - spent_so_far(conn)
+                print(f"step allowance ${args.budget:.2f}, remaining ${remaining:.4f}")
+                if total > remaining:
+                    print("refused: estimate is above the remaining step allowance")
+                    return 1
             if args.dry_run:
                 print("dry run: no chat or judge call, nothing written")
                 return 0
@@ -815,7 +916,11 @@ def main(argv: list[str]) -> int:
                 args.split,
                 cfg,
                 judge_check=args.split == "dev" and not check_file.exists(),
+                budget=remaining,
             )
+    except BudgetStop as e:
+        print(e)
+        return 1
     except ApiError as e:
         print(f"failed: {e}")
         return 1
