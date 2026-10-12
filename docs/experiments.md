@@ -163,3 +163,25 @@ filter (step 2) that would address q15 and q56, which BM25 cannot.
 those sources, and a "no" if X is in them. Correctness and the special gold rules are unchanged. Stored in every run config. **The next answer-level run will also re-judge the stored
 `baseline-dev-60` answers under v3** (`--rejudge baseline-dev-60`, judge calls only) so the comparison is like for like; the v2 numbers in `baseline-dev-60.json` stay as recorded.
 Reason: see `docs/decisions.md` (the q22 and q40 findings).
+
+### Step 2a, department filter on retrieval (written 2026-10-12, before any filter code, config or result)
+
+**Change under test.** `retrieval.dept_filter: on` (config switch, default `off`). If the question names a department (by alias or by a course code), candidate
+chunks whose `scope` is `department` and whose `department` is not among the detected ids are dropped. Chunks with scope `cuny` or `city_tech` always stay. If no
+department is detected, nothing changes. It works with every retrieval mode; the measurement for the keep rule uses `mode: vector`.
+
+**Keep rule (the same as steps 1 and 1b).** On the 30 retrieval-scored dev questions, compared with `baseline-dev-60` (reproduced by `vector-v0-dev`): keep if MRR **or**
+recall@5 improves by at least 0.01 **and** neither drops by more than 0.02. Name every question whose first relevant rank got better or worse. The chain-tagged row (n = 3)
+is reported separately and is not part of the rule. A kept result is not run through the paid answer-level run in step 2a. Switching the default to `on` would be a separate
+commit, only if the rule says keep.
+
+**No tuning constants.** The filter has none. The aliases and course prefixes in `config/departments.yaml` are written from the catalog data (distinct course-code prefix
+per department id in the database) and the project notes (CLAUDE.md: the catalog calls EET "Electrical Engineering Technology"; handle both names) **before** the run, and are
+**not edited after seeing results**. If a result shows a missing or wrong alias, that is a finding for the log and a new, separately pre-registered experiment, not an edit.
+
+**Declared in advance:** "ETET" is included as an alias of EET because it is common student shorthand (the department pages themselves print "ETET Office Hours"). It also
+appears in dev question q15's gold page, so a gain on q15 cannot be taken as independent evidence for it; the test split must confirm it later (not run in this step).
+Short aliases ("Math", "CST") can match inside other uses of the word; every dev question where a department was detected is listed in the report so false matches can be read.
+
+**Same caveat as before:** with 30 scored questions one question moves a mean by about 0.03; the rule guards against regressions and does not test significance. The filter can
+only change the result for questions where a department is detected.
