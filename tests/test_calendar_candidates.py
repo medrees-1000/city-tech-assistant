@@ -69,7 +69,7 @@ def test_gold_is_built_from_the_row_fields():
 
 def test_assumed_term_is_named_in_the_gold():
     gold = mcc.gold_answer({"assumed": "Fall 2026"}, [row()], None)
-    assert gold.startswith("Assumed term: Fall 2026 (from today's date, 2026-10-12). Friday")
+    assert gold.startswith("Assumed term: Fall 2026 (from today's date, 2026-10-11). Friday")
 
 
 def test_several_rows_from_two_calendars_list_each_provenance_once():
@@ -143,7 +143,7 @@ def test_the_real_tba_and_winter_year_cases(events):
 def test_output_is_deterministic(events):
     first = mcc.render(events, "contact", ["q1 (dev): x"])
     assert first == mcc.render(events, "contact", ["q1 (dev): x"])
-    assert "## Checklist for the owner" in first and "| q61 | | | |" in first
+    assert "## Checklist: owner decisions" in first and "| q61 | yes | yes | keep | dev |" in first
 
 
 def test_the_script_does_not_touch_the_questions_file():
