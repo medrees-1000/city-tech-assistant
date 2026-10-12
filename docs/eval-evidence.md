@@ -93,13 +93,12 @@ For each candidate whose gold states facts, the draft gold answer is split into 
 | 1 | Yes. | `page/DENT-NYT/faq#12`: Yes. | 1.00 | 100% | found |
 | 2 | All science courses, including BIO2311, BIO2312, and CHEM, must have been completed within five years of acceptance into the program. | `page/DENT-NYT/faq#12`: All science courses, including BIO2311, BIO2312, and CHEM, must have been completed within five years of acceptance into the program. | 1.00 | 100% | found |
 
-## q53 — Who advises continuing students and readmitted students, and what happens to TAP if my major is still undeclared?
+## q53 — What happens to my TAP if my major is still undeclared?
 
 | # | Draft sentence | Closest source sentence | ratio | words found | result |
 |---|---|---|---|---|---|
-| 1 | Continuing students (second semester and onward) and newly readmitted students are advised by their current academic department. | `page/advisement/continuing-students#1`: Continuing students (second semester and onward), as well as our newly readmitted student population, are advised by their current academic department. | 0.90 | 100% | found |
-| 2 | If your major is listed as undeclared, TAP eligibility can be jeopardized if you have more than 30 credits in an associate program, or more than 60 credits in a bachelor's program. | `page/advisement/continuing-students#1`: If your major is currently listed as undeclared, TAP eligibility can be jeopardized if you have more than 30 credits in an associate program, or more than 60 credits in a bachelor's program. | 0.97 | 100% | found |
-| 3 | If you have reached 30 or 60 credits, you must formally declare a major before the 21st day of the semester. | `page/advisement/continuing-students#1`: If you have reached 30 or 60 credits, you must formally declare a major before the 21st day of the semester. | 1.00 | 100% | found |
+| 1 | If your major is listed as undeclared, TAP eligibility can be jeopardized if you have more than 30 credits in an associate program, or more than 60 credits in a bachelor's program. | `page/advisement/continuing-students#1`: If your major is currently listed as undeclared, TAP eligibility can be jeopardized if you have more than 30 credits in an associate program, or more than 60 credits in a bachelor's program. | 0.97 | 100% | found |
+| 2 | If you have reached 30 or 60 credits, you must formally declare a major before the 21st day of the semester. | `page/advisement/continuing-students#1`: If you have reached 30 or 60 credits, you must formally declare a major before the 21st day of the semester. | 1.00 | 100% | found |
 
 ## q54 — What happens if I fail a math course?
 
@@ -183,7 +182,7 @@ For each candidate whose gold states facts, the draft gold answer is split into 
 | q50 | 6 | 1 |
 | q51 | 3 | 0 |
 | q52 | 2 | 0 |
-| q53 | 3 | 0 |
+| q53 | 2 | 0 |
 | q54 | 2 | 1 |
 | q55 | 2 | 1 |
 | q56 | 16 | 0 |

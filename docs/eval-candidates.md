@@ -7,7 +7,7 @@ Things to know before reviewing:
 - Summer 2027 and Fall 2027 abstain candidates ask about things q25 does not (a refund deadline, exam dates).
 - "This fall" and "next spring" candidates need `eval.today` (2026-10-11) to resolve the term.
 - Chained-prerequisite gold sources list every course in the tree; the draft answer is compact prose (each course with its direct prerequisites in order, placement and equivalence text in one clause). Planned tag `chain`: q20, q22, q39, q40, q41.
-- Review applied (step 0b): q32 test, q52 dev; q33 has spring-2027-006 as a second source; q39 and q41 in prose; q40 replaced (CST 3613, a chain with no MAT course in it); q42 is now a related pair (co-requisite variant), not cross-listed, so q43 is the only cross-listed candidate; q49 and q50 use the CLARIFY OR BOTH / CLARIFY OR STATE THE TERM gold; q54 reworded; q56 asks for at least 3 named opportunities; q53 and q59 replaced (advisement, and bursar/admissions). The new ones are marked NEW in their notes.
+- Review applied (step 0b): q32 test, q52 dev; q33 has spring-2027-006 as a second source; q39 and q41 in prose; q40 replaced (CST 3613, a chain with no MAT course in it); q42 is now a related pair (co-requisite variant), not cross-listed, so q43 is the only cross-listed candidate; q49 and q50 use the CLARIFY OR BOTH / CLARIFY OR STATE THE TERM gold; q54 reworded; q56 asks for at least 3 named opportunities; q53 and q59 replaced (advisement, and bursar/admissions). q53 is now the single question about TAP and an undeclared major (lookup).
 - `docs/eval-evidence.md` compares each fact-stating draft with its source text sentence by sentence.
 - The NO ADVICE candidates use `type: unanswerable` like q30; the CLARIFY candidates use `type: ambiguous` like q23 and q24.
 
@@ -120,7 +120,7 @@ Things to know before reviewing:
 - **Question:** What is the full prerequisite chain for CST 3602 Data Visualization?
 - **Type:** multi_chunk  |  **Department:** CST-NYT  |  **Proposed split:** dev
 - **Closest existing question:** q09 (word overlap 0.24)
-- **Note:** Planned tag: chain. Gold sources are every course in the tree. Needs the prerequisite-chain tool (Phase 3, step 4).
+- **Note:** Chain question (tag chain). Gold sources are every course in the tree. Needs the prerequisite-chain tool (Phase 3, step 4).
 - **Gold sources:**
   - `catalog:CST 3602` — CST 3602
   - `catalog:CST 3512` — CST 3512
@@ -142,7 +142,7 @@ Things to know before reviewing:
 - **Question:** Starting from CST 3613 (Application Development with Database), which courses do I have to take first, and what do those courses require?
 - **Type:** multi_chunk  |  **Department:** CST-NYT  |  **Proposed split:** dev
 - **Closest existing question:** q20 (word overlap 0.21)
-- **Note:** Planned tag: chain. Gold sources are every course in the tree. Needs the prerequisite-chain tool (Phase 3, step 4).
+- **Note:** Chain question (tag chain). Gold sources are every course in the tree. Needs the prerequisite-chain tool (Phase 3, step 4).
 - **Gold sources:**
   - `catalog:CST 3613` — CST 3613
   - `catalog:CST 1201` — CST 1201
@@ -159,7 +159,7 @@ Things to know before reviewing:
 - **Question:** What do I need to take, step by step, before EET 4202?
 - **Type:** multi_chunk  |  **Department:** EET-NYT  |  **Proposed split:** test
 - **Closest existing question:** q22 (word overlap 0.47)
-- **Note:** Planned tag: chain. Gold sources are every course in the tree. Needs the prerequisite-chain tool (Phase 3, step 4).
+- **Note:** Chain question (tag chain). Gold sources are every course in the tree. Needs the prerequisite-chain tool (Phase 3, step 4).
 - **Gold sources:**
   - `catalog:EET 4202` — EET 4202
   - `catalog:EET 4112` — EET 4112
@@ -322,16 +322,16 @@ Things to know before reviewing:
 
 ## q53 — lookup
 
-- **Question:** Who advises continuing students and readmitted students, and what happens to TAP if my major is still undeclared?
-- **Type:** multi_chunk  |  **Department:** (none)  |  **Proposed split:** dev
-- **Closest existing question:** q16 (word overlap 0.15)
-- **Note:** NEW replacement for the removed math-placement question (advisement pages). Not about writing-intensive content.
+- **Question:** What happens to my TAP if my major is still undeclared?
+- **Type:** lookup  |  **Department:** (none)  |  **Proposed split:** dev
+- **Closest existing question:** q09 (word overlap 0.18)
+- **Note:** Advisement page (continuing and readmitted students). Gold limited to the TAP facts.
 - **Gold sources:**
   - `page/advisement/continuing-students#1` — Continuing & Readmit Students
 
 **Draft gold answer — DRAFT: owner must review:**
 
-> Continuing students (second semester and onward) and newly readmitted students are advised by their current academic department. If your major is listed as undeclared, TAP eligibility can be jeopardized if you have more than 30 credits in an associate program, or more than 60 credits in a bachelor's program. If you have reached 30 or 60 credits, you must formally declare a major before the 21st day of the semester.
+> If your major is listed as undeclared, TAP eligibility can be jeopardized if you have more than 30 credits in an associate program, or more than 60 credits in a bachelor's program. If you have reached 30 or 60 credits, you must formally declare a major before the 21st day of the semester.
 
 ## q54 — lookup
 
@@ -398,7 +398,7 @@ Things to know before reviewing:
 - **Question:** What happens if I don't pay my tuition bill?
 - **Type:** multi_chunk  |  **Department:** (none)  |  **Proposed split:** dev
 - **Closest existing question:** q13 (word overlap 0.20)
-- **Note:** NEW replacement for the removed Incomplete-grade lookup (bursar and admissions pages).
+- **Note:** Bursar and admissions pages.
 - **Gold sources:**
   - `page/admissions/tuition-penalty#3` — Penalty Fees > Outstanding Balances
   - `page/bursar/payment-deadlines#1` — Bill Payment Deadlines
@@ -425,8 +425,8 @@ Things to know before reviewing:
 | Type | existing 30 | candidates | combined |
 |---|---|---|---|
 | ambiguous | 2 | 2 | 4 |
-| lookup | 9 | 8 | 17 |
-| multi_chunk | 6 | 7 | 13 |
+| lookup | 9 | 9 | 18 |
+| multi_chunk | 6 | 6 | 12 |
 | time_sensitive | 7 | 6 | 13 |
 | unanswerable | 6 | 7 | 13 |
 | **total** | 30 | 30 | 60 |

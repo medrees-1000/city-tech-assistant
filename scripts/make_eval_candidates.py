@@ -184,16 +184,18 @@ def link_titles(sid: str) -> list[str]:
 # draft: the DRAFT gold answer (string); evidence: strings that must occur in the sources.
 
 
-def spec(cat, q, type_, dept, split, gold, draft, evidence=(), note=""):
+def spec(cat, q, type_, dept, split, gold, draft, evidence=(), note="", tags=()):
     return {"cat": cat, "question": q, "type": type_, "department": dept, "split": split,
-            "gold": gold, "draft": draft, "evidence": list(evidence), "note": note}  # fmt: skip
+            "gold": gold, "draft": draft, "evidence": list(evidence), "note": note,
+            "tags": list(tags)}  # fmt: skip
 
 
 def chain_spec(q, dept, split, code):
     codes = tree_courses(prerequisite_tree(code, DATA))
     return spec("chained prerequisite", q, "multi_chunk", dept, split,
                 [f"catalog:{c}" for c in codes], chain_draft(code),
-                note="Planned tag: chain. Gold sources are every course in the tree. Needs the prerequisite-chain tool (Phase 3, step 4).")  # fmt: skip
+                note="Chain question (tag chain). Gold sources are every course in the tree. Needs the prerequisite-chain tool (Phase 3, step 4).",
+                tags=["chain"])  # fmt: skip
 
 
 SPECS = [
@@ -290,14 +292,13 @@ SPECS = [
          ["page/DENT-NYT/faq#12"],
          "Yes. All science courses, including BIO2311, BIO2312, and CHEM, must have been completed within five years of acceptance into the program.",
          evidence=["must have been completed within five years of acceptance into the program"]),
-    spec("lookup", "Who advises continuing students and readmitted students, and what happens to TAP if my major is still undeclared?", "multi_chunk", None, "dev",
+    spec("lookup", "What happens to my TAP if my major is still undeclared?", "lookup", None, "dev",
          ["page/advisement/continuing-students#1"],
-         "Continuing students (second semester and onward) and newly readmitted students are advised by their current academic department. "
          "If your major is listed as undeclared, TAP eligibility can be jeopardized if you have more than 30 credits in an associate program, or more than 60 credits in a bachelor's program. "
          "If you have reached 30 or 60 credits, you must formally declare a major before the 21st day of the semester.",
-         evidence=["are advised by their current academic department", "TAP eligibility can be jeopardized if you have more than 30 credits in an associate program",
+         evidence=["TAP eligibility can be jeopardized if you have more than 30 credits in an associate program",
                    "you must formally declare a major before the 21st day of the semester"],
-         note="NEW replacement for the removed math-placement question (advisement pages). Not about writing-intensive content."),
+         note="Advisement page (continuing and readmitted students). Gold limited to the TAP facts."),
     spec("lookup", "What happens if I fail a math course?", "lookup", "MATH-NYT", "dev", ["page/MATH-NYT/faqs#12"],
          "When you pass the course again, a grade of C or higher replaces the failing grade in your GPA calculations, but the failed course remains on your transcript. "
          "The FAQ recommends re-taking the course the very next semester (or over the summer if you fail it in the spring), using the tutoring services and your professor's office hours, "
@@ -331,7 +332,7 @@ SPECS = [
          evidence=["could result in cancellation of course enrollment", "a hold will be placed on your account that will prevent you from adding or swapping courses",
                    "denied access to his/her records and will be prevented from registering in the future", "turned over to the College’s collection agency",
                    "agency fees, attorney fees and court costs", "reported to credit bureaus", "nonpayment and not attending courses are NOT considered an official drop"],
-         note="NEW replacement for the removed Incomplete-grade lookup (bursar and admissions pages)."),
+         note="Bursar and admissions pages."),
     spec("lookup", "What is the TAP waiver and who can get one?", "multi_chunk", None, "test",
          ["page/financial-aid/tap-appeal#2", "page/financial-aid/tap-appeal#1"],
          "A one-time waiver of the good academic standing requirement in the TAP regulations. It is not automatic: it may only be granted in extraordinary or unusual circumstances beyond the student's control and with a reasonable expectation that the student will meet future requirements. "
@@ -504,6 +505,50 @@ def evidence_markdown(cands: list[dict]) -> str:
     return "\n".join(out) + "\n"
 
 
+QUESTIONS = ROOT / "eval" / "questions.jsonl"
+CHAIN_EXISTING = ("q20", "q22")  # existing rows that get the tag; nothing else on them changes
+
+
+def gold_object(sid: str) -> dict:
+    src = source_info(sid)
+    if sid in EVENTS:  # a calendar row: the file is the source, the heading starts with the term
+        return {"id": sid, "source": "data/calendar/calendar_events.json", "heading": src["heading"]}
+    return {"id": sid, "source": src["source"], "heading": src["heading"]}
+
+
+def question_row(s: dict) -> dict:
+    """A row for eval/questions.jsonl: the reviewed draft becomes the gold answer (the DRAFT marker
+    exists only in the review document, never in the gold text)."""
+    row = {
+        "id": s["id"], "question": s["question"], "gold_answer": s["draft"],
+        "gold_sources": [gold_object(g) for g in s["gold"]], "type": s["type"],
+        "department": s["department"], "split": s["split"], "note": s["note"],
+    }  # fmt: skip
+    if s["tags"]:
+        row["tags"] = s["tags"]
+    return row
+
+
+def merge(cands: list[dict]) -> None:
+    """Append the candidates to eval/questions.jsonl and add the chain tag to q20 and q22."""
+    lines = QUESTIONS.read_text(encoding="utf-8").splitlines()
+    if any(json.loads(ln)["id"] == cands[0]["id"] for ln in lines):
+        raise SystemExit(f"{cands[0]['id']} is already in {QUESTIONS.name}: nothing merged")
+    out = []
+    for ln in lines:
+        if json.loads(ln)["id"] in CHAIN_EXISTING:  # textual insert: no other byte of the row changes
+            assert ln.endswith("}") and '"tags"' not in ln
+            ln = ln[:-1] + ',"tags":["chain"]}'
+        out.append(ln)
+    for s in cands:
+        text = s["draft"]
+        if "TODO" in text or "DRAFT" in text:
+            raise SystemExit(f"{s['id']}: the gold text still has a TODO or DRAFT marker")
+        out.append(json.dumps(question_row(s), separators=(",", ":")))
+    QUESTIONS.write_text("\n".join(out) + "\n", encoding="utf-8")
+    print(f"merged {len(cands)} questions into {QUESTIONS.relative_to(ROOT)}")
+
+
 def main() -> None:
     existing = load_questions()
     assert len(existing) == 30, "expected the 30 existing questions"
@@ -529,7 +574,7 @@ def main() -> None:
         "- Review applied (step 0b): q32 test, q52 dev; q33 has spring-2027-006 as a second source; q39 and q41 in prose; q40 replaced "
         "(CST 3613, a chain with no MAT course in it); q42 is now a related pair (co-requisite variant), not cross-listed, so q43 is the only "
         "cross-listed candidate; q49 and q50 use the CLARIFY OR BOTH / CLARIFY OR STATE THE TERM gold; q54 reworded; q56 asks for at least 3 "
-        "named opportunities; q53 and q59 replaced (advisement, and bursar/admissions). The new ones are marked NEW in their notes.",
+        "named opportunities; q53 and q59 replaced (advisement, and bursar/admissions). q53 is now the single question about TAP and an undeclared major (lookup).",
         "- `docs/eval-evidence.md` compares each fact-stating draft with its source text sentence by sentence.",
         "- The NO ADVICE candidates use `type: unanswerable` like q30; the CLARIFY candidates use `type: ambiguous` like q23 and q24.",
         "",
@@ -568,6 +613,8 @@ def main() -> None:
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
     EVIDENCE.write_text(evidence_markdown(cands), encoding="utf-8")
     print(f"wrote {OUT.relative_to(ROOT)} with {len(cands)} candidates and {EVIDENCE.relative_to(ROOT)}")
+    if "--merge" in sys.argv:
+        merge(cands)
 
 
 if __name__ == "__main__":
