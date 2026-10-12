@@ -367,3 +367,24 @@ def test_a_run_stops_before_the_budget_saves_what_it_finished_and_resumes(tmp_pa
         len(results[v][r]) == 3 for v in jv.VARIANTS for r in (0, 1)
     )
     assert spent == pytest.approx(sum(r["cost"] for r in json.loads(partial.read_text()).values()))
+
+
+def test_the_report_has_the_table_the_counts_and_the_decision():
+    keys = ["a|run", "p0"]
+    real = [item("a|run", label={"correctness": "partial", "faithfulness": "yes"})]
+    plants = [item("p0", kind="plant_number")]
+    results = make_results(
+        lambda r, k: ("partial", "no" if k == "p0" else "yes"),
+        lambda r, k: ("partial", "no" if k == "p0" else "yes"),
+        lambda r, k: ("partial", "no" if k == "p0" else "yes"),
+        keys,
+    )
+    data = {
+        "results": results, "evaluation": jv.evaluate(results, real, plants), "decision": "v4-reason",
+        "cost_usd": 0.5, "items": [{"key": "a|run", "kind": "real", "label": real[0].label},
+                                   {"key": "p0", "kind": "plant_number", "label": None}],
+    }  # fmt: skip
+    text = jv.report(data)
+    assert "| a @ run | real | partial / yes | partial / yes |" in text  # the key's bar is escaped
+    assert "planted: not yes" in text and "Cost $0.5000" in text and "**v4-reason**" in text
+    assert "| qualifies | control | yes | yes |" in text

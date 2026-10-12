@@ -370,6 +370,8 @@ q06, q56 and q52 and the answers to the "report specifically" list are in `docs/
 | cost per request: answer / rerank / judge (USD) | 0.00017 / 0 / 0.00396 | 0.00017 / **0.00051** / 0.00406 | not in the rule |
 | failure labels (mean per run) | retrieval miss 3, ranking miss 1, generation error 2.7 | retrieval miss 2.3, ranking miss 0, generation error 2.7 | |
 
+> **Caveat added 2026-10-12 (step 4-judge; the numbers above are unchanged):** the faithfulness verdicts in this experiment are unreliable on answers that say "the sources do not state X". The rubric v3 judge graded such answers "no" where a second reader, accepted by the owner, graded them "yes" (q22 and q52 on the stored baseline answers), and no tested variant fixed this without new errors (`docs/step4-judge-results.md`). Read faithfulness differences of one or two questions between arms as noise.
+
 **Decision by the pre-registered rule: KEEP `pool_a` as the default.** No revert commit. (The rule is strict: a faithfulness fall of 0.01 would have reverted it; the margin on (b) is +0.013, which is half a question and inside the noise below.)
 
 **Noise.** Runs of the same arm differ by up to 2 questions in "correct" (OFF 15 to 17 of 26, ON 17 to 19) and 2 in faithfulness "yes". Real changes by the pre-registered definition (identical in all 3 runs of each arm, different between arms):
@@ -451,6 +453,8 @@ runner wiring `a517bbb`. The test split was not run, read or looked at. Full tab
 | (c) 26 judged questions (and abstention, citations) vs 3b arm ON, 40 common questions | correct share 0.692 to 0.667 (-0.026, limit -0.038); faithfulness yes 0.923 to 0.949; abstention accuracy 1.000 to 1.000; wrongly abstained 3 to 2; citations unchanged | pass |
 | (d) q27 q28 q34 still abstain | abstained in all 3 runs (q34 through the calendar node, q27 and q28 through retrieve) | pass |
 
+> **Caveat added 2026-10-12 (step 4-judge; the numbers above are unchanged):** the faithfulness verdicts in this experiment are unreliable on answers that say "the sources do not state X". The rubric v3 judge graded such answers "no" where a second reader, accepted by the owner, graded them "yes" (q22 and q52 on the stored baseline answers), and no tested variant fixed this without new errors (`docs/step4-judge-results.md`). Read faithfulness differences of one or two questions between arms as noise.
+
 **Decision by the pre-registered rule: REJECT.** The router code, config, migration and tests stay in the repository, off.
 
 **Calendar questions, per question.** Correct in all 3 runs: q12 q31 q36 q61 q64 q65 q67 q68 q71 q75 (10). **q33** partial in all runs (returned `spring-2027-007` "Classes begin" only; the gold also has `-006` "Start of Spring 2027 term", same date). **q63** incorrect in all runs: returned `winter-2027-004` and `-005` (same date, "Classes begin") against gold `-004` only; by the fixed rule this
@@ -499,6 +503,8 @@ If it passes, `router.mode` becomes `"on"` and `router.selector` 2 in a separate
 | (c) judged questions vs 3b arm ON (40 common questions) | correct share 0.692 to 0.679 (-0.013, limit -0.038); faithfulness yes 0.923 to 0.949; abstention accuracy 1.000 to 1.000; wrongly abstained 3 to 2; citations unchanged | pass |
 | (d) q27 q28 q34 still abstain | abstained in all 3 runs | pass |
 
+> **Caveat added 2026-10-12 (step 4-judge; the numbers above are unchanged):** the faithfulness verdicts in this experiment are unreliable on answers that say "the sources do not state X". The rubric v3 judge graded such answers "no" where a second reader, accepted by the owner, graded them "yes" (q22 and q52 on the stored baseline answers), and no tested variant fixed this without new errors (`docs/step4-judge-results.md`). Read faithfulness differences of one or two questions between arms as noise.
+
 **Decision by the pre-registered rule: KEEP.** `router.mode` becomes `"on"` and `router.selector` 2 in a separate commit.
 
 **Compared with 4a (REJECT, v1 selector, old gold):** correct 10, 10, 10 of 13 (wrong rows 2, 1, 1) to 12, 12, 13 (0, 0, 0). Two things changed at once and I cannot separate them: the refined gold (q33 and q63 stop being penalised; worth 2 of the 2 questions) and selector v2 (q37 now correct in all three runs, the only change that is not a gold change). Re-scoring the stored 4a runs under v2 with the two refined rows gave 12, 12, 12 of 13 (`docs/calendar-same-date.md`), so selector v2's own gain on the 13 is q37 (a wrong row in 4a run 1 and a miss in runs 2 and 3), and it costs q75 stability (3 of 3 correct in 4a, 1 of 3 here).
@@ -529,3 +535,19 @@ Every variant runs **twice** on every item (real and planted).
 **Cost control.** The budget counts the real cost of every call (prompt tokens the API reports as cached are charged at the cached price). The run saves each finished item and stops itself before an item that could pass $1.00 (`BudgetStop`); a rerun with a bigger `--budget` resumes. The upper-bound estimate (no caching, generous outputs) is above $1.00; the expected real cost is lower because the v3 and v4-reason prompts and the second run repeat prompts.
 
 **Caveats written in advance.** 16 labeled items is small; 8 labels come from a second reader accepted by the owner; nearly all real labels are "yes", so the planted items carry the detection test; the planted errors are crude (a changed number is easier to see than a subtle unsupported claim); the judge sees only the answer and the sources; v4-reason at default temperature is noisy by design.
+
+## Experiment 4-judge: judge variants against labeled answers, 2026-10-12 — no variant qualifies; v3 stays
+
+Pre-registration above (`3161c8e`, before any paid call). Three variants (v3 control, v4-reason = low reasoning effort, v4-claims = claim extraction and per-claim verification), each run twice on 16 labeled real items and 10 planted items, cost $0.7447 of $1.00. Full table: `docs/step4-judge-results.md`.
+
+| Criterion | v3 (control) | v4-reason | v4-claims |
+|---|---|---|---|
+| (1) real items whose faithfulness verdict differs from the label, runs 1 / 2 (limit 1) | 3 / 3 | 3 / 3 | 5 / 5 |
+| (2) planted items marked not yes, of 10 (limit: at least 9) | 10 / 10 | 10 / 10 | 10 / 10 |
+| (3) correctness matches with the 16 labels (at least v3's) | 12 / 12 | 15 / 16 | 12 / 12 (v3's by construction) |
+| (4) verdict flips between runs (limit 1) | 0 | 1 | 0 |
+| qualifies | control | **no** (1) | **no** (1) |
+
+**Decision by the pre-registered rule: keep v3.** No switch was added, `RUBRIC_VERSION` stays 3, nothing stored was re-judged. By the rule, **the faithfulness numbers of steps 3b, 4a and 4a-2 are recorded as unreliable on "the sources do not state X" answers** (caveat lines added under those results; the numbers are not changed).
+**Findings.** The mismatches are the known ones (q03; q22 and q52 on the stored baseline answers). v4-claims fixes q22 (baseline) but adds false "partly" and "no" verdicts (q01, q12, q15 on-run1). v4-reason does not change faithfulness but matches the labels better on correctness (15 and 16 of 16 against 12), which the rule did not ask for and does not act on; if the owner wants it, a pre-registered experiment on correctness would be the way. The earlier v3 row in the `docs/judge-check.md` agreement table compared different answers for 5 of the 8 items (see the pre-registration); the corrected v3 figures are 6 / 8 correctness and 7 / 8 faithfulness on the labeled `baseline-dev` answers.
+**Caveats.** 16 labeled items; 8 labels from a second reader accepted by the owner; nearly all real labels are yes so the planted items carry the detection test; the planted errors are crude; the judge sees only the answer and the sources; v4-reason is stochastic by construction (temperature cannot be set with reasoning on).

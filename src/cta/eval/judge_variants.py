@@ -387,12 +387,58 @@ def table(results: dict, items: list[Item]) -> str:
     return "\n".join(lines)
 
 
+def report(data: dict) -> str:
+    """Markdown report from the saved results file: per-item table, counts per criterion, decision."""
+    results, ev = data["results"], data["evaluation"]
+    out = ["| item | kind | label (corr / faith) | " + " | ".join(f"{v} run1 | {v} run2" for v in VARIANTS) + " |",
+           "|---|---|---|" + "---|" * (2 * len(VARIANTS))]  # fmt: skip
+    for it in data["items"]:
+        label = (
+            f"{it['label']['correctness']} / {it['label']['faithfulness']}"
+            if it["label"]
+            else "planted: not yes"
+        )
+        cells = [
+            f"{results[v][r][it['key']]['correctness']} / {results[v][r][it['key']]['faithfulness']}"
+            for v in VARIANTS
+            for r in range(RUNS)
+        ]
+        out.append(
+            f"| {it['key'].replace('|', ' @ ')} | {it['kind']} | {label} | "
+            + " | ".join(cells)
+            + " |"
+        )
+    out += ["", "| | v3 (control) | v4-reason | v4-claims |", "|---|---|---|---|"]
+    rows = [
+        ("(1) real items with a faithfulness verdict that differs from the label, run 1 / run 2", lambda v: " / ".join(str(len(x)) for x in ev[v]["faithfulness_wrong"])),
+        ("    which items (run 1)", lambda v: ", ".join(k.replace("|", " @ ") for k in ev[v]["faithfulness_wrong"][0]) or "none"),
+        ("    count excluding q15 on-run1", lambda v: " / ".join(str(len([k for k in x if k != "q15|on-run1"])) for x in ev[v]["faithfulness_wrong"])),
+        ("(2) planted items marked not yes (of 10), run 1 / run 2", lambda v: " / ".join(str(x) for x in ev[v]["planted_caught"])),
+        ("(3) correctness matches with the 16 labels, run 1 / run 2", lambda v: " / ".join(str(x) for x in ev[v]["correctness_right"])),
+        ("(4) verdicts that flip between the two runs", lambda v: str(ev[v]["flips"])),
+        ("qualifies", lambda v: "control" if v == "v3" else ("yes" if ev[v]["qualifies"] else "no (criteria " + ", ".join(k for k, ok in ev[v]["criteria"].items() if not ok) + " failed)")),
+    ]  # fmt: skip
+    for name, fn in rows:
+        out.append(f"| {name} | " + " | ".join(fn(v) for v in VARIANTS) + " |")
+    out += [
+        "",
+        f"Cost ${data['cost_usd']:.4f}. Decision by the pre-registered rule: **{data['decision']}**.",
+    ]
+    return "\n".join(out)
+
+
 def main(argv: list[str]) -> int:
     p = argparse.ArgumentParser(prog="python -m cta.eval.judge_variants")
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--yes", action="store_true")
     p.add_argument("--budget", type=float, default=1.0)
+    p.add_argument(
+        "--report", action="store_true", help="print the markdown report of the saved results"
+    )
     args = p.parse_args(argv[1:])
+    if args.report:
+        print(report(json.loads(OUT.read_text(encoding="utf-8"))))
+        return 0
     try:
         refuse_tracing()
     except RuntimeError as e:

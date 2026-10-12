@@ -135,3 +135,7 @@ Owner vs judge on these 8 items (correctness / faithfulness):
 | v3, run `baseline-dev-60-v3` (re-judged from the stored answers) | 6 / 8 | 7 / 8 | q01 correctness (correct vs partial), q15 correctness (incorrect vs partial), q03 faithfulness (yes vs partly) |
 
 The v3 row was computed on 2026-10-12 from `eval/results/baseline-dev-60-v3.json` against the owner verdicts above (no model call; `python -m cta.eval.judge_sheet --agreement`). Disagreements of v3 with the owner: q01 correctness (v3 correct, owner partial), q15 correctness (v3 incorrect, owner partial), q03 faithfulness (v3 yes, owner partly). The owner verdicts and the v1 and v2 rows are unchanged.
+
+### Correction note (2026-10-12, step 4-judge)
+
+The v3 row above was computed from `baseline-dev-60-v3`, but five of the eight items (q01, q04, q05, q08, q15) have different answers in `baseline-dev-60` than in the `baseline-dev` run the owner labeled (the sources are the same), so that row compared the owner's verdicts with verdicts on partly different answers. The v3 judge applied to the labeled `baseline-dev` answers themselves (`docs/step4-judge-results.md`, two runs, identical) gives: correctness 6 / 8 (q01 correct vs partial, q15 incorrect vs partial), faithfulness 7 / 8 (q03 yes vs partly), the same figures. The old row is left as recorded. Rubric v4-reason on the same items: correctness 8 / 8, faithfulness 7 / 8.
