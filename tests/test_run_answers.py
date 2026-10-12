@@ -24,6 +24,7 @@ def top(*ids):
 class FakeSearch:
     cache_hit = False
     cost = 0.0
+    total_cost = 0.0
 
 
 def ans(text="The deadline is Nov 6 [1].", abstained=False, cost=0.0002, sources=None, **kw):

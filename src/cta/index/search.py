@@ -13,18 +13,19 @@ itself is not stored, and another model never reuses old vectors.
 """
 
 import argparse
+import dataclasses
 import hashlib
-import json
-import os
 import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from cta.index import bm25
+from cta.index import rerank as reranker
 from cta.index.db import connect
 from cta.index.departments import allowed_sql, detect_departments
 from cta.index.embed import ApiError, embed_texts, make_client
+from cta.index.jsoncache import read_cache, write_cache
 from cta.settings import ROOT, cost_usd, load_models
 
 CACHE_PATH = ROOT / "data" / "cache" / "query_embeddings.json"
@@ -47,30 +48,18 @@ class Search:
     retrieval_ms: float = 0.0  # the whole search call, including the query embedding if not cached
     dept_filter_applied: bool = False
     detected_departments: list[str] = field(default_factory=list)
+    rerank_mode: str = "off"
+    rerank: reranker.Rerank | None = None  # the reranker's outcome, when it ran
+    pool: list[dict] = field(default_factory=list, repr=False)  # the candidates it scored
+
+    @property
+    def total_cost(self) -> float:
+        """Query embedding plus reranker calls."""
+        return self.cost + (self.rerank.cost if self.rerank else 0.0)
 
 
 def cache_key(model: str, question: str) -> str:
     return hashlib.sha256(f"{model}\n{question}".encode()).hexdigest()
-
-
-def read_cache(path: Path) -> dict:
-    """The cache as a dict; a missing, unreadable or corrupt file is an empty cache."""
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
-    return data if isinstance(data, dict) else {}
-
-
-def write_cache(path: Path, cache: dict) -> None:
-    """Write through a temporary file so an interrupted write cannot corrupt the cache."""
-    try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(cache), encoding="utf-8")
-        os.replace(tmp, path)
-    except OSError:
-        pass  # the cache is only a speed-up
 
 
 def query_vector(question: str, cfg: dict, client_factory, cache_path: Path):
@@ -157,9 +146,16 @@ def search(
     cache_path: Path = CACHE_PATH,
     mode: str | None = None,
     dept_filter: str | None = None,
+    rerank: str | None = None,
+    rerank_limit: float | None = None,
 ) -> Search:
     started = time.perf_counter()
     cfg = cfg or load_models()
+    rerank = rerank or cfg["retrieval"]["rerank"]
+    if rerank != "off":
+        return search_reranked(
+            conn, question, k, rerank, cfg, client_factory, cache_path, rerank_limit, started
+        )
     mode = mode or cfg["retrieval"]["mode"]
     n = cfg["retrieval"]["candidates"]
     # Department filter (step 2a): with a department named in the question, drop chunks whose scope
@@ -237,6 +233,32 @@ def search(
     )  # fmt: skip
 
 
+def search_reranked(
+    conn, question, k, rerank, cfg, client_factory, cache_path, rerank_limit, started
+) -> Search:
+    """Step 3: fetch the pool of the chosen variant, let the reranker order it, keep the top k.
+    The abstain threshold (Search.top_vector_similarity) is the first stage's best vector cosine
+    similarity, kept as it is: rerank scores are 0 to 10 judgements, not similarities, and the
+    threshold was chosen on cosine values."""
+    pool = reranker.POOLS[rerank]
+    first = search(
+        conn, question, pool["size"], cfg=cfg, client_factory=client_factory,
+        cache_path=cache_path, mode=pool["mode"], dept_filter=pool["dept_filter"], rerank="off",
+    )  # fmt: skip
+    outcome = reranker.rerank(
+        question, first.results, cfg, client_factory=client_factory, max_cost=rerank_limit,
+        cache_path=cache_path.with_name("rerank.json"),
+    )  # fmt: skip
+    results = [
+        first.results[i] | {"rank": new_rank, "first_stage_rank": first.results[i]["rank"]}
+        for new_rank, i in enumerate(outcome.order[:k], 1)
+    ]
+    return dataclasses.replace(
+        first, results=results, rerank_mode=rerank, rerank=outcome, pool=first.results,
+        retrieval_ms=(time.perf_counter() - started) * 1000,
+    )  # fmt: skip
+
+
 def format_result(r: dict) -> str:
     head = (
         f"{r['rank']:2}  {r['similarity']:.3f}  {r['id']}  [{r['doc_type']}]  {r['heading_path']}"
@@ -254,11 +276,19 @@ def main(argv: list[str]) -> int:
     parser.add_argument(
         "--dept-filter", choices=("off", "on"), help="override retrieval.dept_filter"
     )
+    parser.add_argument(
+        "--rerank", choices=("off", "pool_a", "pool_b"), help="override retrieval.rerank"
+    )
     args = parser.parse_args(argv[1:])
     try:
         with connect() as conn:
             found = search(
-                conn, args.question, args.k, mode=args.mode, dept_filter=args.dept_filter
+                conn,
+                args.question,
+                args.k,
+                mode=args.mode,
+                dept_filter=args.dept_filter,
+                rerank=args.rerank,
             )
     except ApiError as e:
         print(f"failed: {e}")

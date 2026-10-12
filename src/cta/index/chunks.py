@@ -173,11 +173,16 @@ def raw_chunks(processed: Path) -> list[dict]:
     return chunks
 
 
-def token_counter():
-    """Counter for the encoding text-embedding-3-small uses (cl100k_base). The first use downloads
+def get_encoding():
+    """The tiktoken encoding text-embedding-3-small uses (cl100k_base). The first use downloads
     the encoding file from openaipublic.blob.core.windows.net into .cache/tiktoken."""
     os.environ.setdefault("TIKTOKEN_CACHE_DIR", str(ROOT / ".cache" / "tiktoken"))
-    encoding = tiktoken.encoding_for_model("text-embedding-3-small")
+    return tiktoken.encoding_for_model("text-embedding-3-small")
+
+
+def token_counter():
+    """Counter for the same encoding."""
+    encoding = get_encoding()
     return lambda text: len(encoding.encode(text))
 
 

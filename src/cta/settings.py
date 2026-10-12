@@ -24,6 +24,7 @@ def build_user_agent(sources: dict) -> str:
 
 
 RETRIEVAL_MODES = ("vector", "hybrid", "hybrid_bm25")
+RERANK_MODES = ("off", "pool_a", "pool_b")
 SECRET_KEYS = ("OPENAI_API_KEY", "POSTGRES_PASSWORD", "DATABASE_URL")
 MODEL_OVERRIDES = {
     "embedding_model": "CTA_EMBEDDING_MODEL",
@@ -56,6 +57,12 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
         cfg["retrieval"]["mode"] = env["CTA_RETRIEVAL_MODE"].strip()
     if env.get("CTA_DEPT_FILTER", "").strip():
         cfg["retrieval"]["dept_filter"] = env["CTA_DEPT_FILTER"].strip()
+    if env.get("CTA_RERANK", "").strip():
+        cfg["retrieval"]["rerank"] = env["CTA_RERANK"].strip()
+    if cfg["retrieval"]["rerank"] not in RERANK_MODES:
+        raise ValueError(
+            f"retrieval.rerank must be one of {RERANK_MODES}, not {cfg['retrieval']['rerank']!r}"
+        )
     if cfg["retrieval"]["dept_filter"] not in ("off", "on"):
         raise ValueError(
             f"retrieval.dept_filter must be off or on, not {cfg['retrieval']['dept_filter']!r}"

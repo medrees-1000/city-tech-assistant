@@ -16,10 +16,11 @@ from statistics import median
 
 from psycopg.types.json import Jsonb
 
-from cta.eval.metrics import KS, average, question_metrics, scorable_gold
+from cta.eval.metrics import KS, average, matched_gold, question_metrics, scorable_gold
 from cta.eval.questions import load_questions
 from cta.index.db import connect
 from cta.index.embed import ApiError
+from cta.index.rerank import SpendLimit
 from cta.index.search import search
 from cta.settings import ROOT, load_models
 
@@ -114,10 +115,50 @@ def latency(values: list[float]) -> dict:
     return {"n": len(ordered), "median": median(ordered) if ordered else None, "p95": p95}
 
 
-def run(conn, questions: list[dict], label: str, split: str, cfg: dict, out=print) -> dict:
+def pool_recall(pool: list[dict], gold: list[str]) -> float:
+    """Share of the scorable gold sources that appear anywhere in the reranker's pool."""
+    found = set().union(*(matched_gold(c, gold) for c in pool)) if pool else set()
+    return len(found) / len(gold)
+
+
+def rerank_summary(outcomes: dict, scored: list[dict], pools: dict, gold: dict) -> dict:
+    """Totals over the questions that were reranked: calls, failures, cost, latency, pool recall."""
+    cost = sum(o.cost for o in outcomes.values())
+    api_ms = [o.api_ms for o in outcomes.values()]
+    recalls = {r["id"]: pool_recall(pools[r["id"]], gold[r["id"]]) for r in scored}
+    chain = [recalls[r["id"]] for r in scored if "chain" in r["tags"]]
+    return {
+        "calls": len(outcomes),
+        "cache_hits": sum(o.cache_hit for o in outcomes.values()),
+        "failed": {i: o.reason for i, o in outcomes.items() if o.failed},
+        "cost_usd": cost,
+        "prompt_tokens": sum(o.prompt_tokens for o in outcomes.values()),
+        "completion_tokens": sum(o.completion_tokens for o in outcomes.values()),
+        "api_latency_ms": latency(api_ms),
+        "pool_size": median(len(p) for p in pools.values()),
+        "pool_recall": sum(recalls.values()) / len(recalls) if recalls else None,
+        "pool_recall_chain": sum(chain) / len(chain) if chain else None,
+        "pool_recall_by_question": recalls,
+    }
+
+
+def run(
+    conn,
+    questions: list[dict],
+    label: str,
+    split: str,
+    cfg: dict,
+    out=print,
+    rerank_budget: float | None = None,
+) -> dict:
     retrieved, calls, hits, cost, timing, detected = {}, 0, 0, 0.0, {}, {}
+    outcomes, pools, spent = {}, {}, 0.0
     for q in questions:
-        found = search(conn, q["question"], RETRIEVE_K, cfg=cfg)
+        allowance = None if rerank_budget is None else rerank_budget - spent
+        found = search(conn, q["question"], RETRIEVE_K, cfg=cfg, rerank_limit=allowance)
+        if found.rerank:
+            outcomes[q["id"]], pools[q["id"]] = found.rerank, found.pool
+            spent += found.rerank.cost
         retrieved[q["id"]] = found.results
         timing[q["id"]] = found.retrieval_ms
         detected[q["id"]] = found.detected_departments
@@ -137,6 +178,25 @@ def run(conn, questions: list[dict], label: str, split: str, cfg: dict, out=prin
     out("\nBy type (groups are small: read n before the numbers)\n" + metrics_table(by_type))
     out("\nBy department\n" + metrics_table(by_dept))
     out("\nPer question\n" + per_question_table(scored, retrieved))
+    summary_rerank = None
+    if outcomes:
+        gold = {q["id"]: scorable_gold(q) for q in questions}
+        summary_rerank = rerank_summary(outcomes, scored, pools, gold)
+        r = summary_rerank
+        lat = r["api_latency_ms"]
+        out(
+            f"\nrerank {cfg['retrieval']['rerank']}: {r['calls']} calls "
+            f"({r['cache_hits']} from cache), "
+            f"{len(r['failed'])} failed {sorted(r['failed'])}, cost ${r['cost_usd']:.5f}, "
+            f"tokens {r['prompt_tokens']} in / {r['completion_tokens']} out\n"
+            f"rerank API latency: median {lat['median']:.0f} ms, p95 {lat['p95']:.0f} ms; "
+            f"pool size {r['pool_size']:.0f}; pool recall (scored questions) {r['pool_recall']:.3f}"
+            + (
+                f", chain row {r['pool_recall_chain']:.3f}"
+                if r["pool_recall_chain"] is not None
+                else ""
+            )
+        )
     out(f"\nquery embeddings: {hits} cache hits, {calls} API calls, real cost ${cost:.7f}")
     lat = latency(list(timing.values()))
     out(
@@ -153,6 +213,15 @@ def run(conn, questions: list[dict], label: str, split: str, cfg: dict, out=prin
             "detected_departments": detected[r["id"]],
             "retrieval_ms": round(timing[r["id"]], 1),
             "retrieved_ids": [c["source_id"] for c in retrieved[r["id"]]],
+            **(
+                {
+                    "pool_ids": [c["source_id"] for c in pools[r["id"]]],
+                    "first_stage_ranks": [c["first_stage_rank"] for c in retrieved[r["id"]]],
+                    "rerank_failed": r["id"] in summary_rerank["failed"],
+                }
+                if r["id"] in pools
+                else {}
+            ),
         }
         for r in scored
     ]
@@ -170,6 +239,7 @@ def run(conn, questions: list[dict], label: str, split: str, cfg: dict, out=prin
         "cost": {"usd": cost, "api_calls": calls, "cache_hits": hits},
         "retrieval_mode": cfg["retrieval"]["mode"],
         "retrieval_latency_ms": latency(list(timing.values())),
+        "rerank": summary_rerank,
     }
 
 
@@ -209,6 +279,13 @@ def main(argv: list[str]) -> int:
         "--mode", choices=("vector", "hybrid", "hybrid_bm25"), help="override retrieval.mode"
     )
     p.add_argument("--dept-filter", choices=("off", "on"), help="override retrieval.dept_filter")
+    p.add_argument(
+        "--rerank", choices=("off", "pool_a", "pool_b"), help="override retrieval.rerank"
+    )
+    p.add_argument(
+        "--rerank-budget", type=float, default=0.10,
+        help="most the reranker may spend in this run, USD; a call that could pass it is refused",
+    )  # fmt: skip
     args = p.parse_args(argv[1:])
     if error := check_split(args.split, args.final):
         print(error)
@@ -221,13 +298,17 @@ def main(argv: list[str]) -> int:
         cfg["retrieval"]["mode"] = args.mode
     if args.dept_filter:
         cfg["retrieval"]["dept_filter"] = args.dept_filter
+    if args.rerank:
+        cfg["retrieval"]["rerank"] = args.rerank
     questions = [q for q in load_questions() if q["split"] == args.split]
     try:
         with connect() as conn:
-            summary = run(conn, questions, args.label, args.split, cfg)
+            summary = run(
+                conn, questions, args.label, args.split, cfg, rerank_budget=args.rerank_budget
+            )
             save(conn, summary, cfg)
-    except ApiError as e:
-        print(f"failed: {e}")
+    except (ApiError, SpendLimit) as e:
+        print(f"failed, nothing saved: {e}")
         return 1
     print(f"saved eval_runs row and eval/results/{args.label}.json")
     return 0

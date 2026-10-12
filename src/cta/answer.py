@@ -64,7 +64,7 @@ class Answer:
 
     @property
     def cost(self) -> float:
-        return self.chat_cost + (self.search.cost if self.search else 0.0)
+        return self.chat_cost + (self.search.total_cost if self.search else 0.0)
 
 
 def source_label(chunk: dict) -> str:

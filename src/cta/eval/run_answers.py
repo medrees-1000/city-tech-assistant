@@ -612,7 +612,7 @@ def load_stored(conn, old_label: str, cfg: dict):
         a = Answer(
             text, abstained, reason, top10[:5], old_r["citations"], old_r["invalid_citations"]
         )
-        a.search = SimpleNamespace(cache_hit=old_r["cache_hit"], cost=0.0)
+        a.search = SimpleNamespace(cache_hit=old_r["cache_hit"], cost=0.0, total_cost=0.0)
         a.chat_cost, a.latency_ms, a.chat_ms = (
             old_r["answer_cost"],
             old_r["latency_ms"],
