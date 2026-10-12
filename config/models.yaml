@@ -44,8 +44,9 @@ retrieval:
   # "department" belonging to another department are dropped. CTA_DEPT_FILTER overrides it. Works with every mode.
   dept_filter: "off"   # quoted: bare off/on are booleans in YAML
   # LLM reranker (Phase 3, step 3): off | pool_a | pool_b (pools are fixed in src/cta/index/rerank.py).
-  # CTA_RERANK overrides it. "off" is quoted for the same YAML reason.
-  rerank: "off"
+  # CTA_RERANK overrides it. Quoted for the same YAML reason. pool_a since experiment 3 (kept by its
+  # pre-registered rule); CTA_RERANK=off reproduces the earlier vector-only retrieval.
+  rerank: "pool_a"
 
 # Reranker call (the model is chat_model). Fixed in advance; see docs/experiments.md, step 3.
 rerank:

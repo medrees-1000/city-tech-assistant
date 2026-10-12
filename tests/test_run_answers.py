@@ -8,7 +8,7 @@ from cta.answer import Answer
 from cta.eval import run_answers as ra
 from cta.settings import load_models
 
-CFG = load_models(env={})
+CFG = load_models(env={"CTA_RERANK": "off"})  # the reranker has its own tests
 
 
 def chunk(source_id, merged=(), sim=0.7):

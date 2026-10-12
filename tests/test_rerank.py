@@ -143,8 +143,9 @@ def test_a_call_that_could_pass_the_allowance_is_refused_before_it_is_made(tmp_p
 # ---- the switch and the search ----
 
 
-def test_the_switch_is_off_by_default_and_validated():
-    assert CFG["retrieval"]["rerank"] == "off"
+def test_the_switch_values_and_the_default():
+    assert CFG["retrieval"]["rerank"] == "pool_a"  # switched on in the commit after experiment 3
+    assert load_models(env={"CTA_RERANK": "off"})["retrieval"]["rerank"] == "off"
     assert load_models(env={"CTA_RERANK": "pool_b"})["retrieval"]["rerank"] == "pool_b"
     with pytest.raises(ValueError, match="rerank"):
         load_models(env={"CTA_RERANK": "yes"})
