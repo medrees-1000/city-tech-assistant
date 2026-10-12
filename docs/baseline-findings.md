@@ -218,3 +218,21 @@ rule was changed to follow the tag, the labels were recomputed with `--relabel` 
   abstention gives no advice, so the rule passes it although the gold wants the rules stated. Not changed; recorded in `docs/decisions.md`.
 - **CLARIFY** (q24, q49) is still "not supported yet" until step 5; q49 was stopped by the threshold; q24 answered with 60 and 120 credits plus an example program, without asking which degree.
 - Cost per request $0.0040 (was $0.0044), run total $0.160 (answers $0.0067 + judge $0.153); latency is the same (median 1,164 ms).
+
+## 60-question dev set, with and without the reranker, 3 runs each, rubric v3 (Phase 3 step 3b, 2026-10-12)
+
+Dev split, 40 questions (26 judged normal-gold, 5 ABSTAIN, 2 NO ADVICE, 7 calendar-only, CLARIFY and chain cases reported as "not supported yet"). Judge `gpt-5.6-terra`, rubric v3. OFF = vector top 5 (the baseline system; run 1 is the stored
+`baseline-dev-60` answers re-judged, runs 2 and 3 fresh); ON = vector top 20 reranked by `gpt-6-luna`, top 5 to the answerer (3 fresh runs). Mean (min to max):
+
+| | OFF | ON |
+|---|---|---|
+| correct / partial / incorrect (share of 26) | 0.628 (0.577 to 0.654) / 0.269 / 0.103 | 0.692 (0.654 to 0.731) / 0.269 / 0.038 |
+| faithfulness yes | 0.910 (0.885 to 0.962) | 0.923 (0.885 to 0.962) |
+| abstention accuracy / wrongly abstained (of 28 answerable) | 1.000 / 3 | 1.000 / 3 |
+| citation rate / invalid citations | 1.000 / 0 | 1.000 / 0 |
+| total latency median / p95 | 1.2 s / 2.4 s | 3.0 s / 4.8 s |
+| cost per request, answer + rerank (judge excluded) | $0.00017 | $0.00068 |
+
+Run-to-run spread of the same system is as large as most of the difference (OFF correct 15 to 17 of 26, ON 17 to 19). Judging identical answers twice changed 1 of 80 verdicts; changing the rubric to v3 changed 3 of 52 on identical answers, and q22 and q40 stayed
+"no" (`docs/judge-check-v3.md`). Real changes by the stability rule: q52 correctness (incorrect to correct), q40 faithfulness (no to yes), q15 faithfulness (yes to no). Full per-question table: `docs/step3b-answer-level.md`.
+Because the judge, the answerer and the reranker are all language models and n is small, read these as "no sign of harm and a probable gain", not as an exact measure.

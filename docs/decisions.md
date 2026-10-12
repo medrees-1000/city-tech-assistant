@@ -342,3 +342,11 @@ code at the time of the re-judge); its labels were later recomputed by `--relabe
 - `eval.max_cost_usd` stays at $1.00 per run. For Phase 3 step 3b alone, the owner set a total allowance of **$2.50**, because the step repeats the same 40-question run several times to measure noise (three runs per arm, a
   judge repeat and a v3 re-judge; one judged run costs about $0.16, mostly the judge). `run_answers --budget` takes the total allowance and subtracts what the step's earlier runs already cost (the labels listed in the code); a run refuses
   to start if its estimate does not fit and stops by itself, before the next question, if the running cost would pass it. Other steps keep the old limits.
+
+## Reranker kept after the answer-level check (Oct 12, 2026; Phase 3 step 3b)
+
+- `retrieval.rerank: pool_a` stays the default: the pre-registered four-part rule passed (`docs/experiments.md`, experiment 3b). `CTA_RERANK=off` / `--rerank off` reproduces the old system; answer-level runs must pass `--rerank` explicitly when
+  they want a particular arm. Each answer-level run with the reranker on writes its own reranker score cache (`data/cache/rerank-<label>.json`, not committed), so its reranker cost and latency are real, and a re-judge of an ON run needs that file.
+- A stored run is re-judged with the reranker setting it had (`eval_runs.config.retrieval.rerank`, "off" for runs made before the switch), never the current default.
+- Rubric v3 did not change the q22 and q40 faithfulness verdicts; it moved three other verdicts (q01, q52, q56) on identical answers. The v3 rubric stays in use; the owner checks `docs/judge-check-v3.md` by hand.
+- The step's $2.50 allowance is the only departure from the $1.00 per-run cap (see above); about $1.22 was spent.

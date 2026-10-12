@@ -351,3 +351,39 @@ before it would exceed the remaining allowance and says so (`--budget`).
 
 **Caveats written in advance.** n is small (26 judged questions, 4 abstain, 2 no-advice, 8 not supported yet), so one question is about 4 points of a share; the same model reranks and answers; judge verdicts are not perfect (the
 faithfulness grade is known to be lenient, and the judge repeat measures only its self-consistency, not its correctness); three runs per arm bound the noise roughly and do not remove it.
+
+## Experiment 3b: answer-level check of the reranker, 2026-10-12 — pool_a KEPT (all four parts of the rule pass)
+
+**What was run.** Rubric v3 re-judge of the stored `baseline-dev-60` answers (`baseline-dev-60-v3` = off-run1; v2 file untouched), `off-run2`, `off-run3` (`--rerank off`), `on-run1`, `on-run2`, `on-run3` (`--rerank pool_a`, each with its own fresh
+reranker calls) and `judge-repeat` (`on-run1`'s answers judged again). Pre-registered in `582a2e2`; tooling `5e5a99c`. Everything else unchanged; no test split. Full tables, the per-question verdicts of all six runs, the sources received for
+q06, q56 and q52 and the answers to the "report specifically" list are in `docs/step3b-answer-level.md`; the v2 against v3 check for you to read is `docs/judge-check-v3.md`.
+
+| Mean over 3 runs (min to max), 26 judged questions | OFF | ON (pool_a) | rule |
+|---|---|---|---|
+| correct share | 0.628 (0.577 to 0.654) | 0.692 (0.654 to 0.731) | (a) +0.064, limit -0.038: pass |
+| partial / incorrect share | 0.269 / 0.103 | 0.269 / 0.038 | |
+| faithfulness "yes" share | 0.910 (0.885 to 0.962) | 0.923 (0.885 to 0.962) | (b) +0.013: pass |
+| abstention accuracy; wrongly abstained per run | 1.000; 3 | 1.000; 3 | (c) no change: pass |
+| citation rate; invalid citations | 1.000; 0 | 1.000; 0 | (d) no change: pass |
+| NO ADVICE correct | 1.000 | 1.000 | |
+| latency per request, median / p95 (ms) | total 1,202 / 2,363 (search 13, answer 1,325) | total 3,020 / 4,783 (search 14, **rerank 1,731 / 3,276**, answer 1,341) | not in the rule |
+| cost per request: answer / rerank / judge (USD) | 0.00017 / 0 / 0.00396 | 0.00017 / **0.00051** / 0.00406 | not in the rule |
+| failure labels (mean per run) | retrieval miss 3, ranking miss 1, generation error 2.7 | retrieval miss 2.3, ranking miss 0, generation error 2.7 | |
+
+**Decision by the pre-registered rule: KEEP `pool_a` as the default.** No revert commit. (The rule is strict: a faithfulness fall of 0.01 would have reverted it; the margin on (b) is +0.013, which is half a question and inside the noise below.)
+
+**Noise.** Runs of the same arm differ by up to 2 questions in "correct" (OFF 15 to 17 of 26, ON 17 to 19) and 2 in faithfulness "yes". Real changes by the pre-registered definition (identical in all 3 runs of each arm, different between arms):
+**q52 correctness incorrect to correct** (better), **q40 faithfulness no to yes** (better), **q15 faithfulness yes to no** (worse; correctness stays incorrect, a retrieval miss in all runs). **Unstable, not counted:** q01, q06 (leaning worse),
+q16, q18, q22, q33 (leaning worse), q36, q52 faithfulness (leaning better), q54 (leaning better), q56 (leaning better), q59. Note that q56 (7 to 1 in retrieval) is "leaning better", not "real": OFF gave partial, incorrect, incorrect and ON correct x3, but the first OFF run (the
+stored baseline) is partial. **Judge noise:** judging the same 80 verdicts of `on-run1` twice changed 1 (q15 faithfulness no to partly). The v3 re-judge changed 3 verdicts on identical answers (q01, q52, q56), which is more than the judge repeat
+suggests the judge moves on identical input with an identical rubric; those three are likely wording effects of the new rubric, not an improvement. **q22 and q40 faithfulness did not change under v3** (both still "no" in the stored OFF answers), contrary to what
+v3 was written for.
+
+**What the numbers say, and do not.** The retrieval gain carries over to the answers: more correct, fewer incorrect (mean 2.7 to 1.0 of 26), the ranking misses disappeared, and nothing got worse on abstention, citations or advice. Of the 1.7 more correct answers on average,
+one question (q52, the gold section rescued from outside the old top 10) is a real change; the others are inside the run-to-run noise. The cost is a median 1.7 s (p95 3.3 s) and about $0.0005 per request, and total latency about 2.5 times
+as long. One faithfulness regression (q15) is real: the reranker promoted a plausible-looking advisement chunk and the answer then made a claim the judge calls contradicted.
+
+**Caveats.** n is small (26 judged questions: one question is 3.8 points of a share); the same model reranks and answers; judge verdicts are not perfect (the faithfulness grade is lenient, the repeat measures consistency, not correctness); 3 runs bound the
+noise roughly; the dev questions were used to choose pool_a, so this is not an independent test. The test split is untouched.
+
+**Spend.** About $1.22 of the $2.50 allowance (v3 re-judge $0.16, five generated runs $0.165 to $0.19 each, judge repeat $0.16).

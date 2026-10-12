@@ -4,8 +4,7 @@
 all run and REJECTED by their pre-registered rules. **Step 3 (LLM reranker) was run retrieval-only on dev: both pools met the rule and Pool A (vector top 20 reranked, MRR 0.789 to 0.925, recall@5 0.775 to 0.897,
 7 questions better, q06 worse) was kept; the default is now `retrieval.rerank: pool_a`** (`CTA_RERANK=off` gives the old behaviour). Step 2b (term filter) was not built: on dev, 13 of 40 questions name a term but only 3 are
 retrieval-scored and all 3 already rank 1 (`docs/experiments.md`, step 3 pre-registration). The hybrid modes, BM25, the department filter and `config/departments.yaml` remain in the code, off. Judge rubric is v3 (first used when the
-stored `baseline-dev-60` answers are re-judged with the next answer-level run). **Next, not started:** the answer-level run for the reranker (first `--rejudge baseline-dev-60`), then the first test-split milestone run with `--final` (this
-is after step 3, per the protocol). No test split has been run on the new questions.
+stored `baseline-dev-60` answers are re-judged with the next answer-level run). **Step 3b (answer-level check, 3 runs per arm, rubric v3) passed the pre-registered rule: pool_a stays the default** (correct share 0.628 to 0.692, nothing worse on faithfulness, abstention, citations; cost +$0.0005 and +1.7 s median per request; `docs/experiments.md`, `docs/step3b-answer-level.md`). **Next, not started:** the first test-split milestone run with `--final` (after step 3, per the protocol), or step 4 (router). No test split has been run on the new questions.
 
 Starting point: `docs/baseline-findings.md` (Phase 2: dev `eval/results/baseline.json`, test `eval/results/baseline-final.json`; Phase 3 comparison: `eval/results/baseline-dev-60.json`).
 The baseline is vector-only search, k = 5, `gpt-6-luna`, judge `gpt-5.6-terra` with rubric v2, abstain threshold 0.59.
