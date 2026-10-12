@@ -269,3 +269,65 @@ def test_dry_run_and_missing_yes_do_not_run(monkeypatch, capsys):
     assert ra.main(["x", "--split", "dev", "--label", "dry-test"]) == 0
     out = capsys.readouterr().out
     assert "dry run" in out and "add --yes" in out
+
+
+# ---- rubric v2, new label rule, re-judge helpers ----
+
+
+def test_label_rule_v2_any_missing_gold_is_a_retrieval_miss():
+    q = question(sources=("g1", "g2"))
+    only_one = top("g1")  # g2 nowhere in the top 10
+    judge = fake_judge(judge_reply("partial"))
+    r = ra.evaluate_question(q, ans(), only_one, judge)
+    assert r["label"] == "retrieval miss" and "g2" in r["label_reason"]
+
+
+def test_label_rule_v2_any_missing_from_top5_is_a_ranking_miss():
+    q = question(sources=("g1", "g2"))
+    ranked = top("g1", "x1", "x2", "x3", "x4", "g2")  # g2 at rank 6
+    r = ra.evaluate_question(q, ans(), ranked, fake_judge(judge_reply("partial")))
+    assert r["label"] == "ranking miss" and "g2" in r["label_reason"]
+
+
+def test_label_rule_v2_all_gold_in_top5_is_a_generation_error():
+    q = question(sources=("g1", "g2"))
+    r = ra.evaluate_question(q, ans(), top("g1", "g2"), fake_judge(judge_reply("partial")))
+    assert r["label"] == "generation error"
+
+
+def test_rubric_is_versioned_and_in_the_prompt():
+    from cta.eval import rubric
+
+    assert rubric.RUBRIC_VERSION == 2
+    assert "NOT required" in rubric.JUDGE_INSTRUCTIONS
+    assert "even if it is likely\n  true" in rubric.JUDGE_INSTRUCTIONS
+    msgs = ra.judge_messages("normal", question(), ans())
+    assert msgs[0]["content"] == rubric.JUDGE_INSTRUCTIONS
+
+
+@pytest.mark.integration
+def test_rubric_version_is_stored_in_the_run_config(conn):
+    run_id = ra.start_run(conn, "t", "dev", CFG, {"rejudge_of": "x"})
+    config = conn.execute("SELECT config FROM eval_runs WHERE id = %s", (run_id,)).fetchone()[0]
+    assert config["rubric_version"] == 2 and config["rejudge_of"] == "x"
+
+
+def test_verdict_changes_lists_only_changed_questions():
+    old = [
+        {"id": "q1", "correctness": "partial", "faithfulness": "yes"},
+        {"id": "q2", "correctness": "correct", "faithfulness": "yes"},
+    ]
+    new = [
+        {"id": "q1", "correctness": "correct", "faithfulness": "yes",
+         "correctness_reason": "asked part given", "faithfulness_reason": "ok"},
+        {"id": "q2", "correctness": "correct", "faithfulness": "yes",
+         "correctness_reason": "r", "faithfulness_reason": "r"},
+    ]  # fmt: skip
+    changes = ra.verdict_changes(old, new)
+    assert len(changes) == 1 and changes[0].startswith("q1: correctness partial -> correct")
+    assert "asked part given" in changes[0]
+
+
+def test_rejudge_never_calls_the_api():
+    with pytest.raises(ra.ApiError):
+        ra.no_api()

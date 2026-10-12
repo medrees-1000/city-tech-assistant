@@ -18,7 +18,7 @@ The filing deadline is listed in the Academic Calendar. Applying late may mean y
 
 **Judge, faithfulness:** yes: All factual claims in the answer are supported by sources [1] and [4].
 
-**My verdict:** 
+**My verdict:** correctness partial / faithfulness yes
 
 ## q03 (lookup)
 
@@ -32,7 +32,7 @@ The filing deadline is listed in the Academic Calendar. Applying late may mean y
 
 **Judge, faithfulness:** yes: Every factual claim is directly supported by source [1].
 
-**My verdict:** 
+**My verdict:** correctness correct / faithfulness partly (the "No." goes beyond the source, which only says the program is full-time)
 
 ## q04 (lookup)
 
@@ -46,7 +46,7 @@ The filing deadline is listed in the Academic Calendar. Applying late may mean y
 
 **Judge, faithfulness:** yes: The stated 66–67-credit requirement is directly supported by source [1].
 
-**My verdict:** 
+**My verdict:** correctness correct / faithfulness yes
 
 ## q05 (lookup)
 
@@ -65,7 +65,7 @@ The filing deadline is listed in the Academic Calendar. Applying late may mean y
 
 **Judge, faithfulness:** yes: All factual claims, including credits, prerequisites, hours, supervision requirements, associate option, and CST 4905 alternative, are supported by the cited sources.
 
-**My verdict:** 
+**My verdict:** correctness correct / faithfulness yes
 
 ## q06 (lookup)
 
@@ -79,7 +79,7 @@ The filing deadline is listed in the Academic Calendar. Applying late may mean y
 
 **Judge, faithfulness:** yes: All factual claims about the four programs and their degree types are directly supported by source [1].
 
-**My verdict:** 
+**My verdict:** correctness correct / faithfulness yes
 
 ## q08 (lookup)
 
@@ -93,7 +93,7 @@ The filing deadline is listed in the Academic Calendar. Applying late may mean y
 
 **Judge, faithfulness:** yes: Every factual claim is directly supported by source [1].
 
-**My verdict:** 
+**My verdict:** correctness correct / faithfulness yes
 
 ## q12 (time_sensitive)
 
@@ -107,7 +107,7 @@ The filing deadline is listed in the Academic Calendar. Applying late may mean y
 
 **Judge, faithfulness:** yes: The response makes no factual claim beyond its inability to find the information, so it does not assert anything unsupported by the provided sources.
 
-**My verdict:** 
+**My verdict:** correctness incorrect / faithfulness yes
 
 ## q15 (time_sensitive)
 
@@ -121,5 +121,5 @@ The filing deadline is listed in the Academic Calendar. Applying late may mean y
 
 **Judge, faithfulness:** yes: The supplied sources do not provide any specific student-hours schedule, so the abstention claim is supported by the provided materials.
 
-**My verdict:** 
+**My verdict:** correctness partial / faithfulness yes
 
