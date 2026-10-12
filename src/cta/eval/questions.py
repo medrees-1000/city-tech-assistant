@@ -21,7 +21,10 @@ from cta.validate.findings import Finding
 QUESTIONS = ROOT / "eval" / "questions.jsonl"
 CALENDAR = "data/calendar/calendar_events.json"
 FIELDS = ("id", "question", "gold_answer", "gold_sources", "type", "department", "split", "note")
-OPTIONAL_FIELDS = ("tags",)  # a list of non-empty strings, e.g. "chain"
+# tags: a list of non-empty strings, e.g. "chain". calendar_acceptable_extra: calendar row ids that
+# may appear in an answer to a calendar-only question without penalty (same event, different
+# wording; scoring v2 in cta.eval.run_answers). They must not also be gold sources.
+OPTIONAL_FIELDS = ("tags", "calendar_acceptable_extra")
 TYPES = ("lookup", "multi_chunk", "time_sensitive", "ambiguous", "unanswerable")
 SPLITS = ("dev", "test")
 DEPARTMENTS = ("CST-NYT", "MATH-NYT", "EET-NYT", "DENT-NYT")
@@ -75,6 +78,15 @@ def row_problems(row: dict) -> list[str]:
         not isinstance(tags, list) or not all(isinstance(t, str) and t.strip() for t in tags)
     ):
         problems.append("tags is not a list of non-empty strings")
+    extra = row.get("calendar_acceptable_extra")
+    if "calendar_acceptable_extra" in row:
+        if not isinstance(extra, list) or not all(isinstance(x, str) and x.strip() for x in extra):
+            problems.append("calendar_acceptable_extra is not a list of non-empty strings")
+        else:
+            gold_ids = {s.get("id") for s in row.get("gold_sources", []) if isinstance(s, dict)}
+            both = sorted(set(extra) & gold_ids)
+            if both:
+                problems.append(f"calendar_acceptable_extra also gold: {', '.join(both)}")
     if row.get("type") not in TYPES:
         problems.append(f"type {row.get('type')!r} is not one of {'|'.join(TYPES)}")
     if row.get("split") not in SPLITS:
@@ -171,6 +183,17 @@ def question_problems(row: dict, data: GoldData) -> list[str]:
                 found = gold_problem(s, data)
                 if found:
                     problems.append(found)
+    extras = row.get("calendar_acceptable_extra")
+    if isinstance(extras, list):
+        gold_ids = [s.get("id", "") for s in sources or [] if isinstance(s, dict)]
+        if not gold_ids or not all(i in data.events for i in gold_ids):
+            problems.append("calendar_acceptable_extra needs a calendar-only question")
+        for event_id in extras:
+            event = data.events.get(event_id)
+            if event is None or event.get("verified") is not True:
+                problems.append(
+                    f"calendar_acceptable_extra {event_id!r} is not a verified calendar event"
+                )
     return problems
 
 

@@ -145,29 +145,34 @@ def make_judge_call(cfg: dict, client):
 CALENDAR_LABELS = ("calendar wrong row", "calendar missed", "calendar abstained")
 
 
-def calendar_result(q: dict, ans: Answer) -> tuple[dict, str | None, str]:
-    """Deterministic score of a calendar-only gold question from the rows the answer states:
-    correct = the returned row ids equal the gold ids; partial = a non-empty proper subset;
-    incorrect = a returned id outside the gold set (a wrong date stated), an abstention, or no
-    rows (not routed to the calendar, or fell through). Returns (verdict, label, reason)."""
+def calendar_result(q: dict, ans: Answer, version: int = 1) -> tuple[dict, str | None, str]:
+    """Deterministic score of a calendar-only gold question from the rows the answer states.
+    Version 1 (exact rows): correct = the returned row ids equal the gold ids; partial = a non-empty
+    proper subset; incorrect = a returned id outside the gold set (a wrong date stated), an
+    abstention, or no rows (not routed to the calendar, or fell through).
+    Version 2: the gold ids are the required rows and `calendar_acceptable_extra` ids may also
+    appear; correct = every required id returned and nothing else; partial = a non-empty proper
+    subset of the required ids and nothing outside required and extras; incorrect = any id outside
+    both, an abstention, or no rows. Returns (verdict, label, reason)."""
     gold = {g["id"] for g in q["gold_sources"]}
+    allowed = gold | (set(q.get("calendar_acceptable_extra", [])) if version == 2 else set())
     returned = set(getattr(ans, "row_ids", []) or [])
     if getattr(ans, "route", None) == "abstain":
         grade, label, why = "incorrect", "calendar abstained", "the calendar route abstained"
-    elif returned - gold:
+    elif returned - allowed:
         grade, label = "incorrect", "calendar wrong row"
-        why = f"states rows outside the gold set: {sorted(returned - gold)}"
-    elif returned == gold:
-        grade, label, why = "correct", None, "returned rows equal the gold rows"
-    elif returned:
+        why = f"states rows outside the gold set: {sorted(returned - allowed)}"
+    elif gold <= returned:
+        grade, label, why = "correct", None, "returned rows cover the gold rows"
+    elif returned & gold:
         grade, label = "partial", "calendar missed"
-        why = f"only {sorted(returned)} of {sorted(gold)}"
+        why = f"only {sorted(returned & gold)} of {sorted(gold)}"
     else:
         grade, label = "incorrect", "calendar missed"
         why = "no calendar row returned (not routed to the calendar, or fell through to retrieval)"
     verdict = {
         "correctness": grade, "faithfulness": None, "faithfulness_reason": None,
-        "correctness_reason": f"rule (calendar scoring): {why}", "judge_status": "rule",
+        "correctness_reason": f"rule (calendar scoring {version}): {why}", "judge_status": "rule",
     }  # fmt: skip
     return verdict, label, why
 
@@ -208,13 +213,18 @@ def label_failure(
 
 
 def evaluate_question(
-    q: dict, ans: Answer, top10: list[dict], judge_call, calendar_scoring: bool = False
+    q: dict, ans: Answer, top10: list[dict], judge_call, calendar_scoring: int | bool = 0
 ) -> dict:
     kind = gold_kind(q)
     cost = 0.0
     calendar_label = None
+    version = 2 if calendar_scoring == 2 else 1  # True and 1 mean version 1
+    both = {}
     if calendar_scoring and kind == "calendar_only":
-        verdict, calendar_label, _ = calendar_result(q, ans)
+        for v in (1, 2):  # both versions are always recorded; `version` decides the verdict
+            result = calendar_result(q, ans, v)
+            both[f"calendar_v{v}"] = {"correctness": result[0]["correctness"], "label": result[1]}
+        verdict, calendar_label, _ = calendar_result(q, ans, version)
     elif kind == "abstain":
         ok = ans.text.strip().startswith("ABSTAIN:")
         verdict = {
@@ -277,6 +287,7 @@ def evaluate_question(
         "route": getattr(ans, "route", None),
         "router": router,
         "returned_rows": list(getattr(ans, "row_ids", []) or []),
+        **both,
     }
 
 
@@ -613,9 +624,9 @@ def run(
 ) -> dict:
     today = date.fromisoformat(cfg["eval"]["today"])
     routing = cfg["router"]["mode"] == "on"
-    scoring = routing or bool(cfg["eval"].get("calendar_scoring"))
+    scoring = int(cfg["eval"].get("calendar_scoring") or (1 if routing else 0))
     extra = question_ids_record(questions) | {"router": cfg["router"]["mode"]}
-    extra |= {"calendar_scoring": 1} if scoring else {}
+    extra |= {"calendar_scoring": scoring} if scoring else {}
     run_id = start_run(conn, label, split, cfg, extra)
     router = Router(conn, cfg, client_factory) if routing else None
     judge_call = make_judge_call(cfg, client_factory())
@@ -918,8 +929,9 @@ def main(argv: list[str]) -> int:
     p.add_argument("--tag", help="only questions with this tag, for example calendar")
     p.add_argument("--router", choices=("off", "on"), help="override router.mode")
     p.add_argument(
-        "--calendar-scoring", action="store_true",
-        help="score calendar-only gold by the rows the answer states (always on with --router on)",
+        "--calendar-scoring", type=int, nargs="?", const=1, choices=(1, 2),
+        help="score calendar-only gold by the rows stated: 1 exact rows, 2 required rows "
+        "plus acceptable extras (version 1 is on by default with --router on)",
     )  # fmt: skip
     p.add_argument(
         "--budget-labels", help="comma-separated labels of the runs that count against --budget"
@@ -956,7 +968,7 @@ def main(argv: list[str]) -> int:
     if args.router:
         cfg["router"]["mode"] = args.router
     if args.calendar_scoring:
-        cfg["eval"]["calendar_scoring"] = 1
+        cfg["eval"]["calendar_scoring"] = args.calendar_scoring
     if args.relabel:
         with connect() as conn:
             print(relabel(conn, args.relabel, cfg))
