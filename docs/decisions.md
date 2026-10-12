@@ -350,3 +350,9 @@ code at the time of the re-judge); its labels were later recomputed by `--relabe
 - A stored run is re-judged with the reranker setting it had (`eval_runs.config.retrieval.rerank`, "off" for runs made before the switch), never the current default.
 - Rubric v3 did not change the q22 and q40 faithfulness verdicts; it moved three other verdicts (q01, q52, q56) on identical answers. The v3 rubric stays in use; the owner checks `docs/judge-check-v3.md` by hand.
 - The step's $2.50 allowance is the only departure from the $1.00 per-run cap (see above); about $1.22 was spent.
+
+## LangGraph for the router (Oct 12, 2026; planned for step 4a, nothing added yet)
+
+- Step 4a adds `langgraph` (pinned in `pyproject.toml` when it is added) for the router only: a small graph with three nodes (calendar lookup, retrieve-and-answer, abstain) and one routing decision. Reason: the project plan names LangGraph for the router, it gives explicit
+  nodes, state and a trace of which branch ran, which the later tool nodes (4b prerequisite chain, 4c contact lookup) reuse, and writing that control flow by hand would be more code for the owner to explain. Retrieval, evaluation and the data pipeline stay hand-built
+  (framework policy in `docs/phase3-plan.md`). The dependency is added in the 4a commit with its version, not in this step.

@@ -387,3 +387,10 @@ as long. One faithfulness regression (q15) is real: the reranker promoted a plau
 noise roughly; the dev questions were used to choose pool_a, so this is not an independent test. The test split is untouched.
 
 **Spend.** About $1.22 of the $2.50 allowance (v3 re-judge $0.16, five generated runs $0.165 to $0.19 each, judge repeat $0.16).
+
+### Status after steps 3 and 3b (2026-10-12), for the next steps
+
+- Reranker kept (`retrieval.rerank: pool_a`): experiments 3 (retrieval) and 3b (answer level, 3 runs per arm, rubric v3) above. Means: correct share 0.628 to 0.692, incorrect 0.103 to 0.038, faithfulness yes 0.910 to 0.923, abstention, citations and advice unchanged.
+- **Follow-up for step 6 (guardrails and caching):** total latency per request median 1.2 s to 3.0 s, p95 2.4 s to 4.8 s; cost +$0.0005 per request.
+- **Open question:** the rubric v3 finding that q22 and q40 faithfulness did not change stands until the owner has hand-checked `docs/judge-check-v3.md`; no conclusion about v3 is drawn here.
+- Next: step 4a-0 (calendar question candidates), then 4a (calendar tool in a minimal LangGraph router), 4b, 4c. Each gets its own pre-registration.
