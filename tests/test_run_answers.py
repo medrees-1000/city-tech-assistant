@@ -376,12 +376,21 @@ def test_new_questions_are_classified_as_intended():
     from cta.eval.metrics import scorable_gold
 
     qs = real_questions()
-    assert len(qs) == 60 and sorted(EXPECTED_KIND) == [f"q{n}" for n in range(31, 61)]
+    assert sorted(EXPECTED_KIND) == [f"q{n}" for n in range(31, 61)] and len(qs) >= 60
     for qid, kind in EXPECTED_KIND.items():
         assert ra.gold_kind(qs[qid]) == kind, qid
     # retrieval-scored: a section or course gold source (calendar ids never count)
     unscored = {qid for qid in EXPECTED_KIND if not scorable_gold(qs[qid])}
     assert unscored == {"q31", "q32", "q33", "q34", "q35", "q36", "q37", "q38", "q44", "q45", "q46"}
+    # the 14 calendar questions of step 4a-1 are never retrieval-scored, so the 30 scored dev
+    # questions (and the baseline-dev-60 retrieval numbers) did not change when they were added
+    new_calendar = [q for q in qs if "calendar" in qs[q].get("tags", [])]
+    assert len(new_calendar) == 14 and not any(scorable_gold(qs[q]) for q in new_calendar)
+    kinds = {q: ra.gold_kind(qs[q]) for q in new_calendar}
+    assert {q: k for q, k in kinds.items() if k != "calendar_only"} == {
+        "q72": "abstain",
+        "q74": "clarify",
+    }
 
 
 def test_chain_tags_are_exactly_the_five_chain_questions():
