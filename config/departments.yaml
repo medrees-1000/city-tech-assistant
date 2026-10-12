@@ -1,0 +1,32 @@
+# Department names, aliases and course prefixes for the department filter (Phase 3, step 2a).
+#
+# Written on 2026-10-12 BEFORE the experiment run, from (a) the distinct course-code prefix per department id in
+# the database (query over the 197 course chunks; no prefix belongs to more than one department) and (b) the
+# project notes (CLAUDE.md: the catalog calls EET "Electrical Engineering Technology"; handle both names).
+# NOT to be edited after seeing results (docs/experiments.md): a missing or wrong alias is a finding for a new,
+# separately pre-registered experiment.
+#
+# Matching is case-insensitive and whole-word. A course code in the question ("EET 3672", "eet3672") maps
+# through its prefix. Prefixes of other departments' cross-listed courses (CET, MECH, ...) are not mapped.
+departments:
+  CST-NYT:
+    display: Computer Systems Technology
+    aliases: ["Computer Systems Technology", "Computer Systems", "CST"]
+    prefixes: [CST, MST, DPT]   # MST and DPT: legacy prefixes the catalog still lists as Active (CLAUDE.md)
+  MATH-NYT:
+    display: Mathematics
+    aliases: ["Mathematics", "Math"]
+    prefixes: [MAT, MEDU]
+  EET-NYT:
+    display: Electrical and Telecommunications Engineering Technology
+    aliases:
+      - "Electrical Engineering Technology"
+      - "Electrical & Telecommunications Engineering Technology"
+      - "Electrical and Telecommunications Engineering Technology"
+      - "ETET"   # common student shorthand (the department pages print "ETET Office Hours"); also in dev q15
+      - "EET"
+    prefixes: [EET, TCET]
+  DENT-NYT:
+    display: Dental Hygiene
+    aliases: ["Dental Hygiene"]
+    prefixes: [DEN]
