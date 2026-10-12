@@ -54,14 +54,14 @@ rerank:
   reasoning_effort: none
   max_output_tokens: 600
 
-# Router (Phase 3, step 4a): off | on. With "on" a LangGraph graph (src/cta/graph/) sends calendar questions to a
+# Router (Phase 3, step 4a): off | on (on since step 4a-2, selector v2 kept by its pre-registered rule; CTA_ROUTER_MODE=off restores the old pipeline). With "on" a LangGraph graph (src/cta/graph/) sends calendar questions to a
 # calendar lookup and everything else to the existing pipeline. CTA_ROUTER_MODE overrides it. Quoted: bare off/on are
 # booleans in YAML. The classifier and the selector call the answer model (chat_model) with these settings.
 router:
-  mode: "off"
+  mode: "on"
   # Selector version (step 4a-2): 1 = the pool is the rows of the resolved term; 2 = the rows of all
   # calendars with a stricter prompt. CTA_ROUTER_SELECTOR overrides it.
-  selector: 1
+  selector: 2
   temperature: 0
   reasoning_effort: none
   max_output_tokens: 300

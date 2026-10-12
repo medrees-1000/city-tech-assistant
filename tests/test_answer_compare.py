@@ -176,7 +176,7 @@ def test_a_run_stops_before_the_question_that_would_pass_the_budget(monkeypatch)
         def commit(self):
             pass
 
-    cfg = load_models(env={"CTA_RERANK": "off"})
+    cfg = load_models(env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "off"})
     monkeypatch.setattr(ra, "start_run", lambda *a, **k: 1)
     monkeypatch.setattr(ra, "make_judge_call", lambda *a, **k: None)
     monkeypatch.setattr(ra, "answer", lambda *a, **k: ans())

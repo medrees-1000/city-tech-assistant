@@ -14,7 +14,9 @@ from tests.test_answer import FakeChatClient, add_chunk
 from tests.test_hybrid import add_world
 from tests.test_search import vec
 
-CFG = load_models(env={"CTA_RERANK": "off"})  # the reranker has its own tests
+CFG = load_models(
+    env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "off"}
+)  # the reranker has its own tests
 
 
 def rows(**docs):

@@ -8,7 +8,9 @@ import pytest
 from cta.index import search as srch
 from cta.settings import load_models
 
-CFG = load_models(env={"CTA_RERANK": "off"})  # the reranker has its own tests
+CFG = load_models(
+    env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "off"}
+)  # the reranker has its own tests
 DIM = CFG["embedding_dimensions"]
 
 

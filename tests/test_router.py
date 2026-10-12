@@ -14,8 +14,8 @@ from cta.graph.state import RoutedAnswer
 from cta.index.search import Search
 from cta.settings import load_models
 
-CFG = load_models(env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "on"})
-OFF = load_models(env={"CTA_RERANK": "off"})
+CFG = load_models(env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "on", "CTA_ROUTER_SELECTOR": "1"})
+OFF = load_models(env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "off"})
 TODAY = date(2026, 10, 11)
 
 
@@ -451,9 +451,11 @@ def test_the_architecture_doc_shows_the_current_graph():
 # ---- the switch and the off path ----
 
 
-def test_router_mode_is_off_by_default_and_validated():
-    assert OFF["router"]["mode"] == "off" and load_models(env={})["router"]["mode"] == "off"
-    assert load_models(env={"CTA_ROUTER_MODE": "on"})["router"]["mode"] == "on"
+def test_router_defaults_are_on_and_selector_2_since_step_4a2_and_validated():
+    default = load_models(env={})["router"]
+    assert (default["mode"], default["selector"]) == ("on", 2)  # kept by the 4a-2 rule
+    assert OFF["router"]["mode"] == "off"
+    assert load_models(env={"CTA_ROUTER_MODE": "off"})["router"]["mode"] == "off"
     with pytest.raises(ValueError, match="router.mode"):
         load_models(env={"CTA_ROUTER_MODE": "maybe"})
 
@@ -518,8 +520,8 @@ def test_request_log_row_carries_route_and_router_numbers_and_is_redacted(conn):
 CFG2 = load_models(env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "on", "CTA_ROUTER_SELECTOR": "2"})
 
 
-def test_selector_switch_default_is_version_1_and_validated():
-    assert OFF["router"]["selector"] == 1 and CFG["router"]["selector"] == 1
+def test_selector_switch_values_and_validation():
+    assert CFG["router"]["selector"] == 1 and load_models(env={})["router"]["selector"] == 2
     assert CFG2["router"]["selector"] == 2
     with pytest.raises(ValueError, match="router.selector"):
         load_models(env={"CTA_ROUTER_SELECTOR": "3"})

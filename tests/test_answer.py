@@ -9,7 +9,9 @@ from cta import answer as ans_mod
 from cta.settings import load_models
 from tests.test_search import DIM, FakeClient, vec
 
-CFG = load_models(env={"CTA_RERANK": "off"})  # the reranker has its own tests
+CFG = load_models(
+    env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "off"}
+)  # the reranker has its own tests
 TODAY = date(2026, 10, 11)
 
 
