@@ -1,11 +1,12 @@
 # Phase 2 plan: chunk, embed, vector-only baseline
 
-**Where we are (2026-10-12):** steps 1 to 7 done. The baseline retrieval numbers on dev are saved
-(`eval/results/baseline-retrieval-dev.json`, label `baseline-retrieval-dev`, also in `eval_runs`). The test split has
-not been run (`--split test` is refused without `--final`; only step 9 uses it). Next is step 8 (prompt, abstain
-threshold from dev scores, `request_logs`, first answers; this is the first step that calls the chat model, so show
-the cost estimate first). A new session: read this file, `config/models.yaml`, `docs/decisions.md`, then continue
-at the first step not marked done.
+**Where we are (2026-10-12):** steps 1 to 8 done. `uv run python -m cta.answer "question"` answers with
+citations (`--dry-run` shows the prompt and the estimated cost); the abstain threshold is 0.59 (dev only); every
+request is written to `request_logs` (redacted, with a cache-hit flag). Six first answers were run (dev questions
+and one made-up one), total $0.0009. The test split has still never been run or read. Next is step 9
+(LLM-judged metrics and the baseline run: dry run with the cost first, 8 judge verdicts for the owner to check,
+failure labels, then `--final` on test only when the owner says so). A new session: read this file,
+`config/models.yaml`, `docs/decisions.md`, then continue at the first step not marked done.
 
 Original status: plan only (2026-10-11). No code, no installs, no containers started. Everything here is for the owner
 to approve or change. Scope is CLAUDE.md Phase 2: "chunk, embed, vector-only RAG; record metrics". Not in scope:
@@ -246,7 +247,7 @@ or changed.
 7. **DONE (674648d). Retrieval metrics.** The runner without any LLM call, results saved, baseline retrieval numbers on dev and
    test. Show: the metric table by k, per-question hits and misses, and the top-1 score distribution that
    informs the abstain threshold.
-8. **Answers, abstain rule, logs.** Prompt, threshold (decision recorded in `docs/decisions.md`), `request_logs`.
+8. **DONE (7a9265f). Answers, abstain rule, logs.** Prompt, threshold (decision recorded in `docs/decisions.md`), `request_logs`.
    Show: answers for four dev questions, with citations, an abstention, and the cost lines.
 9. **LLM-judged metrics and the baseline run.** Dry run with the cost, then (with your yes) the dev run; save the
    baseline, write the `docs/validation-log.md` entry, README-ready results table. Show: all metrics, the
@@ -285,6 +286,10 @@ dev questions (q04, q12, q21, q27) and 2 made-up ones: see `docs/decisions.md`. 
 Step 7 (done 2026-10-12): `cta.eval.metrics` (pure), `cta.eval.run_retrieval`, `tests/test_metrics.py`. Dev baseline
 retrieval: 20 dev questions, 17 scored (q12 calendar-only, q27 and q28 no gold source excluded). Hit rate 0.706 @1,
 0.941 @3/@5/@10; recall 0.549 @1, 0.838 @3/@5/@10; MRR 0.814. One miss in the top 10 (q15). Commit: 674648d.
+
+Step 8 (done 2026-10-12): `cta.answer` (prompt, threshold, parsing, logging), migration `002` (`request_logs.query_cache_hit`),
+shared retry helper (`with_retries`; `EmbeddingError` renamed `ApiError`), `tests/test_answer.py`. Settings probe:
+one call, all three accepted. Threshold 0.59. First answers: see `docs/decisions.md`. Commit: 7a9265f.
 
 ## Roadmap after the baseline (no code; Phase 3 and later)
 

@@ -142,3 +142,42 @@ What the weak spots look like (read from ranks, nothing tuned):
   (a math FAQ section outranks the `catalog:MAT 2675` record), q05 and q06 (department overview chunks outrank
   the specific page).
 These are inputs for Phase 3 (hybrid search for codes and names, department filter, reranker), not Phase 2 fixes.
+
+## Chat model settings (checked Oct 12, 2026)
+
+One real call to `gpt-6-luna` (Chat Completions) with `temperature` 0.1, `top_p` 0.3 and `reasoning_effort`
+"none" and the prompt "Reply with the single word: ok": all three parameters were accepted without an error (reply
+"ok", 13 prompt tokens, 4 completion tokens, 0 reasoning tokens). "Accepted" means the API raised no error; it does
+not prove the model uses temperature or top_p. `max_completion_tokens` (600) was added to the answer call and was
+also accepted in the first real answers. Settings live in `config/models.yaml` under `answer`.
+
+## Abstain rule and prompt (Oct 12, 2026)
+
+- Top-1 similarity of every dev question (answerable = the 17 scored questions): lowest answerable is q24 0.591,
+  then q15 0.606, q18 0.635, q22 0.658; unanswerable in the baseline: q27 0.540, q12 0.542 (calendar, not chunked),
+  q28 0.595. **Threshold 0.59**, just below the lowest answerable score, so it blocks no answerable dev question.
+- It separates very little: it stops 2 of the 3 dev questions the baseline cannot answer (q27, q12), not q28
+  (0.595) and not the made-up off-topic question (0.623). The model's own "ABSTAIN:" line is the second line of
+  defence (it caught the off-topic one). Chosen on dev only; it is not to be changed after looking at test.
+- A threshold abstain returns the fixed text "ABSTAIN: I could not find this in the City Tech sources I have." and
+  names no office (the plan had said to name the best contact; changed by the owner for step 8). Contact
+  suggestions are left to the model's own abstain sentence, and only if a source names one.
+- Prompt: system message = static instructions; user message = numbered sources (id, source, heading, terms, last
+  updated, text), then "Today's date" and the question last. Text in sources is declared to be data.
+- Citation check: reported only (invalid numbers are printed and counted), not enforced.
+- Cost is computed from the API's reported usage at the full input price (no cached-input discount), so it is an
+  upper bound. `--dry-run` estimates the prompt with tiktoken (an approximation for this model) and assumes 300
+  output tokens; it still embeds the question (about $0.0000002) because retrieval needs the vector.
+- `request_logs`: question and answer are passed through `cta.redact` before the insert; `query_cache_hit` records
+  whether the question vector came from the cache (a hit hides embedding latency, so `latency_ms` is only
+  comparable between rows with the same flag). Migration `002` adds the column.
+
+## First answers (Oct 12, 2026; not yet judged, step 9 measures them)
+
+Six requests, $0.0009 in total, all query embeddings were cache hits. q27 (seats) was stopped by the threshold
+with no chat call. q04 answered "66-67 credits [1]". q13 listed the four Fall 2026 payment-due ranges [1]. q16
+answered the aid part and said the sources do not state the grade after Sept 17 (its sources also include
+`pdf/dropping-withdrawing-fall-2026#4`, `#6`). q24 (ambiguous) answered 60 and 120 credits without asking which
+degree, citing [1][2]. The made-up off-topic question got a model "ABSTAIN:" (top-1 0.623 passed the threshold).
+No invalid citations. Obvious problems noticed: the model writes markdown bold in some answers; a course
+description in `catalog:EET 4112` contains the raw HTML entity `&rsquo;` (a Phase 1 cleaning gap, not fixed here).
