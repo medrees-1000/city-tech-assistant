@@ -114,3 +114,31 @@ never excluded.
   because the data has an "Architectural Technology" advisor heading (`virtual-advisors#2`, 0.623) that matches
   the words. So top-1 similarity alone will not separate off-topic from answerable cleanly: answerable questions
   here ranged 0.54 to 0.75 and unanswerable ones 0.54 to 0.62. Background for step 8; no threshold chosen.
+
+## Baseline retrieval metrics, dev (Oct 12, 2026)
+
+Vector only, exact cosine, k = 10 retrieved once, no filters; 17 of 20 dev questions scored (q12 has only a
+calendar gold source; q27 and q28 are unanswerable with no gold). The test split was not run.
+
+| k | recall | precision | hit rate |
+|---|---|---|---|
+| 1 | 0.549 | 0.706 | 0.706 |
+| 3 | 0.838 | 0.392 | 0.941 |
+| 5 | 0.838 | 0.235 | 0.941 |
+| 10 | 0.838 | 0.118 | 0.941 |
+
+MRR 0.814. n is 17 overall and 1 to 7 per type or department, so the breakdowns show direction only.
+Precision@k is low by construction: most questions have one gold source, so it cannot exceed 1/k.
+
+What the weak spots look like (read from ranks, nothing tuned):
+- The one miss (q15, EET student hours): the gold chunk is a table of names and times titled "ETET Office Hours
+  (Student Hours) Fall 2024", not in the top 30; the question says "Electrical Engineering Technology" and the
+  EET program chunks win.
+- Recall stays at 0.838 from k = 3 to 10: the missing gold sources are the ones the question's wording does not
+  describe: q01 `applying-graduation#1` ("Check Your Degree Audit", the question is about applying), q06
+  `CST-NYT/degrees#3` (a 261-character Data Science/BS chunk; `#1` ranks 12 and `#4` ranks 16 behind the
+  department overview), q16 `grade-policies#1` (rank 14; the question has two parts).
+- Rank 2 or 3 instead of 1: q21 (`catalog:EET 3672` behind `catalog:EET 2261`: course codes embed weakly), q22
+  (a math FAQ section outranks the `catalog:MAT 2675` record), q05 and q06 (department overview chunks outrank
+  the specific page).
+These are inputs for Phase 3 (hybrid search for codes and names, department filter, reranker), not Phase 2 fixes.

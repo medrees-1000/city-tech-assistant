@@ -1,10 +1,11 @@
 # Phase 2 plan: chunk, embed, vector-only baseline
 
-**Where we are (2026-10-12):** steps 1 to 6 done. `uv run python -m cta.index.search "question" -k 5` returns the
-nearest chunks (vector only, no filters). Query embeddings are cached in `data/cache/` (git-ignored). Test-split
-questions have not been searched or looked at. Next is step 7 (retrieval metrics, no LLM call; dev and test numbers
-are both computed there, decisions use dev only). A new session: read this file, `config/models.yaml`,
-`docs/decisions.md`, then continue at the first step not marked done.
+**Where we are (2026-10-12):** steps 1 to 7 done. The baseline retrieval numbers on dev are saved
+(`eval/results/baseline-retrieval-dev.json`, label `baseline-retrieval-dev`, also in `eval_runs`). The test split has
+not been run (`--split test` is refused without `--final`; only step 9 uses it). Next is step 8 (prompt, abstain
+threshold from dev scores, `request_logs`, first answers; this is the first step that calls the chat model, so show
+the cost estimate first). A new session: read this file, `config/models.yaml`, `docs/decisions.md`, then continue
+at the first step not marked done.
 
 Original status: plan only (2026-10-11). No code, no installs, no containers started. Everything here is for the owner
 to approve or change. Scope is CLAUDE.md Phase 2: "chunk, embed, vector-only RAG; record metrics". Not in scope:
@@ -242,7 +243,7 @@ or changed.
    queries (SAP deadlines, the TBA row).
 6. **DONE (0066e19). Retrieval.** `cta.eval.retrieve` and a `search` command (no chat model). Show: top 5 with scores for six
    sample questions, including one unanswerable and one calendar question.
-7. **Retrieval metrics.** The runner without any LLM call, results saved, baseline retrieval numbers on dev and
+7. **DONE (674648d). Retrieval metrics.** The runner without any LLM call, results saved, baseline retrieval numbers on dev and
    test. Show: the metric table by k, per-question hits and misses, and the top-1 score distribution that
    informs the abstain threshold.
 8. **Answers, abstain rule, logs.** Prompt, threshold (decision recorded in `docs/decisions.md`), `request_logs`.
@@ -280,6 +281,10 @@ Commit: b1be84f.
 
 Step 6 (done 2026-10-12): `cta.index.search` (`search()`, cache, command), `tests/test_search.py`. Sanity check on 4
 dev questions (q04, q12, q21, q27) and 2 made-up ones: see `docs/decisions.md`. Commit: 0066e19.
+
+Step 7 (done 2026-10-12): `cta.eval.metrics` (pure), `cta.eval.run_retrieval`, `tests/test_metrics.py`. Dev baseline
+retrieval: 20 dev questions, 17 scored (q12 calendar-only, q27 and q28 no gold source excluded). Hit rate 0.706 @1,
+0.941 @3/@5/@10; recall 0.549 @1, 0.838 @3/@5/@10; MRR 0.814. One miss in the top 10 (q15). Commit: 674648d.
 
 ## Roadmap after the baseline (no code; Phase 3 and later)
 
