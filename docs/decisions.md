@@ -90,3 +90,27 @@ never excluded.
   correctly in 2027 because the Fall calendar runs to January 1. The data was right; the check was too blunt.
 - Tests that used to assume the real `chunks` table was empty now compare its row count and latest
   `updated_at` before and after.
+
+## Search and the query cache (Oct 12, 2026)
+
+- `search()` is the vector-only baseline: exact cosine scan over all 619 chunks, no filters, ties broken by id.
+  Similarity is `1 - cosine distance`.
+- The query-embedding cache (`data/cache/query_embeddings.json`, git-ignored) is keyed by sha256(model + "\n" +
+  exact question), so a model change never reuses a vector and the question text is not stored in the file. It
+  is for speed and repeatable eval runs, not for answers. A cached vector of the wrong size is ignored, and a
+  missing or corrupt file is an empty cache. Writes go through a temporary file.
+- Downsides: (1) an edited question (even one space) misses the cache, which is correct but costs a call;
+  (2) the cache never expires, so it must be deleted by hand if the embedding model is changed *in place* under
+  the same name (OpenAI does not do that for a named model, but it is the one case the key cannot see);
+  (3) it grows by about 12 KB per distinct question (1,536 numbers), fine for eval sets, not for production
+  traffic; (4) a hit hides latency, so latency measurements must say whether the cache was used; (5) it is a
+  plain file with no locking, so two processes writing at once can lose an entry (harmless here).
+- Sanity check, top 1 similarity (dev questions; test questions were not used):
+  q04 0.754 (right section), q12 0.542 (the calendar is not chunked, so it finds the academic-calendar page),
+  q21 0.675 but the right course `catalog:EET 3672` was rank 2 (0.650) behind `catalog:EET 2261`, q27 (seats,
+  unanswerable) 0.540, made-up on-topic refund question 0.702, made-up off-topic "How do I apply to
+  Architectural Technology?" **0.623**.
+  The off-topic question scores *higher* than the answerable calendar question (0.542) and than q27 (0.540),
+  because the data has an "Architectural Technology" advisor heading (`virtual-advisors#2`, 0.623) that matches
+  the words. So top-1 similarity alone will not separate off-topic from answerable cleanly: answerable questions
+  here ranged 0.54 to 0.75 and unanswerable ones 0.54 to 0.62. Background for step 8; no threshold chosen.
