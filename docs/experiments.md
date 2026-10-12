@@ -244,3 +244,34 @@ been touched and would have to confirm any alias before the filter is used. The 
 
 **Open follow-ups (each would need its own pre-registered rule; none started):** also filter course chunks by their `department` field even though their scope is `city_tech`; use the detected department as a
 boost instead of a filter; use it as a feature of the step 3 reranker.
+
+### Step 3, LLM reranker (written 2026-10-12, before any reranker code, prompt or result)
+
+**Step 0 count (no code beyond a query, dev split, from the question text).** 13 of the 40 dev questions name a term or a relative term ("Fall 2026", "Winter 2027", "Spring 2027", "Summer 2027",
+"this fall", "this semester", "next spring"): q09, q12, q13, q14, q27, q28, q31, q33, q34, q36, q37, q44, q45. Only 3 are retrieval-scored (q09, q13, q14) and all 3 already rank their gold source at **1**.
+The other 10 are calendar-only, abstain or CLARIFY questions (no scorable gold section). So on dev a term filter has nothing to fix: no term-naming scored question ranks below 1. Step 2b is **not worth building
+now**; the 3 questions cannot show a gain, and a regression could not be told from noise. Not built.
+
+**Change under test.** `retrieval.rerank: off | pool_a | pool_b` (config switch, default `off`, quoted). The first stage fetches a candidate pool; one chat call per question scores each candidate 0 to 10; the
+candidates are sorted by score and the top k go to the answerer. Variants, fixed now:
+- **Pool A:** `mode: vector`, no department filter, top **20**.
+- **Pool B:** `mode: hybrid_bm25`, `dept_filter: on`, top **30**.
+- Rerank model = `chat_model` from `config/models.yaml` (`gpt-6-luna`), temperature 0, `reasoning_effort: none`, JSON output (`response_format` json_object).
+- The text sent for each candidate is cut to its **first 400 tokens** (tiktoken, same encoding as the chunker), with its source and heading. 400 is fixed and untuned.
+- Scores: a JSON object, candidate number -> number from 0 to 10. Sorted by score descending; equal scores keep the first-stage order. If the reply is not valid JSON, or any candidate has a missing or invalid
+  score (not a number from 0 to 10), or the call fails, the **whole question keeps the first-stage order**; such calls are counted as failed and reported, never hidden.
+- The abstain threshold stays on the top vector cosine similarity of the first-stage retrieval (not on rerank scores, which are not similarities). No change to the answer prompt, threshold, models, chunks, embeddings.
+
+**Prompt.** Written once, in `src/cta/index/rerank.py`, and committed before the first paid call. It is **not edited after seeing results**. A second prompt would be a new experiment with its own entry.
+
+**Keep rule (per variant).** On the 30 retrieval-scored dev questions, compared with `baseline-dev-60` (reproduced by `vector-v0-dev`): keep if MRR **or** recall@5 improves by at least 0.01 **and** neither drops
+by more than 0.02. Name every question whose first relevant rank got better or worse. The chain-tagged row (n = 3) is reported separately and is not part of the rule. **If both variants satisfy the rule, keep the
+one with the higher MRR** and say so. Both variants are reported whatever happens. Default switch only in a separate commit, only if a variant is kept; no paid answer-level run in this step.
+
+**Also reported, not part of the rule:** the pool's own recall (share of gold sources inside the pool = the upper bound for the reranker), failed or fallback calls, total cost, median and p95 rerank latency, and
+q15, q52, q56, q01, q06, q21 one by one.
+
+**Spend limit for the whole step: $0.25.** A call whose token-counted cost estimate would push a run over its allowance is refused before it is made.
+
+**Caveats written in advance.** n = 30 (one question moves a mean by about 0.03); the rule guards against regressions, not significance. The reranker cannot help a question whose gold is outside the pool (q01 and
+q15 were misses at 10; the pool is larger, so they may now be inside). The same model reranks and answers, which is a choice made for cost and simplicity, not a claim it is the best reranker.
