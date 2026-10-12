@@ -59,6 +59,9 @@ rerank:
 # booleans in YAML. The classifier and the selector call the answer model (chat_model) with these settings.
 router:
   mode: "off"
+  # Selector version (step 4a-2): 1 = the pool is the rows of the resolved term; 2 = the rows of all
+  # calendars with a stricter prompt. CTA_ROUTER_SELECTOR overrides it.
+  selector: 1
   temperature: 0
   reasoning_effort: none
   max_output_tokens: 300

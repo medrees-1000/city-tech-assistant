@@ -71,6 +71,11 @@ def term_pool(events: list[dict], term: str) -> list[dict]:
     return [e for e in events if e["term"] == term and not link_row(e)]
 
 
+def all_rows_pool(events: list[dict]) -> list[dict]:
+    """The rows of every calendar, minus the link rows (the selector v2 pool)."""
+    return [e for e in events if not link_row(e)]
+
+
 def label_pool(events: list[dict], label: str) -> list[dict]:
     """Rows of any calendar whose event text mentions the label (case-insensitive)."""
     needle = label.lower()

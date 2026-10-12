@@ -65,6 +65,11 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
         )
     if env.get("CTA_ROUTER_MODE", "").strip():
         cfg["router"]["mode"] = env["CTA_ROUTER_MODE"].strip()
+    if env.get("CTA_ROUTER_SELECTOR", "").strip():
+        cfg["router"]["selector"] = env["CTA_ROUTER_SELECTOR"].strip()
+    if str(cfg["router"]["selector"]) not in ("1", "2"):
+        raise ValueError(f"router.selector must be 1 or 2, not {cfg['router']['selector']!r}")
+    cfg["router"]["selector"] = int(cfg["router"]["selector"])
     if cfg["router"]["mode"] not in ("off", "on"):
         raise ValueError(f"router.mode must be off or on, not {cfg['router']['mode']!r}")
     if cfg["retrieval"]["dept_filter"] not in ("off", "on"):

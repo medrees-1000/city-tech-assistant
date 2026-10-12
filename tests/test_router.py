@@ -511,3 +511,110 @@ def test_request_log_row_carries_route_and_router_numbers_and_is_redacted(conn):
     ).fetchone()
     assert "a@b.edu" not in q and "718-260-5800" not in a
     assert route == "calendar" and router == {"x": 1}
+
+
+# ---- selector v2 (step 4a-2) ----
+
+CFG2 = load_models(env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "on", "CTA_ROUTER_SELECTOR": "2"})
+
+
+def test_selector_switch_default_is_version_1_and_validated():
+    assert OFF["router"]["selector"] == 1 and CFG["router"]["selector"] == 1
+    assert CFG2["router"]["selector"] == 2
+    with pytest.raises(ValueError, match="router.selector"):
+        load_models(env={"CTA_ROUTER_SELECTOR": "3"})
+
+
+def test_the_all_calendar_pool_has_every_term_and_no_link_rows(events):
+    pool = terms.all_rows_pool(events)
+    assert {r["term"] for r in pool} == {"Fall 2026", "Winter 2027", "Spring 2027"}
+    assert not any(terms.link_row(r) for r in pool)
+    assert len(pool) == 136 - sum(terms.link_row(r) for r in events)
+
+
+def test_v2_lines_show_the_term_and_the_prompt_is_the_stricter_one():
+    msgs = select.build_messages_v2("When?", TODAY, "Fall 2026", [row(applies_to="all students")])
+    assert (
+        "fall-2026-040 | Fall 2026 | Last day to withdraw. | November 06 | Friday | all"
+        in msgs[1]["content"]
+    )
+    assert "Assumed term: Fall 2026" in msgs[1]["content"]
+    assert "Return a row only if its event is what the student asked about" in msgs[0]["content"]
+    assert 'Reply {"row_ids": []} if the listed rows are about something else' in msgs[0]["content"]
+    assert (
+        "Prefer rows from the assumed term" in msgs[0]["content"]
+        and "Never write dates" in msgs[0]["content"]
+    )
+    assert select.build_messages("When?", TODAY, "Fall 2026", [row()])[0]["content"].startswith(
+        "You choose rows from a City Tech"
+    )
+
+
+class Spy(Script):
+    def create(self, **kw):
+        if kw["messages"][0]["content"].startswith(
+            "You choose rows from City Tech academic calendars"
+        ):
+            self.calls.append("select_v2")
+            self.v2_user = kw["messages"][1]["content"]
+            usage = SimpleNamespace(prompt_tokens=100, completion_tokens=10)
+            reply = json.dumps({"row_ids": self.row_ids})
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(content=reply))], usage=usage
+            )
+        return super().create(**kw)
+
+
+def test_selector_v2_sees_all_calendars_and_a_row_of_another_term_can_be_chosen(
+    monkeypatch, events
+):
+    script = Spy("calendar", "next spring", ["fall-2026-039", "fall-2026-038"])
+    router, _ = make_router(script, monkeypatch, events, CFG2)
+    ans = router.answer("When can I register for classes next spring?", TODAY, log=False)
+    assert script.calls == ["classify", "select_v2"]
+    for term in ("Fall 2026", "Winter 2027", "Spring 2027"):
+        assert f"| {term} |" in script.v2_user
+    assert "For more info" not in script.v2_user and "Assumed term: Spring 2027" in script.v2_user
+    assert ans.route == "calendar" and ans.row_ids == ["fall-2026-038", "fall-2026-039"]
+    assert ans.router["selector_version"] == 2 and ans.router["pool_size"] > 100
+    # each row names its own calendar, although the question resolved to Spring 2027
+    assert (
+        ans.text.count("(Fall 2026 calendar, fall_2026.pdf") == 2
+        and "Spring 2027 calendar" not in ans.text
+    )
+
+
+def test_selector_v1_is_unchanged_when_the_switch_is_1(monkeypatch, events):
+    script = Script("calendar", "Fall 2026", ["fall-2026-040"])
+    router, _ = make_router(script, monkeypatch, events, CFG)
+    ans = router.answer("Last day to withdraw in Fall 2026?", TODAY, log=False)
+    assert script.calls == ["classify", "select"]
+    assert ans.router["selector_version"] == 1 and ans.router["pool_size"] == 53
+
+
+def test_the_unsupported_term_path_keeps_selector_v1_even_when_v2_is_on(monkeypatch, events):
+    script = Script("calendar", "Fall 2027", ["spring-2027-040"])
+    router, _ = make_router(script, monkeypatch, events, CFG2)
+    ans = router.answer("When does registration for Fall 2027 begin?", TODAY, log=False)
+    assert script.calls == ["classify", "select"] and ans.router["selector_version"] == 1
+    assert ans.row_ids == ["spring-2027-040"]
+
+
+def test_a_valid_empty_v2_selection_still_falls_through(monkeypatch, events):
+    script = Script("calendar", "this fall", [])
+    router, seen = make_router(script, monkeypatch, events, CFG2)
+    ans = router.answer("When is my tuition bill due this fall?", TODAY, log=False)
+    assert ans.route == "calendar_fallthrough" and len(seen) == 1
+
+
+def test_the_renderer_names_each_rows_own_calendar_and_sorts_across_terms():
+    fall = row("fall-2026-039", date_start="2026-11-02", weekday_raw="Monday")
+    spring = row(
+        "spring-2027-040", term="Spring 2027", date_start="2027-03-22", weekday_raw="Monday",
+        source_pdf="data/pdfs/spring_2027.pdf", pdf_last_updated="2026-07-27",
+    )  # fmt: skip
+    out = render.render_rows([spring, fall], "c", assumed_term="Fall 2026")
+    lines = out.text.splitlines()
+    assert out.row_ids == ["fall-2026-039", "spring-2027-040"]
+    assert "(Fall 2026 calendar, fall_2026.pdf, last updated 2026-09-15;" in lines[1]
+    assert "(Spring 2027 calendar, spring_2027.pdf, last updated 2026-07-27;" in lines[2]

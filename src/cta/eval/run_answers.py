@@ -928,6 +928,7 @@ def main(argv: list[str]) -> int:
     p.add_argument("--ids", help="comma-separated question ids (within the split)")
     p.add_argument("--tag", help="only questions with this tag, for example calendar")
     p.add_argument("--router", choices=("off", "on"), help="override router.mode")
+    p.add_argument("--selector", type=int, choices=(1, 2), help="override router.selector")
     p.add_argument(
         "--calendar-scoring", type=int, nargs="?", const=1, choices=(1, 2),
         help="score calendar-only gold by the rows stated: 1 exact rows, 2 required rows "
@@ -967,6 +968,8 @@ def main(argv: list[str]) -> int:
         cfg["retrieval"]["rerank"] = args.rerank
     if args.router:
         cfg["router"]["mode"] = args.router
+    if args.selector:
+        cfg["router"]["selector"] = args.selector
     if args.calendar_scoring:
         cfg["eval"]["calendar_scoring"] = args.calendar_scoring
     if args.relabel:

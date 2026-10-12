@@ -96,10 +96,20 @@ def make_nodes(d: Deps):
                     render.abstain_text(text, d.contact), "calendar_unsupported_term"
                 )
                 return {"calendar": info, "answer": ans, "fallthrough": False, "route": "abstain"}
+            version = 1  # the unsupported-term path keeps the 4a selector
         else:
-            pool = terms.term_pool(d.events, resolution.term)
+            version = d.cfg["router"].get("selector", 1)
+            pool = (
+                terms.all_rows_pool(d.events)
+                if version == 2
+                else terms.term_pool(d.events, resolution.term)
+            )
         client = d.client_factory()
-        chosen = select.select_rows(client, d.cfg, state["question"], state["today"], label, pool)
+        chosen = select.select_rows(
+            client, d.cfg, state["question"], state["today"], label, pool, version
+        )
+        info["selector_version"] = version
+        info["pool_size"] = len(pool)
         info["select"] = call_numbers(chosen.call) | {"status": chosen.status}
         info["invalid_ids"] = len(chosen.invalid_ids)
         if chosen.status == "empty" and resolution.status != "unsupported":
