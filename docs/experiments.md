@@ -394,3 +394,38 @@ noise roughly; the dev questions were used to choose pool_a, so this is not an i
 - **Follow-up for step 6 (guardrails and caching):** total latency per request median 1.2 s to 3.0 s, p95 2.4 s to 4.8 s; cost +$0.0005 per request.
 - **Open question:** the rubric v3 finding that q22 and q40 faithfulness did not change stands until the owner has hand-checked `docs/judge-check-v3.md`; no conclusion about v3 is drawn here.
 - Next: step 4a-0 (calendar question candidates), then 4a (calendar tool in a minimal LangGraph router), 4b, 4c. Each gets its own pre-registration.
+
+### Step 4a, calendar tool inside a minimal LangGraph router (written 2026-10-12, before any router code, prompt or result)
+
+**Change under test.** `router.mode: "off" | "on"` (config switch, default `"off"`, quoted). With `on`, a graph with nodes `classify -> (calendar | retrieve)` answers calendar questions from the calendar table and sends everything else
+through the existing pipeline (retrieve, rerank, answer) **unchanged**. Nothing in retrieval, rerank, the answer prompt, the abstain threshold, models, chunks, embeddings or the reranker prompt changes. The test split is not run, read or looked at.
+
+**Design, fixed now.**
+- **Classifier:** one model call (the answer model, temperature 0, `reasoning_effort: none`, JSON) returning `{"intent": "calendar" | "other", "term_mention": string | null}`. `calendar` = the student asks for a date, deadline, start or end of a period, or a closure or break
+  from the academic calendar; `other` = everything else (policy explanations, how-to, amounts, programs, courses, contacts). `term_mention` = the words used for a term, verbatim, or null.
+- **Term resolution (plain code, no model).** The supported terms are read from `calendar_events.json` (Fall 2026, Winter 2027, Spring 2027). An explicit supported term maps to its calendar. A season without a year resolves against `eval.today` (2026-10-11): fall = Fall 2026, winter = Winter 2027,
+  spring (also "this spring", "next spring") = Spring 2027. No mention, or a mention that names no season and no year, = the current term (Fall 2026) and the answer states the assumed term. A mention that names a term without a calendar (Summer 2027, Fall 2027, any other year) is **unsupported**: search the event
+  text of all rows for that label (case-insensitive); matching rows form the pool (the q73 pattern); no match = abstain with the Registrar contact. "Next semester" resolves to the current term (a known limitation).
+- **Pool** for a supported term = that term's rows minus rows whose event text is only a "For more info" web address.
+- **Selector:** one model call (same settings, JSON `{"row_ids": [...]}`), input = question, today's date, the term and the pool as lines `id | event | date_raw | weekday_raw | applies_to`; instruction: return the id of every row that answers the question, `[]` if none does, never produce dates. Ids not in the pool are rejected
+  (counted and reported). An empty list, or a failed or malformed call, = abstain ("I could not find that in the <term> calendar" plus the Registrar contact); never a fallback to guessing.
+- **Renderer (plain code; the only thing that writes dates):** weekday and date in words from `date_start` (weekday must equal `weekday_raw`, otherwise `weekday_raw` is rendered and the mismatch counted), ranges and year-crossing ranges, then the event, then "(<term> calendar, <pdf file name>, last updated <date>; the calendar can change)",
+  rows sorted by date, "(applies to: ...)" when `applies_to` is set. A null date (TBA) renders as "not announced yet" plus the Registrar contact (read from the contacts file `make_calendar_candidates.py` uses). The result carries the row ids as its sources.
+- **Prompts** (classifier, selector) are written once and committed **before any paid call**, are never edited after seeing dev results; a second prompt would be a new experiment.
+- **Scoring for calendar-only gold** (all gold sources are calendar row ids; deterministic, no judge; recorded as `calendar_scoring: 1` in run configs): **correct** = the returned row ids equal the gold ids; **partial** = a non-empty proper subset; **incorrect** = any returned id outside the gold set (a "wrong date stated") or an abstention, **or the question was not answered by the calendar route** (it returns no row ids). Gold ABSTAIN
+  questions use the existing abstention rule. Ambiguous or CLARIFY questions stay "not supported yet" until step 5. New failure labels for calendar results: calendar wrong row, calendar missed, calendar abstained; every other label is unchanged.
+- **Calendar-only dev questions (13, confirmed from the data):** q12 q31 q33 q36 q37 q61 q63 q64 q65 q67 q68 q71 q75. (q09 has a calendar row and a page; it is a normal question, judged as usual.)
+
+**Runs.** `router-run1..3`: router `on`, all 48 dev questions, answers with the unchanged settings, rubric v3, same judge. `before-new8`: the current system (router off, rerank on) on the 8 new dev calendar questions (q61 q63 q64 q65 q67 q68 q71 q75), scored by the same exact rule for the record (the current system returns no calendar row ids,
+so by construction it scores incorrect; I will also report, not as a score, whether the gold date appears in its answer text). The 40 old questions use the stored `on-run1..3` (3b arm ON, rubric v3) as "before". Spend limit for the whole step: **$2.00** (`--budget`; a run stops itself before exceeding it).
+
+**Keep rule (all must hold; otherwise the default stays `off`).**
+- (a) On the 13 calendar-only dev questions: mean correct >= 11 of 13 over the 3 router runs and no run below 10.
+- (b) No wrong date stated in any run (no returned row outside the gold set).
+- (c) On the other judged dev questions (the same 26 normal-gold questions as step 3b), compared with the means of the stored `on-run1..3`: the mean correct share does not fall by more than one question's worth (1/26); the faithfulness "yes" share does not fall; abstention accuracy does not fall and the wrongly-abstained count does not rise; citation validity (rate, invalid citations) does not fall.
+- (d) The dev abstain questions for unsupported terms and sections (q27 q28 q34 where present) still abstain.
+Name every question whose result changed in either direction. Report misroutes both ways (an `other` question sent to calendar, a calendar question sent away) and classifier accuracy against the gold intent (calendar = calendar-only gold, or a gold ABSTAIN question whose term has no calendar; everything else = other).
+
+**Known risk, written before the run.** q13 (tuition bill due) and q14 (aid refund date) ask for dates but their answers are in office pages and the aid PDF, not in the academic calendar. A classifier that says `calendar` sends them to a pool that does not hold the answer; by design the result is an abstention (no fallback to retrieval). That would show as wrongly abstained in rule (c). If the rule fails for that reason, "empty selection falls through to retrieve" is a separate follow-up experiment, not an edit of this one.
+
+**Caveats written in advance.** 13 calendar questions is a small set; the same model classifies, selects and answers; the judge is the same as before and imperfect; the three runs bound noise roughly; "next semester" resolves to the current term; dev questions chose the design only through the categories, not through results.
