@@ -316,3 +316,14 @@ code at the time of the re-judge); its labels were later recomputed by `--relabe
   fusion, `cta.eval.compare` (applies the rule), retrieval time recorded per question. A further hybrid variant can reuse all of it.
 - The abstain threshold is applied to `Search.top_vector_similarity` (the best cosine in the vector list) in both modes. In vector mode this is the same value as
   before (the top-1 similarity), so the threshold decisions and all baseline numbers are unchanged.
+
+## Judge rubric v3 and the BM25 code (Oct 12, 2026; Phase 3 step 1b)
+
+- **Rubric v3 (faithfulness only).** In `baseline-dev-60` two chain answers (q22, q40) were graded faithfulness "no". In both the model said the sources do not
+  state some prerequisite (MAT 1575 and 2580 for q22, CST 1201 for q40), and in both those courses were not among the five numbered sources shown, so the statement was
+  true. The judge called it "unsupported" (q40) or "contradicted" by other chunks (q22), and in q40 it also said CST 1204's prerequisites were wrong although the shown source
+  states them. v3 says: judge only against the numbered sources shown, never outside knowledge; a statement that the sources lack X is faithful when X is absent from those
+  sources (and a "no" when X is there). "partly" and "no" otherwise keep their v2 meaning. Correctness and the special gold rules are unchanged. The version is stored in every run config. The next
+  answer-level run re-judges the stored `baseline-dev-60` answers under v3 first, so the comparison is like for like; nothing was re-judged in this step (no paid call).
+- **BM25 code stays, off by default.** `cta.index.bm25`, `retrieval.mode: hybrid_bm25`, the `bm25_rank` field and the in-process index are kept in the repository like the ts_rank hybrid
+  mode; experiment 1b was rejected by the rule as written (MRR -0.023 against a limit of -0.02). Both can be reused by the reranker experiment.

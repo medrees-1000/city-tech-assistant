@@ -104,3 +104,62 @@ better or worse. The chain-tagged row (n = 3) is reported separately and is not 
 answer-level run in step 1b; that is done together with step 2. The default switch to `hybrid_bm25` would be a separate commit, only if the rule says keep.
 
 **Same caveat as before:** with 30 scored questions one question moves a mean by about 0.03; the rule guards against regressions and does not test significance.
+
+## Experiment 1b: hybrid search with a BM25 keyword side, 2026-10-12 — REJECTED (narrowly, by the rule as written)
+
+**Change.** `retrieval.mode: hybrid_bm25` (config switch; default stays `vector`). Vector top 20 plus BM25 top 20, reciprocal rank fusion (k = 60), ties by
+id. BM25 is computed in Python (`cta.index.bm25`, standard library): Postgres only supplies the lexemes and the per-chunk term counts from `chunks.tsv`;
+`k1 = 1.2`, `b = 0.75`, `idf = ln(1 + (N - df + 0.5) / (df + 0.5))`, built once per process (N = 619 chunks, average length 94.6, 5,152 lexemes). Constants
+and the keep rule were written and committed before any BM25 code (`e74a3ab`) and were not touched afterwards. An empty query falls back to vector only; results gain
+`bm25_rank`; the abstain threshold stays on the best vector cosine similarity. The tsvector's 256-positions-per-lexeme cap does not matter here: the most frequent
+lexeme in any chunk occurs 85 times, the largest chunk is 6,868 characters and the longest document has 804 indexed positions. No paid call was made.
+
+**Measurement.** `run_retrieval --split dev --label hybrid-bm25-dev --mode hybrid_bm25` (40 dev questions searched, 30 scored, query vectors cached, cost $0),
+compared with `vector-v0-dev` (= `baseline-dev-60`) and, for reference, with `hybrid-v1-dev` (experiment 1).
+
+| Metric (n = 30) | vector | hybrid (ts_rank) | hybrid_bm25 | bm25 vs vector |
+|---|---|---|---|---|
+| MRR | 0.789 | 0.710 | 0.766 | **-0.023** |
+| recall@5 | 0.775 | 0.743 | 0.803 | **+0.028** |
+| recall@10 | 0.828 | 0.805 | 0.888 | +0.060 |
+| hit rate @1 / @3 / @5 / @10 | 0.700 / 0.867 / 0.900 / 0.933 | 0.600 / 0.800 / 0.833 / 0.900 | 0.633 / 0.900 / 0.900 / 0.967 | -0.067 / +0.033 / 0 / +0.033 |
+| recall@1 / @3 | 0.488 / 0.735 | 0.421 / 0.649 | 0.471 / 0.749 | -0.017 / +0.014 |
+| chain row (n = 3): recall@5 / recall@10 / MRR | 0.500 / 0.533 / 0.833 | 0.600 / 0.633 / 0.833 | 0.533 / 0.633 / 0.833 | +0.033 / +0.100 / 0 |
+| search time, median / p95 | 15.8 / 18.0 ms | 17.6 / 20.8 ms | 15.8 / 16.9 ms | none |
+
+By type, MRR before to after: lookup 0.691 to 0.760 (n = 14), multi_chunk 0.938 to 0.875 (n = 8), ambiguous 0.750 to 0.417 (n = 2), unanswerable 1.000 to 0.750 (n = 2),
+time_sensitive 0.750 unchanged (n = 4).
+
+**Questions that changed (first relevant rank, miss = not in the top 10).** Better (4): q21 2 to 1, q52 miss to 1, q53 5 to 2, q56 7 to 6.
+Worse (6): q01 1 to 2, q06 2 to 7, q24 1 to 2, q47 1 to 2, q49 2 to 3, q59 1 to 2. Unchanged: 20, including q15 (miss to miss). Against experiment 1 (ts_rank), BM25
+improved 8 questions and worsened 2 (q47, q49).
+
+**The five questions asked about.**
+- q21 (EET 3672): vector 2, BM25 1. The code lexeme `3672` is rare (in 9 chunks, idf 4.18) and decides it.
+- q52 (expire): vector 15, **BM25 1**. `expir` occurs in exactly one chunk (idf 6.02), the gold FAQ; the other query lexemes are common (`program` idf 0.53, `prerequisit` 0.96).
+  After fusion it is rank 1 (was a miss). This is the clean case BM25 was meant for.
+- q15 (student hours): vector 103, **BM25 207** (score 2.43). Query lexemes `depart` (df 284, idf 0.78), `student` (327, 0.64), `technolog`, `electr`, `engin`, `hour`. The gold page is a short
+  table; the EET program chunks repeat "electrical engineering technology" many times and score 13. BM25 cannot know that "Electrical Engineering Technology department" names the
+  department and not the topic; unchanged miss.
+- q56 (EET internships): vector 7, BM25 5; fused 6 (better by one rank). Generic EET pages (chair 19.5, overview 17.6) outscore the list page (15.8) on the many department words.
+- q01 (apply for graduation): vector 1 (`#2`), BM25 13 (`#2`) and 35 (`#1`); fused rank 2 (worse by one). The words `citi` and `tech` (City Tech) are in 92 and 214 chunks, and other pages
+  (`readmission#4` 9.2) outscore the right page.
+
+**Decision (rule as written): REJECT for retrieval.** recall@5 improved by 0.028 (more than 0.01) but MRR dropped by 0.023, which is more than the allowed 0.02. It is a narrow miss and I
+am not rounding it: the constants and the rule were fixed beforehand. The paid answer-level run was not done and the default stays `vector`.
+
+**What the result says.** BM25 helps in the lower ranks (recall@10 +0.060, hit rate @10 +0.033, one miss rescued) and costs a little at the top (hit rate @1 -0.067; six questions lose one
+to five positions, four of them only one). Equal-weight fusion moves a correct vector rank 1 down when a BM25 list puts another chunk first. The pattern suggests a keyword-and-vector
+candidate set (good at finding the right chunk somewhere in the top 10) feeding a **reranker** (step 3) that fixes the order, rather than the fusion deciding the order itself. Not tested.
+
+**Caveats.** n = 30 (3 chain, 2 ambiguous, 2 unanswerable): one question moves the means by about 0.03, so MRR -0.023 is smaller than one question's worth of noise.
+The explanation above was read off dev ranks. Rubric v3 (below) was written in the same step but not used here (no judge call).
+
+**Open follow-ups (each needs its own pre-registered rule; none started):** a vector-weighted fusion; BM25 only as candidate generator for the reranker experiment; a department-name
+filter (step 2) that would address q15 and q56, which BM25 cannot.
+
+### Rubric v3 (code only, 2026-10-12)
+`RUBRIC_VERSION = 3`: faithfulness is judged only against the numbered sources shown, never outside knowledge; "the sources do not contain X" is faithful if X is absent from
+those sources, and a "no" if X is in them. Correctness and the special gold rules are unchanged. Stored in every run config. **The next answer-level run will also re-judge the stored
+`baseline-dev-60` answers under v3** (`--rejudge baseline-dev-60`, judge calls only) so the comparison is like for like; the v2 numbers in `baseline-dev-60.json` stay as recorded.
+Reason: see `docs/decisions.md` (the q22 and q40 findings).
