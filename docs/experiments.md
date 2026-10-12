@@ -275,3 +275,47 @@ q15, q52, q56, q01, q06, q21 one by one.
 
 **Caveats written in advance.** n = 30 (one question moves a mean by about 0.03); the rule guards against regressions, not significance. The reranker cannot help a question whose gold is outside the pool (q01 and
 q15 were misses at 10; the pool is larger, so they may now be inside). The same model reranks and answers, which is a choice made for cost and simplicity, not a claim it is the best reranker.
+
+## Experiment 3: LLM reranker, 2026-10-12 — Pool A KEPT, Pool B also meets the rule but has the lower MRR
+
+**Change.** `retrieval.rerank: off | pool_a | pool_b` (default `off` at this commit; `CTA_RERANK` or `--rerank` override). Code, prompt and tests: `774890e` (committed before the first paid call; the prompt in
+`src/cta/index/rerank.py` is unedited since). One chat call per question to `gpt-6-luna` (temperature 0, reasoning none, JSON), each candidate cut to its first 400 tokens, scores 0 to 10, sorted by score with ties and any
+unusable reply falling back to the first-stage order. Rule and variants pre-registered in `8c379c4`. Measurement: `run_retrieval --split dev --rerank pool_a|pool_b`, labels `rerank-a-dev` and `rerank-b-dev`; compared with
+`vector-v0-dev` (= `baseline-dev-60`). Test split not touched. (`compare` prints "mode vector" for both because the saved `retrieval_mode` field is the base mode; the pool is in each file's `config.retrieval.rerank`.)
+
+| Metric (n = 30) | baseline (vector) | Pool A: vector top 20 | Pool B: BM25 + dept filter top 30 |
+|---|---|---|---|
+| MRR | 0.789 | **0.925** (+0.136) | 0.904 (+0.114) |
+| recall@5 | 0.775 | **0.897** (+0.122) | 0.883 (+0.108) |
+| recall@1 / @3 | 0.488 / 0.735 | 0.671 / 0.880 | 0.638 / 0.860 |
+| recall@10 | 0.828 | 0.905 | 0.903 |
+| hit rate @1 / @3 / @5 / @10 | 0.700 / 0.867 / 0.900 / 0.933 | 0.900 / 0.933 / 0.967 / 0.967 | 0.867 / 0.933 / 0.933 / 0.967 |
+| chain row (n = 3) MRR / recall@5 / recall@10 | 0.833 / 0.500 / 0.533 | 1.000 / 0.633 / 0.633 | 1.000 / 0.667 / 0.700 |
+| pool recall (upper bound), all / chain row | | 0.912 / 0.700 | 0.912 / 0.700 |
+| rerank calls, failed or fallback | | 40, **0 failed** | 40, **0 failed** |
+| rerank cost (40 questions, dev) | | $0.0206 (187,863 in / 3,636 out tokens) | $0.0295 (269,326 in / 5,179 out) |
+| rerank API latency median / p95 | | 1,635 / 2,305 ms | 1,862 / 2,333 ms |
+
+By type, MRR before to after (Pool A / Pool B): lookup (14) 0.691 to 0.911 / 0.901; multi_chunk (8) 0.938 to 1.000 / 1.000; ambiguous (2) 0.750 to 1.000 / 0.750; time_sensitive (4) 0.750 to 0.750 / 0.750; unanswerable (2) 1.000 to 1.000.
+
+**Questions (first relevant rank, baseline to reranked).**
+- Pool A: improved 7 — q05 3 to 1, q21 2 to 1, q22 2 to 1, q49 2 to 1, q52 miss to 1, q53 5 to 2, q56 7 to 1. Worsened 1 — **q06 2 to 4**. Unchanged 22.
+- Pool B: the same 7 improved; worsened 2 — **q06 2 to 9**, **q24 1 to 2**. Unchanged 21.
+- The ones asked for: q15 stays a miss in both (pool recall 0 for q15: the gold `student-hours` section is in neither pool, so no reranker can reach it); q52 miss to 1 (its gold was at position 15 of Pool A, outside the old top 10);
+  q56 7 to 1 (position 7 of the pool); q01 stays 1 (but pool recall for q01 is 0.5: its second gold section, `applying-graduation#1`, is in neither pool); q06 gets worse (see below); q21 2 to 1.
+
+**Why q06 got worse.** Its first gold (the CST degrees page, section 2) was at pool position 2 for Pool A (12 and 16 for the other sections); the model scored the CST overview, the department home page and the student-resources page above it
+(ranks 1 to 3 after reranking). I read the ranks only; I have not re-read the reranker's scores, and I did not touch the prompt. The overview pages are about the same topic, which is exactly what rule 1 of the prompt tells the model not to
+reward, so this is a model judgement call, not a malfunction: no failed calls.
+
+**Decision (pre-registered rule).** Both variants satisfy it (MRR and recall@5 each improved by far more than 0.01; neither dropped). **Both satisfy the rule, so the one with the higher MRR is kept: Pool A (0.925 against 0.904).**
+Pool B is also reported as a pass. Pool A is also the simpler one (the baseline's own vector search, no BM25, no department filter) and cheaper ($0.0206 against $0.0295 for 40 questions).
+
+**Cost and latency.** Pool A adds about $0.0005 per question (one call of about 4,700 input tokens) and a median of 1.6 s per question (retrieval alone was about 16 ms). The cost of the answer is unchanged. That is the price of this
+gain and is not free: the answer-level run, not run here, is what shows whether better ranks give better answers.
+
+**What this does not show.** n = 30, three of them chain questions; the rule guards against regressions and does not test significance. Several of the gains (q56 7 to 1, q52 miss to 1) come from gold that was already in the pool; the pool recall of 0.912
+is an upper bound. The same model reranks and answers. Dev questions were used to choose between two pre-registered variants; the prompt was not tuned on dev. The test split is untouched and has to confirm this. The abstain threshold still reads the first
+stage's best cosine similarity: with Pool A (vector, no filter) that is identical to the baseline's, so abstention decisions are unchanged.
+
+**Open follow-ups (each would be its own experiment):** a second prompt; a bigger pool or a different cut for the chunk text; showing the reranker the neighbouring sections (q01, q06); the answer-level run (first re-judge `baseline-dev-60` under rubric v3).
