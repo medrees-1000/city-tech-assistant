@@ -249,6 +249,7 @@ tests/
 - Labels are document/section level (source URL + heading), never chunk IDs.
 - `eval/questions.jsonl` fields: `id`, `question`, `gold_answer`, `gold_sources`, `type`
   (lookup|multi_chunk|time_sensitive|ambiguous|unanswerable), `department`, `split` (dev|test).
+  Optional: `tags`, a list of strings (for example `chain` for chained-prerequisite questions); any other field is rejected.
 - Metrics: recall@k, precision@k, hit rate, MRR, answer correctness, faithfulness, abstention
   accuracy, cost per request, latency. Report each retrieval change against the baseline.
 - Do not tune on `test`. Change one thing at a time. CI fails on a recall regression.

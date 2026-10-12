@@ -20,6 +20,7 @@ from cta.validate.findings import Finding
 QUESTIONS = ROOT / "eval" / "questions.jsonl"
 CALENDAR = "data/calendar/calendar_events.json"
 FIELDS = ("id", "question", "gold_answer", "gold_sources", "type", "department", "split", "note")
+OPTIONAL_FIELDS = ("tags",)  # a list of non-empty strings, e.g. "chain"
 TYPES = ("lookup", "multi_chunk", "time_sensitive", "ambiguous", "unanswerable")
 SPLITS = ("dev", "test")
 DEPARTMENTS = ("CST-NYT", "MATH-NYT", "EET-NYT", "DENT-NYT")
@@ -44,6 +45,12 @@ def load_questions(path: Path = QUESTIONS) -> list[dict]:
 def row_problems(row: dict) -> list[str]:
     """Problems with the row itself (not its gold sources)."""
     problems = [f"missing field {f}" for f in FIELDS if f not in row]
+    problems += [f"unknown field {f}" for f in row if f not in FIELDS + OPTIONAL_FIELDS]
+    tags = row.get("tags")
+    if "tags" in row and (
+        not isinstance(tags, list) or not all(isinstance(t, str) and t.strip() for t in tags)
+    ):
+        problems.append("tags is not a list of non-empty strings")
     if row.get("type") not in TYPES:
         problems.append(f"type {row.get('type')!r} is not one of {'|'.join(TYPES)}")
     if row.get("split") not in SPLITS:

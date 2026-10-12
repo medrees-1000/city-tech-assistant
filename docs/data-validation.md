@@ -54,6 +54,12 @@ PDFs, departments, calendar). A missing input is SKIPPED, never a pass.
   in no heading is allowed only with a stated source (the refund calendar rule, docs/decisions.md);
   `term` is the entry when there is exactly one, else null. Refund pages store `covered_terms`.
 
+### Eval questions (`eval/questions.jsonl`, area "eval")
+- Every row has `id`, `question`, `gold_answer`, `gold_sources`, `type`, `department`, `split`, `note`. An optional `tags`
+  field is allowed and must be a list of non-empty strings (planned tag: `chain`). Any other field is rejected.
+- Gold sources must exist (section ids, `catalog:<CODE>`, verified calendar events), and no gold answer outside the abstain
+  questions may be a placeholder.
+
 ### Calendar
 - Every row has event, date (or explicit TBA), term, source PDF and last-updated date.
 - Dates fall inside the term's expected range, and the weekday matches the date for the right year.

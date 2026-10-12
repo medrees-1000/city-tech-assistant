@@ -87,6 +87,14 @@ def test_every_required_field_is_needed():
         assert f"missing field {f}" in row_problems(row)
 
 
+def test_tags_are_optional_and_unknown_fields_are_rejected():
+    assert row_problems(good(tags=["chain"])) == [] and row_problems(good(tags=[])) == []
+    assert any("tags" in p for p in row_problems(good(tags="chain")))
+    assert any("tags" in p for p in row_problems(good(tags=["chain", ""])))
+    assert any("tags" in p for p in row_problems(good(tags=[1])))
+    assert "unknown field difficulty" in row_problems(good(difficulty="hard"))
+
+
 def test_type_split_and_department_are_checked():
     assert any("type" in p for p in row_problems(good(type="essay")))
     for t in ("lookup", "multi_chunk", "time_sensitive", "ambiguous", "unanswerable"):
