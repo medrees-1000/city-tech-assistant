@@ -86,3 +86,21 @@ rule and the configuration were fixed first), but the explanation above was read
 **Possible follow-ups (each would be its own experiment with its own pre-registered rule, not started):** (a) keyword side restricted to rare
 lexemes, for example only lexemes with a low document frequency or only codes, computed from the index; (b) a weighted fusion that favours the
 vector list; (c) a document-frequency weighted keyword score (BM25 style) computed in Python over the 619 chunks.
+
+### Step 1b, hybrid search with a BM25 keyword side (written 2026-10-12, before any BM25 code or result)
+
+**Why a second try.** Experiment 1 was rejected because Postgres `ts_rank` has no inverse document frequency and no length normalisation, so common
+words and long chunks dominated the keyword list. BM25 weighs rare terms by idf and normalises by chunk length. This is a different keyword scorer, the
+same fusion. The first try (`retrieval.mode: hybrid`, `ts_rank`) stays in the repository, off, so its result can be reproduced and a third variant can reuse
+the pieces; it is not deleted because the rejection is a finding, not a mistake.
+
+**Constants, fixed now and not tuned afterwards:** BM25 `k1 = 1.2`, `b = 0.75`; `idf = ln(1 + (N - df + 0.5) / (df + 0.5))`; candidate lists of 20 each
+(vector top 20 plus BM25 top 20); reciprocal rank fusion `k = 60`; ties by id; query lexemes = the lexemes of `to_tsvector('english', question)`.
+If the numbers look wrong, the next step is a new, separately pre-registered experiment, not an edit of these.
+
+**Keep rule (the same as step 1).** On the 30 retrieval-scored dev questions, compared with `baseline-dev-60` (reproduced by `vector-v0-dev`):
+keep if MRR **or** recall@5 improves by at least 0.01 **and** neither drops by more than 0.02. Name every question whose first relevant rank got
+better or worse. The chain-tagged row (n = 3) is reported separately and is not part of the rule. A kept result is not run through the paid
+answer-level run in step 1b; that is done together with step 2. The default switch to `hybrid_bm25` would be a separate commit, only if the rule says keep.
+
+**Same caveat as before:** with 30 scored questions one question moves a mean by about 0.03; the rule guards against regressions and does not test significance.
