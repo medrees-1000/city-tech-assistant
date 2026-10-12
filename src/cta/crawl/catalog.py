@@ -3,6 +3,7 @@
 Run: uv run python -m cta.crawl.catalog
 """
 
+import html
 import json
 import re
 import sys
@@ -146,6 +147,11 @@ LEGACY_PREFIXES = {"MST", "DPT"}  # old subject prefixes the catalog still lists
 WRITING_INTENSIVE = "WRIC"  # catalog attribute strings look like "WRIC - WRIC (Writing Intensive)"
 
 
+def decode_entities(text: str | None) -> str | None:
+    """The API returns some text HTML-escaped ("CAD&rsquo;s", "design &amp; troubleshooting")."""
+    return html.unescape(text) if isinstance(text, str) else text
+
+
 def to_record(course: dict, dept_ids: set[str], rule_text: str | None, fetched_at: str) -> dict:
     kept = [d for d in course["departments"] if d["id"] in dept_ids]
     credits = course.get("credits") or {}
@@ -153,8 +159,8 @@ def to_record(course: dict, dept_ids: set[str], rule_text: str | None, fetched_a
     attributes = custom.get("catalogAttributes")
     return {
         "code": course.get("code"),
-        "title": course.get("name"),
-        "description": course.get("description"),
+        "title": decode_entities(course.get("name")),
+        "description": decode_entities(course.get("description")),
         "credits": credits.get("numberOfCredits"),
         "credit_hours": credits.get("creditHours"),  # {"min", "max", "operator"} as the API has it
         "contact_hours": credits.get("contactHours"),  # {"value", "operator"}
@@ -169,7 +175,7 @@ def to_record(course: dict, dept_ids: set[str], rule_text: str | None, fetched_a
         # Readable text for coded categories. Only some courses have it; never filled in by hand.
         "pathways_label": custom.get("catalogRequirementDesignation") or None,
         "department": kept[0]["id"],
-        "department_name": kept[0].get("name"),
+        "department_name": decode_entities(kept[0].get("name")),
         "all_departments": [d["id"] for d in course["departments"]],
         "status": course.get("status"),
         "subject_code": course.get("subjectCode"),
@@ -177,7 +183,7 @@ def to_record(course: dict, dept_ids: set[str], rule_text: str | None, fetched_a
         "course_number": course.get("courseNumber"),
         "course_group_id": course.get("courseGroupId"),
         "rule_id": course.get("requirementGroup") or None,
-        "prerequisite_text": rule_text,
+        "prerequisite_text": decode_entities(rule_text),
         "prereq_style": prereq_style(course.get("requirementGroup") or None, rule_text),
         "source": "catalog_api",
         "fetched_at": fetched_at,

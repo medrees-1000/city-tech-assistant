@@ -141,6 +141,18 @@ def check_metadata() -> Area:
     return area
 
 
+def check_entities() -> Area:
+    from cta.validate.entities import check_entities as scan
+
+    area = Area("entities")
+    if not PROCESSED.exists():
+        area.skipped = f"{PROCESSED} is missing"
+        return area
+    count, area.findings = scan(PROCESSED)
+    area.checked = f"{count} records"
+    return area
+
+
 def check_eval() -> Area:
     from cta.eval.questions import QUESTIONS, eval_findings, load_gold_data, load_questions
 
@@ -174,7 +186,7 @@ def check_calendar() -> Area:
 
 AREAS = [
     check_courses, check_pages, check_pdfs, check_departments, check_metadata, check_calendar,
-    check_eval,
+    check_entities, check_eval,
 ]  # fmt: skip
 
 
