@@ -487,3 +487,24 @@ About $0.50 of the $2.00 allowance was spent.
 If it passes, `router.mode` becomes `"on"` and `router.selector` 2 in a separate commit; otherwise both defaults stay. Reported in any case: calendar results per run and question under v1 and v2, wrong rows stated, the q37 pattern, which questions fell through, misroutes both ways, classifier accuracy, the judged questions against 3b, selector input size and latency against 4a, latency by route, cost by component, three example calendar answers in full.
 
 **Caveats written in advance.** 13 calendar questions; the same model classifies, selects and answers; the gold was refined after the 4a run (on the owner's decision from event texts, not from router output) which makes this a re-run on a changed target, not a replication; "next semester" resolves to the current term; the larger pool (about 3.5 times the tokens) costs more selector time and may make the selector pick rows of the wrong term, which rule (b) would catch.
+
+## Experiment 4a-2: selector v2 (all-calendar pool, stricter prompt), 2026-10-12 — KEPT (all four rules pass); `router.mode` on, `router.selector` 2
+
+**What was run.** `router2-run1..3`: `router.mode: on`, `router.selector: 2`, `--calendar-scoring 2`, all 48 dev questions, rubric v3, same judge, compared with the stored 3b arm-ON runs on the 40 common questions. Pre-registration `(commit "pre-registration for selector v2")`, code and selector v2 prompt `35e5ba5` (committed before the first paid call). Test split not run, read or looked at. 4a stays REJECTED; this is a fresh experiment on the refined gold. Tables, per-question rows and example answers: `docs/step4a2-selector-v2-results.md`.
+
+| Rule (scored under v2; v1 gives the same numbers here) | Result | |
+|---|---|---|
+| (a) 13 calendar-only dev questions: mean correct >= 11, no run below 10 | **12, 12, 13** (mean 12.33; the other question is q75, partial in runs 1 and 2) | pass |
+| (b) no wrong row stated in any run | **0, 0, 0** | pass |
+| (c) judged questions vs 3b arm ON (40 common questions) | correct share 0.692 to 0.679 (-0.013, limit -0.038); faithfulness yes 0.923 to 0.949; abstention accuracy 1.000 to 1.000; wrongly abstained 3 to 2; citations unchanged | pass |
+| (d) q27 q28 q34 still abstain | abstained in all 3 runs | pass |
+
+**Decision by the pre-registered rule: KEEP.** `router.mode` becomes `"on"` and `router.selector` 2 in a separate commit.
+
+**Compared with 4a (REJECT, v1 selector, old gold):** correct 10, 10, 10 of 13 (wrong rows 2, 1, 1) to 12, 12, 13 (0, 0, 0). Two things changed at once and I cannot separate them: the refined gold (q33 and q63 stop being penalised; worth 2 of the 2 questions) and selector v2 (q37 now correct in all three runs, the only change that is not a gold change). Re-scoring the stored 4a runs under v2 with the two refined rows gave 12, 12, 12 of 13 (`docs/calendar-same-date.md`), so selector v2's own gain on the 13 is q37 (a wrong row in 4a run 1 and a miss in runs 2 and 3), and it costs q75 stability (3 of 3 correct in 4a, 1 of 3 here).
+
+**What changed for the judged questions:** nothing attributable. Unstable only: q01, q06 (leaning better), q18, q22, q40, q54 (leaning worse); q15 faithfulness is flagged "real better" although its route and retrieval are identical to 3b (stable judge/answer noise, see the results file).
+
+**Cost and latency.** Selector input 4,412 prompt tokens (4a: 1,649); selector latency median about 0.9 to 1.1 s (4a 0.8 to 1.0 s); calendar route total median 1.9 to 2.1 s, other route 3.8 to 4.1 s; cost per request: classify $0.00003, select $0.00015, rerank $0.00035, answer $0.00013 (averaged over all requests). About $0.51 of $2.00 spent.
+
+**Caveats.** 13 calendar questions; the same model classifies, selects and answers; the gold was refined after the 4a run, on the owner's decision from event texts, so this is a re-run on a changed target and the improvement from 10 to 12 of 13 is mostly the gold; q75 varies between runs; "next semester" resolves to the current term; three runs.

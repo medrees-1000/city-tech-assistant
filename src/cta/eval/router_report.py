@@ -50,8 +50,19 @@ def calendar_rows(run: dict, ids: list[str]) -> list[dict]:
     return [by_id[i] for i in ids if i in by_id]
 
 
-def calendar_summary(run: dict, ids: list[str]) -> dict:
+def calendar_summary(run: dict, ids: list[str], version: int | None = None) -> dict:
+    """Counts over the calendar-only questions. `version` 1 or 2 reads the scoring recorded for that
+    version (every calendar-only record stores both); None reads the run's own verdict."""
     rows = calendar_rows(run, ids)
+    if version:
+        # runs made before both versions were recorded (4a, before-new8) keep their own verdict: it
+        # is the same under v2 for them, because none returned a row outside the old gold
+        rows = [
+            r | {"correctness": r[k]["correctness"], "label": r[k]["label"]}
+            if (k := f"calendar_v{version}") in r
+            else r
+            for r in rows
+        ]
     grades = [r["correctness"] for r in rows]
     return {
         "n": len(rows),
@@ -166,11 +177,32 @@ def per_question_table(runs: list[dict], ids: list[str], gold: dict[str, list[st
     return out
 
 
+def selector_numbers(run: dict) -> dict:
+    """Selector input size (prompt tokens) and latency over the calendar-node requests."""
+    rows = [
+        r["router"]["select"]
+        for r in run["per_question"]
+        if r.get("router") and r["router"].get("select")
+    ]
+    if not rows:
+        return {"n": 0}
+    tokens, ms = [x["prompt_tokens"] for x in rows], [x["ms"] for x in rows]
+    return {
+        "n": len(rows),
+        "tokens": sorted(tokens)[len(tokens) // 2],
+        "ms": (sorted(ms)[len(ms) // 2], percentile(ms, 95)),
+    }
+
+
 def main(argv: list[str]) -> int:
     p = argparse.ArgumentParser(prog="python -m cta.eval.router_report")
     p.add_argument("--router", nargs=3, required=True)
     p.add_argument("--before", nargs=3, required=True)
     p.add_argument("--new8", required=True)
+    p.add_argument("--prev", nargs=3, help="the 4a router runs, for selector size and latency")
+    p.add_argument(
+        "--scoring", type=int, default=1, choices=(1, 2), help="version that decides the rule"
+    )
     args = p.parse_args(argv[1:])
     runs, before = [load(x) for x in args.router], [load(x) for x in args.before]
     new8 = load(args.new8)
@@ -188,12 +220,12 @@ def main(argv: list[str]) -> int:
         "| run | correct | partial | incorrect | wrong dates stated | labels |",
         "|---|---|---|---|---|---|",
     ]
-    sums = [calendar_summary(r, cal_ids) for r in runs]
+    sums = [calendar_summary(r, cal_ids, args.scoring) for r in runs]
     for r, s in zip(runs, sums, strict=True):
         out.append(
             f"| {r['label']} | {s['correct']} | {s['partial']} | {s['incorrect']} | {s['wrong_dates']} | {s['labels']} |"
         )
-    nb = calendar_summary(new8, list(NEW8))
+    nb = calendar_summary(new8, list(NEW8), args.scoring)
     out.append(
         f"| {new8['label']} (current system, 8 new) | {nb['correct']} | {nb['partial']} | {nb['incorrect']} | {nb['wrong_dates']} | {nb['labels']} |"
     )
@@ -205,6 +237,24 @@ def main(argv: list[str]) -> int:
         f"Mean correct {means:.2f} of {len(cal_ids)}; lowest run {min(s['correct'] for s in sums)}. Rule (a): {'PASS' if ok_a else 'FAIL'}. Rule (b) no wrong date stated: {'PASS' if ok_b else 'FAIL'}.",
         "",
     ]
+    for v in (1, 2):
+        vs = [calendar_summary(r, cal_ids, v) for r in runs]
+        out.append(
+            f"- scored under v{v}{' (decides the rule)' if v == args.scoring else ''}: correct {[x['correct'] for x in vs]}, "
+            f"partial {[x['partial'] for x in vs]}, wrong rows stated {[x['wrong_dates'] for x in vs]}"
+        )
+    extras = {qid: questions[qid].get("calendar_acceptable_extra", []) for qid in cal_ids}
+    out.append(f"- acceptable extras in the gold: { {k: v for k, v in extras.items() if v} }")
+    if args.prev:
+        for label, group in (
+            ("4a (selector v1)", [load(x) for x in args.prev]),
+            ("this experiment", runs),
+        ):
+            nums = [selector_numbers(r) for r in group]
+            out.append(
+                f"- selector input and latency, {label}: median prompt tokens {[n['tokens'] for n in nums]}, median latency ms {[round(n['ms'][0]) for n in nums]}, p95 {[round(n['ms'][1]) for n in nums]}"
+            )
+    out.append("")
     out += per_question_table(runs, cal_ids, gold) + [""]
     out += ["## Routes, misroutes, classifier accuracy, fall-through\n"]
     for run in runs:
