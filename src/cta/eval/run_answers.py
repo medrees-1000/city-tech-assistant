@@ -33,7 +33,7 @@ from cta.index.db import connect
 from cta.index.embed import ApiError, make_client, with_retries
 from cta.index.search import search
 from cta.redact import redact
-from cta.settings import ROOT, cost_usd, load_models
+from cta.settings import ROOT, cost_usd, load_models, refuse_tracing
 
 JUDGE_ESTIMATE_ANSWER_TOKENS = 150
 JUDGE_ESTIMATE_OUTPUT_TOKENS = 150
@@ -872,6 +872,11 @@ def main(argv: list[str]) -> int:
         return 2
     if (RESULTS / f"{args.label}.json").exists():
         print(f"refused: eval/results/{args.label}.json already exists; use a new label")
+        return 2
+    try:
+        refuse_tracing()
+    except RuntimeError as e:
+        print(f"refused: {e}")
         return 2
     cfg = load_models()
     if args.mode:

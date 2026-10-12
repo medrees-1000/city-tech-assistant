@@ -22,7 +22,7 @@ from cta.index.db import connect
 from cta.index.embed import ApiError
 from cta.index.rerank import SpendLimit
 from cta.index.search import search
-from cta.settings import ROOT, load_models
+from cta.settings import ROOT, load_models, refuse_tracing
 
 RESULTS = ROOT / "eval" / "results"
 RETRIEVE_K = 10
@@ -296,6 +296,11 @@ def main(argv: list[str]) -> int:
         return 2
     if (RESULTS / f"{args.label}.json").exists():
         print(f"refused: eval/results/{args.label}.json already exists; use a new label")
+        return 2
+    try:
+        refuse_tracing()
+    except RuntimeError as e:
+        print(f"refused: {e}")
         return 2
     cfg = load_models()
     if args.mode:

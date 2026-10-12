@@ -74,6 +74,30 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
     return cfg
 
 
+TRACING_VARIABLES = (
+    "LANGSMITH_TRACING", "LANGSMITH_TRACING_V2", "LANGCHAIN_TRACING_V2", "LANGCHAIN_TRACING",
+)  # fmt: skip
+
+
+def enabled_tracing(env: dict | None = None) -> list[str]:
+    """The LangSmith / LangChain tracing variables that are switched on (value true, 1 or yes).
+    Tracing sends text to an outside service; nothing in this project enables it yet (Phase 3,
+    step 6 will, with redacted text only)."""
+    if env is None:
+        load_dotenv(ROOT / ".env")
+        env = dict(os.environ)
+    return [k for k in TRACING_VARIABLES if env.get(k, "").strip().lower() in ("true", "1", "yes")]
+
+
+def refuse_tracing(env: dict | None = None) -> None:
+    """Raise at the start of an eval run if tracing is on, so a question or answer never leaves."""
+    on = enabled_tracing(env)
+    if on:
+        raise RuntimeError(
+            f"tracing is enabled ({', '.join(on)}); unset it: runs must not send text out"
+        )
+
+
 def secret_status(env: dict | None = None) -> dict[str, str]:
     """Which secrets are set, as 'set' / 'missing'. Values are never returned."""
     if env is None:

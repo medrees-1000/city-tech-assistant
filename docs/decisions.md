@@ -351,11 +351,14 @@ code at the time of the re-judge); its labels were later recomputed by `--relabe
 - Rubric v3 did not change the q22 and q40 faithfulness verdicts; it moved three other verdicts (q01, q52, q56) on identical answers. The v3 rubric stays in use; the owner checks `docs/judge-check-v3.md` by hand.
 - The step's $2.50 allowance is the only departure from the $1.00 per-run cap (see above); about $1.22 was spent.
 
-## LangGraph for the router (Oct 12, 2026; planned for step 4a, nothing added yet)
+## LangGraph for the router (Oct 12, 2026; step 4a)
 
-- Step 4a adds `langgraph` (pinned in `pyproject.toml` when it is added) for the router only: a small graph with three nodes (calendar lookup, retrieve-and-answer, abstain) and one routing decision. Reason: the project plan names LangGraph for the router, it gives explicit
-  nodes, state and a trace of which branch ran, which the later tool nodes (4b prerequisite chain, 4c contact lookup) reuse, and writing that control flow by hand would be more code for the owner to explain. Retrieval, evaluation and the data pipeline stay hand-built
-  (framework policy in `docs/phase3-plan.md`). The dependency is added in the 4a commit with its version, not in this step.
+- **Added:** `langgraph==1.2.14`, pinned exactly in `pyproject.toml` and `uv.lock`. **Reason:** a graph with explicit nodes and conditional edges for the router (classify, calendar, retrieve, and the calendar-to-retrieve fall-through of amendment 1); steps 4b (prerequisite chain) and 4c (contact lookup) add tool nodes to the same graph; the LangSmith client it brings is what the step 6 tracing uses.
+  Retrieval, evaluation and the data pipeline stay hand-built (framework policy in `docs/phase3-plan.md`). The owner decided this on Oct 12 after seeing the dependency tree, which is larger than `langchain-core` plus small pure-Python packages (the alternative was a hand-written router).
+- **The 18 new packages** (all installed by `uv add langgraph==1.2.14`): `distro 1.9.0`, `jsonpatch 1.35`, `jsonpointer 3.2.1`, `langchain-core 1.6.10`, `langchain-protocol 0.0.19`, `langgraph 1.2.14`, `langgraph-checkpoint 4.2.0`, `langgraph-prebuilt 1.1.0`, `langgraph-sdk 0.4.6`, `langsmith 0.14.7`, `orjson 3.13.0`,
+  `ormsgpack 1.12.2`, `requests-toolbelt 1.0.0`, `tenacity 9.2.1`, `uuid-utils 0.17.1`, `websockets 16.1.1`, `xxhash 4.0.1`, `zstandard 0.25.0`. Compiled ones: `orjson`, `ormsgpack`, `xxhash`, `uuid-utils`, `zstandard` (and `pydantic-core`, already present). Already installed and now also used: `pydantic`, `httpx2`, `requests`, `anyio`, `pyyaml`, `packaging`, `httpx`, `typing-extensions`.
+- **Safeguards.** (a) Tracing stays off: `cta.settings.enabled_tracing` / `refuse_tracing` check `LANGSMITH_TRACING`, `LANGSMITH_TRACING_V2`, `LANGCHAIN_TRACING_V2`, `LANGCHAIN_TRACING` (true, 1 or yes); a test asserts none is enabled in the test environment and that importing `cta.graph` and `langgraph.graph` makes no network call (a subprocess with sockets disabled).
+  (b) `run_retrieval` and `run_answers` refuse to start (exit 2, message on screen) if either is enabled. (c) Nothing in the code enables tracing; when step 6 does, it will see only redacted text.
 
 ## Calendar questions merged; question sets and comparability (Oct 12, 2026; Phase 3 step 4a-1)
 
