@@ -6,7 +6,9 @@ Things to know before reviewing:
 - **No TBA candidate.** The only TBA row in the calendar is `spring-2027-055` (the 87th Commencement Ceremony), and it is already q11. A second question about it would be a paraphrase, so none is proposed. If you want another "not announced" case, the data has none.
 - Summer 2027 and Fall 2027 abstain candidates ask about things q25 does not (a refund deadline, exam dates).
 - "This fall" and "next spring" candidates need `eval.today` (2026-10-11) to resolve the term.
-- Chained-prerequisite gold sources list every course in the tree; the draft answer is the rendered tree.
+- Chained-prerequisite gold sources list every course in the tree; the draft answer is compact prose (each course with its direct prerequisites in order, placement and equivalence text in one clause). Planned tag `chain`: q20, q22, q39, q40, q41.
+- Review applied (step 0b): q32 test, q52 dev; q33 has spring-2027-006 as a second source; q39 and q41 in prose; q40 replaced (CST 3613, a chain with no MAT course in it); q42 is now a related pair (co-requisite variant), not cross-listed, so q43 is the only cross-listed candidate; q49 and q50 use the CLARIFY OR BOTH / CLARIFY OR STATE THE TERM gold; q54 reworded; q56 asks for at least 3 named opportunities; q53 and q59 replaced (advisement, and bursar/admissions). The new ones are marked NEW in their notes.
+- `docs/eval-evidence.md` compares each fact-stating draft with its source text sentence by sentence.
 - The NO ADVICE candidates use `type: unanswerable` like q30; the CLARIFY candidates use `type: ambiguous` like q23 and q24.
 
 ## q31 — calendar
@@ -24,7 +26,7 @@ Things to know before reviewing:
 ## q32 — calendar
 
 - **Question:** What is the last day to drop a class for a 100% tuition refund in Winter 2027?
-- **Type:** time_sensitive  |  **Department:** (none)  |  **Proposed split:** dev
+- **Type:** time_sensitive  |  **Department:** (none)  |  **Proposed split:** test
 - **Closest existing question:** q10 (word overlap 0.30)
 - **Note:** Refund date. The Winter 2027 refund rows come only from the calendar table.
 - **Gold sources:**
@@ -41,10 +43,11 @@ Things to know before reviewing:
 - **Closest existing question:** q12 (word overlap 0.17)
 - **Gold sources:**
   - `spring-2027-007` — Spring 2027: Classes begin
+  - `spring-2027-006` — Spring 2027: Start of Spring 2027 term.
 
 **Draft gold answer — DRAFT: owner must review:**
 
-> Thursday, January 28, 2027: Classes begin [spring-2027-007] (calendar PDF last updated 2026-07-27; the calendar can change) The start-of-term row (spring-2027-006) has the same date.
+> Thursday, January 28, 2027: Classes begin [spring-2027-007]; Thursday, January 28, 2027: Start of Spring 2027 term. [spring-2027-006] (calendar PDF last updated 2026-07-27; the calendar can change) Both rows have the same date: classes begin on the first day of the term.
 
 ## q34 — calendar
 
@@ -117,7 +120,7 @@ Things to know before reviewing:
 - **Question:** What is the full prerequisite chain for CST 3602 Data Visualization?
 - **Type:** multi_chunk  |  **Department:** CST-NYT  |  **Proposed split:** dev
 - **Closest existing question:** q09 (word overlap 0.24)
-- **Note:** Gold sources are every course in the tree. Needs the prerequisite-chain tool (Phase 3, step 4).
+- **Note:** Planned tag: chain. Gold sources are every course in the tree. Needs the prerequisite-chain tool (Phase 3, step 4).
 - **Gold sources:**
   - `catalog:CST 3602` — CST 3602
   - `catalog:CST 3512` — CST 3512
@@ -132,75 +135,31 @@ Things to know before reviewing:
 
 **Draft gold answer — DRAFT: owner must review:**
 
-> Prerequisite tree from the course records (prerequisites are followed; corequisites, exclusions and placement text are listed, not followed):
->
-> - CST 3602 (Data Visualization): PRE: CST 3512 & MAT 2572
->   - prerequisite CST 3512 (Information and Data Mgmt II): PRE: CST 2312
->     - prerequisite CST 2312 (Information & Data Management): PRE: CST 1101 WITH GRADE C OR BETTER
->       - prerequisite CST 1101 (Problem Solving Comp. Program): no prerequisite text
->   - prerequisite MAT 2572 (Prob & Statistic 1): PRE: MAT 1575
->     - prerequisite MAT 1575 (Calculus II): PREREQUISITE OF MAT 1475, MUST NOT HAVE PASSED MAT 2675
->       - prerequisite MAT 1475 (Calculus I): PRE: MAT 1375 OR Meet the Math Placement for MAT 1475
->         - prerequisite MAT 1375 (Precalculus): PRE: MAT 1275 or MAT 1275CO OR Meet the Math Placement for MAT 1375
->           - prerequisite MAT 1275 (College Algebra/Trigonometry): CUNY proficiency in mathematics.  High School Math GPA 70 or higher AND complete Algebra 1 OR Algebra 1 Regents score of 75 or higher OR Geometry Regents score of 70 or higher
->             - placement or proficiency text, walk stops: CUNY proficiency in mathematics
->             - placement or proficiency text, walk stops: High School Math GPA 70 or higher AND complete Algebra 1 OR Algebra 1 Regents score of 75 or higher OR Geometry Regents score of 70 or higher
->           - prerequisite MAT 1275CO (College Algebra & Trig w Coreq): CUNY proficiency in mathematics;  MAT 1275CO is equivalent to MAT 1275 for grade replacement purposes
->             - placement or proficiency text, walk stops: CUNY proficiency in mathematics
->             - equivalence note, not a prerequisite: MAT 1275CO
->             - equivalence note, not a prerequisite: MAT 1275
->           - placement or proficiency text, walk stops: Meet the Math Placement for MAT 1375
->         - placement or proficiency text, walk stops: Meet the Math Placement for MAT 1475
->       - exclusion, not a prerequisite: MAT 2675
+> CST 3602 (Data Visualization) requires CST 3512 (Information and Data Mgmt II) and MAT 2572 (Prob & Statistic 1). CST 3512 (Information and Data Mgmt II) requires CST 2312 (Information & Data Management). CST 2312 (Information & Data Management) requires CST 1101 (Problem Solving Comp. Program); catalog text: “PRE: CST 1101 WITH GRADE C OR BETTER”. CST 1101 (Problem Solving Comp. Program) has no prerequisite course. MAT 2572 (Prob & Statistic 1) requires MAT 1575 (Calculus II). MAT 1575 (Calculus II) requires MAT 1475 (Calculus I); MAT 2675 is an exclusion (must not have passed it), not a prerequisite. MAT 1475 (Calculus I) requires MAT 1375 (Precalculus); also: Meet the Math Placement for MAT 1475. MAT 1375 (Precalculus) requires MAT 1275 (College Algebra/Trigonometry) and MAT 1275CO (College Algebra & Trig w Coreq); also: Meet the Math Placement for MAT 1375. MAT 1275 (College Algebra/Trigonometry) has no prerequisite course; also: CUNY proficiency in mathematics; High School Math GPA 70 or higher AND complete Algebra 1 OR Algebra 1 Regents score of 75 or higher OR Geometry Regents score of 70 or higher. MAT 1275CO (College Algebra & Trig w Coreq) has no prerequisite course; also: CUNY proficiency in mathematics; MAT 1275CO and MAT 1275 are named as equivalents, not as prerequisites.
 
 ## q40 — chained prerequisite
 
-- **Question:** Which courses lead up to MAT 3672 (Probability and Mathematical Statistics II)? Include the prerequisites of the prerequisites.
-- **Type:** multi_chunk  |  **Department:** MATH-NYT  |  **Proposed split:** dev
-- **Closest existing question:** q20 (word overlap 0.19)
-- **Note:** Gold sources are every course in the tree. Needs the prerequisite-chain tool (Phase 3, step 4).
+- **Question:** Starting from CST 3613 (Application Development with Database), which courses do I have to take first, and what do those courses require?
+- **Type:** multi_chunk  |  **Department:** CST-NYT  |  **Proposed split:** dev
+- **Closest existing question:** q20 (word overlap 0.21)
+- **Note:** Planned tag: chain. Gold sources are every course in the tree. Needs the prerequisite-chain tool (Phase 3, step 4).
 - **Gold sources:**
-  - `catalog:MAT 3672` — MAT 3672
-  - `catalog:MAT 2572` — MAT 2572
-  - `catalog:MAT 1575` — MAT 1575
-  - `catalog:MAT 1475` — MAT 1475
-  - `catalog:MAT 1375` — MAT 1375
-  - `catalog:MAT 1275` — MAT 1275
-  - `catalog:MAT 1275CO` — MAT 1275CO
-  - `catalog:MAT 2580` — MAT 2580
-  - `catalog:MAT 2675` — MAT 2675
+  - `catalog:CST 3613` — CST 3613
+  - `catalog:CST 1201` — CST 1201
+  - `catalog:CST 1100` — CST 1100
+  - `catalog:CST 1101` — CST 1101
+  - `catalog:CST 1204` — CST 1204
 
 **Draft gold answer — DRAFT: owner must review:**
 
-> Prerequisite tree from the course records (prerequisites are followed; corequisites, exclusions and placement text are listed, not followed):
->
-> - MAT 3672 (Probablility & Math Stats II): Prerequisites: MAT 2572, MAT 2580, MAT 2675
->   - prerequisite MAT 2572 (Prob & Statistic 1): PRE: MAT 1575
->     - prerequisite MAT 1575 (Calculus II): PREREQUISITE OF MAT 1475, MUST NOT HAVE PASSED MAT 2675
->       - prerequisite MAT 1475 (Calculus I): PRE: MAT 1375 OR Meet the Math Placement for MAT 1475
->         - prerequisite MAT 1375 (Precalculus): PRE: MAT 1275 or MAT 1275CO OR Meet the Math Placement for MAT 1375
->           - prerequisite MAT 1275 (College Algebra/Trigonometry): CUNY proficiency in mathematics.  High School Math GPA 70 or higher AND complete Algebra 1 OR Algebra 1 Regents score of 75 or higher OR Geometry Regents score of 70 or higher
->             - placement or proficiency text, walk stops: CUNY proficiency in mathematics
->             - placement or proficiency text, walk stops: High School Math GPA 70 or higher AND complete Algebra 1 OR Algebra 1 Regents score of 75 or higher OR Geometry Regents score of 70 or higher
->           - prerequisite MAT 1275CO (College Algebra & Trig w Coreq): CUNY proficiency in mathematics;  MAT 1275CO is equivalent to MAT 1275 for grade replacement purposes
->             - placement or proficiency text, walk stops: CUNY proficiency in mathematics
->             - equivalence note, not a prerequisite: MAT 1275CO
->             - equivalence note, not a prerequisite: MAT 1275
->           - placement or proficiency text, walk stops: Meet the Math Placement for MAT 1375
->         - placement or proficiency text, walk stops: Meet the Math Placement for MAT 1475
->       - exclusion, not a prerequisite: MAT 2675
->   - prerequisite MAT 2580 (Introduction to Linear Algebra): PRE: MAT1475
->     - prerequisite MAT 1475: shown elsewhere in this tree
->   - prerequisite MAT 2675 (Calculus III): Prerequisites of MAT 1575 AND MAT 2580
->     - prerequisite MAT 1575: shown elsewhere in this tree
->     - prerequisite MAT 2580: shown elsewhere in this tree
+> CST 3613 (App. Development with Database) requires CST 1201 (Programming Fundamentals) and CST 1204 (Database Systems Fundamentals); catalog text: “PREREQUISITE OF CST 1201, CST 1204 WITH A GRADE OF C OR HIGHER”. CST 1201 (Programming Fundamentals) requires CST 1100 (Intro to Computer Systems) and CST 1101 (Problem Solving Comp. Program); catalog text: “PRE: FOR CST MAJORS: CST 1100 & 1101, C GRADE / PRE: FOR NON-CST MAJORS: CST 1101”. CST 1100 (Intro to Computer Systems) has no prerequisite course. CST 1101 (Problem Solving Comp. Program) has no prerequisite course. CST 1204 (Database Systems Fundamentals) requires CST 1100 (Intro to Computer Systems).
 
 ## q41 — chained prerequisite
 
 - **Question:** What do I need to take, step by step, before EET 4202?
 - **Type:** multi_chunk  |  **Department:** EET-NYT  |  **Proposed split:** test
 - **Closest existing question:** q22 (word overlap 0.47)
-- **Note:** Gold sources are every course in the tree. Needs the prerequisite-chain tool (Phase 3, step 4).
+- **Note:** Planned tag: chain. Gold sources are every course in the tree. Needs the prerequisite-chain tool (Phase 3, step 4).
 - **Gold sources:**
   - `catalog:EET 4202` — EET 4202
   - `catalog:EET 4112` — EET 4112
@@ -214,41 +173,21 @@ Things to know before reviewing:
 
 **Draft gold answer — DRAFT: owner must review:**
 
-> Prerequisite tree from the course records (prerequisites are followed; corequisites, exclusions and placement text are listed, not followed):
->
-> - EET 4202 (Digital Signal Processing): PRE: EET 4112
->   - prerequisite EET 4112 (Applied Mechatronics): PRE: EET3212
->     - prerequisite EET 3212 (Control Systems): PRE: EET 3102, MAT 1575
->       - prerequisite EET 3102 (Signals & Systems): Pre/Co-requisite of MAT 1575 AND A.A.S. degree in Electrical Engineering Technology or departmental approval are required.
->         - pre- or corequisite, not followed: MAT 1575
->         - placement or proficiency text, walk stops: degree in Electrical Engineering Technology or departmental approval are required
->       - prerequisite MAT 1575 (Calculus II): PREREQUISITE OF MAT 1475, MUST NOT HAVE PASSED MAT 2675
->         - prerequisite MAT 1475 (Calculus I): PRE: MAT 1375 OR Meet the Math Placement for MAT 1475
->           - prerequisite MAT 1375 (Precalculus): PRE: MAT 1275 or MAT 1275CO OR Meet the Math Placement for MAT 1375
->             - prerequisite MAT 1275 (College Algebra/Trigonometry): CUNY proficiency in mathematics.  High School Math GPA 70 or higher AND complete Algebra 1 OR Algebra 1 Regents score of 75 or higher OR Geometry Regents score of 70 or higher
->               - placement or proficiency text, walk stops: CUNY proficiency in mathematics
->               - placement or proficiency text, walk stops: High School Math GPA 70 or higher AND complete Algebra 1 OR Algebra 1 Regents score of 75 or higher OR Geometry Regents score of 70 or higher
->             - prerequisite MAT 1275CO (College Algebra & Trig w Coreq): CUNY proficiency in mathematics;  MAT 1275CO is equivalent to MAT 1275 for grade replacement purposes
->               - placement or proficiency text, walk stops: CUNY proficiency in mathematics
->               - equivalence note, not a prerequisite: MAT 1275CO
->               - equivalence note, not a prerequisite: MAT 1275
->             - placement or proficiency text, walk stops: Meet the Math Placement for MAT 1375
->           - placement or proficiency text, walk stops: Meet the Math Placement for MAT 1475
->         - exclusion, not a prerequisite: MAT 2675
+> EET 4202 (Digital Signal Processing) requires EET 4112 (Applied Mechatronics). EET 4112 (Applied Mechatronics) requires EET 3212 (Control Systems). EET 3212 (Control Systems) requires EET 3102 (Signals & Systems) and MAT 1575 (Calculus II). EET 3102 (Signals & Systems) has no prerequisite course; MAT 1575 is a pre- or corequisite (not a prerequisite); also: degree in Electrical Engineering Technology or departmental approval are required. MAT 1575 (Calculus II) requires MAT 1475 (Calculus I); MAT 2675 is an exclusion (must not have passed it), not a prerequisite. MAT 1475 (Calculus I) requires MAT 1375 (Precalculus); also: Meet the Math Placement for MAT 1475. MAT 1375 (Precalculus) requires MAT 1275 (College Algebra/Trigonometry) and MAT 1275CO (College Algebra & Trig w Coreq); also: Meet the Math Placement for MAT 1375. MAT 1275 (College Algebra/Trigonometry) has no prerequisite course; also: CUNY proficiency in mathematics; High School Math GPA 70 or higher AND complete Algebra 1 OR Algebra 1 Regents score of 75 or higher OR Geometry Regents score of 70 or higher. MAT 1275CO (College Algebra & Trig w Coreq) has no prerequisite course; also: CUNY proficiency in mathematics; MAT 1275CO and MAT 1275 are named as equivalents, not as prerequisites.
 
-## q42 — cross-listed
+## q42 — related pair (co-requisite variant)
 
 - **Question:** What are the prerequisites for MAT 1190CO, and how are they different from MAT 1190?
 - **Type:** lookup  |  **Department:** MATH-NYT  |  **Proposed split:** dev
 - **Closest existing question:** q21 (word overlap 0.33)
-- **Note:** Related pair: separate records; the descriptions begin the same but are not identical (checked in the records). Keep each under its own code.
+- **Note:** Related pair (co-requisite variant), not cross-listed: separate records and separate rules.
 - **Gold sources:**
   - `catalog:MAT 1190CO` — MAT 1190CO
   - `catalog:MAT 1190` — MAT 1190
 
 **Draft gold answer — DRAFT: owner must review:**
 
-> The two descriptions begin the same but are not identical. They are separate records with separate rules. MAT 1190CO (Quantitative Reasoning with Co, 3 credits): Pre- or corequisite of ENG 1101 OR ENG 1101ML OR ENG 1101CO. | MAT 1190 (Quantitative Reasoning, 3 credits): CUNY proficiency in mathematics. Pre/corequisite: ENG 1101 or prerequisite: ENG 1101CO or ENG 1101ML.* Students who already have credit for MAT 1275CO or MAT 1275 or higher will not receive credit for this course
+> MAT 1190CO: Pre- or corequisite of ENG 1101 OR ENG 1101ML OR ENG 1101CO. | MAT 1190: CUNY proficiency in mathematics. Pre/corequisite: ENG 1101 or prerequisite: ENG 1101CO or ENG 1101ML.* Students who already have credit for MAT 1275CO or MAT 1275 or higher will not receive credit for this course | Difference: MAT 1190 requires CUNY proficiency in mathematics and adds a note that students with credit for MAT 1275CO, MAT 1275 or higher will not receive credit for it; MAT 1190CO lists only the pre- or corequisite of ENG 1101, ENG 1101ML or ENG 1101CO.
 
 ## q43 — cross-listed
 
@@ -340,7 +279,7 @@ Things to know before reviewing:
 
 **Draft gold answer — DRAFT: owner must review:**
 
-> CLARIFY: ask whether the other college is in CUNY or outside CUNY; the process differs. CUNY college: file an ePermit in CUNYfirst; eligibility rules include not being on Academic Probation, being matriculated and currently in attendance, not being newly admitted, no holds, immunizations complete. Outside CUNY: a Non-CUNY Permit Form needs approval from the Registrar and the academic department, and a Consortium Agreement is needed for financial aid; only a grade of C or higher is acceptable.
+> CLARIFY OR BOTH: either ask whether the other college is in CUNY or outside CUNY, or answer both cases correctly from the sources; never give one answer as if it applied to both. Facts: CUNY college: file an ePermit in CUNYfirst; eligibility rules include not being on Academic Probation, being matriculated and currently in attendance, not being newly admitted, no holds, immunizations complete. Outside CUNY: a Non-CUNY Permit Form needs approval from the Registrar and the academic department, and a Consortium Agreement is needed for financial aid; only a grade of C or higher is acceptable.
 
 ## q50 — ambiguous
 
@@ -354,7 +293,7 @@ Things to know before reviewing:
 
 **Draft gold answer — DRAFT: owner must review:**
 
-> CLARIFY: it depends on the term and the day the class is dropped; ask which term and when. Fall 2026 (from the Bursar page): drop by August 27, 2026 for a 100% refund; by September 03 75%; by September 10 50%; by September 17 25%; withdrawing September 18 and after means 100% liability. No portion of the student activity fee, special fees or penalty fees is refundable. The assistant may offer the Fall 2026 percentages as an example but must not give one figure without the term.
+> CLARIFY OR STATE THE TERM: ask which term and when, or state the Fall 2026 (current term) schedule with the term named and say it differs by term and date; never give one percentage without the term. Facts, Fall 2026 (Bursar page): drop by August 27, 2026 for a 100% refund; by September 03 75%; by September 10 50%; by September 17 25%; withdrawing September 18 and after means 100% liability. No portion of the student activity fee, special fees or penalty fees is refundable.
 
 ## q51 — lookup
 
@@ -372,7 +311,7 @@ Things to know before reviewing:
 ## q52 — lookup
 
 - **Question:** Do the science prerequisites for the Dental Hygiene program expire?
-- **Type:** lookup  |  **Department:** DENT-NYT  |  **Proposed split:** test
+- **Type:** lookup  |  **Department:** DENT-NYT  |  **Proposed split:** dev
 - **Closest existing question:** q17 (word overlap 0.38)
 - **Gold sources:**
   - `page/DENT-NYT/faq#12` — FAQs > Advisement FAQs > Is there a five-year expiration rule for all preclinical science courses?
@@ -383,27 +322,28 @@ Things to know before reviewing:
 
 ## q53 — lookup
 
-- **Question:** How is my math placement decided?
-- **Type:** lookup  |  **Department:** MATH-NYT  |  **Proposed split:** dev
-- **Closest existing question:** q13 (word overlap 0.17)
+- **Question:** Who advises continuing students and readmitted students, and what happens to TAP if my major is still undeclared?
+- **Type:** multi_chunk  |  **Department:** (none)  |  **Proposed split:** dev
+- **Closest existing question:** q16 (word overlap 0.15)
+- **Note:** NEW replacement for the removed math-placement question (advisement pages). Not about writing-intensive content.
 - **Gold sources:**
-  - `page/MATH-NYT/faqs#2` — Frequently Asked Questions > MATH PLACEMENT > What determines my math placement?
+  - `page/advisement/continuing-students#1` — Continuing & Readmit Students
 
 **Draft gold answer — DRAFT: owner must review:**
 
-> Placement is based on your high school records. If you took AP, College Now or other college-level math, submit your scores or transcripts to the Transfer Office to transfer the credits. If you have struggled with mathematics, MAT1275CO meets the same requirements as MAT1275.
+> Continuing students (second semester and onward) and newly readmitted students are advised by their current academic department. If your major is listed as undeclared, TAP eligibility can be jeopardized if you have more than 30 credits in an associate program, or more than 60 credits in a bachelor's program. If you have reached 30 or 60 credits, you must formally declare a major before the 21st day of the semester.
 
 ## q54 — lookup
 
-- **Question:** What should I do if I fail a math course?
+- **Question:** What happens if I fail a math course?
 - **Type:** lookup  |  **Department:** MATH-NYT  |  **Proposed split:** dev
-- **Closest existing question:** q19 (word overlap 0.24)
+- **Closest existing question:** q19 (word overlap 0.18)
 - **Gold sources:**
   - `page/MATH-NYT/faqs#12` — Frequently Asked Questions > PLANNING YOUR MATH SEQUENCE > What happens if I fail a math course?
 
 **Draft gold answer — DRAFT: owner must review:**
 
-> Re-take the course the very next semester (or over the summer if you failed in the spring) and use tutoring and office hours. A grade of C or higher replaces the failing grade in the GPA, but the failed course stays on the transcript. Check the prerequisites of your other required courses and talk with a faculty advisor, and check with the financial aid office about what a D or F might mean for aid.
+> When you pass the course again, a grade of C or higher replaces the failing grade in your GPA calculations, but the failed course remains on your transcript. The FAQ recommends re-taking the course the very next semester (or over the summer if you fail it in the spring), using the tutoring services and your professor's office hours, looking at the prerequisites to your other required courses and talking with a faculty advisor in your department to adjust your plan for the next semester, and checking with the financial aid office about what a D or F might mean for your financial aid.
 
 ## q55 — lookup
 
@@ -427,7 +367,7 @@ Things to know before reviewing:
 
 **Draft gold answer — DRAFT: owner must review:**
 
-> The Internship/Scholarship page says the internships repeat on a yearly basis and links: Reaching a New Energy Sciences Workforce (RENEW); Brookhaven National Laboratory: A Research Opportunity; NASA Pathways Programs and OSSI SOLAR Internships; PVEDI Engineering, Architecture & Geology, DPC.; Making a Successful Transition from College to Career; National Oceanic and Atmospheric Administration (NOAA); NASA Applied Sciences Develop National Program; Dr. Baruh's Presentation; EPA - Fellowship Programs; Internship and Fellowship Opportunities; EPA P3 Competition; Internship and Fellowship Seminar; NASA Student Opportunities; CIPAIR Presentation; Internship-Research Opportunities. TODO: owner to decide how many of these the answer must name.
+> Names at least 3 opportunities from this list and invents none: Reaching a New Energy Sciences Workforce (RENEW); Brookhaven National Laboratory: A Research Opportunity; NASA Pathways Programs and OSSI SOLAR Internships; PVEDI Engineering, Architecture & Geology, DPC.; Making a Successful Transition from College to Career; National Oceanic and Atmospheric Administration (NOAA); NASA Applied Sciences Develop National Program; Dr. Baruh's Presentation; EPA - Fellowship Programs; Internship and Fellowship Opportunities; EPA P3 Competition; Internship and Fellowship Seminar; NASA Student Opportunities; CIPAIR Presentation; Internship-Research Opportunities.
 
 ## q57 — lookup
 
@@ -455,15 +395,17 @@ Things to know before reviewing:
 
 ## q59 — lookup
 
-- **Question:** What happens to an Incomplete grade if it is never resolved?
-- **Type:** lookup  |  **Department:** (none)  |  **Proposed split:** dev
-- **Closest existing question:** q09 (word overlap 0.17)
+- **Question:** What happens if I don't pay my tuition bill?
+- **Type:** multi_chunk  |  **Department:** (none)  |  **Proposed split:** dev
+- **Closest existing question:** q13 (word overlap 0.20)
+- **Note:** NEW replacement for the removed Incomplete-grade lookup (bursar and admissions pages).
 - **Gold sources:**
-  - `page/registrar/incomplete#1` — Incomplete Grade Information
+  - `page/admissions/tuition-penalty#3` — Penalty Fees > Outstanding Balances
+  - `page/bursar/payment-deadlines#1` — Bill Payment Deadlines
 
 **Draft gold answer — DRAFT: owner must review:**
 
-> If no grade change form is submitted by the deadline in the academic calendar (generally one month after the beginning of the following semester), the INC converts automatically to an FIN, a failing grade. If the INC is for a prerequisite course and is not replaced with a passing grade two weeks before the start of the semester, the student is dropped from courses that need it. Students cannot graduate in a semester in which they have an incomplete.
+> Failure to pay tuition and fees by the due date could result in cancellation of course enrollment, and if the tuition remains unpaid after enrollment a hold is placed on the account that prevents adding or swapping courses. A student who fails to pay tuition or other obligations is denied access to their records and prevented from registering in the future, and the account is turned over to the College's collection agency. The student is responsible for all collection costs, including agency fees, attorney fees and court costs, and non-payment or a default judgment may be reported to credit bureaus. Non-payment and not attending courses are NOT considered an official drop.
 
 ## q60 — lookup
 
@@ -483,24 +425,38 @@ Things to know before reviewing:
 | Type | existing 30 | candidates | combined |
 |---|---|---|---|
 | ambiguous | 2 | 2 | 4 |
-| lookup | 9 | 10 | 19 |
-| multi_chunk | 6 | 5 | 11 |
+| lookup | 9 | 8 | 17 |
+| multi_chunk | 6 | 7 | 13 |
 | time_sensitive | 7 | 6 | 13 |
 | unanswerable | 6 | 7 | 13 |
 | **total** | 30 | 30 | 60 |
 
 | Department | existing 30 | candidates | combined |
 |---|---|---|---|
-| (none) | 17 | 18 | 35 |
-| CST-NYT | 3 | 2 | 5 |
+| (none) | 17 | 19 | 36 |
+| CST-NYT | 3 | 3 | 6 |
 | DENT-NYT | 4 | 2 | 6 |
 | EET-NYT | 3 | 3 | 6 |
-| MATH-NYT | 3 | 5 | 8 |
+| MATH-NYT | 3 | 3 | 6 |
 | **total** | 30 | 30 | 60 |
 
 | Split | existing 30 | candidates | combined |
 |---|---|---|---|
 | dev | 20 | 20 | 40 |
 | test | 10 | 10 | 20 |
+| **total** | 30 | 30 | 60 |
+
+| Central office or source family (first gold source) | existing 30 | candidates | combined |
+|---|---|---|---|
+| (no source: abstain) | 6 | 5 | 11 |
+| admissions | 0 | 1 | 1 |
+| advisement | 1 | 1 | 2 |
+| aid or CUNY PDF | 4 | 0 | 4 |
+| bursar | 1 | 2 | 3 |
+| calendar | 4 | 6 | 10 |
+| catalog (courses) | 3 | 5 | 8 |
+| department pages | 8 | 5 | 13 |
+| financial aid | 1 | 1 | 2 |
+| registrar | 2 | 4 | 6 |
 | **total** | 30 | 30 | 60 |
 

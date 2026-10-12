@@ -274,3 +274,17 @@ are retrieval-scored) to say whether dev and test differ.
 Notes: `baseline.json` is the dev rubric-v2 run, the comparison point for dev experiments; `baseline-final.json` is
 the test record and is not for tuning. The eval_runs row for `baseline-dev-judge-v2` shows git commit `88bbb08` (the
 code at the time of the re-judge); its labels were later recomputed by `--relabel`, which is noted in its config.
+
+## Eval growth: CLARIFY scoring, chain row, tags (Oct 12, 2026; Phase 3 step 0b)
+
+- **CLARIFY scoring rule** (applies to q23, q24, q49 and q50; implemented in Phase 3 step 5, not before): a question with a
+  CLARIFY gold passes if the answer asks the clarifying question, OR answers every branch correctly with sources. It fails if
+  it gives one answer as if it applied to all branches. q49 ("CLARIFY OR BOTH") and q50 ("CLARIFY OR STATE THE TERM") spell
+  this out in their gold text. Until step 5 the judge keeps treating CLARIFY questions as "not supported yet".
+- **Chain row:** questions tagged `chain` (q20, q22, q39, q40, q41) are also reported on their own retrieval row. The "all" row is
+  unchanged (it stays comparable with the baseline); the chain row is added next to it, so the effect of the Phase 3 prerequisite
+  tool is visible without moving the headline numbers.
+- **`tags` field:** eval questions may carry an optional `tags` list (for example `["chain"]`); `cta.validate` accepts it, checks
+  that it is a list of non-empty strings, and now rejects any other unknown field. Documented in CLAUDE.md and
+  `docs/data-validation.md`. `eval/questions.jsonl` is not edited yet: new questions and tags are added in a later step after
+  the owner approves the candidates.
