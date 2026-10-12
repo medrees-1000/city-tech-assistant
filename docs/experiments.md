@@ -429,3 +429,12 @@ Name every question whose result changed in either direction. Report misroutes b
 **Known risk, written before the run.** q13 (tuition bill due) and q14 (aid refund date) ask for dates but their answers are in office pages and the aid PDF, not in the academic calendar. A classifier that says `calendar` sends them to a pool that does not hold the answer; by design the result is an abstention (no fallback to retrieval). That would show as wrongly abstained in rule (c). If the rule fails for that reason, "empty selection falls through to retrieve" is a separate follow-up experiment, not an edit of this one.
 
 **Caveats written in advance.** 13 calendar questions is a small set; the same model classifies, selects and answers; the judge is the same as before and imperfect; the three runs bound noise roughly; "next semester" resolves to the current term; dev questions chose the design only through the categories, not through results.
+
+#### Step 4a, Amendment 1 to the pre-registration (2026-10-12, before any run of step 4a and before any router code)
+
+**Reason.** q13 (tuition bill due) and q14 (aid refund date) ask for dates, but their answers are in office pages and the aid PDF, not in the academic calendar. Abstaining on an empty selection would build a known failure into the design (the "known risk" paragraph above).
+
+**Change.** When the term has a calendar and the selector returns a **valid empty list** (no row answers the question), the graph **falls through to the existing retrieve node (unchanged)** instead of abstaining. A conditional edge `calendar -> retrieve` is added; the route is logged as `calendar_fallthrough`; the results report which questions fell through (expected: q13 and q14).
+
+**Unchanged.** A term without a calendar and no row mentioning it still abstains with the Registrar contact. A failed or malformed selector call (and a reply whose ids are all outside the pool) still abstains: infrastructure errors are not hidden by falling through. Only the renderer writes dates. A calendar-only-gold question that fell through is scored "calendar missed" (incorrect) and counts in the fall-through list.
+The keep rule (a) to (d), the scoring, the runs, the budget and the caveats are as pre-registered. The prompts are still written once, committed before any paid call and not edited after results.
