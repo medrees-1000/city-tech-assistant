@@ -225,6 +225,9 @@ def evaluate_question(q: dict, ans: Answer, top10: list[dict], judge_call) -> di
         "judge_cost": cost,
         "latency_ms": ans.latency_ms,
         "chat_ms": ans.chat_ms,
+        "retrieval_ms": round(ans.search.retrieval_ms, 1)
+        if hasattr(ans.search, "retrieval_ms")
+        else None,
         "cache_hit": ans.search.cache_hit,
     }
 
@@ -263,6 +266,7 @@ def _aggregate(records: list[dict]) -> dict:
     answered = [r for r in records if not r["abstained"]]
     lat = [r["latency_ms"] for r in records]
     chat = [r["chat_ms"] for r in records if r["chat_ms"]]
+    retr = [r["retrieval_ms"] for r in records if r.get("retrieval_ms") is not None]
     return {
         "correctness": share([r["correctness"] for r in normal if r["correctness"]], CORRECTNESS),
         "faithfulness": share(
@@ -308,6 +312,9 @@ def _aggregate(records: list[dict]) -> dict:
             "chat_n": len(chat),
             "chat_median": median(chat) if chat else None,
             "chat_p95": percentile(chat, 95),
+            "retrieval_n": len(retr),
+            "retrieval_median": median(retr) if retr else None,
+            "retrieval_p95": percentile(retr, 95),
             "query_cache_hits": sum(r["cache_hit"] for r in records),
         },
     }
@@ -432,6 +439,8 @@ def print_report(
     out(
         f"Latency ms, total n={lat['n']}: median {lat['total_median']}, p95 {lat['total_p95']}; "
         f"chat call alone n={lat['chat_n']}: median {lat['chat_median']}, p95 {lat['chat_p95']}; "
+        f"search alone n={lat.get('retrieval_n', 0)}: median {lat.get('retrieval_median')} ms, "
+        f"p95 {lat.get('retrieval_p95')} ms; "
         f"query-embedding cache hits {lat['query_cache_hits']}/{lat['n']} "
         "(a hit hides embedding time)"
     )
@@ -481,6 +490,7 @@ def start_run(conn, label: str, split: str, cfg: dict, extra: dict | None = None
     git = git_state()
     config = {
         "rubric_version": RUBRIC_VERSION,
+        "retrieval": cfg["retrieval"],
         **(extra or {}),
         "chat_model": cfg["chat_model"],
         "judge_model": cfg["judge_model"],
@@ -753,6 +763,7 @@ def main(argv: list[str]) -> int:
     p.add_argument("--final", action="store_true", help="allow --split test (part B only)")
     p.add_argument("--rejudge", metavar="OLD_LABEL", help="re-judge a stored run, no answer calls")
     p.add_argument("--relabel", metavar="LABEL", help="recompute failure labels, no API call")
+    p.add_argument("--mode", choices=("vector", "hybrid"), help="override retrieval.mode")
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--yes", action="store_true")
     args = p.parse_args(argv[1:])
@@ -763,6 +774,8 @@ def main(argv: list[str]) -> int:
         print(f"refused: eval/results/{args.label}.json already exists; use a new label")
         return 2
     cfg = load_models()
+    if args.mode:
+        cfg["retrieval"]["mode"] = args.mode
     if args.relabel:
         with connect() as conn:
             print(relabel(conn, args.relabel, cfg))

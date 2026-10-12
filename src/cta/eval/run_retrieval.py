@@ -12,6 +12,7 @@ import json
 import subprocess
 import sys
 from collections import defaultdict
+from statistics import median
 
 from psycopg.types.json import Jsonb
 
@@ -106,11 +107,19 @@ def per_question_table(scored: list[dict], retrieved: dict[str, list[dict]]) -> 
     return "\n".join(lines)
 
 
+def latency(values: list[float]) -> dict:
+    """Median and p95 (nearest rank) of search times in ms."""
+    ordered = sorted(values)
+    p95 = ordered[max(0, -(-95 * len(ordered) // 100) - 1)] if ordered else None
+    return {"n": len(ordered), "median": median(ordered) if ordered else None, "p95": p95}
+
+
 def run(conn, questions: list[dict], label: str, split: str, cfg: dict, out=print) -> dict:
-    retrieved, calls, hits, cost = {}, 0, 0, 0.0
+    retrieved, calls, hits, cost, timing = {}, 0, 0, 0.0, {}
     for q in questions:
         found = search(conn, q["question"], RETRIEVE_K, cfg=cfg)
         retrieved[q["id"]] = found.results
+        timing[q["id"]] = found.retrieval_ms
         calls += found.api_calls
         hits += found.cache_hit
         cost += found.cost
@@ -128,12 +137,19 @@ def run(conn, questions: list[dict], label: str, split: str, cfg: dict, out=prin
     out("\nBy department\n" + metrics_table(by_dept))
     out("\nPer question\n" + per_question_table(scored, retrieved))
     out(f"\nquery embeddings: {hits} cache hits, {calls} API calls, real cost ${cost:.7f}")
+    lat = latency(list(timing.values()))
+    out(
+        f"retrieval mode {cfg['retrieval']['mode']}: search time median {lat['median']:.1f} ms, "
+        f"p95 {lat['p95']:.1f} ms (n={lat['n']})"
+    )
     ranks = [
         {
             "id": r["id"],
             "type": r["type"],
             "department": r["department"],
             "first_rank": r["first_rank"],
+            "tags": r["tags"],
+            "retrieval_ms": round(timing[r["id"]], 1),
             "retrieved_ids": [c["source_id"] for c in retrieved[r["id"]]],
         }
         for r in scored
@@ -150,6 +166,8 @@ def run(conn, questions: list[dict], label: str, split: str, cfg: dict, out=prin
         "by_department": by_dept,
         "per_question": ranks,
         "cost": {"usd": cost, "api_calls": calls, "cache_hits": hits},
+        "retrieval_mode": cfg["retrieval"]["mode"],
+        "retrieval_latency_ms": latency(list(timing.values())),
     }
 
 
@@ -157,7 +175,7 @@ def save(conn, summary: dict, cfg: dict) -> None:
     git = git_state()
     config = {
         "embedding_model": cfg["embedding_model"], "ks": list(KS), "retrieve_k": RETRIEVE_K,
-        "git_dirty": git["dirty"], "search": "vector only, exact cosine, no filters",
+        "git_dirty": git["dirty"], "retrieval": cfg["retrieval"], "filters": "none",
     }  # fmt: skip
     values = (
         summary["label"],
@@ -185,6 +203,7 @@ def main(argv: list[str]) -> int:
     p.add_argument("--split", choices=("dev", "test"), required=True)
     p.add_argument("--label", required=True)
     p.add_argument("--final", action="store_true", help="allow --split test (step 9 only)")
+    p.add_argument("--mode", choices=("vector", "hybrid"), help="override retrieval.mode")
     args = p.parse_args(argv[1:])
     if error := check_split(args.split, args.final):
         print(error)
@@ -193,6 +212,8 @@ def main(argv: list[str]) -> int:
         print(f"refused: eval/results/{args.label}.json already exists; use a new label")
         return 2
     cfg = load_models()
+    if args.mode:
+        cfg["retrieval"]["mode"] = args.mode
     questions = [q for q in load_questions() if q["split"] == args.split]
     try:
         with connect() as conn:

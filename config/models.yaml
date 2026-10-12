@@ -33,6 +33,13 @@ judge:
   reasoning_effort: none
   max_output_tokens: 400
 
+# Retrieval (Phase 3). `mode` is the experiment switch: vector (the frozen baseline) or hybrid. CTA_RETRIEVAL_MODE
+# overrides it in .env. Hybrid = vector top `candidates` + keyword top `candidates`, reciprocal rank fusion.
+retrieval:
+  mode: vector
+  candidates: 20
+  rrf_k: 60
+
 max_chunk_tokens: 6000          # the loader fails instead of truncating (embedding limit is 8192)
 
 eval:

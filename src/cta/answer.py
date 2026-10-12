@@ -165,7 +165,9 @@ def answer(
         conn, question, k or cfg["answer"]["k"], cfg=cfg, client_factory=client_factory, **kwargs
     )
     ans = Answer("", False, None, found.results, search=found)
-    if found.results[0]["similarity"] < cfg["answer"]["abstain_threshold"]:
+    # The threshold is on the best VECTOR cosine similarity in both retrieval modes,
+    # never on a fused score.
+    if found.top_vector_similarity < cfg["answer"]["abstain_threshold"]:
         ans.text, ans.abstained, ans.abstain_reason = THRESHOLD_ABSTAIN, True, "below_threshold"
     else:
         ans.prompt = build_messages(found.results, today, question)

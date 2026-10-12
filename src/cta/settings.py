@@ -23,6 +23,7 @@ def build_user_agent(sources: dict) -> str:
     return crawl["user_agent_template"].format(email=email)
 
 
+RETRIEVAL_MODES = ("vector", "hybrid")
 SECRET_KEYS = ("OPENAI_API_KEY", "POSTGRES_PASSWORD", "DATABASE_URL")
 MODEL_OVERRIDES = {
     "embedding_model": "CTA_EMBEDDING_MODEL",
@@ -51,6 +52,12 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
         if entry["kind"] != kind:
             raise ValueError(f"{key} '{cfg[key]}' is a {entry['kind']} model, expected {kind}")
     cfg["embedding_dimensions"] = cfg["models"][cfg["embedding_model"]]["dimensions"]
+    if env.get("CTA_RETRIEVAL_MODE", "").strip():
+        cfg["retrieval"]["mode"] = env["CTA_RETRIEVAL_MODE"].strip()
+    if cfg["retrieval"]["mode"] not in RETRIEVAL_MODES:
+        raise ValueError(
+            f"retrieval.mode must be one of {RETRIEVAL_MODES}, not {cfg['retrieval']['mode']!r}"
+        )
     return cfg
 
 

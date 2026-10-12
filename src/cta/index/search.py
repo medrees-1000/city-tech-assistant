@@ -1,8 +1,11 @@
-"""Vector-only baseline retrieval: embed the question, return the k nearest chunks.
+"""Retrieval: embed the question, return the k best chunks.
 
-    uv run python -m cta.index.search "How do I apply for graduation?" -k 5
+    uv run python -m cta.index.search "How do I apply for graduation?" -k 5 [--mode hybrid]
 
-Exact cosine scan over all chunks: no index, no filters, no term or department logic (Phase 3).
+Two modes (config `retrieval.mode`, default vector = the frozen baseline):
+- vector: exact cosine scan over all chunks, no filters.
+- hybrid (Phase 3, step 1): the vector top N plus the keyword top N (Postgres full-text on
+  `chunks.tsv`), merged by reciprocal rank fusion, then the top k. No filters in either mode.
 Question embeddings are cached in data/cache/query_embeddings.json (speed and repeatable eval runs;
 never answers). The key is a hash of the model name and the exact question, so the question text
 itself is not stored, and another model never reuses old vectors.
@@ -13,6 +16,7 @@ import hashlib
 import json
 import os
 import sys
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -35,6 +39,9 @@ class Search:
     tokens: int
     cost: float
     question_key: str = field(repr=False, default="")
+    mode_used: str = "vector"  # "hybrid", "vector", or "vector (empty keyword query)"
+    top_vector_similarity: float | None = None  # best cosine similarity in the vector list
+    retrieval_ms: float = 0.0  # the whole search call, including the query embedding if not cached
 
 
 def cache_key(model: str, question: str) -> str:
@@ -75,6 +82,52 @@ def query_vector(question: str, cfg: dict, client_factory, cache_path: Path):
     return vectors[0], tokens, 1, False
 
 
+def rrf(vector_ids: list[str], keyword_ids: list[str], k: int = 60) -> list[dict]:
+    """Reciprocal rank fusion: score = sum over the lists of 1 / (k + rank), ranks from 1. A chunk
+    in both lists gets both terms. Best score first; ties break by id."""
+    scores: dict[str, dict] = {}
+    for name, ids in (("vector_rank", vector_ids), ("keyword_rank", keyword_ids)):
+        for rank, cid in enumerate(ids, 1):
+            entry = scores.setdefault(
+                cid, {"id": cid, "rrf_score": 0.0, "vector_rank": None, "keyword_rank": None}
+            )
+            entry[name] = rank
+            entry["rrf_score"] += 1.0 / (k + rank)
+    return sorted(scores.values(), key=lambda e: (-e["rrf_score"], e["id"]))
+
+
+def tsquery_text(lexemes: list[str]) -> str:
+    """An OR query over already-normalised lexemes, each quoted so no character in it is syntax."""
+    quoted = ["'" + lex.replace("\\", "\\\\").replace("'", "''") + "'" for lex in lexemes]
+    return " | ".join(quoted)
+
+
+def keyword_lexemes(conn, question: str) -> list[str]:
+    """The question's lexemes under the same 'english' configuration as the index (stop words
+    dropped, ordinary words stemmed, codes such as EET 3672 or MAT 1275CO kept)."""
+    rows = conn.execute(
+        "SELECT lexeme FROM unnest(to_tsvector('english', %s)) ORDER BY lexeme", (question,)
+    )
+    return [r[0] for r in rows]
+
+
+def keyword_ids(conn, query: str, limit: int) -> list[str]:
+    """Chunk ids matching any lexeme, best ts_rank first, ties by id. ts_rank counts how often and
+    where the query words occur in a chunk; it does not weigh rare words more than common ones (no
+    inverse document frequency), so "student" counts as much as "3672", and it does not normalise by
+    chunk length."""
+    rows = conn.execute(
+        "SELECT id FROM chunks WHERE tsv @@ to_tsquery('simple', %s) "
+        "ORDER BY ts_rank(tsv, to_tsquery('simple', %s)) DESC, id LIMIT %s",
+        (query, query, limit),
+    )
+    return [r[0] for r in rows]
+
+
+def row_dict(row, rank: int) -> dict:
+    return {"rank": rank, "similarity": row[-1]} | dict(zip(RESULT_COLUMNS, row[:-1], strict=True))
+
+
 def search(
     conn,
     question: str,
@@ -83,21 +136,48 @@ def search(
     cfg: dict | None = None,
     client_factory=make_client,
     cache_path: Path = CACHE_PATH,
+    mode: str | None = None,
 ) -> Search:
+    started = time.perf_counter()
     cfg = cfg or load_models()
+    mode = mode or cfg["retrieval"]["mode"]
+    n = cfg["retrieval"]["candidates"]
     vector, tokens, calls, hit = query_vector(question, cfg, client_factory, cache_path)
     literal = "[" + ",".join(map(str, vector)) + "]"
+    columns = ", ".join(RESULT_COLUMNS)
+    select = f"SELECT {columns}, 1 - (embedding <=> %s::vector) AS similarity FROM chunks"
+    used = "vector"
+    query = ""
+    if mode == "hybrid":
+        lexemes = keyword_lexemes(conn, question)
+        query = tsquery_text(lexemes)
+        used = "hybrid" if lexemes else "vector (empty keyword query)"
     rows = conn.execute(
-        f"SELECT {', '.join(RESULT_COLUMNS)}, 1 - (embedding <=> %s::vector) AS similarity "
-        "FROM chunks WHERE embedding IS NOT NULL ORDER BY embedding <=> %s::vector, id LIMIT %s",
-        (literal, literal, k),
+        f"{select} WHERE embedding IS NOT NULL ORDER BY embedding <=> %s::vector, id LIMIT %s",
+        (literal, literal, n if used == "hybrid" else k),
     ).fetchall()
-    results = [
-        {"rank": n, "similarity": r[-1]} | dict(zip(RESULT_COLUMNS, r[:-1], strict=True))
-        for n, r in enumerate(rows, 1)
-    ]
+    top_similarity = rows[0][-1] if rows else None
+    if used != "hybrid":
+        results = [
+            row_dict(r, i) | {"vector_rank": i, "keyword_rank": None} for i, r in enumerate(rows, 1)
+        ]
+    else:
+        by_id = {r[0]: r for r in rows}
+        keyword = keyword_ids(conn, query, n)
+        fused = rrf([r[0] for r in rows], keyword, cfg["retrieval"]["rrf_k"])[:k]
+        missing = [e["id"] for e in fused if e["id"] not in by_id]
+        if missing:  # keyword-only hits: fetch them with their cosine similarity
+            extra = conn.execute(f"{select} WHERE id = ANY(%s)", (literal, missing)).fetchall()
+            by_id |= {r[0]: r for r in extra}
+        results = [
+            row_dict(by_id[e["id"]], i) | e | {"id": e["id"]} for i, e in enumerate(fused, 1)
+        ]
     cost = cost_usd(cfg, cfg["embedding_model"], tokens)
-    return Search(results, hit, calls, tokens, cost, cache_key(cfg["embedding_model"], question))
+    return Search(
+        results, hit, calls, tokens, cost, cache_key(cfg["embedding_model"], question),
+        mode_used=used, top_vector_similarity=top_similarity,
+        retrieval_ms=(time.perf_counter() - started) * 1000,
+    )  # fmt: skip
 
 
 def format_result(r: dict) -> str:
@@ -111,10 +191,11 @@ def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="python -m cta.index.search")
     parser.add_argument("question")
     parser.add_argument("-k", type=int, default=5)
+    parser.add_argument("--mode", choices=("vector", "hybrid"), help="override retrieval.mode")
     args = parser.parse_args(argv[1:])
     try:
         with connect() as conn:
-            found = search(conn, args.question, args.k)
+            found = search(conn, args.question, args.k, mode=args.mode)
     except ApiError as e:
         print(f"failed: {e}")
         return 1
