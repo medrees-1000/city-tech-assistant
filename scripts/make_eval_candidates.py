@@ -409,7 +409,7 @@ def draft_sentences(draft: str) -> list[tuple[str, bool]]:
     least 3 ...') are the scoring rule, not a fact, so they are listed but not checked."""
     out: list[tuple[str, bool]] = []
     # sentence ends, except after common abbreviations such as "Comp." in a course title
-    chunks = re.split(r"\s\|\s|(?<!Comp)(?<!Dev)(?<=[.!?])\s+(?=[A-Z\"(])", draft.strip())
+    chunks = re.split(r"\s\|\s|(?<!Comp\.)(?<!App\.)(?<=[.!?])\s+(?=[A-Z\"(])", draft.strip())
     for chunk in chunks:
         chunk = chunk.strip()
         if not chunk:

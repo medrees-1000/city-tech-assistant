@@ -6,16 +6,13 @@ For each candidate whose gold states facts, the draft gold answer is split into 
 
 | # | Draft sentence | Closest source sentence | ratio | words found | result |
 |---|---|---|---|---|---|
-| 1 | CST 3613 (App. | `catalog:CST 3613`: CST 3613 - App. | 1.00 | 100% | found |
-| 2 | Development with Database) requires CST 1201 (Programming Fundamentals) and CST 1204 (Database Systems Fundamentals) | `catalog:CST 1204`: CST 1204 - Database Systems Fundamentals. | 0.51 | 57% | **NOT FOUND: check** |
-| 3 | catalog text: “PREREQUISITE OF CST 1201, CST 1204 WITH A GRADE OF C OR HIGHER”. | `catalog:CST 3613`: Prerequisites: PREREQUISITE OF CST 1201, CST 1204 WITH A GRADE OF C OR HIGHER | 0.86 | 87% | found |
-| 4 | CST 1201 (Programming Fundamentals) requires CST 1100 (Intro to Computer Systems) and CST 1101 (Problem Solving Comp. | `catalog:CST 1100`: CST 1100 - Intro to Computer Systems. | 0.47 | 47% | **NOT FOUND: check** |
-| 5 | Program) | `catalog:CST 1101`: Program. | 1.00 | 100% | found |
-| 6 | catalog text: “PRE: FOR CST MAJORS: CST 1100 & 1101, C GRADE / PRE: FOR NON-CST MAJORS: CST 1101”. | `catalog:CST 1201`: Prerequisites: PRE: FOR CST MAJORS: CST 1100 & 1101, C GRADE | 0.62 | 83% | found |
-| 7 | CST 1100 (Intro to Computer Systems) has no prerequisite course. | `catalog:CST 1100`: CST 1100 - Intro to Computer Systems. | 0.72 | 60% | found |
-| 8 | CST 1101 (Problem Solving Comp. | `catalog:CST 1101`: CST 1101 - Problem Solving Comp. | 1.00 | 100% | found |
-| 9 | Program) has no prerequisite course. | `catalog:CST 3613`: Prerequisites: PREREQUISITE OF CST 1201, CST 1204 WITH A GRADE OF C OR HIGHER | 0.40 | 20% | **NOT FOUND: check** |
-| 10 | CST 1204 (Database Systems Fundamentals) requires CST 1100 (Intro to Computer Systems). | `catalog:CST 1100`: CST 1100 - Intro to Computer Systems. | 0.59 | 67% | **NOT FOUND: check** |
+| 1 | CST 3613 (App. Development with Database) requires CST 1201 (Programming Fundamentals) and CST 1204 (Database Systems Fundamentals) | `catalog:CST 1204`: CST 1204 - Database Systems Fundamentals. | 0.47 | 53% | **NOT FOUND: check** |
+| 2 | catalog text: “PREREQUISITE OF CST 1201, CST 1204 WITH A GRADE OF C OR HIGHER”. | `catalog:CST 3613`: Prerequisites: PREREQUISITE OF CST 1201, CST 1204 WITH A GRADE OF C OR HIGHER | 0.86 | 87% | found |
+| 3 | CST 1201 (Programming Fundamentals) requires CST 1100 (Intro to Computer Systems) and CST 1101 (Problem Solving Comp. Program) | `catalog:CST 1100`: CST 1100 - Intro to Computer Systems. | 0.44 | 44% | **NOT FOUND: check** |
+| 4 | catalog text: “PRE: FOR CST MAJORS: CST 1100 & 1101, C GRADE / PRE: FOR NON-CST MAJORS: CST 1101”. | `catalog:CST 1201`: Prerequisites: PRE: FOR CST MAJORS: CST 1100 & 1101, C GRADE | 0.62 | 83% | found |
+| 5 | CST 1100 (Intro to Computer Systems) has no prerequisite course. | `catalog:CST 1100`: CST 1100 - Intro to Computer Systems. | 0.72 | 60% | found |
+| 6 | CST 1101 (Problem Solving Comp. Program) has no prerequisite course. | `catalog:CST 1101`: CST 1101 - Problem Solving Comp. | 0.62 | 50% | found |
+| 7 | CST 1204 (Database Systems Fundamentals) requires CST 1100 (Intro to Computer Systems). | `catalog:CST 1100`: CST 1100 - Intro to Computer Systems. | 0.59 | 67% | **NOT FOUND: check** |
 
 ## q42 — What are the prerequisites for MAT 1190CO, and how are they different from MAT 1190?
 
@@ -177,7 +174,7 @@ For each candidate whose gold states facts, the draft gold answer is split into 
 
 | Candidate | sentences checked | NOT FOUND |
 |---|---|---|
-| q40 | 10 | 4 |
+| q40 | 7 | 3 |
 | q42 | 5 | 2 |
 | q43 | 4 | 2 |
 | q47 | 4 | 0 |
