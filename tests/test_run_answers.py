@@ -335,6 +335,7 @@ def test_rejudge_never_calls_the_api():
 
 def test_chained_prerequisite_questions_are_not_supported_yet():
     q = question("q22", sources=("catalog:MAT 2675",), qtype="multi_chunk")
+    q["tags"] = ["chain"]
     top10 = top("catalog:MAT 2675")
     r = ra.evaluate_question(
         q, ans("Needs MAT 1575 and MAT 2580 [1]."), top10, fake_judge(judge_reply("partial"))
@@ -345,7 +346,6 @@ def test_chained_prerequisite_questions_are_not_supported_yet():
         other, ans(), top("catalog:EET 3672"), fake_judge(judge_reply("partial"))
     )
     assert r["label"] == "generation error"
-    assert ra.CHAINED_PREREQUISITE_QUESTIONS == ("q20", "q22")
 
 
 # ---- the 60-question set and the chain row ----

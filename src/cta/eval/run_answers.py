@@ -41,11 +41,9 @@ CORRECTNESS = ("correct", "partial", "incorrect")
 FAITHFULNESS = ("yes", "partly", "no")
 NOT_SUPPORTED = "not supported yet"
 CHAINED = "not supported yet (chained prerequisite)"
-# The two questions Phase 1 built as chained-prerequisite trees (validation log step 11,
-# docs/eval-review.md). Their gold answers need the prerequisites of the prerequisites, which the
-# baseline cannot follow (a prerequisite-chain tool is Phase 3). Fixed before the test run, and
-# checked for q22 against its dev run.
-CHAINED_PREREQUISITE_QUESTIONS = ("q20", "q22")
+# Questions tagged "chain" in eval/questions.jsonl need the prerequisites of the prerequisites,
+# which the baseline cannot follow (a prerequisite-chain tool is Phase 3). q22 was checked against
+# its dev run; before the tag existed the rule named q20 and q22 in code.
 
 
 # ---- classification and judging ----
@@ -159,7 +157,7 @@ def label_failure(
         )
     if kind == "abstain":
         return "abstention error", "answered a question that should be refused"
-    if q["id"] in CHAINED_PREREQUISITE_QUESTIONS and not ans.abstained:
+    if "chain" in q.get("tags", []) and not ans.abstained:
         return CHAINED, "needs the prerequisites of the prerequisites (chained prerequisite)"
     gold = scorable_gold(q)
     missing10 = [g for g in gold if not any(g in matched_gold(c, gold) for c in top10)]
