@@ -54,6 +54,15 @@ rerank:
   reasoning_effort: none
   max_output_tokens: 600
 
+# Router (Phase 3, step 4a): off | on. With "on" a LangGraph graph (src/cta/graph/) sends calendar questions to a
+# calendar lookup and everything else to the existing pipeline. CTA_ROUTER_MODE overrides it. Quoted: bare off/on are
+# booleans in YAML. The classifier and the selector call the answer model (chat_model) with these settings.
+router:
+  mode: "off"
+  temperature: 0
+  reasoning_effort: none
+  max_output_tokens: 300
+
 max_chunk_tokens: 6000          # the loader fails instead of truncating (embedding limit is 8192)
 
 eval:

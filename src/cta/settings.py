@@ -63,6 +63,10 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
         raise ValueError(
             f"retrieval.rerank must be one of {RERANK_MODES}, not {cfg['retrieval']['rerank']!r}"
         )
+    if env.get("CTA_ROUTER_MODE", "").strip():
+        cfg["router"]["mode"] = env["CTA_ROUTER_MODE"].strip()
+    if cfg["router"]["mode"] not in ("off", "on"):
+        raise ValueError(f"router.mode must be off or on, not {cfg['router']['mode']!r}")
     if cfg["retrieval"]["dept_filter"] not in ("off", "on"):
         raise ValueError(
             f"retrieval.dept_filter must be off or on, not {cfg['retrieval']['dept_filter']!r}"

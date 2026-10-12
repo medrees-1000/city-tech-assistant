@@ -46,6 +46,7 @@ def test_importing_the_graph_package_makes_no_network_call():
         "socket.create_connection = no\n"
         "socket.getaddrinfo = no\n"
         "import cta.graph, langgraph.graph\n"
+        "import cta.graph.build\n"
     )
     env = {k: v for k, v in os.environ.items() if k not in TRACING_VARIABLES}
     done = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, env=env)
