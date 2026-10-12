@@ -288,3 +288,21 @@ code at the time of the re-judge); its labels were later recomputed by `--relabe
   that it is a list of non-empty strings, and now rejects any other unknown field. Documented in CLAUDE.md and
   `docs/data-validation.md`. `eval/questions.jsonl` is not edited yet: new questions and tags are added in a later step after
   the owner approves the candidates.
+
+## The 60-question set and the new dev baseline (Oct 12, 2026; Phase 3 step 0c)
+
+- q31 to q60 (reviewed by the owner, drafts from `scripts/make_eval_candidates.py`) were merged into `eval/questions.jsonl`: 60
+  questions, 40 dev and 20 test, ids unique, every gold source resolves to a chunk or a verified calendar event. The first 30 rows are
+  unchanged except for one added field: `tags: ["chain"]` on q20 and q22 (no other field of any existing row was touched). New rows
+  with a chain tag: q39, q40, q41. q53 is the single question "What happens to my TAP if my major is still undeclared?" (lookup).
+- The system is the frozen one: `git diff --stat 08cc8df..HEAD` for `src/cta/index/search.py`, `src/cta/answer.py` and
+  `config/models.yaml` is empty.
+- Run `baseline-dev-60` (40 dev questions) is the comparison file for the Phase 3 experiments. `baseline.json` (20 questions) is kept as the
+  Phase 2 record.
+- Eval runner: questions tagged `chain` are reported on their own retrieval row and answer block; the "all" row is unchanged and still
+  contains them.
+- The "not supported yet (chained prerequisite)" label now follows the `chain` tag instead of a list of ids in the code. This changed the label of q39
+  and q40 in the first printout of `baseline-dev-60` (retrieval miss to chained prerequisite); labels were recomputed with `--relabel`.
+  Metrics were not affected.
+- Known scoring limit: a NO ADVICE gold passes when the answer abstains (q47 on dev). Fixing it belongs with the CLARIFY scoring in step 5;
+  until then NO ADVICE results are read with that caveat.

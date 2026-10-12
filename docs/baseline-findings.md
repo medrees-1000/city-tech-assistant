@@ -126,3 +126,95 @@ This maps the failures above to the roadmap in `docs/phase2-plan.md`. It is a pl
 - Test correctness has not been verified by hand.
 - Multi-turn behavior, long-term drift, and any question outside the 30 are untested.
 - The calendar was never exercised: q11 and q12 are the only calendar-only questions.
+
+## 40-question dev baseline (Phase 3 step 0c, 2026-10-12)
+
+The same frozen system (search, prompt, threshold, models, rubric v2; commit `08cc8df` for the system code, `37f472f` for the
+runner) run on the grown dev split: the original 20 dev questions plus 20 reviewed new ones. Run `baseline-dev-60`,
+`eval/results/baseline-dev-60.json` (also in `eval_runs`). **This is the comparison file for the Phase 3 experiments.** The test split
+(20 questions now) was not run. n is next to every number; the groups are small, and the 20 new questions were written and reviewed
+by the owner before this run (they were not chosen from any baseline result).
+
+| Metric | 20-question dev (`baseline.json`, rubric v2) | 40-question dev (`baseline-dev-60.json`) |
+|---|---|---|
+| Questions in the split | 20 | 40 |
+| Retrieval-scored questions | n=17 | n=30 |
+| Recall@1 / hit@1 | 0.549 / 0.706 | 0.488 / 0.700 |
+| Recall@3 / hit@3 | 0.838 / 0.941 | 0.735 / 0.867 |
+| Recall@5 / hit@5 | 0.838 / 0.941 | 0.775 / 0.900 |
+| Recall@10 / hit@10 | 0.838 / 0.941 | 0.828 / 0.933 |
+| MRR | 0.814 | 0.789 |
+| Chain row (tagged), recall@5 / hit@5 / MRR | not reported (q22 only) | n=3: 0.500 / 1.000 / 0.833 |
+| Correctness, normal gold | n=15: correct 0.80, partial 0.13, incorrect 0.07 | n=26: correct 0.62, partial 0.27, incorrect 0.12 |
+| Faithfulness, normal gold | n=15: yes 1.00, partly 0.00, no 0.00 | n=26: yes 0.92, partly 0.00, no 0.08 |
+| Chain row: correctness / faithfulness | - | n=3: correct 0.00, partial 1.00, incorrect 0.00 / n=3: yes 0.33, partly 0.00, no 0.67 |
+| NO ADVICE gold judged correct | n=1: correct 1.00 | n=2: correct 1.00 |
+| Abstention accuracy (ABSTAIN gold) | 1.0 (n=2) | 1.0 (n=5) |
+| Wrongly abstained (answerable) | 0.062 (n=16) | 0.107 (n=28) |
+| Citation rate / invalid | 1.0 (n=16) / 0 | 1.0 (n=26) / 0 |
+| Judge failures | 0 | 0 |
+| Cost per request (answer + judge) | $0.00436 (n=20) | $0.00399 (n=40) |
+| Total cost of the run | $0.0871 | $0.1597 |
+| Latency total, median / p95 ms | 1179 / 2351 (n=20) | 1164 / 2193 (n=40) |
+| Latency chat call alone, median / p95 ms | 1201 / 2447 (n=18) | 1219 / 2231 (n=32) |
+| Query-embedding cache hits | 20/20 | 40/40 |
+
+The chain row is also counted inside the "all" numbers. Retrieval is scored on 30 of the 40 questions (the calendar-only and
+ABSTAIN questions have no section or course gold source). Latency has no embedding time (all 40 query vectors were cached; the dry run
+embedded the 20 new ones).
+
+### Failure labels
+
+| Label | 20-question dev | 40-question dev |
+|---|---|---|
+| retrieval miss | 2 | 3 |
+| ranking miss | 0 | 1 |
+| generation error | 0 | 3 |
+| abstention error | 0 | 0 |
+| not supported yet | 2 | 7 |
+| not supported yet (chained prerequisite) | 1 | 3 |
+
+| Question | Type | Label | Reason |
+|---|---|---|---|
+| q01 | lookup | retrieval miss | not in the top 10: page/registrar/applying-graduation#1 |
+| q12 | time_sensitive | not supported yet | calendar-only gold |
+| q15 | time_sensitive | retrieval miss | not in the top 10: page/EET-NYT/student-hours#1 |
+| q22 | multi_chunk | not supported yet (chained prerequisite) | needs the prerequisites of the prerequisites (chained prerequisite) |
+| q24 | ambiguous | not supported yet | CLARIFY question |
+| q31 | time_sensitive | not supported yet | calendar-only gold |
+| q33 | time_sensitive | not supported yet | calendar-only gold |
+| q36 | time_sensitive | not supported yet | calendar-only gold |
+| q37 | time_sensitive | not supported yet | calendar-only gold |
+| q39 | multi_chunk | not supported yet (chained prerequisite) | needs the prerequisites of the prerequisites (chained prerequisite) |
+| q40 | multi_chunk | not supported yet (chained prerequisite) | needs the prerequisites of the prerequisites (chained prerequisite) |
+| q42 | lookup | generation error | It correctly states the English and math-proficiency prerequisites, but omits the stated no-credit r |
+| q49 | ambiguous | not supported yet | CLARIFY question |
+| q52 | lookup | retrieval miss | not in the top 10: page/DENT-NYT/faq#12 |
+| q54 | lookup | generation error | The answer correctly explains retaking, GPA replacement, transcript retention, prerequisites, and ad |
+| q56 | lookup | ranking miss | in the top 10 but not the top 5: page/EET-NYT/student-resources#14 |
+| q59 | multi_chunk | generation error | It accurately describes most consequences and the $15 fee, but omits that nonpayment and not attendi |
+
+The three chain questions (q22, q39, q40) are labelled "not supported yet (chained prerequisite)" because they carry the `chain` tag. The
+label rule first named only q20 and q22 in code, so the first print of this run showed q39 and q40 as "retrieval miss". After the
+rule was changed to follow the tag, the labels were recomputed with `--relabel` (no API call; metrics are unaffected).
+
+### What is different from the 20-question dev
+
+- **Retrieval is lower, mostly because the new questions are harder, not because the system changed.** Hit rate @3 0.941 to 0.867, recall
+  @5 0.838 to 0.775, MRR 0.814 to 0.789 (n = 17 to 30). The added misses: q52 (`DENT-NYT/faq#12` never retrieved, the five-year rule for
+  science prerequisites), q56 (the EET internship list at rank 7, so a ranking miss), and the chain questions q39 and q40 (the chain courses
+  beyond the first level are not in the top 10; chain row n = 3, recall @5 0.500, hit @5 1.000).
+- **Correctness 0.80 to 0.62** (n = 15 to 26). New partial answers: q39, q40 (chains), q42 (left out the no-credit rule for MAT 1190),
+  q54 (left out tutoring and the financial aid check), q59 (left out that non-payment is not an official drop). New incorrect: q52
+  (the model abstained although the policy exists, `answer: the sources do not state whether ... expire`) and q56 (named fewer than 3
+  opportunities). Every chain answer is partial (n = 3).
+- **Faithfulness is no longer 1.00:** 2 of 26 answers are "no", both chain answers (q22, q40) where the model says the sources do not give
+  prerequisites that are in the catalog text it was shown. The judge is still probably lenient (see the trust section above).
+- **Calendar questions: none supported.** All five calendar-only dev questions (q12, q31, q33, q36, q37) were answered with an abstention
+  (q12, q36 and q37 stopped by the threshold, q31 and q33 by the model); none gave a wrong date. The Summer 2027 question (q34) abstained correctly.
+- **Abstention accuracy 5 of 5** (q27, q28, q34, q44, q45). **Wrongly abstained 3 of 28** answerable questions: q15, q47 (threshold) and q52
+  (model).
+- **NO ADVICE 2 of 2 "correct" is partly vacuous:** q47 ("Should I take an Incomplete or withdraw?") was stopped by the threshold, and an
+  abstention gives no advice, so the rule passes it although the gold wants the rules stated. Not changed; recorded in `docs/decisions.md`.
+- **CLARIFY** (q24, q49) is still "not supported yet" until step 5; q49 was stopped by the threshold; q24 answered with 60 and 120 credits plus an example program, without asking which degree.
+- Cost per request $0.0040 (was $0.0044), run total $0.160 (answers $0.0067 + judge $0.153); latency is the same (median 1,164 ms).

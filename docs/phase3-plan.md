@@ -17,7 +17,7 @@ The baseline is vector-only search, k = 5, `gpt-6-luna`, judge `gpt-5.6-terra` w
 ## Protocol (every experiment)
 
 1. One change at a time, behind a config switch (default off = baseline behaviour). The baseline path must stay reproducible.
-2. Measure on **dev** against the frozen baseline (`eval/results/baseline.json`, re-run on the grown dev set in step 0). Same
+2. Measure on **dev** against the frozen baseline (`eval/results/baseline-dev-60.json`, the frozen system run on the grown dev set in step 0). Same
    judge, same rubric (v2), same `eval.today`. Retrieval-only changes are first measured with `run_retrieval` (no LLM cost).
 3. Log the result in `docs/experiments.md`: what changed, the metric deltas (retrieval at k = 1, 3, 5, 10; correctness;
    faithfulness; abstention; citations), the cost and latency deltas, the questions that got better and the ones that got worse
