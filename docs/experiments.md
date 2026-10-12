@@ -438,3 +438,33 @@ Name every question whose result changed in either direction. Report misroutes b
 
 **Unchanged.** A term without a calendar and no row mentioning it still abstains with the Registrar contact. A failed or malformed selector call (and a reply whose ids are all outside the pool) still abstains: infrastructure errors are not hidden by falling through. Only the renderer writes dates. A calendar-only-gold question that fell through is scored "calendar missed" (incorrect) and counts in the fall-through list.
 The keep rule (a) to (d), the scoring, the runs, the budget and the caveats are as pre-registered. The prompts are still written once, committed before any paid call and not edited after results.
+
+## Experiment 4a: calendar tool in a LangGraph router, 2026-10-12 — REJECTED (rules (a) and (b) fail); default stays `router.mode: "off"`
+
+**What was run.** `before-new8` (current system, router off, rerank on, the 8 new dev calendar questions, same exact rule) and `router-run1..3` (router on, all 48 dev questions, rubric v3, same judge), compared with the stored 3b arm-ON runs (`on-run1..3`) on the 40 common questions. Pre-registration `cb26c57`, Amendment 1 `86d9651`, code and prompts `e12834d` (committed before the first paid call),
+runner wiring `a517bbb`. The test split was not run, read or looked at. Full tables: `docs/step4a-router-results.md`.
+
+| Rule | Result | |
+|---|---|---|
+| (a) the 13 calendar-only dev questions: mean correct >= 11, no run below 10 | **10, 10, 10** (mean 10.0; plus 1 partial and 2 incorrect in each run) | **FAIL** |
+| (b) no wrong date stated in any run | **2, 1, 1 wrong rows** (q63 in every run, q37 in run 1) | **FAIL** |
+| (c) 26 judged questions (and abstention, citations) vs 3b arm ON, 40 common questions | correct share 0.692 to 0.667 (-0.026, limit -0.038); faithfulness yes 0.923 to 0.949; abstention accuracy 1.000 to 1.000; wrongly abstained 3 to 2; citations unchanged | pass |
+| (d) q27 q28 q34 still abstain | abstained in all 3 runs (q34 through the calendar node, q27 and q28 through retrieve) | pass |
+
+**Decision by the pre-registered rule: REJECT.** The router code, config, migration and tests stay in the repository, off.
+
+**Calendar questions, per question.** Correct in all 3 runs: q12 q31 q36 q61 q64 q65 q67 q68 q71 q75 (10). **q33** partial in all runs (returned `spring-2027-007` "Classes begin" only; the gold also has `-006` "Start of Spring 2027 term", same date). **q63** incorrect in all runs: returned `winter-2027-004` and `-005` (same date, "Classes begin") against gold `-004` only; by the fixed rule this
+is a wrong row stated even though the date is the same. **q37** incorrect in all runs: run 1 stated Plan Week of the Spring calendar (a real wrong date), runs 2 and 3 fell through to retrieval ("calendar missed"). The old system on the 8 new questions: 0 of 8 (it abstained on all, so it also states nothing wrong).
+
+**Routing.** Classifier accuracy against the gold intent 45/48 in every run. Misroutes: other questions sent to the calendar node: q09, q13, q30 in every run (q09 and q30 were answered correctly there; q13 fell through); calendar questions sent away: none. Fell through: q13 (3 of 3 runs, answered correctly by retrieval), q37 (runs 2 and 3); q14 was classified `other` and never reached the calendar node. Abstain route: q34 only (unsupported term, selector empty: abstained, not fell through).
+Invalid selector ids: 0; weekday mismatches: 0; failed classifier or selector calls: 0 (all three runs).
+
+**Judged questions.** Changes against the 3b ON runs are all inside the run-to-run noise: q01, q06 (leaning better), q15 (faithfulness leaning better), q18, q22, q54 (leaning worse) are unstable; there is no real change by the stability rule.
+
+**Latency and cost.** Calendar route total median about 1.8 to 1.9 s (classify about 0.9 s, select about 0.9 s, render under 1 ms) against about 4 s for the other route (classify about 0.85 s plus the old path, 3.8 to 4.0 s in these runs); cost per request: classify $0.00003, select $0.00005 (calendar questions only), rerank $0.00036, answer $0.00013, judge $0.0029 (mean over all requests). The calendar route skips retrieval, rerank and the answer call, so a calendar answer is cheaper and faster than an old-path answer.
+About $0.50 of the $2.00 allowance was spent.
+
+**What this shows, and what it does not.** The tool answers 10 of 13 calendar-only questions with the right row and a code-written date every time, and it did not hurt the 26 judged questions. The two failures that matter are structural, not noise: (1) **a term mention is not enough to find the row**: "next spring" registration is in the Fall calendar, and the Spring pool has a plausible-looking Plan Week row (q37);
+(2) **same-date duplicate rows** ("Start of Winter 2027 session" and "Classes begin") make the exact-set rule strict, so q33 and q63 depend on how the gold is written (q33 lists both, q63 one). Neither the pre-registered rule nor the prompts were edited after the results. n = 13 calendar questions; the same model classifies, selects and answers; 3 runs.
+
+**Follow-ups (each a separate, pre-registered experiment; none started):** let the selector see rows of the adjacent calendars (registration for the next term sits in the current term's calendar); decide with the owner whether the gold of q63 should include `winter-2027-005` (a gold edit, not an edit of this result); a selector prompt that is told to prefer one row when several state the same event on the same date.

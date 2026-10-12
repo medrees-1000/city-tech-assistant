@@ -236,3 +236,20 @@ Dev split, 40 questions (26 judged normal-gold, 5 ABSTAIN, 2 NO ADVICE, 7 calend
 Run-to-run spread of the same system is as large as most of the difference (OFF correct 15 to 17 of 26, ON 17 to 19). Judging identical answers twice changed 1 of 80 verdicts; changing the rubric to v3 changed 3 of 52 on identical answers, and q22 and q40 stayed
 "no" (`docs/judge-check-v3.md`). Real changes by the stability rule: q52 correctness (incorrect to correct), q40 faithfulness (no to yes), q15 faithfulness (yes to no). Full per-question table: `docs/step3b-answer-level.md`.
 Because the judge, the answerer and the reranker are all language models and n is small, read these as "no sign of harm and a probable gain", not as an exact measure.
+
+## Calendar tool (router) on the 48-question dev set, 3 runs, rubric v3 (Phase 3 step 4a, 2026-10-12)
+
+Router on (a classifier sends calendar questions to a calendar lookup whose dates are written by code; everything else takes the existing pipeline) against the stored reranker-on runs of step 3b, same judge and rubric. The router was **rejected** by its pre-registered rule; this section is the measurement.
+
+| | before (3b arm ON, 40 questions) | router on (48 questions, 3 runs) |
+|---|---|---|
+| calendar-only dev questions correct (13) | not scored by rows (judged "not supported yet") | 10, 10, 10 of 13 (1 partial, 2 incorrect each run) |
+| wrong calendar rows stated | - | 2, 1, 1 (q63 same-date duplicate row; q37 a real wrong date once) |
+| correct share, 26 judged | 0.692 (0.654 to 0.731) | 0.667 (0.654 to 0.692) |
+| faithfulness yes | 0.923 | 0.949 |
+| abstention accuracy / wrongly abstained | 1.000 / 3 | 1.000 / 2 |
+| citation rate / invalid citations | 1.000 / 0 | 1.000 / 0 |
+| median total latency: calendar route / other route | about 3.0 s (all questions) | 1.8 to 1.9 s / 3.8 to 4.0 s |
+| cost per request (answer incl. router and rerank, no judge) | $0.00068 | $0.00058 (calendar answers skip retrieval, rerank and the answer call; the classifier adds $0.00003 to the others) |
+
+The old system answers none of the 8 new calendar dev questions (it abstains on all 8). The calendar tool answers 7 of 8 with exactly the gold rows in every run (q63 is the exception). Classifier accuracy against the gold intent: 45/48.
