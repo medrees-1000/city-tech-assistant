@@ -25,7 +25,7 @@ from psycopg.types.json import Jsonb
 
 from cta.answer import Answer, answer, estimate_cost, format_source
 from cta.eval.metrics import CALENDAR_ID, average, matched_gold, scorable_gold
-from cta.eval.questions import load_questions
+from cta.eval.questions import load_questions, question_ids_record, select_questions
 from cta.eval.rubric import ADVICE_INSTRUCTIONS, JUDGE_INSTRUCTIONS, RUBRIC_VERSION
 from cta.eval.run_retrieval import RESULTS, check_split, git_state, metrics_table, score
 from cta.index.chunks import token_counter
@@ -563,7 +563,7 @@ def run(
     budget: float | None = None,
 ) -> dict:
     today = date.fromisoformat(cfg["eval"]["today"])
-    run_id = start_run(conn, label, split, cfg)
+    run_id = start_run(conn, label, split, cfg, question_ids_record(questions))
     judge_call = make_judge_call(cfg, client_factory())
     qs = {q["id"]: q for q in questions}
     records, top10s, texts = [], {}, {}
@@ -605,6 +605,7 @@ def run(
         "answers": agg,
         "failure_labels": label_counts(records),
         "per_question": records,
+        **question_ids_record(questions),
     }
     git = git_state()
     cost = {"usd": agg["cost"]["answer_usd"] + agg["cost"]["judge_usd"], **agg["cost"]}
@@ -677,7 +678,8 @@ def load_stored(conn, old_label: str, cfg: dict):
             (run_id,),
         )
     }
-    questions = [q for q in load_questions() if q["split"] == split]
+    # only the questions this run answered (the split may have grown since)
+    questions = [q for q in load_questions() if q["split"] == split and q["id"] in old_records]
     answers, top10s = {}, {}
     for q in questions:
         text, abstained, reason, retrieved = logs[redact(q["question"])]
@@ -731,7 +733,9 @@ def rejudge(conn, old_label: str, label: str, cfg: dict, out=print) -> dict:
     redacted = [q["id"] for q in questions if any(m in answers[q["id"]].text for m in markers)]
     log_label = old.get("rejudge_of") or old_label
     cfg = stored_config(cfg, find_run(conn, log_label)[2], log_label)
-    run_id = start_run(conn, label, split, cfg, {"rejudge_of": old_label})
+    run_id = start_run(
+        conn, label, split, cfg, {"rejudge_of": old_label} | question_ids_record(questions)
+    )
     judge_call = make_judge_call(cfg, make_client())
     records = [
         evaluate_question(q, answers[q["id"]], top10s[q["id"]], judge_call) for q in questions
@@ -767,6 +771,7 @@ def rejudge(conn, old_label: str, label: str, cfg: dict, out=print) -> dict:
         "failure_labels": label_counts(records),
         "per_question": records,
         "git": git_state(),
+        **question_ids_record(questions),
     }
     finish_run(
         conn,
@@ -849,6 +854,8 @@ def main(argv: list[str]) -> int:
         "--mode", choices=("vector", "hybrid", "hybrid_bm25"), help="override retrieval.mode"
     )
     p.add_argument("--dept-filter", choices=("off", "on"), help="override retrieval.dept_filter")
+    p.add_argument("--ids", help="comma-separated question ids (within the split)")
+    p.add_argument("--tag", help="only questions with this tag, for example calendar")
     p.add_argument(
         "--rerank", choices=("off", "pool_a", "pool_b"), help="override retrieval.rerank"
     )
@@ -882,7 +889,12 @@ def main(argv: list[str]) -> int:
         return 2
     if args.rejudge:
         return main_rejudge(args, cfg)
-    questions = [q for q in load_questions() if q["split"] == args.split]
+    try:
+        ids = args.ids.split(",") if args.ids else None
+        questions = select_questions(load_questions(), args.split, ids, args.tag)
+    except ValueError as e:
+        print(f"refused: {e}")
+        return 2
     today = date.fromisoformat(cfg["eval"]["today"])
     if cfg["retrieval"]["rerank"] != "off":  # each run makes its own reranker calls
         cfg["rerank"] = {**cfg["rerank"], "cache_path": rerank_cache_file(args.label)}

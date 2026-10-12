@@ -7,6 +7,7 @@ must exist in the section index data (embed true) with the same source and headi
 splits and gold answers are never changed by this module. Not part of CI yet.
 """
 
+import hashlib
 import json
 import re
 import sys
@@ -40,6 +41,29 @@ def load_questions(path: Path = QUESTIONS) -> list[dict]:
             except json.JSONDecodeError as e:
                 raise ValueError(f"{path.name} line {n}: not valid JSON ({e})") from e
     return rows
+
+
+def select_questions(
+    rows: list[dict], split: str, ids: list[str] | None = None, tag: str | None = None
+) -> list[dict]:
+    """The questions of a split, optionally only the given ids and/or those carrying a tag.
+    An unknown id is an error (a typo must not silently shrink a run)."""
+    chosen = [q for q in rows if q["split"] == split]
+    if ids:
+        unknown = sorted(set(ids) - {q["id"] for q in chosen})
+        if unknown:
+            raise ValueError(f"not in the {split} split: {', '.join(unknown)}")
+        chosen = [q for q in chosen if q["id"] in ids]
+    if tag:
+        chosen = [q for q in chosen if tag in q.get("tags", [])]
+    return chosen
+
+
+def question_ids_record(questions: list[dict]) -> dict:
+    """What a run config stores about its question set: the sorted ids and a short hash of them."""
+    ids = sorted(q["id"] for q in questions)
+    digest = hashlib.sha256("\n".join(ids).encode()).hexdigest()[:12]
+    return {"question_ids": ids, "question_ids_hash": digest}
 
 
 def row_problems(row: dict) -> list[str]:

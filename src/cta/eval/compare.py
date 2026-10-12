@@ -78,12 +78,55 @@ def metric_rows(label: str, old: dict | None, new: dict | None) -> list[str]:
     return lines
 
 
+def common_ids(old: dict, new: dict) -> tuple[list[str], str | None]:
+    """(sorted ids scored in both runs, a notice if the two runs scored different questions)."""
+    a = {q["id"] for q in old["per_question"]}
+    b = {q["id"] for q in new["per_question"]}
+    if a == b:
+        return sorted(a), None
+    return sorted(a & b), (
+        f"The runs scored different questions ({len(a)} before, {len(b)} after). Only the "
+        f"{len(a & b)} common ids are compared; only in the old run: {sorted(a - b) or 'none'}; "
+        f"only in the new run: {sorted(b - a) or 'none'}."
+    )
+
+
+def rank_metrics(rows: list[dict]) -> dict:
+    """MRR and hit rates from the first relevant ranks alone (recall and precision need the gold
+    sources, which the run files do not store)."""
+    ranks = [rank_of(q["first_rank"]) for q in rows]
+    out = {"n": len(rows), "mrr": sum(1 / r for r in ranks if r != MISS) / len(rows)}
+    for k in (1, 3, 5, 10):
+        out[f"hit@{k}"] = sum(r <= k for r in ranks) / len(rows)
+    return out
+
+
+def common_report(old: dict, new: dict, ids: list[str], notice: str) -> str:
+    keep = set(ids)
+    before = rank_metrics([q for q in old["per_question"] if q["id"] in keep])
+    after = rank_metrics([q for q in new["per_question"] if q["id"] in keep])
+    out = [notice, "", f"Common ids (n={len(ids)}), from first relevant ranks only:"]
+    out.append(f"  {'':10}{'before':>8}{'after':>8}{'change':>9}")
+    for m in ("hit@1", "hit@3", "hit@5", "hit@10", "mrr"):
+        out.append(f"  {m:10}{before[m]:>8.3f}{after[m]:>8.3f}{after[m] - before[m]:>+9.3f}")
+    out.append(
+        "The pre-registered keep rule is not applied: it needs recall@5 on one question set."
+    )
+    return "\n".join(out)
+
+
 def report(old: dict, new: dict) -> str:
     out = [
         f"before: {old['label']} (mode {old.get('retrieval_mode', '?')})   "
         f"after: {new['label']} (mode {new.get('retrieval_mode', '?')})",
         "",
     ]
+    ids, notice = common_ids(old, new)
+    if notice:
+        old = {**old, "per_question": [q for q in old["per_question"] if q["id"] in set(ids)]}
+        new = {**new, "per_question": [q for q in new["per_question"] if q["id"] in set(ids)]}
+        return "\n".join(out) + common_report(old, new, ids, notice)
+    out += [f"Same {len(ids)} scored questions in both runs.", ""]
     out += metric_rows("Overall", old["metrics"], new["metrics"]) + [""]
     out += metric_rows(
         "Chain-tagged row (reported separately, not part of the rule)",

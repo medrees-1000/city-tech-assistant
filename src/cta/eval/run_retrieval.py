@@ -17,7 +17,7 @@ from statistics import median
 from psycopg.types.json import Jsonb
 
 from cta.eval.metrics import KS, average, matched_gold, question_metrics, scorable_gold
-from cta.eval.questions import load_questions
+from cta.eval.questions import load_questions, question_ids_record, select_questions
 from cta.index.db import connect
 from cta.index.embed import ApiError
 from cta.index.rerank import SpendLimit
@@ -240,6 +240,7 @@ def run(
         "retrieval_mode": cfg["retrieval"]["mode"],
         "retrieval_latency_ms": latency(list(timing.values())),
         "rerank": summary_rerank,
+        **question_ids_record(questions),
     }
 
 
@@ -248,6 +249,7 @@ def save(conn, summary: dict, cfg: dict) -> None:
     config = {
         "embedding_model": cfg["embedding_model"], "ks": list(KS), "retrieve_k": RETRIEVE_K,
         "git_dirty": git["dirty"], "retrieval": cfg["retrieval"], "filters": "none",
+        "question_ids": summary["question_ids"], "question_ids_hash": summary["question_ids_hash"],
     }  # fmt: skip
     values = (
         summary["label"],
@@ -279,6 +281,8 @@ def main(argv: list[str]) -> int:
         "--mode", choices=("vector", "hybrid", "hybrid_bm25"), help="override retrieval.mode"
     )
     p.add_argument("--dept-filter", choices=("off", "on"), help="override retrieval.dept_filter")
+    p.add_argument("--ids", help="comma-separated question ids (within the split)")
+    p.add_argument("--tag", help="only questions with this tag, for example calendar")
     p.add_argument(
         "--rerank", choices=("off", "pool_a", "pool_b"), help="override retrieval.rerank"
     )
@@ -300,7 +304,12 @@ def main(argv: list[str]) -> int:
         cfg["retrieval"]["dept_filter"] = args.dept_filter
     if args.rerank:
         cfg["retrieval"]["rerank"] = args.rerank
-    questions = [q for q in load_questions() if q["split"] == args.split]
+    try:
+        ids = args.ids.split(",") if args.ids else None
+        questions = select_questions(load_questions(), args.split, ids, args.tag)
+    except ValueError as e:
+        print(f"refused: {e}")
+        return 2
     try:
         with connect() as conn:
             summary = run(

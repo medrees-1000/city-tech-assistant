@@ -14,7 +14,7 @@ import sys
 from statistics import mean
 
 from cta.eval.questions import load_questions
-from cta.eval.run_answers import percentile
+from cta.eval.run_answers import aggregate, percentile
 from cta.eval.run_retrieval import RESULTS
 from cta.settings import ROOT
 
@@ -218,9 +218,36 @@ def cell(s) -> str:
     return "-" if s is None else f"{s[0]:.3f} ({s[1]:.3f} to {s[2]:.3f})"
 
 
+def common_question_ids(runs: list[dict]) -> list[str]:
+    sets = [{r["id"] for r in run["per_question"]} for run in runs]
+    return sorted(set.intersection(*sets))
+
+
+def restrict(run: dict, ids: list[str]) -> dict:
+    """The run limited to these questions, its aggregate numbers recomputed from the records."""
+    rows = [r for r in run["per_question"] if r["id"] in set(ids)]
+    return {**run, "per_question": rows, "answers": aggregate(rows)}
+
+
 def report(off_runs: list[dict], on_runs: list[dict], repeat: dict | None, first_on: dict) -> str:
+    everything = [*off_runs, *on_runs, *([repeat] if repeat else [])]
+    ids = common_question_ids(everything)
+    sizes = sorted({len(run["per_question"]) for run in everything})
+    notice = []
+    if len(sizes) > 1 or len(ids) != sizes[0]:
+        notice = [
+            f"> The runs answered different question sets (sizes {sizes}). Everything below uses "
+            f"only the {len(ids)} common ids; the aggregates are recomputed from the records.",
+            "",
+        ]
+        off_runs, on_runs = (
+            [restrict(r, ids) for r in off_runs],
+            [restrict(r, ids) for r in on_runs],
+        )
+        repeat = restrict(repeat, ids) if repeat else None
+        first_on = restrict(first_on, ids)
     off, on = arm_summary(off_runs), arm_summary(on_runs)
-    out = ["# Answer-level comparison: reranker off against pool_a", ""]
+    out = ["# Answer-level comparison: reranker off against pool_a", "", *notice]
     out.append("## Metrics, mean (min to max) over the 3 runs of each arm\n")
     out += ["| metric | OFF | ON |", "|---|---|---|"]
     rows = [
