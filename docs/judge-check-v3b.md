@@ -109,7 +109,7 @@ Programs that list this course: Applied Mathematics - BS - Bachelor of Science (
 
 </details>
 
-**My verdict:** correctness  / faithfulness 
+**My verdict:** correctness partial / faithfulness yes — second reader (Claude), accepted by the owner on 2026-10-12
 
 ## q22 (multi_chunk): arm ON run 1, run `on-run1`
 
@@ -217,7 +217,7 @@ Programs that list this course: Computer Systems - BTECH - Bachelor of Technolog
 
 </details>
 
-**My verdict:** correctness  / faithfulness 
+**My verdict:** correctness partial / faithfulness yes — second reader (Claude), accepted by the owner on 2026-10-12
 
 ## q40 (multi_chunk): stored baseline answer, arm OFF run 1 (rubric v3 verdicts), run `baseline-dev-60-v3`
 
@@ -325,7 +325,7 @@ Programs that list this course: Computer Systems - BTECH - Bachelor of Technolog
 
 </details>
 
-**My verdict:** correctness  / faithfulness 
+**My verdict:** correctness partial / faithfulness yes — second reader (Claude), accepted by the owner on 2026-10-12
 
 ## q40 (multi_chunk): arm ON run 1, run `on-run1`
 
@@ -432,7 +432,7 @@ Programs that list this course: Computer Systems - BTECH - Bachelor of Technolog
 
 </details>
 
-**My verdict:** correctness  / faithfulness 
+**My verdict:** correctness partial / faithfulness yes — second reader (Claude), accepted by the owner on 2026-10-12
 
 ## q52 (lookup): stored baseline answer, arm OFF run 1 (rubric v3 verdicts), run `baseline-dev-60-v3`
 
@@ -634,7 +634,7 @@ Any Chemistry course numbered CHEM 1000 or higher can be considered. The course 
 
 </details>
 
-**My verdict:** correctness  / faithfulness 
+**My verdict:** correctness incorrect / faithfulness yes — second reader (Claude), accepted by the owner on 2026-10-12
 
 ## q52 (lookup): arm ON run 1, run `on-run1`
 
@@ -782,7 +782,7 @@ At least 1 course designated WI is required from Gen Ed Flexible Common Core.
 
 </details>
 
-**My verdict:** correctness  / faithfulness 
+**My verdict:** correctness correct / faithfulness yes — second reader (Claude), accepted by the owner on 2026-10-12
 
 ## q15 (time_sensitive): arm ON run 1, run `on-run1`
 
@@ -1055,7 +1055,7 @@ A recommended semester-by-semester plan for full-time students.
 
 </details>
 
-**My verdict:** correctness  / faithfulness 
+**My verdict:** correctness partial / faithfulness yes — second reader (Claude), accepted by the owner on 2026-10-12 (borderline: the v3 judge counts the Summer 2026 advisement schedule as student hours; the second reader does not)
 
 ## q15 (time_sensitive): stored baseline answer, arm OFF run 1 (rubric v3 verdicts), run `baseline-dev-60-v3`
 
@@ -1296,4 +1296,4 @@ Programs that list this course: none found
 
 </details>
 
-**My verdict:** correctness  / faithfulness 
+**My verdict:** correctness partial / faithfulness yes — second reader (Claude), accepted by the owner on 2026-10-12

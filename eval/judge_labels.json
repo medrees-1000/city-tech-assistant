@@ -1,0 +1,21 @@
+{
+ "_comment": "Labeled answers for the judge-variant test (step 4-judge). References to stored runs only: the answer and its five sources are read from request_logs and the chunks table by (run, question). Labels: owner = written by the owner in docs/judge-check.md; second reader = Claude's reading, accepted by the owner on 2026-10-12 (docs/judge-check-v3b.md).",
+ "items": [
+  {"question": "q01", "run": "baseline-dev", "correctness": "partial", "faithfulness": "yes", "source": "owner", "note": "docs/judge-check.md"},
+  {"question": "q03", "run": "baseline-dev", "correctness": "correct", "faithfulness": "partly", "source": "owner", "note": "the 'No.' goes beyond the source, which only says the program is full-time"},
+  {"question": "q04", "run": "baseline-dev", "correctness": "correct", "faithfulness": "yes", "source": "owner", "note": "docs/judge-check.md"},
+  {"question": "q05", "run": "baseline-dev", "correctness": "correct", "faithfulness": "yes", "source": "owner", "note": "docs/judge-check.md"},
+  {"question": "q06", "run": "baseline-dev", "correctness": "correct", "faithfulness": "yes", "source": "owner", "note": "docs/judge-check.md"},
+  {"question": "q08", "run": "baseline-dev", "correctness": "correct", "faithfulness": "yes", "source": "owner", "note": "docs/judge-check.md"},
+  {"question": "q12", "run": "baseline-dev", "correctness": "incorrect", "faithfulness": "yes", "source": "owner", "note": "an abstention on a calendar question"},
+  {"question": "q15", "run": "baseline-dev", "correctness": "partial", "faithfulness": "yes", "source": "owner", "note": "docs/judge-check.md"},
+  {"question": "q22", "run": "baseline-dev-60-v3", "correctness": "partial", "faithfulness": "yes", "source": "second reader", "note": "docs/judge-check-v3b.md"},
+  {"question": "q22", "run": "on-run1", "correctness": "partial", "faithfulness": "yes", "source": "second reader", "note": "docs/judge-check-v3b.md"},
+  {"question": "q40", "run": "baseline-dev-60-v3", "correctness": "partial", "faithfulness": "yes", "source": "second reader", "note": "docs/judge-check-v3b.md"},
+  {"question": "q40", "run": "on-run1", "correctness": "partial", "faithfulness": "yes", "source": "second reader", "note": "docs/judge-check-v3b.md"},
+  {"question": "q52", "run": "baseline-dev-60-v3", "correctness": "incorrect", "faithfulness": "yes", "source": "second reader", "note": "docs/judge-check-v3b.md"},
+  {"question": "q52", "run": "on-run1", "correctness": "correct", "faithfulness": "yes", "source": "second reader", "note": "docs/judge-check-v3b.md"},
+  {"question": "q15", "run": "on-run1", "correctness": "partial", "faithfulness": "yes", "source": "second reader", "note": "borderline: the v3 judge counts the Summer 2026 advisement schedule as student hours; the second reader does not"},
+  {"question": "q15", "run": "baseline-dev-60-v3", "correctness": "partial", "faithfulness": "yes", "source": "second reader", "note": "docs/judge-check-v3b.md"}
+ ]
+}
