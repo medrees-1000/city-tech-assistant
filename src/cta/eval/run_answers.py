@@ -211,6 +211,7 @@ def evaluate_question(q: dict, ans: Answer, top10: list[dict], judge_call) -> di
         "type": q["type"],
         "department": q["department"],
         "gold_kind": kind,
+        "tags": q.get("tags", []),
         "retrieved": [
             {"id": c["source_id"], "similarity": round(c["similarity"], 4)} for c in top10
         ],
@@ -246,6 +247,18 @@ def percentile(values: list[float], p: float) -> float | None:
 
 
 def aggregate(records: list[dict]) -> dict:
+    """Metrics over all records, plus a separate `chain` block for the questions tagged chain. The
+    top-level numbers are unchanged by the tag (the chain questions are inside them as well)."""
+    chain = [r for r in records if "chain" in r.get("tags", [])]
+    return {**_aggregate(records), "chain": _aggregate(chain) if chain else None}
+
+
+def chain_retrieval(scored: list[dict]) -> dict | None:
+    rows = [r for r in scored if "chain" in r.get("tags", [])]
+    return average(rows) if rows else None
+
+
+def _aggregate(records: list[dict]) -> dict:
     normal = [r for r in records if r["gold_kind"] == "normal"]
     answerable = [r for r in records if r["gold_kind"] in ("normal", "no_advice")]
     abstain_gold = [r for r in records if r["gold_kind"] == "abstain"]
@@ -379,10 +392,16 @@ def fmt_share(d: dict, options: tuple) -> str:
 
 
 def print_report(
-    records: list[dict], agg: dict, retrieval: dict, excluded: list[str], out=print
+    records: list[dict],
+    agg: dict,
+    retrieval: dict,
+    excluded: list[str],
+    out=print,
+    retrieval_chain: dict | None = None,
 ) -> None:
     out(f"retrieval, scored questions n={retrieval['n']} (excluded: {', '.join(excluded)})")
-    out(metrics_table({"all": retrieval}))
+    rows = {"all": retrieval} | ({"chain (tagged)": retrieval_chain} if retrieval_chain else {})
+    out(metrics_table(rows))
     out("\nAnswers (small groups: read n before the numbers)")
     out(f"  correctness, normal gold   {fmt_share(agg['correctness'], CORRECTNESS)}")
     out(f"  faithfulness, normal gold  {fmt_share(agg['faithfulness'], FAITHFULNESS)}")
@@ -398,6 +417,15 @@ def print_report(
         f"invalid citations: {c['invalid_citations']}"
     )
     out(f"  judge failed: {agg['judge_failed']}")
+    chain = agg.get("chain")
+    if chain:
+        out(
+            f"  chain-tagged questions (also inside the numbers above): correctness "
+            f"{fmt_share(chain['correctness'], CORRECTNESS)}; faithfulness "
+            f"{fmt_share(chain['faithfulness'], FAITHFULNESS)}; "
+            f"wrongly abstained n={chain['wrongly_abstained']['n']}: "
+            f"{chain['wrongly_abstained']['share']}"
+        )
     k, lat = agg["cost"], agg["latency_ms"]
     out(
         f"\nCost, n={k['n']} requests: ${k['per_request_usd']:.6f} per request "
@@ -506,12 +534,14 @@ def run(
         )
     scored, excluded = score(questions, top10s)
     retrieval = average(scored)
+    retrieval_chain = chain_retrieval(scored)
     agg = aggregate(records)
-    print_report(records, agg, retrieval, excluded, out)
+    print_report(records, agg, retrieval, excluded, out, retrieval_chain)
     summary = {
         "label": label,
         "split": split,
         "retrieval": retrieval,
+        "retrieval_chain": retrieval_chain,
         "excluded_from_retrieval": excluded,
         "answers": agg,
         "failure_labels": label_counts(records),
@@ -519,7 +549,14 @@ def run(
     }
     git = git_state()
     cost = {"usd": agg["cost"]["answer_usd"] + agg["cost"]["judge_usd"], **agg["cost"]}
-    finish_run(conn, run_id, {"status": "done"}, {"retrieval": retrieval, **agg}, records, cost)
+    finish_run(
+        conn,
+        run_id,
+        {"status": "done"},
+        {"retrieval": retrieval, "retrieval_chain": retrieval_chain, **agg},
+        records,
+        cost,
+    )
     path = RESULTS / f"{label}.json"
     path.write_text(json.dumps({**summary, "git": git}, indent=1) + "\n", encoding="utf-8")
     if judge_check:  # dev only, and never over an existing file (it holds the owner's verdicts)
@@ -614,9 +651,10 @@ def rejudge(conn, old_label: str, label: str, cfg: dict, out=print) -> dict:
     ]
     scored, excluded = score(questions, top10s)
     retrieval, agg = average(scored), aggregate(records)
+    retrieval_chain = chain_retrieval(scored)
     out(f"re-judge of {old_label} with rubric v{RUBRIC_VERSION}; stored answers containing a "
         f"redaction marker: {redacted or 'none'}")  # fmt: skip
-    print_report(records, agg, retrieval, excluded, out)
+    print_report(records, agg, retrieval, excluded, out, retrieval_chain)
     out("\nv1 (baseline-dev) vs v2")
     for name, options in (("correctness", CORRECTNESS), ("faithfulness", FAITHFULNESS)):
         out(f"  {name:13} v1 {fmt_share(old['answers'][name], options)}")
@@ -637,12 +675,20 @@ def rejudge(conn, old_label: str, label: str, cfg: dict, out=print) -> dict:
         "rejudge_of": old_label,
         "rubric_version": RUBRIC_VERSION,
         "retrieval": retrieval,
+        "retrieval_chain": retrieval_chain,
         "answers": agg,
         "failure_labels": label_counts(records),
         "per_question": records,
         "git": git_state(),
     }
-    finish_run(conn, run_id, {"status": "done"}, {"retrieval": retrieval, **agg}, records, cost)
+    finish_run(
+        conn,
+        run_id,
+        {"status": "done"},
+        {"retrieval": retrieval, "retrieval_chain": retrieval_chain, **agg},
+        records,
+        cost,
+    )
     (RESULTS / f"{label}.json").write_text(json.dumps(summary, indent=1) + "\n", encoding="utf-8")
     return summary
 

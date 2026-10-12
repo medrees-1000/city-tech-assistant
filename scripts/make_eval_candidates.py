@@ -550,7 +550,8 @@ def merge(cands: list[dict]) -> None:
 
 
 def main() -> None:
-    existing = load_questions()
+    # the questions that existed before the candidates (q01-q30); after a merge the file also holds q31 on
+    existing = [q for q in load_questions() if int(q["id"][1:]) < FIRST_ID]
     assert len(existing) == 30, "expected the 30 existing questions"
     seen = {q["question"].strip().lower() for q in existing}
     lines = [

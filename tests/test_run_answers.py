@@ -346,3 +346,82 @@ def test_chained_prerequisite_questions_are_not_supported_yet():
     )
     assert r["label"] == "generation error"
     assert ra.CHAINED_PREREQUISITE_QUESTIONS == ("q20", "q22")
+
+
+# ---- the 60-question set and the chain row ----
+
+EXPECTED_KIND = {  # how each of q31-q60 is meant to be handled
+    **dict.fromkeys(["q31", "q32", "q33", "q36", "q37", "q38"], "calendar_only"),
+    **dict.fromkeys(["q34", "q35", "q44", "q45", "q46"], "abstain"),
+    **dict.fromkeys(["q47", "q48"], "no_advice"),
+    **dict.fromkeys(["q49", "q50"], "clarify"),
+    **dict.fromkeys(
+        ["q39", "q40", "q41", "q42", "q43", "q51", "q52", "q53", "q54", "q55", "q56", "q57",
+         "q58", "q59", "q60"], "normal"),
+}  # fmt: skip
+
+
+def real_questions():
+    from cta.eval.questions import load_questions
+
+    return {q["id"]: q for q in load_questions()}
+
+
+def test_new_questions_are_classified_as_intended():
+    from cta.eval.metrics import scorable_gold
+
+    qs = real_questions()
+    assert len(qs) == 60 and sorted(EXPECTED_KIND) == [f"q{n}" for n in range(31, 61)]
+    for qid, kind in EXPECTED_KIND.items():
+        assert ra.gold_kind(qs[qid]) == kind, qid
+    # retrieval-scored: a section or course gold source (calendar ids never count)
+    unscored = {qid for qid in EXPECTED_KIND if not scorable_gold(qs[qid])}
+    assert unscored == {"q31", "q32", "q33", "q34", "q35", "q36", "q37", "q38", "q44", "q45", "q46"}
+
+
+def test_chain_tags_are_exactly_the_five_chain_questions():
+    qs = real_questions()
+    tagged = sorted(q for q, row in qs.items() if "chain" in row.get("tags", []))
+    assert tagged == ["q20", "q22", "q39", "q40", "q41"]
+
+
+def test_chain_row_is_separate_and_all_row_is_unchanged():
+    chain_q = question("qa", sources=("g",))
+    chain_q["tags"] = ["chain"]
+    plain_q = question("qb", sources=("g",))
+    retrieved = {"qa": top("x"), "qb": top("g")}  # the chain question misses, the other hits
+    scored, _ = ra.score([chain_q, plain_q], retrieved)
+    assert [r["tags"] for r in scored] == [["chain"], []]
+    overall, chain = ra.average(scored), ra.chain_retrieval(scored)
+    assert overall["n"] == 2 and overall["hit@1"] == 0.5  # 'all' counts both
+    assert chain["n"] == 1 and chain["hit@1"] == 0.0  # the chain row only the tagged one
+    assert ra.chain_retrieval([r for r in scored if not r["tags"]]) is None
+
+
+def test_aggregate_adds_a_chain_block_without_changing_the_rest():
+    j = fake_judge(judge_reply("correct"), judge_reply("partial"))
+    q1, q2 = question("q1"), question("q2")
+    q2["tags"] = ["chain"]
+    recs = [
+        ra.evaluate_question(q1, ans(), top("g"), j),
+        ra.evaluate_question(q2, ans(), top("g"), j),
+    ]
+    agg = ra.aggregate(recs)
+    assert agg["correctness"]["n"] == 2 and agg["chain"]["correctness"]["n"] == 1
+    assert agg["chain"]["correctness"]["partial"] == 1.0
+    plain = ra.aggregate([recs[0]])
+    assert plain["chain"] is None
+    assert {k: v for k, v in agg.items() if k != "chain"}["correctness"] != plain["correctness"]
+
+
+def test_print_report_shows_the_chain_row():
+    j = fake_judge(judge_reply("partial"))
+    q = question("q2")
+    q["tags"] = ["chain"]
+    recs = [ra.evaluate_question(q, ans(), top("g"), j)]
+    scored, excluded = ra.score([q], {"q2": top("g")})
+    lines: list[str] = []
+    ra.print_report(recs, ra.aggregate(recs), ra.average(scored), excluded, lines.append,
+                    ra.chain_retrieval(scored))  # fmt: skip
+    text = "\n".join(lines)
+    assert "chain (tagged)" in text and "chain-tagged questions" in text

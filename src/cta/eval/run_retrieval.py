@@ -57,7 +57,15 @@ def score(questions: list[dict], retrieved: dict[str, list[dict]]):
         if m is None:
             excluded.append(q["id"])
         else:
-            scored.append({"id": q["id"], "type": q["type"], "department": q["department"], **m})
+            scored.append(
+                {
+                    "id": q["id"],
+                    "type": q["type"],
+                    "department": q["department"],
+                    "tags": q.get("tags", []),
+                    **m,
+                }
+            )
     return scored, excluded
 
 
@@ -112,7 +120,10 @@ def run(conn, questions: list[dict], label: str, split: str, cfg: dict, out=prin
     gone = ", ".join(excluded)
     out(f"split {split}: {len(questions)} questions, {len(scored)} scored, "
         f"{len(excluded)} excluded (no scorable gold source): {gone}")  # fmt: skip
-    out("\nOverall\n" + metrics_table({"all": overall}))
+    chain_rows = [r for r in scored if "chain" in r.get("tags", [])]
+    chain = average(chain_rows) if chain_rows else None
+    rows = {"all": overall} | ({"chain (tagged)": chain} if chain else {})
+    out("\nOverall (the chain row is also counted inside 'all')\n" + metrics_table(rows))
     out("\nBy type (groups are small: read n before the numbers)\n" + metrics_table(by_type))
     out("\nBy department\n" + metrics_table(by_dept))
     out("\nPer question\n" + per_question_table(scored, retrieved))
@@ -134,6 +145,7 @@ def run(conn, questions: list[dict], label: str, split: str, cfg: dict, out=prin
         "n_scored": len(scored),
         "excluded": excluded,
         "metrics": overall,
+        "metrics_chain": chain,
         "by_type": by_type,
         "by_department": by_dept,
         "per_question": ranks,

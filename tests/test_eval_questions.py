@@ -355,10 +355,13 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.mark.skipif(not (ROOT / "eval" / "questions.jsonl").exists(), reason="no questions file")
-def test_the_real_file_has_30_well_formed_rows_with_unique_ids():
+def test_the_real_file_has_60_well_formed_rows_with_unique_ids():
     rows = load_questions()
     assert [r["id"] for r in rows if answer_problems(r)] == []  # no TODO or FILL_FROM_CALENDAR
-    assert [r["id"] for r in rows] == [f"q{n:02d}" for n in range(1, 31)]
+    assert [r["id"] for r in rows] == [f"q{n:02d}" for n in range(1, 61)]
+    assert [r["split"] for r in rows].count("dev") == 40 and [r["split"] for r in rows].count(
+        "test"
+    ) == 20
     assert all(row_problems(r) == [] for r in rows) and duplicate_ids(rows) == set()
 
 
