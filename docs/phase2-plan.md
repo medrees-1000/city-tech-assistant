@@ -1,9 +1,10 @@
 # Phase 2 plan: chunk, embed, vector-only baseline
 
-**Where we are (2026-10-12):** steps 1 and 2 done. The Docker database is running (`docker compose up -d`),
-`001_init.sql` is applied, all tables are empty. Next is step 3 (chunk builder, no network; adds tiktoken).
-Nothing paid or called so far. A new session: read this file, `config/models.yaml`, `docs/decisions.md`, then
-continue at the first step not marked done.
+**Where we are (2026-10-12):** steps 1 to 3 done. The Docker database is running with the schema applied and
+empty. `uv run python -m cta.index.chunks --stats` builds the 619 chunks (no network once the tiktoken file is
+cached). Next is step 4 (embedding client and loader; adds `openai`; needs the owner's approval of the exact cost
+from the dry run, about $0.003). Nothing has been sent to OpenAI yet. A new session: read this file,
+`config/models.yaml`, `docs/decisions.md`, then continue at the first step not marked done.
 
 Original status: plan only (2026-10-11). No code, no installs, no containers started. Everything here is for the owner
 to approve or change. Scope is CLAUDE.md Phase 2: "chunk, embed, vector-only RAG; record metrics". Not in scope:
@@ -232,7 +233,7 @@ or changed.
    a price table, tests. Show: the resolved config (secrets hidden).
 2. **DONE (fb7b842). Docker and schema.** Fill `docker-compose.yml`, `db/migrations/001_init.sql`, `cta.index.db migrate`,
    tests that run when the database is up. You start the container. Show: `docker compose ps`, the table list.
-3. **Chunk builder (no network).** Pure functions for the three chunk kinds, hashes, `--dry-run` report; add
+3. **DONE (aaab39e). Chunk builder (no network).** Pure functions for the three chunk kinds, hashes, `--dry-run` report; add
    tiktoken. Show: chunk counts per kind and doc_type, exact token total, the 10 longest chunks, three sample
    chunks of each kind, the cost estimate.
 4. **Embedding client and loader.** Embed and upsert, hash-based skip, delete. Needs your key and approval of
@@ -260,6 +261,10 @@ Step 1 (done 2026-10-12): `config/models.yaml`, `cta.settings.load_models` / `se
 Step 2 (done 2026-10-12): image `pgvector/pgvector:0.8.7-pg17`, `db/migrations/001_init.sql`, `cta.index.db` (`migrate`,
 `status`), `tests/test_db.py` (2 integration tests, skipped when Postgres is down). Commit: fb7b842. The plan's
 `schema_version` table is named `schema_migrations` (owner request). Dependencies added: `psycopg[binary]`, `pgvector`.
+
+Step 3 (done 2026-10-12): `cta.index.chunks` (`--stats`, `--write`), `tests/test_chunks.py`, fixtures under
+`tests/fixtures/processed/`. 619 chunks as planned (413 section, 197 course, 9 contact), 136,297 tokens, max 2,138,
+$0.0027 to embed; all gold sources resolve. Dependency added: `tiktoken`. Commit: aaab39e.
 
 ## Roadmap after the baseline (no code; Phase 3 and later)
 
