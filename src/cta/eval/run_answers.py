@@ -28,6 +28,7 @@ from cta.eval.metrics import CALENDAR_ID, average, matched_gold, scorable_gold
 from cta.eval.questions import load_questions, question_ids_record, select_questions
 from cta.eval.rubric import ADVICE_INSTRUCTIONS, JUDGE_INSTRUCTIONS, RUBRIC_VERSION
 from cta.eval.run_retrieval import RESULTS, check_split, git_state, metrics_table, score
+from cta.graph.build import Router
 from cta.index.chunks import token_counter
 from cta.index.db import connect
 from cta.index.embed import ApiError, make_client, with_retries
@@ -139,6 +140,38 @@ def make_judge_call(cfg: dict, client):
     return call
 
 
+# ---- calendar scoring (step 4a) ----
+
+CALENDAR_LABELS = ("calendar wrong row", "calendar missed", "calendar abstained")
+
+
+def calendar_result(q: dict, ans: Answer) -> tuple[dict, str | None, str]:
+    """Deterministic score of a calendar-only gold question from the rows the answer states:
+    correct = the returned row ids equal the gold ids; partial = a non-empty proper subset;
+    incorrect = a returned id outside the gold set (a wrong date stated), an abstention, or no
+    rows (not routed to the calendar, or fell through). Returns (verdict, label, reason)."""
+    gold = {g["id"] for g in q["gold_sources"]}
+    returned = set(getattr(ans, "row_ids", []) or [])
+    if getattr(ans, "route", None) == "abstain":
+        grade, label, why = "incorrect", "calendar abstained", "the calendar route abstained"
+    elif returned - gold:
+        grade, label = "incorrect", "calendar wrong row"
+        why = f"states rows outside the gold set: {sorted(returned - gold)}"
+    elif returned == gold:
+        grade, label, why = "correct", None, "returned rows equal the gold rows"
+    elif returned:
+        grade, label = "partial", "calendar missed"
+        why = f"only {sorted(returned)} of {sorted(gold)}"
+    else:
+        grade, label = "incorrect", "calendar missed"
+        why = "no calendar row returned (not routed to the calendar, or fell through to retrieval)"
+    verdict = {
+        "correctness": grade, "faithfulness": None, "faithfulness_reason": None,
+        "correctness_reason": f"rule (calendar scoring): {why}", "judge_status": "rule",
+    }  # fmt: skip
+    return verdict, label, why
+
+
 # ---- failure labels ----
 
 
@@ -174,10 +207,15 @@ def label_failure(
 # ---- one question ----
 
 
-def evaluate_question(q: dict, ans: Answer, top10: list[dict], judge_call) -> dict:
+def evaluate_question(
+    q: dict, ans: Answer, top10: list[dict], judge_call, calendar_scoring: bool = False
+) -> dict:
     kind = gold_kind(q)
     cost = 0.0
-    if kind == "abstain":
+    calendar_label = None
+    if calendar_scoring and kind == "calendar_only":
+        verdict, calendar_label, _ = calendar_result(q, ans)
+    elif kind == "abstain":
         ok = ans.text.strip().startswith("ABSTAIN:")
         verdict = {
             "correctness": "correct" if ok else "incorrect",
@@ -199,12 +237,15 @@ def evaluate_question(q: dict, ans: Answer, top10: list[dict], judge_call) -> di
     done = verdict["correctness"] == "correct"
     label = reason = None
     if not done:
-        if verdict["judge_status"] == "judge failed":
+        if calendar_scoring and kind == "calendar_only":
+            label, reason = calendar_label, verdict["correctness_reason"]
+        elif verdict["judge_status"] == "judge failed":
             label, reason = "judge failed", "no valid verdict from the judge"
         else:
             label, reason = label_failure(kind, q, ans, top10, verdict)
     gold = scorable_gold(q)
     rerank = getattr(ans.search, "rerank", None)  # None when the reranker was off
+    router = getattr(ans, "router", None)  # None unless the answer came through the router graph
     return {
         "id": q["id"],
         "type": q["type"],
@@ -233,6 +274,9 @@ def evaluate_question(q: dict, ans: Answer, top10: list[dict], judge_call) -> di
         "rerank_cost": rerank.cost if rerank else 0.0,
         "rerank_ms": round(rerank.ms, 1) if rerank else 0.0,
         "rerank_failed": bool(rerank and rerank.failed),
+        "route": getattr(ans, "route", None),
+        "router": router,
+        "returned_rows": list(getattr(ans, "row_ids", []) or []),
     }
 
 
@@ -477,6 +521,8 @@ def estimate_run(conn, questions: list[dict], cfg: dict, today: date, count) -> 
     # cache): it counts the prompt of the first-stage top 5 and adds a flat reranker allowance.
     plain = {**cfg, "retrieval": {**cfg["retrieval"], "rerank": "off"}}
     extra = RERANK_ESTIMATE_PER_QUESTION if cfg["retrieval"]["rerank"] != "off" else 0.0
+    if cfg["router"]["mode"] == "on":
+        extra += ROUTER_ESTIMATE_PER_QUESTION
     for q in questions:
         a = answer(conn, q["question"], today, cfg=plain, dry_run=True, log=False)
         chat = estimate_cost(a.prompt, cfg, count) if a.prompt else 0.0
@@ -540,6 +586,9 @@ STEP_3B_LABELS = (
 # Rough cost of the reranker calls per question, used only in the estimate (measured in experiment 3
 # at about $0.0005 per question; doubled here).
 RERANK_ESTIMATE_PER_QUESTION = 0.001
+# Rough cost of the router's classifier (every question) and selector (calendar questions), used
+# only in the estimate: one call of about 3,000 tokens on the answer model is about $0.0004.
+ROUTER_ESTIMATE_PER_QUESTION = 0.001
 
 
 def spent_so_far(conn, labels: tuple[str, ...] = STEP_3B_LABELS) -> float:
@@ -563,7 +612,12 @@ def run(
     budget: float | None = None,
 ) -> dict:
     today = date.fromisoformat(cfg["eval"]["today"])
-    run_id = start_run(conn, label, split, cfg, question_ids_record(questions))
+    routing = cfg["router"]["mode"] == "on"
+    scoring = routing or bool(cfg["eval"].get("calendar_scoring"))
+    extra = question_ids_record(questions) | {"router": cfg["router"]["mode"]}
+    extra |= {"calendar_scoring": 1} if scoring else {}
+    run_id = start_run(conn, label, split, cfg, extra)
+    router = Router(conn, cfg, client_factory) if routing else None
     judge_call = make_judge_call(cfg, client_factory())
     qs = {q["id"]: q for q in questions}
     records, top10s, texts = [], {}, {}
@@ -579,12 +633,18 @@ def run(
                 f"stopped before {q['id']}: spent ${spent:.4f} of the ${budget:.4f} allowance and "
                 f"the dearest question so far cost ${priciest:.4f}; nothing saved"
             )
-        ans = answer(
-            conn, q["question"], today, cfg=cfg, client_factory=client_factory, run_id=run_id
-        )
-        top10 = search(conn, q["question"], 10, cfg=cfg, client_factory=client_factory).results
+        if router:
+            ans = router.answer(q["question"], today, run_id)
+        else:
+            ans = answer(
+                conn, q["question"], today, cfg=cfg, client_factory=client_factory, run_id=run_id
+            )
+        if getattr(ans, "route", None) in ("calendar", "abstain") and not scorable_gold(q):
+            top10 = []  # nothing to score or label: no search, no rerank call
+        else:
+            top10 = search(conn, q["question"], 10, cfg=cfg, client_factory=client_factory).results
         top10s[q["id"]], texts[q["id"]] = top10, ans.text
-        records.append(evaluate_question(q, ans, top10, judge_call))
+        records.append(evaluate_question(q, ans, top10, judge_call, scoring))
         priciest = max(priciest, records[-1]["answer_cost"] + records[-1]["judge_cost"])
         spent += records[-1]["answer_cost"] + records[-1]["judge_cost"]
         out(
@@ -856,6 +916,14 @@ def main(argv: list[str]) -> int:
     p.add_argument("--dept-filter", choices=("off", "on"), help="override retrieval.dept_filter")
     p.add_argument("--ids", help="comma-separated question ids (within the split)")
     p.add_argument("--tag", help="only questions with this tag, for example calendar")
+    p.add_argument("--router", choices=("off", "on"), help="override router.mode")
+    p.add_argument(
+        "--calendar-scoring", action="store_true",
+        help="score calendar-only gold by the rows the answer states (always on with --router on)",
+    )  # fmt: skip
+    p.add_argument(
+        "--budget-labels", help="comma-separated labels of the runs that count against --budget"
+    )
     p.add_argument(
         "--rerank", choices=("off", "pool_a", "pool_b"), help="override retrieval.rerank"
     )
@@ -885,6 +953,10 @@ def main(argv: list[str]) -> int:
         cfg["retrieval"]["dept_filter"] = args.dept_filter
     if args.rerank:
         cfg["retrieval"]["rerank"] = args.rerank
+    if args.router:
+        cfg["router"]["mode"] = args.router
+    if args.calendar_scoring:
+        cfg["eval"]["calendar_scoring"] = 1
     if args.relabel:
         with connect() as conn:
             print(relabel(conn, args.relabel, cfg))
@@ -913,8 +985,11 @@ def main(argv: list[str]) -> int:
                 print("refused: estimate is above eval.max_cost_usd")
                 return 1
             remaining = None
+            budget_labels = (
+                tuple(args.budget_labels.split(",")) if args.budget_labels else STEP_3B_LABELS
+            )
             if args.budget is not None:
-                remaining = args.budget - spent_so_far(conn)
+                remaining = args.budget - spent_so_far(conn, budget_labels)
                 print(f"step allowance ${args.budget:.2f}, remaining ${remaining:.4f}")
                 if total > remaining:
                     print("refused: estimate is above the remaining step allowance")
