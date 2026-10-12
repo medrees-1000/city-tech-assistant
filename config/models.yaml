@@ -25,6 +25,14 @@ answer:
   # see docs/decisions.md. Do not change it after looking at the test split.
   abstain_threshold: 0.59
 
+# Judge settings. Probed 2026-10-12 on gpt-5.6-terra: temperature 0 is REJECTED with the default reasoning
+# ("Only the default (1) value is supported"), but ACCEPTED with reasoning_effort "none"; JSON response
+# format is accepted. So the judge runs at the lowest temperature, 0, with reasoning off.
+judge:
+  temperature: 0
+  reasoning_effort: none
+  max_output_tokens: 400
+
 max_chunk_tokens: 6000          # the loader fails instead of truncating (embedding limit is 8192)
 
 eval:

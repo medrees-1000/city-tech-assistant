@@ -60,6 +60,7 @@ class Answer:
     completion_tokens: int = 0
     chat_cost: float = 0.0
     latency_ms: int = 0
+    chat_ms: int = 0
 
     @property
     def cost(self) -> float:
@@ -123,16 +124,19 @@ def call_chat(client, cfg: dict, messages: list[dict]):
     )
 
 
-def log_request(conn, question: str, today: date, ans: Answer, cfg: dict) -> None:
+def log_request(
+    conn, question: str, today: date, ans: Answer, cfg: dict, run_id: int | None = None
+) -> None:
     """One request_logs row. Question and answer are redacted before they are stored."""
     found = ans.search
     retrieved = [{"id": r["id"], "similarity": round(r["similarity"], 4)} for r in found.results]
     conn.execute(
-        "INSERT INTO request_logs (question, today, retrieved, answer, abstained, abstain_reason, "
-        "chat_model, prompt_tokens, completion_tokens, embedding_tokens, cost_usd, latency_ms, "
-        "query_cache_hit) VALUES (%s, %s, %s::jsonb, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+        "INSERT INTO request_logs (run_id, question, today, retrieved, answer, abstained, "
+        "abstain_reason, chat_model, prompt_tokens, completion_tokens, embedding_tokens, cost_usd, "
+        "latency_ms, query_cache_hit) "
+        "VALUES (%s, %s, %s, %s::jsonb, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
         (
-            redact(question), today, json.dumps(retrieved), redact(ans.text),
+            run_id, redact(question), today, json.dumps(retrieved), redact(ans.text),
             ans.abstained, ans.abstain_reason and redact(ans.abstain_reason),
             cfg["chat_model"], ans.prompt_tokens, ans.completion_tokens, found.tokens,
             ans.cost, ans.latency_ms, found.cache_hit,
@@ -152,6 +156,7 @@ def answer(
     cache_path=None,
     dry_run: bool = False,
     log: bool = True,
+    run_id: int | None = None,
 ) -> Answer:
     cfg = cfg or load_models()
     started = time.perf_counter()
@@ -166,7 +171,9 @@ def answer(
         ans.prompt = build_messages(found.results, today, question)
         if dry_run:
             return ans
+        chat_started = time.perf_counter()
         response = call_chat(client_factory(), cfg, ans.prompt)
+        ans.chat_ms = round((time.perf_counter() - chat_started) * 1000)
         ans.text = (response.choices[0].message.content or "").strip()
         ans.prompt_tokens = response.usage.prompt_tokens
         ans.completion_tokens = response.usage.completion_tokens
@@ -178,7 +185,7 @@ def answer(
         ans.abstain_reason = parsed["reason"]
     ans.latency_ms = round((time.perf_counter() - started) * 1000)
     if log and not dry_run:
-        log_request(conn, question, today, ans, cfg)
+        log_request(conn, question, today, ans, cfg, run_id)
     return ans
 
 
