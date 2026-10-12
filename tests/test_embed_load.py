@@ -3,7 +3,6 @@ database tests run in a throwaway schema that is dropped afterwards."""
 
 import hashlib
 import random
-import uuid
 from types import SimpleNamespace
 
 import httpx2
@@ -11,7 +10,7 @@ import openai
 import pytest
 
 from cta.index import chunks as ch
-from cta.index import db, embed, load
+from cta.index import embed, load
 from cta.settings import load_models
 from tests.test_chunks import FIXTURES, words
 
@@ -110,26 +109,6 @@ def test_other_embedding_model_counts_as_changed():
 # ---- database: throwaway schema ----
 
 
-@pytest.fixture
-def conn():
-    try:
-        c = db.connect()
-    except Exception as e:
-        pytest.skip(f"Postgres not available ({type(e).__name__}); run: docker compose up -d")
-    schema = f"test_{uuid.uuid4().hex[:8]}"
-    with c:
-        c.execute(f"CREATE SCHEMA {schema}")
-        c.execute(f"SET search_path TO {schema}, public")
-        c.execute(db.migration_files()[0].read_text(encoding="utf-8"))
-        c.commit()
-        try:
-            yield c
-        finally:
-            c.rollback()
-            c.execute(f"DROP SCHEMA {schema} CASCADE")
-            c.commit()
-
-
 def go(conn, chunks, client, *, yes=True, cfg=CFG, validate=lambda: True):
     lines: list[str] = []
     code = load.run(conn, chunks, cfg, words, lambda: client, yes, False, validate, lines.append)
@@ -154,10 +133,11 @@ def test_first_load_embeds_everything_second_embeds_nothing(conn):
 
 
 @pytest.mark.integration
-def test_real_table_stays_empty(conn):
+def test_real_table_is_not_touched(conn):
+    real = "SELECT count(*), max(updated_at) FROM public.chunks"
+    before = conn.execute(real).fetchone()
     go(conn, built(), FakeClient())
-    conn.execute("SET search_path TO public")
-    assert conn.execute("SELECT count(*) FROM public.chunks").fetchone()[0] == 0
+    assert conn.execute(real).fetchone() == before
 
 
 @pytest.mark.integration
