@@ -763,7 +763,9 @@ def main(argv: list[str]) -> int:
     p.add_argument("--final", action="store_true", help="allow --split test (part B only)")
     p.add_argument("--rejudge", metavar="OLD_LABEL", help="re-judge a stored run, no answer calls")
     p.add_argument("--relabel", metavar="LABEL", help="recompute failure labels, no API call")
-    p.add_argument("--mode", choices=("vector", "hybrid"), help="override retrieval.mode")
+    p.add_argument(
+        "--mode", choices=("vector", "hybrid", "hybrid_bm25"), help="override retrieval.mode"
+    )
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--yes", action="store_true")
     args = p.parse_args(argv[1:])

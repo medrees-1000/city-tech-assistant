@@ -126,7 +126,7 @@ def report(old: dict, new: dict) -> str:
     keep, why = verdict(old["metrics"], new["metrics"])
     out += [
         "",
-        f"Pre-registered rule (docs/experiments.md, step 1): {why}",
+        f"Pre-registered rule (docs/experiments.md, steps 1 and 1b): {why}",
         f"=> {'KEEP' if keep else 'REJECT'} for retrieval",
     ]
     return "\n".join(out)

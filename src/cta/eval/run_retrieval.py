@@ -203,7 +203,9 @@ def main(argv: list[str]) -> int:
     p.add_argument("--split", choices=("dev", "test"), required=True)
     p.add_argument("--label", required=True)
     p.add_argument("--final", action="store_true", help="allow --split test (step 9 only)")
-    p.add_argument("--mode", choices=("vector", "hybrid"), help="override retrieval.mode")
+    p.add_argument(
+        "--mode", choices=("vector", "hybrid", "hybrid_bm25"), help="override retrieval.mode"
+    )
     args = p.parse_args(argv[1:])
     if error := check_split(args.split, args.final):
         print(error)

@@ -23,7 +23,7 @@ def build_user_agent(sources: dict) -> str:
     return crawl["user_agent_template"].format(email=email)
 
 
-RETRIEVAL_MODES = ("vector", "hybrid")
+RETRIEVAL_MODES = ("vector", "hybrid", "hybrid_bm25")
 SECRET_KEYS = ("OPENAI_API_KEY", "POSTGRES_PASSWORD", "DATABASE_URL")
 MODEL_OVERRIDES = {
     "embedding_model": "CTA_EMBEDDING_MODEL",

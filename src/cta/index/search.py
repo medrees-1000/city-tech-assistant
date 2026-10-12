@@ -4,8 +4,9 @@
 
 Two modes (config `retrieval.mode`, default vector = the frozen baseline):
 - vector: exact cosine scan over all chunks, no filters.
-- hybrid (Phase 3, step 1): the vector top N plus the keyword top N (Postgres full-text on
-  `chunks.tsv`), merged by reciprocal rank fusion, then the top k. No filters in either mode.
+- hybrid (Phase 3, step 1, rejected, off): the vector top N plus the Postgres ts_rank keyword top N.
+- hybrid_bm25 (step 1b): the vector top N plus the BM25 top N (cta.index.bm25), same fusion.
+  Fusion is reciprocal rank fusion; then the top k. No filters in any mode.
 Question embeddings are cached in data/cache/query_embeddings.json (speed and repeatable eval runs;
 never answers). The key is a hash of the model name and the exact question, so the question text
 itself is not stored, and another model never reuses old vectors.
@@ -20,6 +21,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from cta.index import bm25
 from cta.index.db import connect
 from cta.index.embed import ApiError, embed_texts, make_client
 from cta.settings import ROOT, cost_usd, load_models
@@ -82,14 +84,26 @@ def query_vector(question: str, cfg: dict, client_factory, cache_path: Path):
     return vectors[0], tokens, 1, False
 
 
-def rrf(vector_ids: list[str], keyword_ids: list[str], k: int = 60) -> list[dict]:
+def rrf(
+    vector_ids: list[str],
+    keyword_ids: list[str],
+    k: int = 60,
+    keyword_name: str = "keyword_rank",
+) -> list[dict]:
     """Reciprocal rank fusion: score = sum over the lists of 1 / (k + rank), ranks from 1. A chunk
     in both lists gets both terms. Best score first; ties break by id."""
     scores: dict[str, dict] = {}
-    for name, ids in (("vector_rank", vector_ids), ("keyword_rank", keyword_ids)):
+    for name, ids in (("vector_rank", vector_ids), (keyword_name, keyword_ids)):
         for rank, cid in enumerate(ids, 1):
             entry = scores.setdefault(
-                cid, {"id": cid, "rrf_score": 0.0, "vector_rank": None, "keyword_rank": None}
+                cid,
+                {
+                    "id": cid,
+                    "rrf_score": 0.0,
+                    "vector_rank": None,
+                    "keyword_rank": None,
+                    "bm25_rank": None,
+                },
             )
             entry[name] = rank
             entry["rrf_score"] += 1.0 / (k + rank)
@@ -146,25 +160,32 @@ def search(
     literal = "[" + ",".join(map(str, vector)) + "]"
     columns = ", ".join(RESULT_COLUMNS)
     select = f"SELECT {columns}, 1 - (embedding <=> %s::vector) AS similarity FROM chunks"
-    used = "vector"
-    query = ""
+    used, query, lexemes = "vector", "", []
     if mode == "hybrid":
         lexemes = keyword_lexemes(conn, question)
         query = tsquery_text(lexemes)
-        used = "hybrid" if lexemes else "vector (empty keyword query)"
+    elif mode == "hybrid_bm25":
+        lexemes = bm25.query_lexemes(conn, question)
+    if mode in ("hybrid", "hybrid_bm25"):
+        used = mode if lexemes else "vector (empty keyword query)"
+    fused_mode = used in ("hybrid", "hybrid_bm25")
     rows = conn.execute(
         f"{select} WHERE embedding IS NOT NULL ORDER BY embedding <=> %s::vector, id LIMIT %s",
-        (literal, literal, n if used == "hybrid" else k),
+        (literal, literal, n if fused_mode else k),
     ).fetchall()
     top_similarity = rows[0][-1] if rows else None
-    if used != "hybrid":
+    if not fused_mode:
         results = [
-            row_dict(r, i) | {"vector_rank": i, "keyword_rank": None} for i, r in enumerate(rows, 1)
+            row_dict(r, i) | {"vector_rank": i, "keyword_rank": None, "bm25_rank": None}
+            for i, r in enumerate(rows, 1)
         ]
     else:
         by_id = {r[0]: r for r in rows}
-        keyword = keyword_ids(conn, query, n)
-        fused = rrf([r[0] for r in rows], keyword, cfg["retrieval"]["rrf_k"])[:k]
+        if used == "hybrid":
+            keyword, name = keyword_ids(conn, query, n), "keyword_rank"
+        else:
+            keyword, name = bm25.bm25_ids(conn, lexemes, n), "bm25_rank"
+        fused = rrf([r[0] for r in rows], keyword, cfg["retrieval"]["rrf_k"], name)[:k]
         missing = [e["id"] for e in fused if e["id"] not in by_id]
         if missing:  # keyword-only hits: fetch them with their cosine similarity
             extra = conn.execute(f"{select} WHERE id = ANY(%s)", (literal, missing)).fetchall()
@@ -191,7 +212,9 @@ def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="python -m cta.index.search")
     parser.add_argument("question")
     parser.add_argument("-k", type=int, default=5)
-    parser.add_argument("--mode", choices=("vector", "hybrid"), help="override retrieval.mode")
+    parser.add_argument(
+        "--mode", choices=("vector", "hybrid", "hybrid_bm25"), help="override retrieval.mode"
+    )
     args = parser.parse_args(argv[1:])
     try:
         with connect() as conn:
