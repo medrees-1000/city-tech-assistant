@@ -1,0 +1,21 @@
+services:
+  db:
+    # pgvector 0.8.7 on Postgres 17; pinned so a pull never changes the database version.
+    image: pgvector/pgvector:0.8.7-pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cta
+      POSTGRES_DB: cta
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:5432:5432"   # localhost only
+    volumes:
+      - cta_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cta -d cta"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  cta_pgdata:

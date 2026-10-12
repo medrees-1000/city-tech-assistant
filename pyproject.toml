@@ -7,6 +7,8 @@ dependencies = [
     "beautifulsoup4>=4.15.0",
     "httpx>=0.28.1",
     "pdfplumber>=0.11.10",
+    "pgvector>=0.5.1",
+    "psycopg[binary]>=3.3.6",
     "python-dotenv>=1.2.4",
     "pyyaml>=6.0.3",
 ]
@@ -25,6 +27,7 @@ select = ["E", "F", "I", "B", "UP"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["integration: needs the Docker Postgres (skipped when it is not running)"]
 
 [dependency-groups]
 dev = [
