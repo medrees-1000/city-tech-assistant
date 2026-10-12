@@ -231,3 +231,33 @@ q15's gold allows abstaining, the judge still graded it incorrect, and its label
 gold chunk is not in the top 10. q22 is a chained-prerequisite question: the plan lists those as "not supported
 yet", but the rule used here labels it generation error (the owner's rule for this step names only calendar-only
 and CLARIFY).
+
+## Judge rubric v2, labels, and the freeze (Oct 12, 2026)
+
+- The owner checked 8 dev verdicts (`docs/judge-check.md`). Rubric v1 agreed on correctness 6/8 and faithfulness 7/8:
+  the judge was too strict on gold facts the question did not ask for (q04), graded q15 incorrect where the owner
+  said partial, and missed that q03's "No." goes beyond the source.
+- **Rubric v2** (`src/cta/eval/rubric.py`, `RUBRIC_VERSION = 2`, stored in every run's config): gold facts the
+  question does not ask for are not required; faithfulness "partly" means any inference beyond the sources. The
+  special gold rules are unchanged. Re-judged from the stored answers with no new answer or embedding calls
+  (`baseline-dev-judge-v2`, $0.083): correctness on normal gold n = 15 went from correct 0.67 / partial 0.27 /
+  incorrect 0.07 to 0.80 / 0.13 / 0.07 (q04 and q16 became correct); faithfulness stayed yes 1.00 (n = 15).
+  Agreement with the owner on the 8 items is now correctness 7/8, faithfulness 7/8. The remaining disagreements
+  are q15 (judge incorrect, owner partial) and q03 faithfulness (judge yes, owner partly): the judge's
+  faithfulness grade is probably too lenient about inferences. Not tuned further; this is a known limit of the
+  baseline's faithfulness number.
+- **Failure-label rule v2:** retrieval miss if ANY scorable gold source is missing from the top 10; ranking miss if
+  any is missing from the top 5; generation error otherwise; abstention error and "not supported yet" as before.
+  Dev labels with it: retrieval miss 2 (q01: `applying-graduation#1` never retrieved; q15), generation error 0
+  after q22's relabel, not supported yet 2 (q12 calendar, q24 CLARIFY), not supported yet (chained prerequisite) 1
+  (q22).
+- **q22 (chained prerequisite):** the only gold source `catalog:MAT 2675` is at rank 2, and its record says
+  "Prerequisites of MAT 1575 AND MAT 2580". The model repeated that. The gold answer needs the next levels: MAT 1575
+  is at rank 6, MAT 2580 is not in the top 10, MAT 1475 and MAT 1375 are in the top 5 but the model had no instruction
+  or tool to follow the chain. The missing pieces are the deeper prerequisite courses, so it is labelled "not
+  supported yet (chained prerequisite)". The rule is fixed for q20 and q22, the two questions Phase 1 built as
+  prerequisite trees; q20 is not in the dev split and was not looked at. A `--relabel` command recomputes labels
+  from stored verdicts with no API call.
+- **FROZEN** from commit `08cc8df` (the code and rubric) until after the test run: the answer prompt, abstain
+  threshold 0.59, k = 5, models (`text-embedding-3-small`, `gpt-6-luna`, judge `gpt-5.6-terra`), answer and
+  judge settings, rubric v2, and the failure-label rules. Nothing is changed after seeing the test results.
