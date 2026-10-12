@@ -55,9 +55,15 @@ def test_extras_must_be_verified_calendar_events_on_a_calendar_only_question():
     assert any("needs a calendar-only question" in p for p in check_all([section], data)["q1"])
 
 
-def test_the_real_file_loads_with_the_optional_field_unused_until_the_owner_decides():
-    rows = load_questions()
-    assert all(row_problems(r) == [] for r in rows)
+def test_the_real_file_uses_the_field_only_where_the_owner_decided():
+    rows = {r["id"]: r for r in load_questions()}
+    assert all(row_problems(r) == [] for r in rows.values())
+    with_field = {i for i, r in rows.items() if "calendar_acceptable_extra" in r}
+    assert with_field == {"q33", "q63"}
+    assert [g["id"] for g in rows["q33"]["gold_sources"]] == ["spring-2027-007"]
+    assert rows["q33"]["calendar_acceptable_extra"] == ["spring-2027-006"]
+    assert [g["id"] for g in rows["q63"]["gold_sources"]] == ["winter-2027-004"]
+    assert rows["q63"]["calendar_acceptable_extra"] == ["winter-2027-005"]
 
 
 # ---- scoring v1 and v2 ----
@@ -126,7 +132,7 @@ def test_collisions_exclude_gold_undated_and_web_address_rows():
 def test_proposals_default_to_no_and_the_prefilled_rows_are_the_owners():
     assert cg.proposal("q63", "winter-2027-005")[0] == "yes"
     assert cg.proposal("q63", "winter-2027-006")[0] == "no" and cg.proposal("q12", "x")[0] == "no"
-    q33 = next(q for q in load_questions() if q["id"] == "q33")
+    q33 = question(("spring-2027-007", "spring-2027-006"), None, "q33")  # as before the decision
     after = cg.with_prefilled(q33)
     assert [g["id"] for g in after["gold_sources"]] == ["spring-2027-007"]
     assert after["calendar_acceptable_extra"] == ["spring-2027-006"]

@@ -396,3 +396,14 @@ code at the time of the re-judge); its labels were later recomputed by `--relabe
 - **Scoring v2 (`calendar_scoring: 2`).** The gold sources are the required rows. Correct = every required id returned and every returned id in required or extras; partial = a non-empty proper subset of the required ids with nothing outside required and extras; incorrect = any returned id outside both (a "wrong row stated"), an abstention, or no rows. Scoring v1 (exact rows, `calendar_scoring: 1`) stays available and is the default with `--router on`; every calendar-only record stores both verdicts
   (`calendar_v1`, `calendar_v2`) whichever one decides, so every run can be reported under both (`run_answers --calendar-scoring 1|2`).
 - **Information only:** `docs/calendar-same-date.md` re-scores the three stored 4a runs under v2 with just the two pre-filled changes, without any model call ("re-scored, not a decision").
+
+### Applied to `eval/questions.jsonl` (Oct 12, 2026, after the owner replied "continue" and accepted the proposals and the two pre-filled changes)
+
+Reason for both: owner decision after the 4a run; the 4a result is not changed (it stands as REJECT, scored with the old gold); the re-run in step 4a-2 part 2 is a fresh experiment. The only "yes" proposal in `docs/calendar-same-date.md` was q63's `winter-2027-005`; every other collision is "no". `gold_answer` text and every other field are unchanged.
+
+| question | before | after |
+|---|---|---|
+| q33 | `gold_sources`: `spring-2027-007` ("Classes begin") and `spring-2027-006` ("Start of Spring 2027 term."), both required; no extra | `gold_sources`: `spring-2027-007` only (required); `calendar_acceptable_extra`: `["spring-2027-006"]` |
+| q63 | `gold_sources`: `winter-2027-004`; no extra | `gold_sources`: `winter-2027-004` (required); `calendar_acceptable_extra`: `["winter-2027-005"]` ("Classes begin") |
+
+`docs/calendar-same-date.md` was generated before this change and is left as it was (its v1 column is the 4a scoring with the old gold).
