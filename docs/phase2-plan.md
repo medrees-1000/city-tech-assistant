@@ -1,9 +1,9 @@
 # Phase 2 plan: chunk, embed, vector-only baseline
 
-**Where we are (2026-10-12):** steps 1 to 4 done. The `chunks` table holds all 619 chunks with embeddings
-(`text-embedding-3-small`, 136,297 tokens, $0.00273); a second `cta.index.load --yes` embeds 0. `calendar_events`,
-`eval_runs` and `request_logs` are still empty. Next is step 5 (calendar loader, no API call). A new session: read
-this file, `config/models.yaml`, `docs/decisions.md`, then continue at the first step not marked done.
+**Where we are (2026-10-12):** steps 1 to 5 done. The database holds 619 embedded chunks and the 136 verified
+calendar events (all integrity checks pass; one TBA row). `eval_runs` and `request_logs` are empty. Next is step 6
+(retrieval and a `search` command; embeds only the question, a fraction of a cent). A new session: read this file,
+`config/models.yaml`, `docs/decisions.md`, then continue at the first step not marked done.
 
 Original status: plan only (2026-10-11). No code, no installs, no containers started. Everything here is for the owner
 to approve or change. Scope is CLAUDE.md Phase 2: "chunk, embed, vector-only RAG; record metrics". Not in scope:
@@ -237,7 +237,7 @@ or changed.
    chunks of each kind, the cost estimate.
 4. **DONE (a878e8c). Embedding client and loader.** Embed and upsert, hash-based skip, delete. Needs your key and approval of
    the exact cost shown by the dry run. Show: counts, tokens, dollars; a second run that re-embeds 0.
-5. **Calendar loader.** `calendar_events` table from the verified file. Show: row counts per term and a few
+5. **DONE (b1be84f). Calendar loader.** `calendar_events` table from the verified file. Show: row counts per term and a few
    queries (SAP deadlines, the TBA row).
 6. **Retrieval.** `cta.eval.retrieve` and a `search` command (no chat model). Show: top 5 with scores for six
    sample questions, including one unanswerable and one calendar question.
@@ -270,6 +270,12 @@ real token usage), `cta.index.load` (`--dry-run`, `--yes`, cost cap, validation 
 `tests/test_embed_load.py` (fake client, throwaway schema). Dependency added: `openai` (brings `httpx2`, which
 openai requires itself since 3.0.0). First real load: 619 new, 136,297 tokens, $0.00273, 0 NULL embeddings,
 self-check OK; second run: 619 unchanged, 0 embedded. Commit: a878e8c.
+
+Step 5 (done 2026-10-12): `cta.index.load_calendar` (`--dry-run`, `--yes`; reads the file only through
+`load_events_for_indexing`), integrity checks, `tests/test_load_calendar.py`; the throwaway-schema fixture moved to
+`tests/conftest.py`. 136 rows (Fall 2026 55, Winter 2027 26, Spring 2027 55), 0 integrity problems, 1 TBA row
+(spring-2027-055, "87th Commencement Ceremony", date NULL, `date_raw` "TBA"). Second run: 136 unchanged.
+Commit: b1be84f.
 
 ## Roadmap after the baseline (no code; Phase 3 and later)
 

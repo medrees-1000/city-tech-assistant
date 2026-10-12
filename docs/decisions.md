@@ -76,3 +76,17 @@ never excluded.
 - `openai` 3.x depends on `httpx2` (the pydantic-org successor of httpx, openai requires it since 3.0.0 of
   2026-08-12). It is a transitive dependency and not named in `pyproject.toml`.
 - Loader tests run in a throwaway schema (created and dropped per test), because the loader really commits.
+
+## Calendar loader (Oct 12, 2026)
+
+- Same rules as the chunk loader: `--yes` for any write, nothing written in a dry run, one transaction, rows no
+  longer in the file are deleted. The integrity checks run after the load and only report; a mismatch is listed
+  and the exit code is 1, nothing is corrected silently.
+- Weekday check: the first name in `weekday_raw` must be the weekday of `date_start`, and for a range such as
+  "Friday-Sunday" the second must be the weekday of `date_end`.
+- Year check: the term decides the year (Winter 2027: December is 2026, January is 2027), **unless the PDF
+  printed a year in `date_raw`, which decides.** The first version of the check had no such exception and
+  flagged `fall-2026-055` ("College Closed", `date_raw` "January 01, 2027", a Friday): a Fall 2026 row that is
+  correctly in 2027 because the Fall calendar runs to January 1. The data was right; the check was too blunt.
+- Tests that used to assume the real `chunks` table was empty now compare its row count and latest
+  `updated_at` before and after.
