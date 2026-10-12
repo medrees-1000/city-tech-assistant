@@ -17,7 +17,7 @@ BATCH_SIZE = 64
 MAX_RETRIES = 3  # retries after the first attempt; waits 1, 2, 4 seconds
 
 
-class EmbeddingError(RuntimeError):
+class ApiError(RuntimeError):
     pass
 
 
@@ -25,7 +25,7 @@ def make_client() -> openai.OpenAI:
     """A client with the library's own retries off: this module does the retrying."""
     load_dotenv(ROOT / ".env")
     if not os.environ.get("OPENAI_API_KEY", "").strip():
-        raise EmbeddingError("OPENAI_API_KEY is not set; add it to .env")
+        raise ApiError("OPENAI_API_KEY is not set; add it to .env")
     return openai.OpenAI(max_retries=0)
 
 
@@ -37,23 +37,29 @@ def retryable(error: Exception) -> bool:
     return isinstance(error, openai.APIStatusError) and error.status_code >= 500
 
 
-def embed_batch(client, model: str, texts: list[str], sleep: Callable[[float], None]):
-    """(response, attempts used). Retries retryable errors up to MAX_RETRIES times."""
+def with_retries(call, what: str, sleep: Callable[[float], None] = time.sleep):
+    """Run call(); retry retryable errors up to MAX_RETRIES times (waits 1, 2, 4 seconds). Other
+    errors, such as a bad key, fail at once. Error messages never contain the key."""
     for attempt in range(MAX_RETRIES + 1):
         try:
-            return client.embeddings.create(model=model, input=texts)
+            return call()
         except openai.OpenAIError as e:
             if not retryable(e):
                 status = getattr(e, "status_code", None)
-                raise EmbeddingError(
-                    f"embedding request rejected ({type(e).__name__}, status {status}); "
-                    "not retrying"
+                raise ApiError(
+                    f"{what} rejected ({type(e).__name__}, status {status}); not retrying"
                 ) from None
             if attempt == MAX_RETRIES:
-                raise EmbeddingError(
-                    f"embedding request failed after {MAX_RETRIES} retries ({type(e).__name__})"
+                raise ApiError(
+                    f"{what} failed after {MAX_RETRIES} retries ({type(e).__name__})"
                 ) from None
             sleep(2**attempt)
+
+
+def embed_batch(client, model: str, texts: list[str], sleep: Callable[[float], None]):
+    return with_retries(
+        lambda: client.embeddings.create(model=model, input=texts), "embedding request", sleep
+    )
 
 
 def embed_texts(
@@ -72,10 +78,10 @@ def embed_texts(
         response = embed_batch(client, model, batch, sleep)
         rows = sorted(response.data, key=lambda d: d.index)
         if len(rows) != len(batch):
-            raise EmbeddingError(f"asked for {len(batch)} embeddings, got {len(rows)}")
+            raise ApiError(f"asked for {len(batch)} embeddings, got {len(rows)}")
         for row in rows:
             if len(row.embedding) != dimensions:
-                raise EmbeddingError(
+                raise ApiError(
                     f"embedding has {len(row.embedding)} dimensions, expected {dimensions}"
                 )
             vectors.append(list(row.embedding))

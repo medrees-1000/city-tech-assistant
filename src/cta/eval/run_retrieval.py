@@ -18,7 +18,7 @@ from psycopg.types.json import Jsonb
 from cta.eval.metrics import KS, average, question_metrics, scorable_gold
 from cta.eval.questions import load_questions
 from cta.index.db import connect
-from cta.index.embed import EmbeddingError
+from cta.index.embed import ApiError
 from cta.index.search import search
 from cta.settings import ROOT, load_models
 
@@ -186,7 +186,7 @@ def main(argv: list[str]) -> int:
         with connect() as conn:
             summary = run(conn, questions, args.label, args.split, cfg)
             save(conn, summary, cfg)
-    except EmbeddingError as e:
+    except ApiError as e:
         print(f"failed: {e}")
         return 1
     print(f"saved eval_runs row and eval/results/{args.label}.json")

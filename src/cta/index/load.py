@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 
 from cta.index import chunks as chunk_builder
 from cta.index.db import connect
-from cta.index.embed import EmbeddingError, embed_texts, make_client
+from cta.index.embed import ApiError, embed_texts, make_client
 from cta.settings import cost_usd, load_models
 
 COLUMNS = (
@@ -184,7 +184,7 @@ def main(argv: list[str]) -> int:
             return run(
                 conn, chunks, cfg, count, make_client, "--yes" in flags, "--dry-run" in flags
             )
-    except (ValueError, EmbeddingError) as e:
+    except (ValueError, ApiError) as e:
         print(f"failed: {e}")
         return 1
 

@@ -56,7 +56,7 @@ def test_batches_of_64():
 
 
 def test_wrong_dimension_fails():
-    with pytest.raises(embed.EmbeddingError, match="3 dimensions, expected 1536"):
+    with pytest.raises(embed.ApiError, match="3 dimensions, expected 1536"):
         embed.embed_texts(FakeClient(dim=3), "m", ["a"], DIM)
 
 
@@ -69,14 +69,14 @@ def test_retries_on_429_then_succeeds():
 
 def test_gives_up_after_three_retries():
     client = FakeClient(errors=[api_error(openai.InternalServerError, 503)] * 9)
-    with pytest.raises(embed.EmbeddingError, match="after 3 retries"):
+    with pytest.raises(embed.ApiError, match="after 3 retries"):
         embed.embed_texts(client, "m", ["a"], DIM, sleep=lambda s: None)
     assert client.calls == 4
 
 
 def test_no_retry_on_bad_key():
     client = FakeClient(errors=[api_error(openai.AuthenticationError, 401)])
-    with pytest.raises(embed.EmbeddingError, match="not retrying") as e:
+    with pytest.raises(embed.ApiError, match="not retrying") as e:
         embed.embed_texts(client, "m", ["a"], DIM, sleep=lambda s: None)
     assert client.calls == 1 and "sk-" not in str(e.value)
 

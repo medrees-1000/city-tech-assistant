@@ -17,13 +17,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from cta.index.db import connect
-from cta.index.embed import EmbeddingError, embed_texts, make_client
+from cta.index.embed import ApiError, embed_texts, make_client
 from cta.settings import ROOT, cost_usd, load_models
 
 CACHE_PATH = ROOT / "data" / "cache" / "query_embeddings.json"
 RESULT_COLUMNS = (
     "id", "kind", "source", "source_id", "merged_section_ids", "doc_type", "department", "term",
-    "terms", "heading_path", "text",
+    "terms", "heading_path", "last_updated", "text",
 )  # fmt: skip
 
 
@@ -115,7 +115,7 @@ def main(argv: list[str]) -> int:
     try:
         with connect() as conn:
             found = search(conn, args.question, args.k)
-    except EmbeddingError as e:
+    except ApiError as e:
         print(f"failed: {e}")
         return 1
     for r in found.results:
