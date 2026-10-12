@@ -3,8 +3,8 @@
 **Where we are (2026-10-12): Phase 2 is finished.** All nine steps are done. The baseline is recorded: dev
 `eval/results/baseline-dev-judge-v2.json` (copied to `eval/results/baseline.json`, the file Phase 3 compares
 against on dev), test `eval/results/baseline-final.json` (run once, after the freeze at `08cc8df`), and the write-up
-`docs/baseline-findings.md`. Nothing may be tuned on the test split. Next is Phase 3 (roadmap below): one change at a
-time, each compared with `baseline.json` on dev. A new session: read this file, `docs/baseline-findings.md`,
+`docs/baseline-findings.md`. Nothing may be tuned on the test split. Next is Phase 3: see `docs/phase3-plan.md` (step 0, growing
+the eval set, is in progress): one change at a time, each compared with `baseline.json` on dev. A new session: read this file, `docs/baseline-findings.md`,
 `docs/decisions.md` and `config/models.yaml`.
 
 Original status: plan only (2026-10-11). No code, no installs, no containers started. Everything here is for the owner
