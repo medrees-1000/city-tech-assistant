@@ -40,6 +40,12 @@ JUDGE_ESTIMATE_OUTPUT_TOKENS = 150
 CORRECTNESS = ("correct", "partial", "incorrect")
 FAITHFULNESS = ("yes", "partly", "no")
 NOT_SUPPORTED = "not supported yet"
+CHAINED = "not supported yet (chained prerequisite)"
+# The two questions Phase 1 built as chained-prerequisite trees (validation log step 11,
+# docs/eval-review.md). Their gold answers need the prerequisites of the prerequisites, which the
+# baseline cannot follow (a prerequisite-chain tool is Phase 3). Fixed before the test run, and
+# checked for q22 against its dev run.
+CHAINED_PREREQUISITE_QUESTIONS = ("q20", "q22")
 
 
 # ---- classification and judging ----
@@ -153,6 +159,8 @@ def label_failure(
         )
     if kind == "abstain":
         return "abstention error", "answered a question that should be refused"
+    if q["id"] in CHAINED_PREREQUISITE_QUESTIONS and not ans.abstained:
+        return CHAINED, "needs the prerequisites of the prerequisites (chained prerequisite)"
     gold = scorable_gold(q)
     missing10 = [g for g in gold if not any(g in matched_gold(c, gold) for c in top10)]
     missing5 = [g for g in gold if not any(g in matched_gold(c, gold) for c in top10[:5])]
@@ -404,7 +412,8 @@ def print_report(
     ns = [
         r
         for r in records
-        if r["label"] == NOT_SUPPORTED or r["gold_kind"] in ("clarify", "calendar_only")
+        if (r["label"] or "").startswith(NOT_SUPPORTED)
+        or r["gold_kind"] in ("clarify", "calendar_only")
     ]
     out(f"\nNot supported yet (reported separately, n={len(ns)}):")
     for r in ns:
@@ -529,13 +538,14 @@ def no_api() -> None:
 def load_stored(conn, old_label: str, cfg: dict):
     """(questions, answers, top10s, old records) of a finished run, rebuilt from request_logs, the
     chunks table and the run's results file. Raises if the sources the answerer saw have changed."""
+    old = json.loads((RESULTS / f"{old_label}.json").read_text(encoding="utf-8"))
+    log_label = old.get("rejudge_of") or old_label  # a re-judge reuses the original run's logs
     run_row = conn.execute(
-        "SELECT id, split FROM eval_runs WHERE label = %s ORDER BY id DESC LIMIT 1", (old_label,)
+        "SELECT id, split FROM eval_runs WHERE label = %s ORDER BY id DESC LIMIT 1", (log_label,)
     ).fetchone()
     if run_row is None:
-        raise ValueError(f"no eval run labelled {old_label}")
+        raise ValueError(f"no eval run labelled {log_label}")
     run_id, split = run_row
-    old = json.loads((RESULTS / f"{old_label}.json").read_text(encoding="utf-8"))
     old_records = {r["id"]: r for r in old["per_question"]}
     logs = {
         r[0]: r[1:]
@@ -663,12 +673,42 @@ def main_rejudge(args, cfg: dict) -> int:
     return 0
 
 
+def relabel(conn, label: str, cfg: dict) -> dict:
+    """Recompute the failure labels of a finished run from its stored verdicts and sources. No
+    judge, answer or embedding call. Rewrites the results file and the eval_runs row."""
+    questions, answers, top10s, old = load_stored(conn, label, cfg)
+    by_id = {r["id"]: r for r in old["per_question"]}
+    changed = []
+    for q in questions:
+        r = by_id[q["id"]]
+        new_label = new_reason = None
+        if r["correctness"] != "correct" and r["judge_status"] != "judge failed":
+            new_label, new_reason = label_failure(
+                r["gold_kind"], q, answers[q["id"]], top10s[q["id"]], r
+            )
+        elif r["judge_status"] == "judge failed":
+            new_label, new_reason = r["label"], r["label_reason"]
+        if new_label != r["label"]:
+            changed.append((q["id"], r["label"], new_label))
+        r["label"], r["label_reason"] = new_label, new_reason
+    old["failure_labels"] = label_counts(old["per_question"])
+    (RESULTS / f"{label}.json").write_text(json.dumps(old, indent=1) + "\n", encoding="utf-8")
+    conn.execute(
+        "UPDATE eval_runs SET per_question = %s, config = config || %s "
+        "WHERE id = (SELECT max(id) FROM eval_runs WHERE label = %s)",
+        (Jsonb(old["per_question"]), Jsonb({"relabelled": "chained-prerequisite rule"}), label),
+    )
+    conn.commit()
+    return {"changed": changed, "labels": old["failure_labels"]}
+
+
 def main(argv: list[str]) -> int:
     p = argparse.ArgumentParser(prog="python -m cta.eval.run_answers")
-    p.add_argument("--split", choices=("dev", "test"), required=True)
-    p.add_argument("--label", required=True)
+    p.add_argument("--split", choices=("dev", "test"))
+    p.add_argument("--label")
     p.add_argument("--final", action="store_true", help="allow --split test (part B only)")
     p.add_argument("--rejudge", metavar="OLD_LABEL", help="re-judge a stored run, no answer calls")
+    p.add_argument("--relabel", metavar="LABEL", help="recompute failure labels, no API call")
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--yes", action="store_true")
     args = p.parse_args(argv[1:])
@@ -679,6 +719,13 @@ def main(argv: list[str]) -> int:
         print(f"refused: eval/results/{args.label}.json already exists; use a new label")
         return 2
     cfg = load_models()
+    if args.relabel:
+        with connect() as conn:
+            print(relabel(conn, args.relabel, cfg))
+        return 0
+    if not args.split or not args.label:
+        print("--split and --label are required")
+        return 2
     if args.rejudge:
         return main_rejudge(args, cfg)
     questions = [q for q in load_questions() if q["split"] == args.split]

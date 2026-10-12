@@ -123,3 +123,12 @@ The filing deadline is listed in the Academic Calendar. Applying late may mean y
 
 **My verdict:** correctness partial / faithfulness yes
 
+
+## Agreement summary (recorded 2026-10-12)
+
+Owner vs judge on these 8 items (correctness / faithfulness):
+
+| Rubric | Correctness agreement | Faithfulness agreement | Disagreements (judge vs owner) |
+|---|---|---|---|
+| v1, run `baseline-dev` | 6 / 8 | 7 / 8 | q04 correctness (partial vs correct), q15 correctness (incorrect vs partial), q03 faithfulness (yes vs partly) |
+| v2, run `baseline-dev-judge-v2` (re-judged from the stored answers) | 7 / 8 | 7 / 8 | q15 correctness (incorrect vs partial), q03 faithfulness (yes vs partly) |

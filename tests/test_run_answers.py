@@ -331,3 +331,18 @@ def test_verdict_changes_lists_only_changed_questions():
 def test_rejudge_never_calls_the_api():
     with pytest.raises(ra.ApiError):
         ra.no_api()
+
+
+def test_chained_prerequisite_questions_are_not_supported_yet():
+    q = question("q22", sources=("catalog:MAT 2675",), qtype="multi_chunk")
+    top10 = top("catalog:MAT 2675")
+    r = ra.evaluate_question(
+        q, ans("Needs MAT 1575 and MAT 2580 [1]."), top10, fake_judge(judge_reply("partial"))
+    )
+    assert r["label"] == "not supported yet (chained prerequisite)"
+    other = question("q21", sources=("catalog:EET 3672",))
+    r = ra.evaluate_question(
+        other, ans(), top("catalog:EET 3672"), fake_judge(judge_reply("partial"))
+    )
+    assert r["label"] == "generation error"
+    assert ra.CHAINED_PREREQUISITE_QUESTIONS == ("q20", "q22")
