@@ -179,7 +179,7 @@ def test_gold_text_is_built_from_the_record_in_a_fixed_format():
     )
     gold = mcc.chain_gold(mcc.expand("AA 1001", records))
     assert gold.splitlines() == [
-        "Draft chain for AA 1001 (Root Course), built from the catalog records:",
+        "Chain for AA 1001 (Root Course), built from the catalog records:",
         'Level 0 - AA 1001 (Root Course): catalog text "PRE: BB 1001 / PRE: CC 1001"; course codes named: BB 1001, CC 1001.',
         "Level 1 - BB 1001 (Title of BB 1001): no prerequisite is listed in the catalog.",
         "Level 1 - CC 1001 (Third): no prerequisite is listed in the catalog.",

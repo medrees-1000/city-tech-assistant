@@ -191,7 +191,7 @@ def node_line(n: Node) -> str:
 
 def chain_gold(nodes: list[Node]) -> str:
     root = nodes[0]
-    head = f"Draft chain for {root.code} ({root.record['title'].strip()}), built from the catalog records:"
+    head = f"Chain for {root.code} ({root.record['title'].strip()}), built from the catalog records:"
     return head + "\n" + "\n".join(node_line(n) for n in nodes)
 
 
