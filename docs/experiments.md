@@ -490,7 +490,7 @@ If it passes, `router.mode` becomes `"on"` and `router.selector` 2 in a separate
 
 ## Experiment 4a-2: selector v2 (all-calendar pool, stricter prompt), 2026-10-12 — KEPT (all four rules pass); `router.mode` on, `router.selector` 2
 
-**What was run.** `router2-run1..3`: `router.mode: on`, `router.selector: 2`, `--calendar-scoring 2`, all 48 dev questions, rubric v3, same judge, compared with the stored 3b arm-ON runs on the 40 common questions. Pre-registration `(commit "pre-registration for selector v2")`, code and selector v2 prompt `35e5ba5` (committed before the first paid call). Test split not run, read or looked at. 4a stays REJECTED; this is a fresh experiment on the refined gold. Tables, per-question rows and example answers: `docs/step4a2-selector-v2-results.md`.
+**What was run.** `router2-run1..3`: `router.mode: on`, `router.selector: 2`, `--calendar-scoring 2`, all 48 dev questions, rubric v3, same judge, compared with the stored 3b arm-ON runs on the 40 common questions. Pre-registration `96d6515`, code and selector v2 prompt `35e5ba5` (committed before the first paid call). Test split not run, read or looked at. 4a stays REJECTED; this is a fresh experiment on the refined gold. Tables, per-question rows and example answers: `docs/step4a2-selector-v2-results.md`.
 
 | Rule (scored under v2; v1 gives the same numbers here) | Result | |
 |---|---|---|
