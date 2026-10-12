@@ -224,3 +224,6 @@ data/pdfs/
 # Collected data (not committed; small samples go in tests/fixtures/)
 data/raw/
 data/processed/
+
+# Local caches (query embeddings)
+data/cache/
