@@ -23,6 +23,7 @@ from pathlib import Path
 
 from cta.index import bm25
 from cta.index.db import connect
+from cta.index.departments import allowed_sql, detect_departments
 from cta.index.embed import ApiError, embed_texts, make_client
 from cta.settings import ROOT, cost_usd, load_models
 
@@ -44,6 +45,8 @@ class Search:
     mode_used: str = "vector"  # "hybrid", "vector", or "vector (empty keyword query)"
     top_vector_similarity: float | None = None  # best cosine similarity in the vector list
     retrieval_ms: float = 0.0  # the whole search call, including the query embedding if not cached
+    dept_filter_applied: bool = False
+    detected_departments: list[str] = field(default_factory=list)
 
 
 def cache_key(model: str, question: str) -> str:
@@ -125,15 +128,17 @@ def keyword_lexemes(conn, question: str) -> list[str]:
     return [r[0] for r in rows]
 
 
-def keyword_ids(conn, query: str, limit: int) -> list[str]:
+def keyword_ids(conn, query: str, limit: int, departments: list[str] | None = None) -> list[str]:
     """Chunk ids matching any lexeme, best ts_rank first, ties by id. ts_rank counts how often and
     where the query words occur in a chunk; it does not weigh rare words more than common ones (no
     inverse document frequency), so "student" counts as much as "3672", and it does not normalise by
     chunk length."""
+    keep = f" AND {allowed_sql()}" if departments else ""
+    params = (query, *((departments,) if departments else ()), query, limit)
     rows = conn.execute(
-        "SELECT id FROM chunks WHERE tsv @@ to_tsquery('simple', %s) "
+        f"SELECT id FROM chunks WHERE tsv @@ to_tsquery('simple', %s){keep} "
         "ORDER BY ts_rank(tsv, to_tsquery('simple', %s)) DESC, id LIMIT %s",
-        (query, query, limit),
+        params,
     )
     return [r[0] for r in rows]
 
@@ -151,11 +156,21 @@ def search(
     client_factory=make_client,
     cache_path: Path = CACHE_PATH,
     mode: str | None = None,
+    dept_filter: str | None = None,
 ) -> Search:
     started = time.perf_counter()
     cfg = cfg or load_models()
     mode = mode or cfg["retrieval"]["mode"]
     n = cfg["retrieval"]["candidates"]
+    # Department filter (step 2a): with a department named in the question, drop chunks whose scope
+    # is 'department' and whose department is another one. Applied to every candidate list before
+    # any ranking is cut, so lower-ranked chunks move up. Nothing changes if none is detected.
+    detected = (
+        sorted(detect_departments(question))
+        if (dept_filter or cfg["retrieval"]["dept_filter"]) == "on"
+        else []
+    )
+    keep = f" AND {allowed_sql()}" if detected else ""
     vector, tokens, calls, hit = query_vector(question, cfg, client_factory, cache_path)
     literal = "[" + ",".join(map(str, vector)) + "]"
     columns = ", ".join(RESULT_COLUMNS)
@@ -169,34 +184,55 @@ def search(
     if mode in ("hybrid", "hybrid_bm25"):
         used = mode if lexemes else "vector (empty keyword query)"
     fused_mode = used in ("hybrid", "hybrid_bm25")
+    params = (literal, *((detected,) if detected else ()), literal, n if fused_mode else k)
     rows = conn.execute(
-        f"{select} WHERE embedding IS NOT NULL ORDER BY embedding <=> %s::vector, id LIMIT %s",
-        (literal, literal, n if fused_mode else k),
+        f"{select} WHERE embedding IS NOT NULL{keep} "
+        "ORDER BY embedding <=> %s::vector, id LIMIT %s",
+        params,
     ).fetchall()
+    # The abstain threshold reads this value: the best vector cosine similarity AFTER the department
+    # filter, so it is equal to or lower than the unfiltered one. It differs only when the single
+    # best-matching chunk in the index belongs to a department the question does not name (rare for
+    # a question that names one, and the case the filter exists to correct).
     top_similarity = rows[0][-1] if rows else None
     if not fused_mode:
         results = [
-            row_dict(r, i) | {"vector_rank": i, "keyword_rank": None, "bm25_rank": None}
+            row_dict(r, i)
+            | {"vector_rank": i, "keyword_rank": None, "bm25_rank": None}
+            | {"dept_filter_applied": bool(detected), "detected_departments": detected}
             for i, r in enumerate(rows, 1)
         ]
     else:
         by_id = {r[0]: r for r in rows}
         if used == "hybrid":
-            keyword, name = keyword_ids(conn, query, n), "keyword_rank"
+            keyword, name = keyword_ids(conn, query, n, detected or None), "keyword_rank"
         else:
-            keyword, name = bm25.bm25_ids(conn, lexemes, n), "bm25_rank"
+            keyword, name = bm25.bm25_ids(conn, lexemes, 10_000), "bm25_rank"
+            if detected:
+                rows_ok = conn.execute(f"SELECT id FROM chunks WHERE {allowed_sql()}", (detected,))
+                allowed = {r[0] for r in rows_ok}
+                keyword = [cid for cid in keyword if cid in allowed]
+            keyword = keyword[:n]
         fused = rrf([r[0] for r in rows], keyword, cfg["retrieval"]["rrf_k"], name)[:k]
         missing = [e["id"] for e in fused if e["id"] not in by_id]
         if missing:  # keyword-only hits: fetch them with their cosine similarity
             extra = conn.execute(f"{select} WHERE id = ANY(%s)", (literal, missing)).fetchall()
             by_id |= {r[0]: r for r in extra}
         results = [
-            row_dict(by_id[e["id"]], i) | e | {"id": e["id"]} for i, e in enumerate(fused, 1)
+            row_dict(by_id[e["id"]], i)
+            | e
+            | {
+                "id": e["id"],
+                "dept_filter_applied": bool(detected),
+                "detected_departments": detected,
+            }
+            for i, e in enumerate(fused, 1)
         ]
     cost = cost_usd(cfg, cfg["embedding_model"], tokens)
     return Search(
         results, hit, calls, tokens, cost, cache_key(cfg["embedding_model"], question),
         mode_used=used, top_vector_similarity=top_similarity,
+        dept_filter_applied=bool(detected), detected_departments=detected,
         retrieval_ms=(time.perf_counter() - started) * 1000,
     )  # fmt: skip
 
@@ -215,10 +251,15 @@ def main(argv: list[str]) -> int:
     parser.add_argument(
         "--mode", choices=("vector", "hybrid", "hybrid_bm25"), help="override retrieval.mode"
     )
+    parser.add_argument(
+        "--dept-filter", choices=("off", "on"), help="override retrieval.dept_filter"
+    )
     args = parser.parse_args(argv[1:])
     try:
         with connect() as conn:
-            found = search(conn, args.question, args.k, mode=args.mode)
+            found = search(
+                conn, args.question, args.k, mode=args.mode, dept_filter=args.dept_filter
+            )
     except ApiError as e:
         print(f"failed: {e}")
         return 1

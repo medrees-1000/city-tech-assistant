@@ -766,6 +766,7 @@ def main(argv: list[str]) -> int:
     p.add_argument(
         "--mode", choices=("vector", "hybrid", "hybrid_bm25"), help="override retrieval.mode"
     )
+    p.add_argument("--dept-filter", choices=("off", "on"), help="override retrieval.dept_filter")
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--yes", action="store_true")
     args = p.parse_args(argv[1:])
@@ -778,6 +779,8 @@ def main(argv: list[str]) -> int:
     cfg = load_models()
     if args.mode:
         cfg["retrieval"]["mode"] = args.mode
+    if args.dept_filter:
+        cfg["retrieval"]["dept_filter"] = args.dept_filter
     if args.relabel:
         with connect() as conn:
             print(relabel(conn, args.relabel, cfg))

@@ -40,6 +40,9 @@ retrieval:
   mode: vector
   candidates: 20
   rrf_k: 60
+  # Department filter (Phase 3, step 2a): off | on. With a department named in the question, chunks of scope
+  # "department" belonging to another department are dropped. CTA_DEPT_FILTER overrides it. Works with every mode.
+  dept_filter: "off"   # quoted: bare off/on are booleans in YAML
 
 max_chunk_tokens: 6000          # the loader fails instead of truncating (embedding limit is 8192)
 

@@ -54,6 +54,12 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
     cfg["embedding_dimensions"] = cfg["models"][cfg["embedding_model"]]["dimensions"]
     if env.get("CTA_RETRIEVAL_MODE", "").strip():
         cfg["retrieval"]["mode"] = env["CTA_RETRIEVAL_MODE"].strip()
+    if env.get("CTA_DEPT_FILTER", "").strip():
+        cfg["retrieval"]["dept_filter"] = env["CTA_DEPT_FILTER"].strip()
+    if cfg["retrieval"]["dept_filter"] not in ("off", "on"):
+        raise ValueError(
+            f"retrieval.dept_filter must be off or on, not {cfg['retrieval']['dept_filter']!r}"
+        )
     if cfg["retrieval"]["mode"] not in RETRIEVAL_MODES:
         raise ValueError(
             f"retrieval.mode must be one of {RETRIEVAL_MODES}, not {cfg['retrieval']['mode']!r}"

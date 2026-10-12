@@ -115,11 +115,12 @@ def latency(values: list[float]) -> dict:
 
 
 def run(conn, questions: list[dict], label: str, split: str, cfg: dict, out=print) -> dict:
-    retrieved, calls, hits, cost, timing = {}, 0, 0, 0.0, {}
+    retrieved, calls, hits, cost, timing, detected = {}, 0, 0, 0.0, {}, {}
     for q in questions:
         found = search(conn, q["question"], RETRIEVE_K, cfg=cfg)
         retrieved[q["id"]] = found.results
         timing[q["id"]] = found.retrieval_ms
+        detected[q["id"]] = found.detected_departments
         calls += found.api_calls
         hits += found.cache_hit
         cost += found.cost
@@ -149,6 +150,7 @@ def run(conn, questions: list[dict], label: str, split: str, cfg: dict, out=prin
             "department": r["department"],
             "first_rank": r["first_rank"],
             "tags": r["tags"],
+            "detected_departments": detected[r["id"]],
             "retrieval_ms": round(timing[r["id"]], 1),
             "retrieved_ids": [c["source_id"] for c in retrieved[r["id"]]],
         }
@@ -206,6 +208,7 @@ def main(argv: list[str]) -> int:
     p.add_argument(
         "--mode", choices=("vector", "hybrid", "hybrid_bm25"), help="override retrieval.mode"
     )
+    p.add_argument("--dept-filter", choices=("off", "on"), help="override retrieval.dept_filter")
     args = p.parse_args(argv[1:])
     if error := check_split(args.split, args.final):
         print(error)
@@ -216,6 +219,8 @@ def main(argv: list[str]) -> int:
     cfg = load_models()
     if args.mode:
         cfg["retrieval"]["mode"] = args.mode
+    if args.dept_filter:
+        cfg["retrieval"]["dept_filter"] = args.dept_filter
     questions = [q for q in load_questions() if q["split"] == args.split]
     try:
         with connect() as conn:
