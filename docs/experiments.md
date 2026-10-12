@@ -319,3 +319,35 @@ is an upper bound. The same model reranks and answers. Dev questions were used t
 stage's best cosine similarity: with Pool A (vector, no filter) that is identical to the baseline's, so abstention decisions are unchanged.
 
 **Open follow-ups (each would be its own experiment):** a second prompt; a bigger pool or a different cut for the chunk text; showing the reranker the neighbouring sections (q01, q06); the answer-level run (first re-judge `baseline-dev-60` under rubric v3).
+
+### Step 3b, answer-level check of the reranker (written 2026-10-12, before any paid call of this step)
+
+**Question.** Does the reranker (`retrieval.rerank: pool_a`, kept in experiment 3 on retrieval metrics only) hold up at the answer level, with the noise of the answerer and the judge measured? If not, the default goes back to `off`.
+
+**Design, fixed now.**
+- **Arm OFF** = `retrieval.rerank: off` (the old vector-only system). **Arm ON** = `retrieval.rerank: pool_a`. All 40 dev questions; answers generated with the unchanged settings (`gpt-6-luna`, temperature 0.1, top_p 0.3, k = 5,
+  abstain threshold 0.59, `eval.today` 2026-10-11); every verdict judged by `gpt-5.6-terra` under **rubric v3**. Test split not touched. Answer prompt, threshold, models, chunks, embeddings, reranker prompt and settings unchanged.
+- **3 runs per arm.** OFF run 1 is the stored `baseline-dev-60` answers re-judged under v3 (no regeneration; saved as `eval/results/baseline-dev-60-v3.json`, the v2 file untouched; this is "off-run1"), plus two fresh
+  runs `off-run2`, `off-run3`. ON: three fresh runs `on-run1`, `on-run2`, `on-run3`. Each ON run makes its own fresh reranker calls (its own cache file `data/cache/rerank-<label>.json`), so reranker noise is part of the ON noise and the
+  reranker's real cost and latency are measured in every ON run.
+- **Judge noise.** `judge-repeat` = `on-run1`'s stored answers judged a second time (same answers, same rubric, same judge); the number of verdicts that differ is reported.
+- **The answerer receives the reranked top 5 in arm ON**; the sources it received are shown for three example questions (q06, q56, q52, chosen as the worsened, a large-gain and a rescued-from-outside-top-10 case).
+
+**Rule, on the mean of the 3 runs per arm** (shares as defined by `aggregate` in `cta.eval.run_answers`): keep `pool_a` as the default only if **all** of
+- (a) **correct share** (normal-gold questions, n = 26) does not fall by more than one question's worth: ON mean >= OFF mean - 1/26;
+- (b) **faithfulness "yes" share** (same questions) does not fall: ON mean >= OFF mean;
+- (c) **abstention accuracy** (ABSTAIN-gold questions answered with "ABSTAIN:") does not fall (ON mean >= OFF mean) **and** the wrongly-abstained count (answerable questions that abstained, mean count per run) does not rise (ON <= OFF);
+- (d) **citation validity** does not fall: the citation rate (answers with at least one valid [n]) ON >= OFF **and** the mean number of invalid citations per run ON <= OFF.
+Otherwise the default goes back to `off` in its own commit. The comparisons are exact (no rounding); the rule is strict on purpose, so a tiny fall in (b), (c) or (d) means revert even if the retrieval gain is real; the log will say what was
+lost. The rule does not weigh latency or cost (reported only: the reranker adds a call per question).
+
+**Noise.** For each question and for each of correctness and faithfulness (ordinal: incorrect < partial < correct; no < partly < yes), the verdicts of its 3 runs are listed per arm. A question is **stable in an arm** if its verdict is the
+same in all 3 runs of that arm. A **real change** is a question that is stable in both arms and has different verdicts between the arms (so it differs in the same direction in 3 of 3 pairings, which satisfies "at least 2 of 3"). A question
+where ON and OFF differ in the same direction in at least 2 of the 3 pairings (run i against run i) but which is not stable in both arms is a **leaning** question; leaning, and every other question with any variation inside an arm, is
+listed as **unstable** and is not counted as a change.
+
+**Spend limit for the whole step: $2.50** (including the v3 re-judge, the five fresh runs, the judge repeat and the reranker calls). The per-run cap in `config/models.yaml` (`eval.max_cost_usd: 1.0`) is unchanged. Each run stops itself
+before it would exceed the remaining allowance and says so (`--budget`).
+
+**Caveats written in advance.** n is small (26 judged questions, 4 abstain, 2 no-advice, 8 not supported yet), so one question is about 4 points of a share; the same model reranks and answers; judge verdicts are not perfect (the
+faithfulness grade is known to be lenient, and the judge repeat measures only its self-consistency, not its correctness); three runs per arm bound the noise roughly and do not remove it.

@@ -336,3 +336,9 @@ code at the time of the re-judge); its labels were later recomputed by `--relabe
 - Data fact: course chunks have scope `city_tech` (with the department id in `department`), so the scope-based rule never filters them. Filtering them by their department field would be a different,
   separately pre-registered experiment.
 - The abstain threshold reads the best vector cosine similarity after the filter; with the filter off, or with no department detected, it is the same value as before.
+
+## Spend limit raised for step 3b only (Oct 12, 2026)
+
+- `eval.max_cost_usd` stays at $1.00 per run. For Phase 3 step 3b alone, the owner set a total allowance of **$2.50**, because the step repeats the same 40-question run several times to measure noise (three runs per arm, a
+  judge repeat and a v3 re-judge; one judged run costs about $0.16, mostly the judge). `run_answers --budget` takes the total allowance and subtracts what the step's earlier runs already cost (the labels listed in the code); a run refuses
+  to start if its estimate does not fit and stops by itself, before the next question, if the running cost would pass it. Other steps keep the old limits.
