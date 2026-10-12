@@ -261,3 +261,16 @@ and CLARIFY).
 - **FROZEN** from commit `08cc8df` (the code and rubric) until after the test run: the answer prompt, abstain
   threshold 0.59, k = 5, models (`text-embedding-3-small`, `gpt-6-luna`, judge `gpt-5.6-terra`), answer and
   judge settings, rubric v2, and the failure-label rules. Nothing is changed after seeing the test results.
+
+## Test run and what it showed (Oct 12, 2026)
+
+Run once as `baseline-final` (`--split test --final`), with everything frozen at `08cc8df` and nothing changed afterwards.
+10 test questions, estimated $0.035, real $0.028. Retrieval n = 5 scored: hit rate 0.800 @1, 1.000 @5/@10, recall 0.507
+@1, 0.933 @10, MRR 0.850. Correctness on normal gold n = 5: correct 0.60, partial 0.40; faithfulness n = 5: yes 1.00;
+abstention accuracy 3/3; wrongly abstained 0 of 5; citation rate 5/5, 0 invalid citations. Labels: retrieval miss 1 (q07),
+not supported yet 2 (q11 calendar, q23 CLARIFY), chained prerequisite 1 (q20). Details, the five most instructive
+failures and the Phase 3 mapping are in `docs/baseline-findings.md`. The test split is too small (and only 5 questions
+are retrieval-scored) to say whether dev and test differ.
+Notes: `baseline.json` is the dev rubric-v2 run, the comparison point for dev experiments; `baseline-final.json` is
+the test record and is not for tuning. The eval_runs row for `baseline-dev-judge-v2` shows git commit `88bbb08` (the
+code at the time of the re-judge); its labels were later recomputed by `--relabel`, which is noted in its config.

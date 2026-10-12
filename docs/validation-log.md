@@ -743,3 +743,9 @@ done. All five manual checks are now done (1, 4 and 5 are recorded in earlier en
 - Fix in `cta.crawl.catalog.to_record` (`html.unescape`); courses rebuilt from raw with `--from-raw`; only those 4
   files changed. New `entities` area in `python -m cta.validate` (292 records, 0 failures). Loader: 4 chunks
   changed, 614 tokens, $0.00001. Dev retrieval metrics unchanged (`baseline-retrieval-dev-v2`).
+
+## Phase 2 baseline recorded — 2026-10-12
+
+Dev runs `baseline-dev` (rubric v1) and `baseline-dev-judge-v2` (rubric v2), test run `baseline-final`; results in
+`eval/results/`, analysis in `docs/baseline-findings.md`. Owner check of 8 dev judge verdicts: correctness 6/8 (v1)
+and 7/8 (v2), faithfulness 7/8. All automatic data checks pass (`python -m cta.validate`, including the new `entities` area).
