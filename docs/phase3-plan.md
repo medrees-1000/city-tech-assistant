@@ -1,9 +1,10 @@
 # Phase 3 plan: improve the baseline, one measured change at a time
 
-**Where we are (2026-10-12):** step 0 is done (60 questions, comparison file `eval/results/baseline-dev-60.json`). **Step 1 (hybrid search with ts_rank) was
-REJECTED**, and **step 1b (hybrid search with a BM25 keyword side) was REJECTED narrowly by the same pre-registered rule** (MRR 0.789 to 0.766, recall@5 0.775 to 0.803, recall@10
-0.828 to 0.888; details in `docs/experiments.md`). Default stays `retrieval.mode: vector`; both hybrid modes remain in the code, off. Judge rubric is now v3 (code only; first used
-when the stored `baseline-dev-60` answers are re-judged with the next answer-level run). Next is step 2 (department and term filters). No test split has been run on the new questions.
+**Where we are (2026-10-12):** step 0 is done (60 questions, comparison file `eval/results/baseline-dev-60.json`). Steps 1 (hybrid, ts_rank), 1b (hybrid, BM25) and **2a (department filter) were
+all run and REJECTED by their pre-registered rules** (2a: no first-relevant rank changed; details and a reference run in `docs/experiments.md`). Defaults stay `retrieval.mode: vector`,
+`retrieval.dept_filter: off`; the hybrid modes, BM25, the filter and `config/departments.yaml` remain in the code, off. Judge rubric is v3 (first used when the stored `baseline-dev-60` answers are
+re-judged with the next answer-level run). Next: step 2b (term filter) or step 3 (reranker over the top 20 to 30; the reference run suggests BM25 plus the filter as a better candidate set).
+No test split has been run on the new questions.
 
 Starting point: `docs/baseline-findings.md` (Phase 2: dev `eval/results/baseline.json`, test `eval/results/baseline-final.json`; Phase 3 comparison: `eval/results/baseline-dev-60.json`).
 The baseline is vector-only search, k = 5, `gpt-6-luna`, judge `gpt-5.6-terra` with rubric v2, abstain threshold 0.59.
@@ -36,7 +37,7 @@ Failures are those in `docs/baseline-findings.md`. "Should fix" is a hypothesis 
 |---|---|---|
 | 0 (done) | Grow the eval set (about 30 owner-reviewed questions: calendar, chained prerequisites, cross-listed courses, abstain and advice cases, ambiguous, more department lookups), then re-run the frozen baseline on the new set. | Nothing: it makes the measurements meaningful. Dev has 20 questions and test 10, and only 17 and 5 of them are retrieval-scored. |
 | 1, 1b (done: both rejected) | Hybrid search (1: Postgres ts_rank; 1b: BM25): fill `chunks.tsv`, full-text search, reciprocal rank fusion with the vector ranking. | q15 (the page says "ETET", the question says "Electrical Engineering Technology"), q07 (department-name words); course-code questions that rank 2 (q21, q22). |
-| 2 | Department and term filters (soft term rule from `docs/decisions.md`; a department filter only when the question names one). | q15 (department and the "Fall 2024" label that must be stated), q07 (overview chunks outrank the degrees page). |
+| 2 (2a done: rejected; 2b open) | Department and term filters (soft term rule from `docs/decisions.md`; a department filter only when the question names one). | q15 (department and the "Fall 2024" label that must be stated), q07 (overview chunks outrank the degrees page). |
 | 3 | Reranker over the top 20 to 30. | q07 (gold at ranks 4 and 8) and the rank-2 and rank-3 cases (q05, q06, q21, q22). It cannot help q01 or q15, whose gold chunk is not retrieved. |
 | 4 | Router with tools (LangGraph): calendar lookup, prerequisite chain, contact lookup. | Calendar: q11, q12 and the new calendar questions. Chain: q20, q22 and the new chain questions. Contact: q15 (abstain with the department contact). |
 | 5 | Answer style: completeness (answer all parts the question asks) and clarifying questions. | q23, q24 (CLARIFY), partial answers such as q01 and q07 once the evidence is retrieved. Needs the sources in front of the model first, so after step 3 or 4. |

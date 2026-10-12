@@ -327,3 +327,12 @@ code at the time of the re-judge); its labels were later recomputed by `--relabe
   answer-level run re-judges the stored `baseline-dev-60` answers under v3 first, so the comparison is like for like; nothing was re-judged in this step (no paid call).
 - **BM25 code stays, off by default.** `cta.index.bm25`, `retrieval.mode: hybrid_bm25`, the `bm25_rank` field and the in-process index are kept in the repository like the ts_rank hybrid
   mode; experiment 1b was rejected by the rule as written (MRR -0.023 against a limit of -0.02). Both can be reused by the reranker experiment.
+
+## Department filter code stays, switched off (Oct 12, 2026; Phase 3 step 2a)
+
+- Experiment 2a was rejected by the rule written beforehand (no first-relevant rank changed). `retrieval.dept_filter` stays `"off"` (quoted in YAML because a bare `off` is a boolean).
+- Kept, off: `config/departments.yaml` (aliases and prefixes written before the run, from the catalog data and project notes, not edited after results), `cta.index.departments`, the filter in
+  `cta.index.search` (all three retrieval modes), `--dept-filter` and `CTA_DEPT_FILTER`.
+- Data fact: course chunks have scope `city_tech` (with the department id in `department`), so the scope-based rule never filters them. Filtering them by their department field would be a different,
+  separately pre-registered experiment.
+- The abstain threshold reads the best vector cosine similarity after the filter; with the filter off, or with no department detected, it is the same value as before.

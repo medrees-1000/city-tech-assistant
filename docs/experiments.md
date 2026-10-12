@@ -185,3 +185,62 @@ Short aliases ("Math", "CST") can match inside other uses of the word; every dev
 
 **Same caveat as before:** with 30 scored questions one question moves a mean by about 0.03; the rule guards against regressions and does not test significance. The filter can
 only change the result for questions where a department is detected.
+
+## Experiment 2a: department filter on retrieval, 2026-10-12 — REJECTED (no effect)
+
+**Change.** `retrieval.dept_filter: on` (config switch, default `off`; `CTA_DEPT_FILTER` or `--dept-filter` override; works with every retrieval mode). `cta.index.departments`
+detects the departments a question names, from the aliases and course-code prefixes in `config/departments.yaml` (written and committed before the run, `cd78f89`, not edited
+afterwards; prefixes read from the 197 course chunks: CST, MST, DPT -> CST-NYT; MAT, MEDU -> MATH-NYT; EET, TCET -> EET-NYT; DEN -> DENT-NYT; no prefix belongs to more than one
+department; cross-listed CET and MECH are not mapped). With at least one department detected, candidate chunks whose `scope` is `department` and whose `department` is not detected
+are dropped before any ranking is cut; scopes `cuny` and `city_tech` always stay; with none detected nothing changes. The abstain threshold stays on the best vector cosine
+similarity, computed after the filter (it can only be equal or lower, and differs only when the single best chunk in the index belongs to a department the question does not name).
+Results gain `dept_filter_applied` and `detected_departments`. Rule and "no tuning constants" statement: pre-registered in `3e0448a`.
+
+**How the fields are stored (checked in the database before writing the rule).**
+
+| Chunk type | scope | department | Effect of the rule |
+|---|---|---|---|
+| department web pages, program pages, department FAQs (413 section chunks of the four) | department | the department id | filtered |
+| per-department contact chunks (4) | department | the department id | filtered |
+| **course chunks (197)** | **city_tech** | **the department id** | **never filtered: scope is city_tech.** This is the one chunk type that does not fit the intent |
+| office contacts, central pages (aid, policy, howto, calendar, advisement staff list) | city_tech | none | always stay |
+| CUNY-wide documents | cuny | none | always stay |
+
+**Measurement.** `run_retrieval --split dev --mode vector --dept-filter on --label dept-filter-dev`; 40 dev questions searched, 30 scored; cost $0 (cached vectors). Compared with `vector-v0-dev`
+(= `baseline-dev-60`).
+
+| Metric (n = 30) | vector | + department filter | change |
+|---|---|---|---|
+| MRR | 0.789 | 0.789 | 0.000 |
+| recall@5 | 0.775 | 0.775 | 0.000 |
+| recall@10 | 0.828 | 0.837 | +0.008 |
+| hit rate @1 / @3 / @5 / @10 | 0.700 / 0.867 / 0.900 / 0.933 | identical | 0 |
+| chain row (n = 3) | all metrics identical | | 0 |
+
+**No first relevant rank changed (improved 0, worsened 0, unchanged 30).** Only two questions' top-10 lists changed at all: q06 (the Mathematics degrees page left the list, the CST degrees page
+entered; gold rank stayed 2) and q42 (three CST program chunks left, three MAT course chunks entered; gold rank stayed 1). The small recall@10 difference comes from one of them.
+
+**Detection report (dev questions only).** A department was detected in 17 of the 40 dev questions and in 14 of the 30 retrieval-scored ones. In all 14 scored questions the detected department is
+also the department of the gold sources (q39 names CST 3602; its gold includes MAT courses of the chain, still a match; the three other detected questions, q27, q28 and q45, are abstain
+questions with no gold). **No detected department differs from the gold department and no false match was seen** (checked by reading all 17 questions: "Dental Hygiene", "Computer Systems
+Technology", "math", "MAT 1190CO", "EET 3672", "MAT 2675" and so on). q15 and q56 are both detected as EET-NYT and both unchanged (q15 stays a miss, q56 stays rank 7).
+
+**Why it did nothing.** For the questions that name a department, pages of *other* departments almost never reach the top 10 in the first place. What outranks the gold chunk is inside the
+named department (q15: EET program chunks; q56: EET overview and chair pages) or is a course chunk, which the rule cannot drop by scope. Cross-department leakage is not the problem in this data;
+the problem is ranking inside the right department.
+
+**Reference only (not part of the keep rule, not pre-registered): the same filter with `hybrid_bm25`** (`dept-filter-bm25-dev`).
+- Against `vector-v0-dev`: MRR 0.789 to 0.771 (-0.018), recall@5 0.775 to 0.803 (+0.028), recall@10 0.828 to 0.895 (+0.067), hit rate @1 0.700 to 0.633; chain row recall@10 0.533 to 0.700 (n = 3).
+  Better: q05 3 to 2, q21 2 to 1, q52 miss to 1, q53 5 to 2, q56 7 to 6. Worse: q01, q06, q24, q47, q49, q59 (one to five places).
+- Against `hybrid-bm25-dev` (the filter's own effect on BM25): MRR +0.006, recall@5 0.000, recall@10 +0.007; one question changed (q05 3 to 2).
+- The rule applied to this combination would say keep (MRR -0.018 is inside the limit), but the combination was **not pre-registered**, the only thing separating it from the rejected step 1b is one question
+  (q05), and I am not treating it as a decision. What it shows for the reranker step: with BM25 and the filter the top-10 candidate set contains more gold sources (recall@10 0.895 against 0.828 for vector
+  search, chain row 0.700 against 0.533) while the top-1 position is slightly worse. That is the shape a reranker is for; it is a hypothesis for step 3, not a result.
+
+**Decision (pre-registered rule): REJECT.** MRR and recall@5 did not improve by 0.01. The default stays `off`. Code, config and tests stay in the repository, off.
+
+**Caveats.** n = 30 (14 with a detected department). "ETET" was declared in advance as an alias and also appears in q15's gold page, so q15 cannot confirm it; q15 did not change anyway. The test split has not
+been touched and would have to confirm any alias before the filter is used. The explanation above was read off dev ranks.
+
+**Open follow-ups (each would need its own pre-registered rule; none started):** also filter course chunks by their `department` field even though their scope is `city_tech`; use the detected department as a
+boost instead of a filter; use it as a feature of the step 3 reranker.
