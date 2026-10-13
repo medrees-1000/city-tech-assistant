@@ -204,3 +204,6 @@ Owner decisions after manual testing, details in `docs/decisions.md` ("Chat poli
 
 ## Chat page, finishing round (2026-10-13)
 Owner decisions, recorded in `docs/decisions.md` ("Chat page, finishing round"): markdown headings; hold cues (office decided from the data); the "How this was found" panel on each answer; the privacy notice under the input with an expandable "What is saved?".
+
+## Feedback votes (2026-10-13)
+`POST /feedback {request_id, vote}` with vote `"up"` or `"down"` only (extra fields rejected, no free text); 404 for an unknown id or an eval-run row; 422 for an invalid vote; the latest vote wins; response `{request_id, vote}`. Stored in `request_logs.feedback` and `feedback_at` (migration 006). `GET /health` shows `feedback_failures`. Details in `docs/decisions.md` ("Feedback votes and inspecting one request").
