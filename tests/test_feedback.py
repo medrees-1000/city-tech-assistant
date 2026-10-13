@@ -321,3 +321,37 @@ def test_logs_id_for_an_unknown_id_an_eval_row_or_garbage_prints_nothing_stored(
     for bad in (UNKNOWN, "7f0f3a4e00004000800000000000d002", "garbage"):
         assert logs.main(["x", "--id", bad]) == 1
         assert capsys.readouterr().out.strip() == "no API request with that id"
+
+
+# ---- the privacy notice and the vote (what the code stores) ----
+
+
+def test_the_notice_says_a_vote_is_saved_with_the_answer_and_nothing_else_is_stored_with_it():
+    import re
+
+    from tests.test_requestlog import notice_text
+
+    assert (
+        "thumbs up or down, that vote is saved with the answer. Nothing else is saved with it"
+        in notice_text()
+    )
+    sql = next(p for p in migration_files() if p.name.startswith("006")).read_text(encoding="utf-8")
+    added = re.findall(r"ADD COLUMN IF NOT EXISTS (\w+)", sql)
+    assert added == ["feedback", "feedback_at"]  # a vote is these two columns and nothing else
+    assert "CHECK (feedback IN ('up', 'down'))" in sql  # and only up or down: no text
+
+
+def test_the_vote_request_and_the_writer_take_no_identifier_and_no_text():
+    import inspect
+
+    from cta.api import schema
+
+    assert set(schema.FeedbackRequest.model_fields) == {"request_id", "vote"}
+    assert schema.FeedbackRequest.model_config["extra"] == "forbid"
+    assert list(inspect.signature(requestlog.write_feedback).parameters) == [
+        "conn",
+        "request_id",
+        "vote",
+    ]
+    sql = inspect.getsource(requestlog.write_feedback)
+    assert "SET feedback = %s, feedback_at = now()" in sql and "source = 'api'" in sql

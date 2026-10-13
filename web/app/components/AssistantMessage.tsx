@@ -7,6 +7,7 @@ import type { Turn } from "../../lib/messages";
 import { AnswerText } from "./AnswerText";
 import { ContactCard } from "./ContactCard";
 import { ErrorView } from "./ErrorView";
+import { Feedback } from "./Feedback";
 import { HowFound } from "./HowFound";
 import { SourceList } from "./SourceList";
 
@@ -59,6 +60,7 @@ function Done({
     <>
       <AnswerText text={view.text} citations={data.citations} onCite={onCite} />
       {data.contact && showContact(data) ? <ContactCard contact={data.contact} /> : null}
+      <Feedback requestId={data.request_id} />
       <SourceList assistantId={id} citations={data.citations} open={open} onToggle={setOpen} />
       <HowFound data={data} />
     </>

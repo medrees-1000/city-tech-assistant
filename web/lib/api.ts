@@ -122,3 +122,26 @@ export async function ask(question: string, signal?: AbortSignal): Promise<AskRe
   }
   return { ok: false, error: UNREACHABLE };
 }
+
+export type FeedbackResult = { ok: true } | { ok: false; error: ApiError };
+
+/** Save a thumbs vote for an answer. Only "up" or "down" is ever sent (no text). */
+export async function sendFeedback(requestId: string, vote: "up" | "down"): Promise<FeedbackResult> {
+  try {
+    const response = await fetch("/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ request_id: requestId, vote }),
+    });
+    if (response.ok) return { ok: true };
+    const body = (await response.json()) as { error?: { code?: unknown; message?: unknown }; request_id?: unknown };
+    if (typeof body.error?.message === "string") {
+      const code = typeof body.error.code === "string" ? body.error.code : "error";
+      const id = typeof body.request_id === "string" ? body.request_id : null;
+      return { ok: false, error: { code, message: body.error.message, request_id: id } };
+    }
+  } catch {
+    // fall through to the fixed message
+  }
+  return { ok: false, error: UNREACHABLE };
+}

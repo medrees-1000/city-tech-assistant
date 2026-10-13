@@ -523,6 +523,46 @@ button:disabled {
   margin: 0 0 0.3rem;
 }
 
+.feedback {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0.25rem 0 0;
+}
+
+.thumb {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+}
+
+.thumb svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.thumb:hover:not(:disabled) {
+  color: var(--link);
+  border-color: var(--line);
+}
+
+.thumb[aria-pressed="true"] {
+  color: var(--on-blue);
+  background: var(--blue);
+}
+
+.fb-msg {
+  margin-left: 0.4rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
 .howfound {
   margin-top: 0.25rem;
 }
