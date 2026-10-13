@@ -528,3 +528,14 @@ The gold check on q40 (dev) found that the last sentence of its gold_answer did 
 - **New sentence:** "CST 1204 (Database Systems Fundamentals) requires CST 1100 (Intro to Computer Systems) and CST 1101 (Problem Solving Comp. Program); catalog text: “PRE: CST 1100 & 1101”."
 - **Reason:** source wins: the catalog record, found by the gold check. `gold_sources` is unchanged.
 - **Made after reading the catalog record, not after reading any run's score.** It is not tuning: no retrieval, prompt or threshold changed and no run was repeated. Retrieval metrics cannot change. Only q40's answer-level verdicts (correctness, faithfulness) could change when a run is judged again. Old result files keep the verdicts they got under the old gold.
+
+## Two-course questions (step 2): the 4b definitions M2 and R1 restated for q42's new route (Oct 13, 2026)
+Written before any code of this step. The 4b definitions (`docs/step4b-plan.md`) read: **M2** = control (CTRL) questions answered by the chain node, each id listed; a control question the classifier calls `prerequisite` but whose extraction fails (two codes, no code) is not counted in M2. **R1** = q87 is not answered by the chain node in 3 of 3 runs, and M2 lists at most 1 other id (q21, a one-code prerequisite question without the `chain` tag).
+
+Why they must change: with up to three codes accepted, q42 ("What are the prerequisites for MAT 1190CO, and how are they different from MAT 1190?", two codes, intent `prerequisite`, no `chain` tag) is no longer a failed extraction. It goes to the chain node on purpose, so under the old M2 it would count as a wrong catch.
+
+Restated for the run of this step (the 4b results themselves stay as measured; they are the record of the old route):
+- **M2** is unchanged in wording: CTRL questions answered by the chain node, each id listed. CTRL still means every dev question that is not in CH. **CH** is still "dev questions tagged `chain` whose type is not `unanswerable`"; with the eight questions of 2026-10-13 it is q22 q39 q40 q76 q77 q79 q81 q85 **q93 q94** (ten), so M1 expects 10 of 10 and M3 (two or more gold catalog sources) adds q93 and q94.
+- **R1** becomes: q87 is not answered by the chain node in any run, and M2 lists **at most the two ids q21 and q42** and nothing else. q42 is expected (not merely allowed) to be answered by the chain node; if it falls through, that is reported as a miss, not as a pass.
+- "Fall through" now means: no code, a code that is not a record and not an unambiguous title, or **more than three codes**. Two or three codes are not a fall-through any more.
+- q42's judged result is compared before (4b runs: answered by retrieve and judged correct) and after (the chain node); the combined answer shows both catalog texts verbatim, which should satisfy its gold, but that is measured, not assumed.
