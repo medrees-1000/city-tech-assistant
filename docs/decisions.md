@@ -451,3 +451,8 @@ Reason for both: owner decision after the 4a run; the 4a result is not changed (
 - The prompt (rule 5: name an office only if a source does) is unchanged; replay rule D5 checks that no email or phone appears that is neither in the table nor in the original answer.
 - Tests pin `CTA_ROUTER_CONTACTS=off` where they test the earlier router behaviour (like chain), and test contacts in `tests/test_contact.py`.
 - `router.contacts` is `"on"` by default since the replay passed.
+
+## Contact records: phones only from Phone lines (Oct 13, 2026; step 4c-data)
+
+- `phones` of a contact record (and of the page records' `contact`) holds only numbers on `Phone:` or `Office Phone:` lines. Fax numbers are in `fax`, the Admissions 24/7 AI-agent number is in `ai_agent_line`; the panel text, and so the contact chunks, keep the printed labels. No chunk changed, so nothing was re-embedded. "Phone Number:" lines inside hours tables are not treated as phone lines (they repeat the `Phone:` number).
+- Other readers of `phones` (`render.registrar_contact`, the candidate scripts) get the corrected list; for the Registrar the value is unchanged.

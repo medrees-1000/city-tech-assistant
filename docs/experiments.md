@@ -580,3 +580,18 @@ Pre-registration above (`3161c8e`, before any paid call). Three variants (v3 con
 **Measurement (no paid call).** Replay on the stored dev answers of `4b-run1..3` (55 questions x 3, `cta.eval.contact_replay`, report `docs/step4c-replay.md`): 27 abstentions (q15 q27 q28 q34 q44 q45 q47 q49 q83 in each run) all get exactly one line equal to the table entry of the approved office; q34 (a calendar abstain that already carried the Registrar line) is byte-identical; the 138 non-abstaining answers are byte-identical; no email or phone outside the table; the validator passes and refuses a fax-only number. D1 to D8: all PASS.
 
 **Caveats.** This is a consistency check on dev, not evidence: the office table, the account cues (written knowing q44) and the best-chunk map were derived with the dev abstentions in view. The test split at the final milestone is their real check. The model-written abstain sentences (q15, q28) are replayed from stored text; a live run was skipped by the owner. Refusals in prose that do not start with `ABSTAIN:` get no line. q47 and q49 abstain at the threshold although their gold is not ABSTAIN; 4c only adds the line (step 5). Cost $0.
+
+## Step 4c-data: fax and AI-agent numbers out of `phones`, 2026-10-13 — KEPT (K1 to K5)
+
+**Change.** `contact_block` (`src/cta/parse/html.py`) stored every `NNN-NNN-NNNN` in the contact panels as a phone. Now `phones` holds only numbers on `Phone:` / `Office Phone:` lines, `fax` the numbers on `Fax:` lines, `ai_agent_line` the number on the "AI agent" line; `build_contacts` copies the three fields. The panel text is unchanged, so the contact chunks (built from the panels) were already labelled correctly ("Fax:", "Call or chat 24/7 with our AI agent:"); only the metadata list was wrong. Pre-registered in `913eb62` (predicted changed chunks: none).
+
+| Rule | Result |
+|---|---|
+| K1 changed chunks equal the prediction (none) | loader: new 0, changed 0, metadata-only 0, unchanged 619, stale 0; `--yes` re-embedded nothing, API tokens 0. Changed files: the 3 contact records (EET-NYT, financial-aid, admissions) and 14 page records of those owners (7 EET, 3 admissions, 4 financial aid), all only in `phones` plus the two new keys. PASS |
+| K2 `cta.validate` incl. contacts | 0 failures in every area; contacts PASS on 10 entries. PASS |
+| K3 retrieval-only dev run, `pool_a`, no gold source lost from the top 5 vs `4b-run1` | 36 scored questions: 0 losses, 0 first-rank changes; 2 gains (q06 `CST-NYT/degrees#1`, q39 `catalog:CST 2312`). PASS |
+| K4 no email or phone in `config/contacts.yaml` changes | file untouched. PASS |
+| K5 ruff and pytest | ruff clean; pytest all pass. PASS |
+
+**Reading K3.** The data cannot change retrieval (chunk text and embeddings are identical), so every difference is reranker variation: this run used the default reranker cache (40 of 55 calls from cache, 15 fresh, cost $0.0072) and the 4b runs used their own fresh calls. Against `4b-run2` the same comparison shows one loss (q40 `catalog:CST 1100`), and `4b-run1` against `4b-run2` shows that same difference the other way round, which is the run-to-run noise of the reranker. The rule names `4b-run1`; against it nothing is lost.
+**Side finding.** `data/processed/chunks.jsonl` on disk was stale for 4 EET course chunks (the HTML-entity fix of an earlier step was loaded into the database but the file was not rewritten); the database was current (loader: unchanged). Rewritten now with `cta.index.chunks --write`; the file is not committed. `docs/manual-check-contacts.md` is regenerated with a separate "Fax / AI-agent line" column. Total paid cost $0.0072.
