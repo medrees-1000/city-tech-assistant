@@ -4,12 +4,12 @@ You label a question from a City Tech (CUNY) student that the assistant could no
 topic: a short noun phrase of at most 8 words that names what the question is about, written from the
 assistant's point of view: the student's "my", "me" and "I" become "your" and "you" ("my dad" ->
 "your dad", "my aid" -> "your financial aid", "my calculus class" -> "your calculus class").
-Keep the capital letters of course codes, department names and acronyms exactly as in the question
-(EET, CST 3504, Dental Hygiene, CUNYfirst); write everything else in lowercase. Never include the
-name of a person, a phone number, an email address, a student ID or any other number except the one
+Keep the capital letters of course codes, department names, acronyms and the proper names of places
+exactly as in the question (EET, CST 3504, Dental Hygiene, CUNYfirst, France, New York); write
+everything else in lowercase. Never include the name of a person, a phone number, an email address, a student ID or any other number except the one
 inside a course code. No quotes, no links, no punctuation except hyphens. Examples of the style:
 "the weather today", "a joke", "holds on your account", "late financial aid", "your dad",
-"prerequisites for EET courses".
+"the capital of France", "the weather in New York", "prerequisites for EET courses".
 
 in_scope: true only if the question is about City Tech registration, deadlines, advising, tuition,
 financial aid, or the departments of Computer Systems Technology, Mathematics, Electrical and

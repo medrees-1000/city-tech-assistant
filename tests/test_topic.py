@@ -111,7 +111,8 @@ def test_the_apology_prefix_for_the_generic_fallback():
 @pytest.mark.parametrize(
     "good",
     ["your dad", "your financial aid", "your calculus class", "EET courses", "CST 3504",
-     "Dental Hygiene", "CUNYfirst", "prerequisites for EET 2171", "holds on your account"],
+     "Dental Hygiene", "CUNYfirst", "prerequisites for EET 2171", "holds on your account",
+     "the capital of France", "the weather in New York", "the subway in Brooklyn"],
 )  # fmt: skip
 def test_the_sanitiser_keeps_your_and_the_capitals_of_codes_and_acronyms(good):
     assert sanitize_topic(good) == good
@@ -267,3 +268,11 @@ def test_nothing_in_the_pipeline_or_the_eval_path_imports_the_api():
             assert not re.search(r"^\s*(from|import) cta\.api", text, re.M), path
     assert not re.search(r"cta\.api", (ROOT / "src" / "cta" / "answer.py").read_text())
     assert not Path(topic.__file__).samefile(ROOT / "src" / "cta" / "answer.py")
+
+
+def test_the_topic_prompt_keeps_the_capitals_of_place_names_and_still_bans_people():
+    from cta.api.topic import PROMPT
+
+    text = PROMPT.read_text(encoding="utf-8")
+    assert "proper names of places" in text and "France" in text and "New York" in text
+    assert "Never include the name of a person" in text
