@@ -72,20 +72,18 @@ export const showContact = (data: AskResponse): boolean => data.contact !== null
 
 export type AnswerKind = "answer" | "abstain" | "personal_account" | "not_announced" | "clarify";
 
-/** Which state to show, its small label (or null) and the text. A personal-account abstention
- * shows the fixed sentence, never the model's text; the contact card follows it. */
-export function answerView(data: AskResponse): { kind: AnswerKind; label: string | null; text: string } {
+/** Which kind of answer this is and the text to show. Abstain and "not announced yet" answers are
+ * plain assistant messages like any other (no box, no label); the kind is for logic and tests. A
+ * personal-account abstention shows the fixed sentence, never the model's text; the contact card
+ * follows it when there is one. */
+export function answerView(data: AskResponse): { kind: AnswerKind; text: string } {
   if (data.abstained && data.abstain_reason === "personal_account") {
     // "Here is who can help:" only when a contact card follows it
     const text = showContact(data) ? PERSONAL_ACCOUNT_TEXT : PERSONAL_ACCOUNT_TEXT_NO_CARD;
-    return { kind: "personal_account", label: "Personal account", text };
+    return { kind: "personal_account", text };
   }
-  if (data.abstained) return { kind: "abstain", label: "No answer found", text: data.answer };
-  if (data.answer_type === "not_announced") {
-    return { kind: "not_announced", label: "Not announced yet", text: data.answer };
-  }
-  if (data.answer_type === "clarify") {
-    return { kind: "clarify", label: "Needs a clarification", text: data.answer };
-  }
-  return { kind: "answer", label: null, text: data.answer };
+  if (data.abstained) return { kind: "abstain", text: data.answer };
+  if (data.answer_type === "not_announced") return { kind: "not_announced", text: data.answer };
+  if (data.answer_type === "clarify") return { kind: "clarify", text: data.answer };
+  return { kind: "answer", text: data.answer };
 }

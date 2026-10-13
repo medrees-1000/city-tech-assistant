@@ -90,13 +90,13 @@ test("the textarea grows with its content up to six lines, then scrolls", () => 
   assert.equal(MAX_HEIGHT, 172);
 });
 
-test("a normal answer has no label and its own text", () => {
-  assert.deepEqual(answerView(data()), { kind: "answer", label: null, text: "Because. [1]" });
+test("a normal answer is its own text", () => {
+  assert.deepEqual(answerView(data()), { kind: "answer", text: "Because. [1]" });
 });
 
-test("a normal abstention says no answer found and keeps the API text", () => {
+test("a normal abstention shows the API text as a plain message (no label, no box)", () => {
   const v = answerView(data({ abstained: true, answer_type: "abstain", abstain_reason: "below_threshold", answer: "I could not find this." }));
-  assert.deepEqual(v, { kind: "abstain", label: "No answer found", text: "I could not find this." });
+  assert.deepEqual(v, { kind: "abstain", text: "I could not find this." });
 });
 
 test("a personal-account abstention shows the fixed sentence, not the API text", () => {
@@ -112,8 +112,9 @@ test("a personal_account code on an answer that did not abstain is ignored", () 
   assert.equal(v.kind, "answer");
 });
 
-test("not announced and clarify have their own labels", () => {
-  assert.equal(answerView(data({ answer_type: "not_announced" })).label, "Not announced yet");
+test("not announced and clarify keep their kind and their text, with no label", () => {
+  const v = answerView(data({ answer_type: "not_announced", answer: "Not yet [1]" }));
+  assert.deepEqual(v, { kind: "not_announced", text: "Not yet [1]" });
   assert.equal(answerView(data({ answer_type: "clarify" })).kind, "clarify");
 });
 
@@ -127,7 +128,7 @@ test("the contact card is shown only when the API sent a contact", () => {
 test("an abstention with no contact is a plain abstain box: its own text, no card", () => {
   const d = data({ abstained: true, answer_type: "abstain", abstain_reason: "below_threshold", answer: "I could not find this.", contact: null });
   assert.equal(showContact(d), false);
-  assert.deepEqual(answerView(d), { kind: "abstain", label: "No answer found", text: "I could not find this." });
+  assert.deepEqual(answerView(d), { kind: "abstain", text: "I could not find this." });
 });
 
 test("a personal-account abstention with a card says who can help; without a card it does not point at one", () => {
@@ -138,8 +139,9 @@ test("a personal-account abstention with a card says who can help; without a car
   assert.ok(!without.text.includes("Here is who can help"));
 });
 
-test("the stylesheet leaves no bottom margin under the last text of an answer box (no gap without a card)", () => {
+test("the stylesheet leaves no bottom margin under the last block of an answer (no gap without a card) and has no abstain or teal box", () => {
   const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
-  assert.match(css, /\.answer-card \.answer-text:last-child\s*\{\s*margin-bottom:\s*0;/);
+  assert.match(css, /\.answer-text > :last-child\s*\{\s*margin-bottom:\s*0;/);
+  assert.doesNotMatch(css, /answer-card|answer-abstain|answer-not_announced|answer-personal_account/);
   assert.match(css, /\.slot-empty\s*\{\s*display:\s*none;/); // the reserved step 6 places take no space
 });

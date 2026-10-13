@@ -54,17 +54,9 @@ function Done({
   onCite: (n: number) => void;
 }) {
   const view = answerView(data);
-  const boxed = view.kind !== "answer";
   return (
     <>
-      <div className={boxed ? `answer-card answer-${view.kind}` : undefined}>
-        {view.label ? <p className="state-label">{view.label}</p> : null}
-        {boxed && view.kind !== "not_announced" && view.kind !== "clarify" ? (
-          <p className="answer-text">{view.text}</p>
-        ) : (
-          <AnswerText text={view.text} citations={data.citations} onCite={onCite} />
-        )}
-      </div>
+      <AnswerText text={view.text} citations={data.citations} onCite={onCite} />
       {data.contact && showContact(data) ? <ContactCard contact={data.contact} /> : null}
       <SourceList assistantId={id} citations={data.citations} open={open} onToggle={setOpen} />
       {/* STEP 6: the "How this was found" toggle for this answer goes here (data.how_found). Not built yet. */}

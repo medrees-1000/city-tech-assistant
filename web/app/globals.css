@@ -374,38 +374,30 @@ button:disabled {
   border-radius: 50%;
 }
 
-.answer-card {
-  padding: 0.85rem 1rem;
-  border-radius: 12px;
-}
-
-.answer-abstain,
-.answer-personal_account {
-  color: var(--text);
-  background: var(--abstain-bg);
-  border-left: 5px solid var(--orange);
-}
-
-.answer-abstain .state-label,
-.answer-personal_account .state-label {
-  color: var(--abstain-text);
-}
-
-.answer-not_announced {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-left: 5px solid var(--blue);
-}
-
 .answer-text {
-  margin: 0 0 0.75rem;
   font-size: 1.0625rem;
-  white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-.answer-card .answer-text:last-child {
+.answer-text p,
+.answer-text ul {
+  margin: 0 0 0.75rem;
+}
+
+.answer-text p {
+  white-space: pre-wrap;
+}
+
+.answer-text > :last-child {
   margin-bottom: 0;
+}
+
+.answer-list {
+  padding-left: 1.3rem;
+}
+
+.answer-list li {
+  margin: 0.15rem 0;
 }
 
 .cite {
