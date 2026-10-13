@@ -51,3 +51,24 @@ def test_importing_the_graph_package_makes_no_network_call():
     env = {k: v for k, v in os.environ.items() if k not in TRACING_VARIABLES}
     done = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, env=env)
     assert done.returncode == 0, done.stderr
+
+
+def test_importing_the_api_stack_and_serving_in_process_makes_no_network_call():
+    """fastapi brings opentelemetry-api (API only, no exporter): it must send nothing out."""
+    script = (
+        "import socket\n"
+        "def no(*a, **k):\n"
+        "    raise AssertionError('network call')\n"
+        "socket.socket.connect = no\n"
+        "socket.create_connection = no\n"
+        "socket.getaddrinfo = no\n"
+        "import fastapi, starlette, uvicorn, opentelemetry.trace as t\n"
+        "from fastapi.testclient import TestClient\n"
+        "app = fastapi.FastAPI()\n"
+        "app.get('/x')(lambda: {'ok': 1})\n"
+        "assert TestClient(app).get('/x').json() == {'ok': 1}\n"
+        "assert type(t.get_tracer_provider()).__name__ == 'ProxyTracerProvider'\n"
+    )
+    env = {k: v for k, v in os.environ.items() if k not in TRACING_VARIABLES}
+    done = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, env=env)
+    assert done.returncode == 0, done.stderr

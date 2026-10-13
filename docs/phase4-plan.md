@@ -143,6 +143,9 @@ Deployment (not done now; only a list): an API host that can run the Python app 
 
 Each step ends with ruff, pytest and `python -m cta.validate`; the pipeline code is not edited (the only touches outside `src/cta/api/`, `web/`, `docs/` are `pyproject.toml`/`uv.lock`, `config/models.yaml` for the `api:` block, `.env.example`, one migration, and tests).
 
+## Node pins (decided at step 1, installed at step 4)
+Node 22.23.2 and npm 10.9.8 are what this machine has (Next 16.4.0 needs Node >= 20.9). Exact versions for `web/package.json`: `next` 16.4.0, `react` 19.3.0, `react-dom` 19.3.0, `typescript` **5.9.3**, `@types/react` 19.3.0, `@types/node` **22.20.5**. Two deliberate departures from the registry's latest: `typescript` 5.9.3 instead of 7.0.2 (Next 16.4.0 does not name TypeScript in its peer ranges and I have no evidence that it works with the 7.x line; 5.9.3 is the last 5.x), and `@types/node` 22.x to match the Node 22 runtime instead of 26.6.5. `package-lock.json` is committed.
+
 ## Owner decisions (2026-10-13)
 1. Yes to `fastapi` and `uvicorn` with the listed transitive packages, including `opentelemetry-api` (to be confirmed as the API package only: no exporter, no network call, and the tracing-variable guard must still work with it installed).
 2. Yes to Next.js 16.4.0 + React 19.3.0 + TypeScript with plain `fetch`; no Vercel AI SDK. Exact pins: npm exact versions in `package.json`, lockfile committed; Python exact pins and `uv.lock`.
