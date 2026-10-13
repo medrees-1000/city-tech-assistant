@@ -184,6 +184,9 @@ def test_the_fixtures_the_page_tests_read_are_what_the_renderer_writes():
     for code, name in (("CST 3504", "chain_cst3504.md"), ("MAT 2440", "chain_mat2440.md")):
         path = ROOT / "web" / "lib" / "testdata" / name
         assert path.read_text(encoding="utf-8") == rendered(code)[1] + "\n"
+    several = ch.combined_chain(["CST 1204", "CST 2403"])
+    path = ROOT / "web" / "lib" / "testdata" / "chain_cst1204_cst2403.md"
+    assert path.read_text(encoding="utf-8") == chain_render.render(several, RECORDS) + "\n"
 
 
 @pytest.mark.parametrize(
@@ -295,6 +298,7 @@ PAGE_STRINGS = [
     ROOT / "web" / "app" / "chat" / "page.tsx",
     ROOT / "web" / "lib" / "testdata" / "chain_cst3504.md",
     ROOT / "web" / "lib" / "testdata" / "chain_mat2440.md",
+    ROOT / "web" / "lib" / "testdata" / "chain_cst1204_cst2403.md",
 ]
 
 

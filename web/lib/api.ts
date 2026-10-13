@@ -38,6 +38,7 @@ export type RetrievedChunk = {
 export type ChainInfo = {
   extraction?: string;
   code?: string | null;
+  detail?: string[];
   course_count?: number;
   truncated?: boolean;
   unexpanded?: { code: string; level: number; names: string[]; reason: string }[];

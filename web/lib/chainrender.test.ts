@@ -77,3 +77,36 @@ test("catalog text holding markup characters WOULD be changed by the page (so th
   assert.equal(parseBlocks('Catalog says: "a\n- item"', cites(1))[1].type, "ul");
   assert.equal(parseBlocks('Catalog says: "a\n# heading"', cites(1))[1].type, "h");
 });
+
+test("two courses: a section heading per asked course, then the course headings with numbers running on", () => {
+  const blocks = parseBlocks(fixture("chain_cst1204_cst2403.md"), cites(6));
+  const headings = blocks.filter((b): b is Extract<Block, { type: "h" }> => b.type === "h");
+  assert.deepEqual(
+    headings.map((h) => [h.level, flat(h.inlines)]),
+    [
+      [3, "Prerequisites for CST 1204"],
+      [4, "CST 1204 — Database Systems Fundamentals [1]"],
+      [4, "CST 1100 — Intro to Computer Systems [2]"],
+      [4, "CST 1101 — Problem Solving Comp. Program [3]"],
+      [3, "Prerequisites for CST 2403"],
+      [4, "CST 2403 — Intro C++ Programming I [4]"],
+      [4, "MAT 1275 — College Algebra/Trigonometry [5]"],
+      [4, "MAT 1275CO — College Algebra & Trig w Coreq [6]"],
+    ],
+  );
+  const course = headings.filter((h) => h.level === 4);
+  for (const [i, h] of course.entries()) {
+    assert.deepEqual(h.inlines[h.inlines.length - 1], { type: "cite", n: i + 1, label: `[${i + 1}]` });
+  }
+});
+
+test("two courses: the shared course sentence and the no-record line are plain paragraphs", () => {
+  const text = fixture("chain_cst1204_cst2403.md");
+  const paragraphs = parseBlocks(text, cites(6))
+    .filter((b): b is Extract<Block, { type: "p" }> => b.type === "p")
+    .map((p) => flat(p.inlines));
+  assert.ok(paragraphs.includes("CST 1101 is already shown above."));
+  assert.ok(paragraphs.includes("No catalog record in the four departments for: MAT 1476, EMT 1111."));
+  assert.ok(paragraphs[0].startsWith("Here are the prerequisites for CST 1204 and CST 2403, from the catalog:"));
+  assert.ok(!/chain|level/i.test(text.replace(/"[^"]*"/g, "")));
+});

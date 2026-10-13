@@ -16,8 +16,8 @@ from cta.settings import ROOT
 PUBLIC_HOST = "www.citytech.cuny.edu"
 MARKER = "ABSTAIN:"
 EXCERPT_CHARS = 300
-CHAIN_KEYS = ("extraction", "code", "course_count", "truncated", "unexpanded", "no_record",
-              "no_record_codes")  # fmt: skip
+CHAIN_KEYS = ("extraction", "code", "detail", "course_count", "truncated", "unexpanded",
+              "no_record", "no_record_codes")  # fmt: skip
 OWN_CODES = ("calendar_", "chain_no_record")  # codes the graph itself sets for its two tools
 
 

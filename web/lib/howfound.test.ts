@@ -198,3 +198,13 @@ test("a step with no time did not happen and is not listed", () => {
   const lines = stepLines(howFound({ stages_ms: { classify: 900, answer: 0, rerank: 0.2, total: 900 } }));
   assert.deepEqual(lines, ["Understanding the question: 900 ms", "Total: 900 ms"]);
 });
+
+test("several courses asked: the panel lists all of them", () => {
+  const data = response({
+    route: "chain",
+    how_found: howFound({ chain: { code: "CST 1204", extraction: "codes", detail: ["CST 1204", "CST 2403"] } }),
+  });
+  assert.equal(chainLines(data)[0], "Courses asked about: CST 1204, CST 2403");
+  const one = response({ route: "chain", how_found: howFound({ chain: { code: "CST 3504", extraction: "code", detail: [] } }) });
+  assert.equal(chainLines(one)[0], "Course asked about: CST 3504");
+});

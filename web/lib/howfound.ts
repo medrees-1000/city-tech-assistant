@@ -124,7 +124,11 @@ export function chainLines(data: AskResponse): string[] {
   const chain = data.how_found.chain;
   if (data.route !== "chain" || !chain) return [];
   const lines: string[] = [];
-  if (chain.code) lines.push(`Course asked about: ${chain.code}`);
+  if (chain.extraction === "codes" && chain.detail && chain.detail.length > 1) {
+    lines.push(`Courses asked about: ${chain.detail.join(", ")}`);
+  } else if (chain.code) {
+    lines.push(`Course asked about: ${chain.code}`);
+  }
   if (chain.no_record && chain.code) lines.push(`No catalog record for ${chain.code}.`);
   if (data.citations.length > 0) {
     lines.push(`Courses followed (${data.citations.length}), in the order found:`);
