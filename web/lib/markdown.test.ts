@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import { inlines, parseBlocks } from "./markdown.ts";
@@ -94,4 +95,51 @@ test("the text of all nodes adds up to the input without the ** marks", () => {
     xs.map((x) => (x.type === "text" ? x.text : x.type === "cite" ? x.label : flat(x.children))).join("");
   const text = "**a [1]** b ** c";
   assert.equal(flat(inlines(text, cites)), "a [1] b ** c");
+});
+
+const h = (level: 3 | 4, ...inl: Inline[]): Block => ({ type: "h", level, inlines: inl });
+
+test("# and ## are small level-3 headings, ### is level 4 (never a page title)", () => {
+  assert.deepEqual(parseBlocks("# One", cites), [h(3, t("One"))]);
+  assert.deepEqual(parseBlocks("## Two", cites), [h(3, t("Two"))]);
+  assert.deepEqual(parseBlocks("### Level 0", cites), [h(4, t("Level 0"))]);
+});
+
+test("a heading followed by a list, then a paragraph", () => {
+  assert.deepEqual(parseBlocks("### Level 1\n- MAT 1375 [1]\n- CST 1201\nDone", cites), [
+    h(4, t("Level 1")),
+    { type: "ul", items: [[t("MAT 1375 "), cite(1)], [t("CST 1201")]] },
+    { type: "p", inlines: [t("Done")] },
+  ]);
+});
+
+test("a heading ends the paragraph above it and needs no blank line", () => {
+  assert.deepEqual(parseBlocks("text line\n## Next\nmore", cites), [
+    { type: "p", inlines: [t("text line")] },
+    h(3, t("Next")),
+    { type: "p", inlines: [t("more")] },
+  ]);
+});
+
+test("a # in the middle of a line, four hashes, and a # with no space stay text", () => {
+  assert.deepEqual(parseBlocks("Room # 5 and C# code", cites), [{ type: "p", inlines: [t("Room # 5 and C# code")] }]);
+  assert.deepEqual(parseBlocks("#### too deep", cites), [{ type: "p", inlines: [t("#### too deep")] }]);
+  assert.deepEqual(parseBlocks("#nospace", cites), [{ type: "p", inlines: [t("#nospace")] }]);
+  assert.deepEqual(parseBlocks("a\n# b", cites)[1], h(3, t("b"))); // but at the start of its own line it is one
+  assert.deepEqual(parseBlocks("see - # x", cites), [{ type: "p", inlines: [t("see - # x")] }]);
+});
+
+test("a heading can hold a citation and bold text", () => {
+  assert.deepEqual(parseBlocks("## Due **soon** [2]", cites), [h(3, t("Due "), bold(t("soon")), t(" "), cite(2))]);
+  assert.deepEqual(parseBlocks("### **Level 0** [1]", cites), [h(4, bold(t("Level 0")), t(" "), cite(1))]);
+});
+
+test("HTML in a heading is text", () => {
+  assert.deepEqual(parseBlocks("# <script>alert(1)</script>", cites), [h(3, t("<script>alert(1)</script>"))]);
+});
+
+test("the stylesheet gives headings small sizes", () => {
+  const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+  const size = css.match(/\.answer-text \.answer-heading\s*\{[^}]*font-size:\s*([\d.]+)rem/);
+  assert.ok(size && Number(size[1]) <= 1.25, "headings must not be page-title sized");
 });

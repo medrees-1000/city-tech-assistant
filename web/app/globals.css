@@ -392,6 +392,23 @@ button:disabled {
   margin-bottom: 0;
 }
 
+.answer-text .answer-heading {
+  margin: 1rem 0 0.35rem;
+  font-family: var(--sans);
+  font-size: 1.0625rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.answer-text h4.answer-heading {
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.answer-text > .answer-heading:first-child {
+  margin-top: 0;
+}
+
 .answer-list {
   padding-left: 1.3rem;
 }

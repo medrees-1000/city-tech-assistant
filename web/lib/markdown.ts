@@ -1,5 +1,5 @@
-// A small, safe markdown subset for answers: paragraphs, "- " bullet lists, **bold** and the [n]
-// citation markers. Pure: it returns a tree that React renders as text nodes, so nothing the model
+// A small, safe markdown subset for answers: paragraphs, "- " bullet lists, headings (#, ##, ###
+// at the start of a line), **bold** and the [n] citation markers. Pure: it returns a tree that React renders as text nodes, so nothing the model
 // writes is ever treated as HTML (an "<b>" in an answer is shown as the characters "<b>").
 
 import type { Citation } from "./api.ts";
@@ -10,7 +10,10 @@ export type Inline =
   | { type: "bold"; children: Inline[] }
   | { type: "cite"; n: number; label: string };
 
-export type Block = { type: "p"; inlines: Inline[] } | { type: "ul"; items: Inline[][] };
+export type Block =
+  | { type: "p"; inlines: Inline[] }
+  | { type: "ul"; items: Inline[][] }
+  | { type: "h"; level: 3 | 4; inlines: Inline[] }; // shown as small h3 or h4 elements, never page-title sizes
 
 type Known = Pick<Citation, "n">[];
 
@@ -50,9 +53,11 @@ export function inlines(text: string, citations: Known): Inline[] {
 }
 
 const BULLET = /^\s*- (\S.*)$/;
+const HEADING = /^ {0,3}(#{1,3}) +(\S.*)$/; // "#", "##" or "###" at the start of a line, then a space
 
-/** Blocks: consecutive "- " lines are one list; other consecutive lines are one paragraph; a blank
- * line ends either. Line breaks inside a paragraph are kept (the page shows them as written). */
+/** Blocks: a heading line is its own block ("#" and "##" become level 3, "###" level 4); consecutive
+ * "- " lines are one list; other consecutive lines are one paragraph; a blank line ends a list or a
+ * paragraph. Line breaks inside a paragraph are kept (the page shows them as written). */
 export function parseBlocks(text: string, citations: Known): Block[] {
   const blocks: Block[] = [];
   let para: string[] = [];
@@ -66,8 +71,17 @@ export function parseBlocks(text: string, citations: Known): Block[] {
     items = null;
   };
   for (const line of text.replace(/\r\n?/g, "\n").split("\n")) {
-    const bullet = BULLET.exec(line);
-    if (bullet) {
+    const heading = HEADING.exec(line);
+    const bullet = heading ? null : BULLET.exec(line);
+    if (heading) {
+      flushPara();
+      flushList();
+      blocks.push({
+        type: "h",
+        level: heading[1].length === 3 ? 4 : 3,
+        inlines: inlines(heading[2], citations),
+      });
+    } else if (bullet) {
       flushPara();
       (items ??= []).push(inlines(bullet[1], citations));
     } else if (line.trim() === "") {

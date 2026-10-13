@@ -32,6 +32,12 @@ export function AnswerText({
       {parseBlocks(text, citations).map((block, i) =>
         block.type === "p" ? (
           <p key={i}>{renderInlines(block.inlines, onCite)}</p>
+        ) : block.type === "h" ? (
+          block.level === 3 ? (
+            <h3 key={i} className="answer-heading">{renderInlines(block.inlines, onCite)}</h3>
+          ) : (
+            <h4 key={i} className="answer-heading">{renderInlines(block.inlines, onCite)}</h4>
+          )
         ) : (
           <ul key={i} className="answer-list">
             {block.items.map((item, j) => (
