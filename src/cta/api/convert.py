@@ -1,0 +1,189 @@
+"""Turn the router's RoutedAnswer into the API response (docs/phase4-plan.md, section 1).
+
+This module only reads fields: routing, abstaining, contact choice and rendering stay in the graph.
+"""
+
+import json
+import re
+from datetime import date
+from pathlib import Path
+from urllib.parse import unquote, urlparse
+
+from cta.api import schema
+from cta.graph import contact as contacts
+from cta.settings import ROOT
+
+PUBLIC_HOST = "www.citytech.cuny.edu"
+MARKER = "ABSTAIN:"
+EXCERPT_CHARS = 300
+CODES = ("calendar_", "chain_no_record", "below_threshold")
+
+
+def build_url_map(pages_dir: Path = ROOT / "data" / "processed" / "pages") -> dict[str, str]:
+    """File name -> public URL, only for PDFs that a collected page of the City Tech site links."""
+    out: dict[str, str] = {}
+    for path in sorted(pages_dir.glob("*/*.json")):
+        for link in json.loads(path.read_text(encoding="utf-8")).get("pdf_links", []):
+            url = urlparse(link["url"])
+            if url.scheme == "https" and url.netloc == PUBLIC_HOST:
+                out.setdefault(unquote(Path(url.path).name), link["url"])
+    return out
+
+
+def public_route(ans) -> str:
+    if ans.route == "abstain":
+        return "chain" if ans.abstain_reason == "chain_no_record" else "calendar"
+    return {"calendar": "calendar", "chain": "chain"}.get(ans.route, "retrieve")
+
+
+def abstain_code(reason: str | None) -> str | None:
+    if reason is None:
+        return None
+    return reason if reason.startswith(CODES) else "model"
+
+
+def excerpt(text: str) -> str:
+    flat = re.sub(r"\s+", " ", text).strip()
+    return flat if len(flat) <= EXCERPT_CHARS else flat[:EXCERPT_CHARS].rstrip() + "..."
+
+
+def citation(n: int, chunk: dict, cited: bool, url_map: dict, events: dict) -> schema.Citation:
+    """One numbered source: a web page uses its own URL; a file gets one only if a page links it."""
+    source = chunk.get("source") or ""
+    kind = chunk.get("kind")
+    url = file = None
+    if kind == "calendar":
+        pdf = (events.get(chunk["id"]) or {}).get("source_pdf")
+        file = Path(pdf).name if pdf else None
+    elif source.startswith("https://"):
+        url = source
+    elif kind != "course" and source:
+        file = Path(source).name
+    if file:
+        url = url_map.get(file)
+    title = chunk.get("heading_path") or chunk["id"]
+    if kind == "course":
+        title = f"City Tech course catalog: {title}"
+    return schema.Citation(
+        n=n, id=chunk["id"], title=title, url=url, file=file,
+        doc_type="calendar" if kind == "calendar" else chunk.get("doc_type"),
+        scope=chunk.get("scope") or ("city_tech" if kind == "calendar" else None),
+        term=chunk.get("term") or (chunk.get("terms") or [None])[0],
+        last_updated=chunk.get("last_updated"), excerpt=excerpt(chunk.get("text", "")),
+        cited=cited,
+    )  # fmt: skip
+
+
+def contact_card(key: str, table: dict) -> schema.Contact:
+    entry = table["offices"][key]
+    emails = [
+        {"address": e, "for": None}
+        if isinstance(e, str)
+        else {"address": e["address"], "for": e["for"]}
+        for e in entry["emails"]
+    ]
+    return schema.Contact(
+        office=key, name=entry["name"], emails=emails, phones=list(entry["phones"]),
+        note=entry.get("also"),
+    )  # fmt: skip
+
+
+def retrieved_block(search, k: int) -> list[schema.RetrievedChunk]:
+    """The candidate pool in first-stage order, with the reranker's score and final rank."""
+    if search is None or not search.results:
+        return []
+    pool = search.pool or search.results
+    rr = search.rerank
+    final = {i: pos for pos, i in enumerate(rr.order, 1)} if rr and not rr.failed else {}
+    out = []
+    for i, c in enumerate(pool):
+        if search.pool:
+            pos = final.get(i)
+        else:
+            pos = i + 1
+        score = rr.scores[i] if rr and not rr.failed and i < len(rr.scores) else None
+        out.append(
+            schema.RetrievedChunk(
+                id=c["id"],
+                first_stage_rank=c.get("rank", i + 1),
+                similarity=c.get("similarity"),
+                rerank_score=score,
+                final_rank=pos,
+                sent_to_answerer=bool(pos and pos <= k),
+            )  # fmt: skip
+        )
+    return out
+
+
+def how_found(ans, cfg: dict) -> schema.HowFound:
+    router, search = ans.router, ans.search
+    classify = router["classify"]
+    select = (router.get("select") or {}) if router.get("select") else {}
+    chain = router.get("chain")
+    rr = search.rerank if search else None
+    answer_ms = max(0.0, ans.chat_ms - classify["ms"] - select.get("ms", 0.0))
+    retrieval_ms = (
+        (search.retrieval_ms - (rr.ms if rr else 0.0)) if search and search.results else None
+    )
+    cost_search = search.cost if search else 0.0
+    answer_cost = ans.chat_cost - classify["cost"] - select.get("cost", 0.0)
+    return schema.HowFound(
+        route_detail=router["route"], intent=router.get("intent"),
+        top_vector_similarity=search.top_vector_similarity if search else None,
+        abstain_threshold=cfg["answer"]["abstain_threshold"],
+        retrieved=retrieved_block(search, cfg["answer"]["k"]),
+        calendar={k: router[k] for k in ("term_status", "term", "selector_version", "pool_size",
+                                          "selected", "weekday_mismatches", "invalid_ids")
+                  if k in router} or None,
+        chain={k: chain[k] for k in ("extraction", "code", "course_count", "truncated",
+                                      "unexpanded", "no_record") if k in chain} if chain else None,
+        stages_ms={
+            "classify": classify["ms"], "select": select.get("ms"),
+            "retrieval": retrieval_ms, "rerank": rr.ms if rr else None,
+            "walk": chain.get("walk_ms") if chain else None,
+            "answer": round(answer_ms, 1) if ans.route in ("other", "chain", "calendar_fallthrough",
+                                                            "chain_fallthrough") else None,
+            "total": float(ans.latency_ms),
+        },
+        tokens={
+            "prompt": ans.prompt_tokens, "completion": ans.completion_tokens,
+            "embedding": search.tokens if search else 0,
+            "rerank_prompt": rr.prompt_tokens if rr else 0,
+            "rerank_completion": rr.completion_tokens if rr else 0,
+        },
+        cost_usd={
+            "classify": classify["cost"], "select": select.get("cost", 0.0),
+            "embedding": cost_search, "rerank": rr.cost if rr else 0.0,
+            "answer": round(max(0.0, answer_cost), 8), "total": ans.cost,
+        },
+        cache_hits={"embedding": bool(search and search.cache_hit),
+                    "rerank": bool(rr and rr.cache_hit)},
+    )  # fmt: skip
+
+
+def to_response(ans, question: str, cfg: dict, today: date, request_id: str, version: str,
+                url_map: dict, events: dict, table: dict | None = None):  # fmt: skip
+    """The /ask response for a RoutedAnswer. The contact sentence the graph appended is removed
+    from the text (the contact card carries it); the ABSTAIN: marker is removed too."""
+    table = table or contacts.load_contacts()
+    key = ans.router.get("contact_office") if ans.abstained else None
+    text = ans.text.strip()
+    if key:
+        text = text.removesuffix(contacts.contact_line(key, table)).rstrip()
+    if ans.abstained:
+        text = text.removeprefix(MARKER).strip()
+    kind = (
+        "abstain" if ans.abstained else "not_announced" if ans.router.get("tba_rows") else "answer"
+    )
+    cited = set(ans.citations)
+    return schema.AskResponse(
+        request_id=request_id, question=question, answer=text, answer_type=kind,
+        abstained=ans.abstained, abstain_reason=abstain_code(ans.abstain_reason),
+        route=public_route(ans),
+        citations=[]
+        if ans.abstained  # an abstention cites nothing; the retrieved chunks are in how_found
+        else [citation(n, c, n in cited, url_map, events) for n, c in enumerate(ans.sources, 1)],
+        contact=contact_card(key, table) if key else None,
+        how_found=how_found(ans, cfg),
+        meta=schema.Meta(today=today.isoformat(), version=version, model=cfg["chat_model"]),
+    )  # fmt: skip

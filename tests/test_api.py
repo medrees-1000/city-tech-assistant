@@ -1,13 +1,27 @@
 """The local API (Phase 4). No network, no database, no paid call: the connection is a stub."""
 
+import json
+from datetime import date
+from types import SimpleNamespace
+
+import psycopg
 import pytest
 from fastapi.testclient import TestClient
 
+from cta.answer import THRESHOLD_ABSTAIN, Answer
 from cta.api import __main__ as api_main
 from cta.api import app as api_app
+from cta.api import convert, schema
 from cta.api.checks import StartupError, startup_problems
+from cta.graph import build, render
+from cta.graph import chain as chains
+from cta.graph.build import Router
 from cta.index.db import migration_files
+from cta.index.embed import ApiError
+from cta.index.rerank import Rerank
+from cta.index.search import Search
 from cta.settings import ROOT, TRACING_VARIABLES, load_models
+from tests.test_chain import WORLD
 
 ENV = {"OPENAI_API_KEY": "sk-test"}
 CFG = load_models(env={})  # router on, contacts on: the defaults
@@ -152,3 +166,381 @@ def test_env_example_lists_the_new_names():
         ln.split("=")[0] for ln in (ROOT / ".env.example").read_text().splitlines() if "=" in ln
     }
     assert {"CTA_ROUTER_CONTACTS", "CTA_API_TODAY"} <= names
+
+
+# ================= POST /ask (step 3) =================
+
+TODAY = date(2026, 10, 11)
+EVENTS = build.load_events()
+REGISTRAR = render.registrar_contact()
+PAGE = "https://www.citytech.cuny.edu/registrar/faqs.aspx"
+
+
+class Client:
+    """Scripted chat client: classifier, calendar selector, chain answer and retrieval answer."""
+
+    def __init__(self, intent="other", mention=None, row_ids=(), answer="ok [1]", fail=None):
+        self.intent, self.mention, self.row_ids = intent, mention, list(row_ids)
+        self.answer_text, self.fail, self.calls = answer, fail, []
+        self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
+
+    def create(self, **kw):
+        system = kw["messages"][0]["content"]
+        which = (
+            "classify" if system.startswith("You route")
+            else "select" if system.startswith("You choose")
+            else "answer"
+        )  # fmt: skip
+        self.calls.append(which)
+        if self.fail:
+            raise self.fail
+        reply = {
+            "classify": json.dumps({"intent": self.intent, "term_mention": self.mention}),
+            "select": json.dumps({"row_ids": self.row_ids}),
+            "answer": self.answer_text,
+        }[which]
+        usage = SimpleNamespace(prompt_tokens=100, completion_tokens=10)
+        return SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content=reply))], usage=usage
+        )
+
+
+def chunk(cid, source=PAGE, kind="section", **kw):
+    base = {"id": cid, "kind": kind, "source": source, "source_id": cid, "merged_section_ids": [],
+            "doc_type": "faq", "department": None, "scope": "city_tech", "term": None, "terms": [],
+            "heading_path": "FAQ > Question", "last_updated": None, "text": "Some  text\nhere.",
+            "similarity": 0.7, "rank": 1}  # fmt: skip
+    return base | kw
+
+
+def retrieve_answer(text="Yes. [1]", abstained=False, reason=None, citations=(1,), n=3):
+    chunks = [chunk(f"page/registrar/faqs#{i}", rank=i) for i in range(1, n + 1)]
+    pool = [chunk(f"page/registrar/faqs#{i}", rank=i, similarity=0.9 - i / 10) for i in range(1, 8)]
+    scores = [5.0, 1.0, 9.0, 0.0, 0.0, 0.0, 0.0]
+    rerank = Rerank(order=[2, 0, 1, 3, 4, 5, 6], scores=scores, ms=11.0, prompt_tokens=40,
+                    completion_tokens=5, cost=0.0004)  # fmt: skip
+    search = Search(chunks, True, 0, 7, 1e-7, top_vector_similarity=0.8, retrieval_ms=60.0,
+                    rerank_mode="pool_a", rerank=rerank, pool=pool)  # fmt: skip
+    return Answer(text, abstained, reason, chunks, list(citations), [], search, prompt_tokens=300,
+                  completion_tokens=20, chat_cost=0.0002, chat_ms=400)  # fmt: skip
+
+
+def cfg_for(**api):
+    cfg = load_models(env={"CTA_RERANK": "off", "CTA_ROUTER_CHAIN": "on"})
+    cfg["api"] |= api
+    return cfg
+
+
+def make_client_app(client, monkeypatch, stub=None, cfg=None, tmp_root=None, connect=ok_connect,
+                    clock=lambda: TODAY):  # fmt: skip
+    cfg = cfg or cfg_for()
+    if stub is not None:
+        monkeypatch.setattr(build, "answer", lambda *a, **k: stub)
+    monkeypatch.setattr(chains, "load_records", lambda *a, **k: WORLD)
+
+    def factory(conn, cfg):
+        return Router(conn, cfg, lambda: client, events=EVENTS, contact=REGISTRAR)
+
+    app = api_app.create_app(cfg, connect=connect, check_startup=False, router_factory=factory,
+                             root=tmp_root or ROOT, clock=clock)  # fmt: skip
+    return TestClient(app, raise_server_exceptions=False)
+
+
+def ask(client, question="How do I apply for graduation?"):
+    return client.post("/ask", json={"question": question})
+
+
+# ---- the contract ----
+
+
+def test_a_retrieval_answer_has_every_contract_field_and_validates(monkeypatch):
+    c = make_client_app(Client(), monkeypatch, retrieve_answer())
+    r = ask(c)
+    assert r.status_code == 200
+    body = r.json()
+    fields = ("request_id question answer answer_type abstained abstain_reason route citations "
+              "contact how_found meta").split()  # fmt: skip
+    assert set(body) == set(fields)
+    schema.AskResponse.model_validate(body)
+    assert body["route"] == "retrieve" and body["answer_type"] == "answer" and not body["abstained"]
+    assert body["answer"] == "Yes. [1]" and body["contact"] is None
+    assert body["request_id"] == r.headers["X-Request-ID"]
+    assert body["meta"]["today"] == "2026-10-11" and body["meta"]["model"] == "gpt-6-luna"
+
+
+def test_citations_are_the_numbered_sources_with_a_cited_flag_and_a_short_excerpt(monkeypatch):
+    body = ask(make_client_app(Client(), monkeypatch, retrieve_answer())).json()
+    cites = body["citations"]
+    assert [c["n"] for c in cites] == [1, 2, 3] and [c["cited"] for c in cites] == [
+        True,
+        False,
+        False,
+    ]
+    assert cites[0]["url"] == PAGE and cites[0]["file"] is None and cites[0]["doc_type"] == "faq"
+    assert cites[0]["title"] == "FAQ > Question" and cites[0]["excerpt"] == "Some text here."
+
+
+def test_how_found_has_the_pool_with_rerank_order_stages_tokens_and_cost(monkeypatch):
+    hf = ask(make_client_app(Client(), monkeypatch, retrieve_answer())).json()["how_found"]
+    assert hf["route_detail"] == "other" and hf["intent"] == "other"
+    assert hf["top_vector_similarity"] == 0.8 and hf["abstain_threshold"] == 0.59
+    pool = {p["id"]: p for p in hf["retrieved"]}
+    assert len(pool) == 7
+    best = pool["page/registrar/faqs#3"]  # the reranker put pool index 2 first
+    assert (best["final_rank"], best["rerank_score"], best["sent_to_answerer"]) == (1, 9.0, True)
+    assert pool["page/registrar/faqs#2"]["final_rank"] == 3
+    assert pool["page/registrar/faqs#5"]["sent_to_answerer"] is True  # final rank 5
+    assert pool["page/registrar/faqs#6"]["final_rank"] == 6
+    assert pool["page/registrar/faqs#6"]["sent_to_answerer"] is False
+    st = hf["stages_ms"]
+    assert st["rerank"] == 11.0 and st["retrieval"] == 49.0 and st["select"] is None
+    assert st["classify"] is not None and st["answer"] is not None and st["total"] > 0
+    assert hf["tokens"]["embedding"] == 7 and hf["tokens"]["rerank_prompt"] == 40
+    assert hf["tokens"]["prompt"] == 400  # 300 for the answer + 100 for the classifier
+    cost = hf["cost_usd"]
+    assert cost["rerank"] == 0.0004 and cost["total"] == pytest.approx(
+        cost["classify"] + cost["embedding"] + cost["rerank"] + cost["answer"], abs=1e-7
+    )
+    assert hf["cache_hits"] == {"embedding": True, "rerank": False}
+    assert hf["calendar"] is None and hf["chain"] is None
+
+
+def test_a_threshold_abstention_has_a_contact_card_and_no_contact_sentence_in_the_text(monkeypatch):
+    stub = retrieve_answer(THRESHOLD_ABSTAIN, True, "below_threshold", citations=())
+    stub.sources[0]["id"] = "page/registrar/incomplete#1"
+    body = ask(make_client_app(Client(), monkeypatch, stub), "Should I take an Incomplete?").json()
+    assert body["abstained"] and body["answer_type"] == "abstain" and body["route"] == "retrieve"
+    assert body["abstain_reason"] == "below_threshold"
+    assert body["answer"] == "I could not find this in the City Tech sources I have."
+    assert body["citations"] == []  # an abstention cites nothing
+    card = body["contact"]
+    assert card["office"] == "registrar" and card["name"] == "the Registrar"
+    assert card["emails"] == [{"address": "registrar@citytech.cuny.edu", "for": None}]
+    assert card["phones"] == ["718-260-5800"] and card["note"] is None
+    assert len(body["how_found"]["retrieved"]) == 7  # what was retrieved is still shown
+
+
+def test_a_model_written_abstention_is_coded_model_and_gets_a_department_card(monkeypatch):
+    stub = retrieve_answer("ABSTAIN: The sources do not list who teaches MAT 1475.", True,
+                           "The sources do not list who teaches MAT 1475.", ())  # fmt: skip
+    body = ask(make_client_app(Client(), monkeypatch, stub), "Who is teaching MAT 1475?").json()
+    assert body["abstain_reason"] == "model" and body["contact"]["office"] == "MATH-NYT"
+    assert body["answer"] == "The sources do not list who teaches MAT 1475."
+
+
+def test_advisement_card_keeps_its_labelled_emails_and_note(monkeypatch):
+    stub = retrieve_answer(THRESHOLD_ABSTAIN, True, "below_threshold", ())
+    stub.sources[0]["id"] = "page/advisement/virtual-advisors#2"
+    card = ask(
+        make_client_app(Client(), monkeypatch, stub), "Apply to Architectural Technology?"
+    ).json()["contact"]
+    assert card["office"] == "advisement" and card["phones"] == []
+    assert {"address": "transferadvisement@citytech.cuny.edu", "for": "transfer students"} in card[
+        "emails"
+    ]
+    assert "virtual-advisors.aspx" in card["note"]
+
+
+# ---- the calendar and chain routes ----
+
+
+def test_a_calendar_answer_cites_its_rows_with_a_public_pdf_url_only_when_a_page_links_it(
+    monkeypatch, tmp_path
+):
+    pages = tmp_path / "data" / "processed" / "pages" / "registrar"
+    pages.mkdir(parents=True)
+    links = [
+        {"url": "https://www.citytech.cuny.edu/registrar/docs/fall_2026.pdf", "text": "Fall 2026"}
+    ]
+    (pages / "academic-calendar.json").write_text(json.dumps({"pdf_links": links}))
+    client = Client("calendar", "Fall 2026", ["fall-2026-040"])
+    body = ask(
+        make_client_app(client, monkeypatch, tmp_root=tmp_path), "Last day to withdraw?"
+    ).json()
+    assert body["route"] == "calendar" and body["answer_type"] == "answer"
+    cite = body["citations"][0]
+    assert cite["doc_type"] == "calendar" and cite["file"] == "fall_2026.pdf"
+    assert cite["url"] == "https://www.citytech.cuny.edu/registrar/docs/fall_2026.pdf"
+    assert cite["term"] == "Fall 2026" and cite["last_updated"]
+    hf = body["how_found"]
+    assert hf["retrieved"] == [] and hf["calendar"]["selected"] == ["fall-2026-040"]
+    assert hf["stages_ms"]["select"] is not None and hf["stages_ms"]["answer"] is None
+    assert client.calls == ["classify", "select"]
+
+
+def test_the_same_calendar_answer_has_no_url_when_no_page_links_the_file(monkeypatch, tmp_path):
+    client = Client("calendar", "Fall 2026", ["fall-2026-040"])
+    cite = ask(make_client_app(client, monkeypatch, tmp_root=tmp_path)).json()["citations"][0]
+    assert cite["file"] == "fall_2026.pdf" and cite["url"] is None
+
+
+def test_a_row_with_no_date_is_not_announced_and_keeps_the_registrar_line(monkeypatch):
+    client = Client("calendar", "Spring 2027", ["spring-2027-055"])
+    body = ask(make_client_app(client, monkeypatch), "When is commencement?").json()
+    assert body["answer_type"] == "not_announced" and not body["abstained"]
+    assert "not announced yet" in body["answer"] and "Contact the Registrar" in body["answer"]
+    assert body["contact"] is None
+
+
+def test_a_calendar_abstention_has_one_registrar_card_and_no_sentence(monkeypatch):
+    client = Client("calendar", "Summer 2027", [])
+    body = ask(make_client_app(client, monkeypatch), "When does Summer 2027 start?").json()
+    assert body["abstained"] and body["route"] == "calendar"
+    assert body["abstain_reason"].startswith("calendar_")
+    assert body["contact"]["office"] == "registrar" and "Contact" not in body["answer"]
+    assert not body["answer"].startswith("ABSTAIN")
+
+
+def test_a_chain_answer_cites_course_records_without_any_url(monkeypatch):
+    client = Client("prerequisite", answer="AA 1001 needs BB 1001 [1][2].")
+    body = ask(make_client_app(client, monkeypatch), "What do I need before AA 1001?").json()
+    assert body["route"] == "chain" and not body["abstained"]
+    assert [c["id"] for c in body["citations"]] == ["catalog:AA 1001", "catalog:BB 1001"]
+    assert all(c["url"] is None and c["file"] is None for c in body["citations"])
+    assert body["citations"][0]["title"].startswith("City Tech course catalog: ")
+    chain = body["how_found"]["chain"]
+    assert chain["code"] == "AA 1001" and chain["course_count"] == 2 and chain["truncated"] is False
+    assert body["how_found"]["stages_ms"]["walk"] is not None
+
+
+def test_a_chain_with_no_record_abstains_with_the_department_card(monkeypatch):
+    client = Client("prerequisite")
+    body = ask(make_client_app(client, monkeypatch), "What do I need before CST 4999?").json()
+    assert (
+        body["route"] == "chain"
+        and body["abstained"]
+        and body["abstain_reason"] == "chain_no_record"
+    )
+    assert body["contact"]["office"] == "CST-NYT" and "Contact" not in body["answer"]
+    assert body["answer"].startswith("No record exists in the catalog data for CST 4999")
+
+
+# ---- URL rules ----
+
+
+def test_urls_come_only_from_the_chunk_page_or_a_page_that_links_the_file():
+    urls = {"fall_2026.pdf": "https://www.citytech.cuny.edu/registrar/docs/fall_2026.pdf"}
+    web = convert.citation(1, chunk("a"), True, urls, {})
+    pdf_mapped = convert.citation(1, chunk("p", "data/pdfs/fall_2026.pdf"), True, urls, {})
+    pdf_unmapped = convert.citation(1, chunk("q", "data/pdfs/other.pdf"), True, urls, {})
+    course = convert.citation(
+        1, chunk("catalog:CST 1", "catalog_course", kind="course"), True, urls, {}
+    )
+    assert web.url == PAGE and web.file is None
+    assert pdf_mapped.url == urls["fall_2026.pdf"] and pdf_mapped.file == "fall_2026.pdf"
+    assert pdf_unmapped.url is None and pdf_unmapped.file == "other.pdf"
+    assert course.url is None and course.file is None
+
+
+def test_the_url_map_uses_only_https_links_on_the_city_tech_host_and_decodes_names(tmp_path):
+    d = tmp_path / "registrar"
+    d.mkdir()
+    links = [
+        {"url": "https://www.citytech.cuny.edu/registrar/docs/a%20b.pdf", "text": ""},
+        {"url": "http://www.citytech.cuny.edu/registrar/docs/insecure.pdf", "text": ""},
+        {"url": "https://other.example.org/x/outside.pdf", "text": ""},
+    ]
+    (d / "p.json").write_text(json.dumps({"pdf_links": links}))
+    assert convert.build_url_map(tmp_path) == {
+        "a b.pdf": "https://www.citytech.cuny.edu/registrar/docs/a%20b.pdf"
+    }
+
+
+# ---- errors ----
+
+
+def error_ok(r, status, code):
+    body = r.json()
+    assert r.status_code == status and body["error"]["code"] == code
+    assert body["request_id"] == r.headers["X-Request-ID"]
+    return body
+
+
+def test_empty_or_too_long_questions_are_422_without_echoing_the_input(monkeypatch):
+    c = make_client_app(Client(), monkeypatch, retrieve_answer())
+    error_ok(c.post("/ask", json={"question": "   "}), 422, "invalid_question")
+    long = "x" * 501
+    body = error_ok(c.post("/ask", json={"question": long}), 422, "invalid_question")
+    assert long not in json.dumps(body)
+    assert c.post("/ask", json={"question": "x" * 500}).status_code == 200
+
+
+def test_a_bad_body_is_422_and_a_large_body_is_413(monkeypatch):
+    c = make_client_app(Client(), monkeypatch, retrieve_answer())
+    error_ok(c.post("/ask", json={"q": "x"}), 422, "invalid_request")
+    error_ok(
+        c.post("/ask", content=b"not json", headers={"content-type": "application/json"}),
+        422,
+        "invalid_request",
+    )
+    error_ok(c.post("/ask", json={"question": "x" * 5000}), 413, "too_large")
+
+
+def test_a_provider_failure_is_502_with_no_provider_text(monkeypatch):
+    c = make_client_app(Client(), monkeypatch, retrieve_answer())
+
+    def fail(*a, **k):
+        raise ApiError("chat request failed: 401 sk-secret-key quota")
+
+    monkeypatch.setattr(build, "answer", fail)
+    r = ask(c)
+    body = error_ok(r, 502, "provider_error")
+    assert "sk-secret" not in r.text and "401" not in r.text and body["error"]["message"]
+
+
+def test_a_database_failure_is_503_and_an_unexpected_error_is_500_with_a_generic_message(
+    monkeypatch,
+):
+    def broken():
+        raise psycopg.OperationalError("connection to server at 10.0.0.5 failed")
+
+    r = ask(make_client_app(Client(), monkeypatch, retrieve_answer(), connect=broken))
+    error_ok(r, 503, "unavailable")
+    assert "10.0.0.5" not in r.text
+    c = make_client_app(Client(), monkeypatch, retrieve_answer())
+
+    def boom(*a, **k):
+        raise RuntimeError("secret trace /home/x")
+
+    monkeypatch.setattr(build, "answer", boom)
+    r = ask(c)
+    error_ok(r, 500, "internal_error")
+    assert "secret" not in r.text and "/home" not in r.text
+
+
+def test_unknown_paths_and_methods_use_the_error_envelope(monkeypatch):
+    c = make_client_app(Client(), monkeypatch, retrieve_answer())
+    error_ok(c.get("/nope"), 404, "not_found")
+    error_ok(c.get("/ask"), 405, "method_not_allowed")
+
+
+# ---- date, logging, no model call ----
+
+
+def test_the_date_is_the_server_date_unless_the_config_overrides_it(monkeypatch):
+    c = make_client_app(Client(), monkeypatch, retrieve_answer(), clock=lambda: date(2030, 1, 2))
+    assert ask(c).json()["meta"]["today"] == "2030-01-02"
+    cfg = cfg_for(today=date(2026, 10, 11))
+    c = make_client_app(
+        Client(), monkeypatch, retrieve_answer(), cfg=cfg, clock=lambda: date(2030, 1, 2)
+    )
+    assert ask(c).json()["meta"]["today"] == "2026-10-11"
+
+
+def test_the_router_is_called_without_writing_a_log_row_in_this_step(monkeypatch):
+    seen = []
+
+    class Spy:
+        def answer(self, question, today, run_id=None, log=True):
+            seen.append((question, today, log))
+            return Router(None, cfg_for(), lambda: Client(), events=EVENTS).answer(
+                question, today, log=False
+            )
+
+    monkeypatch.setattr(build, "answer", lambda *a, **k: retrieve_answer())
+    app = api_app.create_app(
+        cfg_for(), connect=ok_connect, check_startup=False,
+        router_factory=lambda conn, cfg: Spy(), clock=lambda: TODAY,
+    )  # fmt: skip
+    assert TestClient(app).post("/ask", json={"question": "  hello  "}).status_code == 200
+    assert seen == [("hello", TODAY, False)]  # the question is stripped; log=False
