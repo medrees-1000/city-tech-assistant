@@ -523,8 +523,82 @@ button:disabled {
   margin: 0 0 0.3rem;
 }
 
-.slot-empty {
-  display: none; /* STEP 6: reserved place, nothing is built here yet */
+.howfound {
+  margin-top: 0.25rem;
+}
+
+.howfound summary,
+.privacy summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 0.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--link);
+  cursor: pointer;
+}
+
+.hf-body {
+  margin: 0 0 0.5rem;
+  padding: 0.25rem 1rem 0.5rem;
+  font-size: 0.9375rem;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.hf-title {
+  margin: 0.75rem 0 0.2rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.hf-body ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.hf-body li {
+  margin: 0.15rem 0;
+  overflow-wrap: anywhere;
+}
+
+.privacy {
+  margin: 0.5rem 0.25rem 0;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.privacy p {
+  margin: 0;
+}
+
+.privacy details {
+  text-align: left;
+}
+
+.privacy summary {
+  font-size: 0.8125rem;
+  justify-content: center;
+  width: 100%;
+}
+
+.privacy ul {
+  margin: 0 0 0.5rem;
+  padding: 0.5rem 1rem 0.5rem 2rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.privacy li {
+  margin: 0.2rem 0;
 }
 
 /* loading placeholder: three dots that breathe */

@@ -8,6 +8,7 @@ import { canSend, finishTurn, isEmpty, isLoading, startTurn } from "../../lib/me
 import type { Message } from "../../lib/messages";
 import { AssistantMessage } from "../components/AssistantMessage";
 import { Composer } from "../components/Composer";
+import { PrivacyNotice } from "../components/PrivacyNotice";
 
 // Questions that exist in the current data: a calendar row, a prerequisite chain, a payment
 // deadline, a department rule.
@@ -108,8 +109,7 @@ export default function ChatPage() {
             <br />
             <span className="unofficial">Unofficial student project, not affiliated with City Tech</span>
           </p>
-          {/* STEP 6: the logging notice ("Do not type personal information") goes here. Not built yet. */}
-          <div className="slot-empty" data-slot="log-notice" />
+          <PrivacyNotice />
         </div>
       </main>
     </div>

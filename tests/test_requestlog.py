@@ -249,3 +249,54 @@ def test_the_logs_command_prints_the_last_api_requests_redacted_and_a_total(
     assert len(out) == 2 and "retrieve" in out[0] and out[-1].startswith("1 API requests matching")
     assert logs.main(["x", "--since", "2999-01-01"]) == 0
     assert capsys.readouterr().out.strip() == "0 API requests matching, total cost $0.000000"
+
+
+# ---- the privacy notice matches the code ----
+
+
+def notice_text() -> str:
+    from cta.settings import ROOT
+
+    return (ROOT / "web" / "lib" / "notice.ts").read_text(encoding="utf-8")
+
+
+def test_the_notice_says_what_the_code_does():
+    from cta.settings import ROOT
+
+    text = notice_text()
+    # 30 days: the purge command's examples and the plan use 30, and the notice says it
+    assert "saved for 30 days" in text
+    assert "run by hand" in text  # there is no automatic deletion: the purge is a command
+    purge_doc = (ROOT / "src" / "cta" / "api" / "purge.py").read_text(encoding="utf-8")
+    assert "--days 30" in purge_doc
+    # emails, phone numbers, ID numbers (and SSN-like numbers) are the patterns of cta.redact
+    assert {"EMAIL", "PHONE", "ID"} <= {
+        tag
+        for tag in ("EMAIL", "SSN", "PHONE", "ID")
+        if f"[{tag}]" in redact("a@b.edu 718-260-5800 23456789 123-45-6789")
+    }
+    assert "emails, phone numbers and ID numbers removed" in text
+    # names are not removed (the known gap) and the notice says so
+    assert redact("Maria Lopez") == "Maria Lopez" and "Names are not removed" in text
+
+
+def test_the_notice_claim_of_no_ip_and_no_cookies_is_true_of_the_code():
+    from cta.settings import ROOT
+
+    assert "No IP address and no cookies are stored" in notice_text()
+    forbidden = {"ip", "ip_address", "client_ip", "user_agent", "cookie", "cookies", "headers"}
+    assert not forbidden & set(requestlog.COLUMNS)
+    sources = [
+        *(ROOT / "src" / "cta" / "api").glob("*.py"),
+        *(ROOT / "web" / "app").rglob("*.tsx"),
+        *(ROOT / "web" / "lib").glob("*.ts"),
+    ]
+    for path in sources:
+        code = path.read_text(encoding="utf-8")
+        if path.name in ("notice.ts", "notice.test.ts"):
+            continue
+        assert "set_cookie" not in code and "document.cookie" not in code, path
+        assert "localStorage" not in code and "sessionStorage" not in code, path
+        assert "request.client" not in code and "x-forwarded-for" not in code.lower(), path
+    launcher = (ROOT / "src" / "cta" / "api" / "__main__.py").read_text(encoding="utf-8")
+    assert "access_log=False" in launcher  # the server's own log would print client addresses

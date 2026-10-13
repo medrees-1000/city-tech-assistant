@@ -19,7 +19,8 @@ def main(argv: list[str]) -> int:
     if problems:
         print("the API cannot start:\n  - " + "\n  - ".join(problems))
         return 2
-    uvicorn.run("cta.api.app:create_app", factory=True, host=HOST, port=args.port)
+    # access_log=False: uvicorn's access log would print every client address to the terminal
+    uvicorn.run("cta.api.app:create_app", factory=True, host=HOST, port=args.port, access_log=False)
     return 0
 
 

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import type { AskResponse } from "./api.ts";
+import { response } from "./testdata.ts";
 import {
   answerView,
   canSend,
@@ -19,20 +20,7 @@ import {
   startTurn,
 } from "./messages.ts";
 
-const data = (over: Partial<AskResponse> = {}): AskResponse => ({
-  request_id: "r1",
-  question: "q",
-  answer: "Because. [1]",
-  answer_type: "answer",
-  abstained: false,
-  abstain_reason: null,
-  route: "retrieve",
-  citations: [],
-  contact: null,
-  how_found: {},
-  meta: { today: "2026-10-13", version: "x", model: "m" },
-  ...over,
-});
+const data = (over: Partial<AskResponse> = {}): AskResponse => response(over);
 
 test("a new conversation is empty; a turn adds the question and a loading placeholder", () => {
   assert.equal(isEmpty([]), true);
@@ -143,5 +131,4 @@ test("the stylesheet leaves no bottom margin under the last block of an answer (
   const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
   assert.match(css, /\.answer-text > :last-child\s*\{\s*margin-bottom:\s*0;/);
   assert.doesNotMatch(css, /answer-card|answer-abstain|answer-not_announced|answer-personal_account/);
-  assert.match(css, /\.slot-empty\s*\{\s*display:\s*none;/); // the reserved step 6 places take no space
 });

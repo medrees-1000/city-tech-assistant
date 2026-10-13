@@ -7,6 +7,7 @@ import type { Turn } from "../../lib/messages";
 import { AnswerText } from "./AnswerText";
 import { ContactCard } from "./ContactCard";
 import { ErrorView } from "./ErrorView";
+import { HowFound } from "./HowFound";
 import { SourceList } from "./SourceList";
 
 export function AssistantMessage({ id, turn }: { id: number; turn: Turn }) {
@@ -59,8 +60,7 @@ function Done({
       <AnswerText text={view.text} citations={data.citations} onCite={onCite} />
       {data.contact && showContact(data) ? <ContactCard contact={data.contact} /> : null}
       <SourceList assistantId={id} citations={data.citations} open={open} onToggle={setOpen} />
-      {/* STEP 6: the "How this was found" toggle for this answer goes here (data.how_found). Not built yet. */}
-      <div className="slot-empty" data-slot="how-found" />
+      <HowFound data={data} />
     </>
   );
 }

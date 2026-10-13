@@ -25,6 +25,49 @@ export type Contact = {
 
 export type AnswerType = "answer" | "abstain" | "not_announced" | "clarify";
 
+export type RetrievedChunk = {
+  id: string;
+  title: string | null;
+  first_stage_rank: number;
+  similarity: number | null;
+  rerank_score: number | null;
+  final_rank: number | null;
+  sent_to_answerer: boolean;
+};
+
+export type ChainInfo = {
+  extraction?: string;
+  code?: string | null;
+  course_count?: number;
+  truncated?: boolean;
+  unexpanded?: { code: string; level: number; names: string[]; reason: string }[];
+  no_record?: boolean;
+  no_record_codes?: string[];
+};
+
+export type CalendarInfo = {
+  term_status?: string;
+  term?: string | null;
+  selected?: string[];
+  pool_size?: number;
+};
+
+export type HowFound = {
+  route_detail: string;
+  intent: string | null;
+  top_vector_similarity: number | null;
+  abstain_threshold: number;
+  retrieved: RetrievedChunk[];
+  calendar: CalendarInfo | null;
+  chain: ChainInfo | null;
+  stages_ms: Record<string, number | null>;
+  tokens: Record<string, number>;
+  cost_usd: Record<string, number>;
+  cache_hits: Record<string, boolean>;
+  abstain_wording?: string | null;
+  topic_in_scope?: boolean | null;
+};
+
 export type AskResponse = {
   request_id: string;
   question: string;
@@ -35,7 +78,7 @@ export type AskResponse = {
   route: "calendar" | "chain" | "retrieve";
   citations: Citation[];
   contact: Contact | null;
-  how_found: Record<string, unknown>; // shown in step 6
+  how_found: HowFound;
   meta: { today: string; version: string; model: string };
 };
 
