@@ -58,6 +58,9 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* the input bar is sticky at the bottom (about 12rem with the notice): scrolling to an element
+     (the newest answer, a source opened from a [n] link) leaves it clear of the bar */
+  scroll-padding-bottom: 13rem;
 }
 
 body {
@@ -321,7 +324,7 @@ button:disabled {
 
 .thread {
   flex: 1;
-  padding: 1rem 0 1.5rem;
+  padding: 1rem 0 3rem; /* room under the last line, so an opened panel or list is never cut off */
 }
 
 .msg {

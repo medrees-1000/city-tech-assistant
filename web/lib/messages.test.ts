@@ -132,3 +132,11 @@ test("the stylesheet leaves no bottom margin under the last block of an answer (
   assert.match(css, /\.answer-text > :last-child\s*\{\s*margin-bottom:\s*0;/);
   assert.doesNotMatch(css, /answer-card|answer-abstain|answer-not_announced|answer-personal_account/);
 });
+
+test("the conversation area and the page leave room under the last line for the sticky input bar", () => {
+  const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+  const thread = css.match(/\.thread\s*\{[^}]*padding:\s*[\d.]+(?:rem)?\s+[\d.]+(?:rem)?\s+([\d.]+)rem/);
+  assert.ok(thread && Number(thread[1]) >= 2.5, "the bottom padding of .thread must be at least 2.5rem");
+  const scroll = css.match(/scroll-padding-bottom:\s*([\d.]+)rem/);
+  assert.ok(scroll && Number(scroll[1]) >= 12, "scroll-padding-bottom must clear the input bar");
+});
