@@ -14,10 +14,14 @@ from cta.redact import redact
 PROMPT = Path(__file__).resolve().parent / "prompts" / "topic.txt"
 GENERIC_CODES = ("below_threshold", "model")  # the abstain codes whose text is a generic sentence
 OUT_OF_SCOPE = (
-    "I can only help with City Tech questions (registration, deadlines, advising, tuition and aid, "
-    "and four departments), so I can't help with {topic}."
+    "I'm sorry, but I can only help with City Tech questions (registration, deadlines, advising, "
+    "tuition and aid, and four departments), so a question about {topic} is outside what I can "
+    "answer."
 )
-NOT_FOUND = "I couldn't find anything about {topic} in the City Tech pages and documents I use."
+NOT_FOUND = (
+    "I'm sorry, I couldn't find anything about {topic} in the City Tech pages and documents I use."
+)
+APOLOGY = "I'm sorry, "
 MAX_WORDS, MAX_CHARS = 8, 60
 
 LINK = re.compile(r"https?://\S+|www\.\S+|\S+@\S+", re.IGNORECASE)
@@ -39,6 +43,21 @@ def sanitize_topic(raw) -> str | None:
     return text
 
 
+def apologize(text: str) -> str:
+    """The generic sentence with a short apology in front: "I'm sorry, I could not find ..." or
+    "I'm sorry, the sources do not list ..." (the first word loses its capital unless it is an
+    acronym or a name such as "EET")."""
+    text = text.strip()
+    if not text or text.startswith(APOLOGY.strip()):
+        return text
+    if text[0] == "I" and (len(text) == 1 or not text[1].isalpha()):
+        return APOLOGY + text  # "I could not ..." keeps its capital I
+    first = text.split(" ", 1)[0]
+    if first[:1].isupper() and first[1:].islower():
+        text = text[0].lower() + text[1:]
+    return APOLOGY + text
+
+
 def sentence(topic: str, in_scope: bool) -> str:
     return (NOT_FOUND if in_scope else OUT_OF_SCOPE).format(topic=topic)
 
@@ -55,6 +74,7 @@ def rewrite(question: str, response, cfg: dict, client_factory) -> None:
     try:
         call = json_call(client_factory(), cfg, messages, "topic request")
     except Exception:  # noqa: BLE001 - e.g. no client: the generic sentence stays
+        response.answer = apologize(response.answer)
         response.how_found.abstain_wording = "generic"
         return
     hf = response.how_found
@@ -72,4 +92,5 @@ def rewrite(question: str, response, cfg: dict, client_factory) -> None:
         response.answer = sentence(topic, in_scope)
         hf.abstain_wording, hf.topic_in_scope = "topic", in_scope
     else:
+        response.answer = apologize(response.answer)
         hf.abstain_wording = "generic"

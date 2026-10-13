@@ -335,7 +335,7 @@ def test_a_threshold_abstention_with_a_clear_office_has_a_card_and_no_contact_se
     ).json()
     assert body["abstained"] and body["answer_type"] == "abstain" and body["route"] == "retrieve"
     assert body["abstain_reason"] == "below_threshold"
-    assert body["answer"] == "I could not find this in the City Tech sources I have."
+    assert body["answer"] == "I'm sorry, I could not find this in the City Tech sources I have."
     assert body["citations"] == []  # an abstention cites nothing
     card = body["contact"]
     assert (
@@ -362,7 +362,7 @@ def test_an_abstention_with_no_clear_office_has_contact_null_and_no_contact_line
     r = ask(make_client_app(Client(), monkeypatch, stub), question)
     body = r.json()
     assert body["abstained"] and body["answer_type"] == "abstain" and body["contact"] is None
-    assert body["answer"] == "I could not find this in the City Tech sources I have."
+    assert body["answer"] == "I'm sorry, I could not find this in the City Tech sources I have."
     assert body["abstain_reason"] == "below_threshold" and body["citations"] == []
     assert "Contact" not in body["answer"] and body["how_found"]["retrieved"]
 
@@ -372,7 +372,7 @@ def test_a_model_written_abstention_is_coded_model_and_gets_a_department_card(mo
                            "The sources do not list who teaches MAT 1475.", ())  # fmt: skip
     body = ask(make_client_app(Client(), monkeypatch, stub), "Who is teaching MAT 1475?").json()
     assert body["abstain_reason"] == "model" and body["contact"]["office"] == "MATH-NYT"
-    assert body["answer"] == "The sources do not list who teaches MAT 1475."
+    assert body["answer"] == "I'm sorry, the sources do not list who teaches MAT 1475."
 
 
 def test_advisement_is_no_longer_attached_by_a_chunk_from_its_pages(monkeypatch):
@@ -691,7 +691,7 @@ def test_an_abstention_row_has_the_code_the_office_and_the_answer_without_the_co
     row = c.logs[0]
     assert row["abstained"] is True and row["abstain_reason"] == "below_threshold"
     assert row["contact_office"] == "CST-NYT" and row["trace"]["answer_type"] == "abstain"
-    assert row["answer"] == "I could not find this in the City Tech sources I have."
+    assert row["answer"] == "I'm sorry, I could not find this in the City Tech sources I have."
     assert row["status"] == "ok"
 
 

@@ -9,12 +9,15 @@ import pytest
 
 from cta.answer import THRESHOLD_ABSTAIN
 from cta.api import topic
-from cta.api.topic import NOT_FOUND, OUT_OF_SCOPE, sanitize_topic, sentence
+from cta.api.topic import NOT_FOUND, OUT_OF_SCOPE, apologize, sanitize_topic, sentence
 from cta.index.embed import ApiError
 from cta.settings import ROOT
 from tests.test_api import Client, ask, make_client_app, retrieve_answer
 
-GENERIC = "I could not find this in the City Tech sources I have."
+PIPELINE_GENERIC = (
+    "I could not find this in the City Tech sources I have."  # as the pipeline writes it
+)
+GENERIC = "I'm sorry, " + PIPELINE_GENERIC  # the fallback: the same sentence with a short apology
 
 
 def reply(topic_text, in_scope):
@@ -79,13 +82,53 @@ def test_a_long_topic_is_cut_to_60_characters_at_a_word():
 
 def test_the_templates_are_fixed_sentences():
     assert sentence("the weather today", False) == (
-        "I can only help with City Tech questions (registration, deadlines, advising, tuition and "
-        "aid, and four departments), so I can't help with the weather today."
+        "I'm sorry, but I can only help with City Tech questions (registration, deadlines, "
+        "advising, tuition and aid, and four departments), so a question about the weather today "
+        "is outside what I can answer."
     )
-    assert sentence("laptop loans", True) == (
-        "I couldn't find anything about laptop loans in the City Tech pages and documents I use."
+    assert sentence("a late refund", True) == (
+        "I'm sorry, I couldn't find anything about a late refund in the City Tech pages and "
+        "documents I use."
     )
     assert OUT_OF_SCOPE.count("{topic}") == NOT_FOUND.count("{topic}") == 1
+    assert OUT_OF_SCOPE.startswith("I'm sorry, but") and NOT_FOUND.startswith("I'm sorry, I")
+
+
+def test_the_apology_prefix_for_the_generic_fallback():
+    assert apologize(PIPELINE_GENERIC) == GENERIC
+    assert apologize("The sources do not list who teaches MAT 1475.") == (
+        "I'm sorry, the sources do not list who teaches MAT 1475."
+    )
+    assert (
+        apologize("EET student hours are not listed.")
+        == "I'm sorry, EET student hours are not listed."
+    )
+    assert apologize("CUNYfirst is not covered.") == "I'm sorry, CUNYfirst is not covered."
+    assert apologize(GENERIC) == GENERIC  # never twice
+    assert apologize("") == ""
+
+
+@pytest.mark.parametrize(
+    "good",
+    ["your dad", "your financial aid", "your calculus class", "EET courses", "CST 3504",
+     "Dental Hygiene", "CUNYfirst", "prerequisites for EET 2171", "holds on your account"],
+)  # fmt: skip
+def test_the_sanitiser_keeps_your_and_the_capitals_of_codes_and_acronyms(good):
+    assert sanitize_topic(good) == good
+
+
+def test_a_topic_in_the_assistants_voice_flows_into_both_templates(monkeypatch):
+    c, _ = abstain_app(monkeypatch, reply("your dad", False))
+    assert ask(c, "who is my dad").json()["answer"] == (
+        "I'm sorry, but I can only help with City Tech questions (registration, deadlines, "
+        "advising, tuition and aid, and four departments), so a question about your dad is "
+        "outside what I can answer."
+    )
+    c, _ = abstain_app(monkeypatch, reply("prerequisites for EET courses", True))
+    assert ask(c, "What are the prerequisites for EET 2171 and EET 2162?").json()["answer"] == (
+        "I'm sorry, I couldn't find anything about prerequisites for EET courses in the City "
+        "Tech pages and documents I use."
+    )
 
 
 # ---- through the API ----
@@ -172,7 +215,7 @@ def test_specific_messages_are_not_changed_and_make_no_topic_call(monkeypatch):
     client = Client("calendar", "Summer 2027", [], topic=reply("x", False))
     body = ask(make_client_app(client, monkeypatch), "When does Summer 2027 start?").json()
     assert body["abstain_reason"].startswith("calendar_") and "topic" not in client.calls
-    assert not body["answer"].startswith("I can only help")
+    assert not body["answer"].startswith("I'm sorry")
     # chain no-record
     client = Client("prerequisite", topic=reply("x", False))
     body = ask(make_client_app(client, monkeypatch), "What do I need before CST 4999?").json()
@@ -182,7 +225,7 @@ def test_specific_messages_are_not_changed_and_make_no_topic_call(monkeypatch):
     c, client = abstain_app(monkeypatch, reply("x", False))
     body = ask(c, "What is my GPA this semester?").json()
     assert body["abstain_reason"] == "personal_account" and "topic" not in client.calls
-    assert body["answer"] == GENERIC  # the page shows its own fixed personal-account sentence
+    assert body["answer"] == PIPELINE_GENERIC  # unchanged; the page shows its own fixed sentence
 
 
 def test_an_answer_makes_no_topic_call(monkeypatch):
