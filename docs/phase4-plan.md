@@ -180,3 +180,21 @@ The dev server is bound to 127.0.0.1 (`next dev -H 127.0.0.1`), so the proxy is 
 
 ## Contact policy v2 (2026-10-13)
 The contact card is shown only when the office clearly applies (named department or course prefix, account-word cue, calendar abstention, chain no-record for one of the four departments). Otherwise `contact` is null, the answer has no contact line, and the chat page shows the abstain box alone, with no card and no empty gap. See `docs/decisions.md` ("Contact policy v2") and `docs/step4c-plan.md` ("v2").
+
+## Request logging: what is stored and what is not (step 5; the page notice in step 6 summarises this)
+
+**One row per request** in the `request_logs` table (migration 005 adds `request_id`, `source`, `status`, `trace`, `contact_office` and an index on `ts`; the table's timestamp column is `ts`). `source` is `'api'` for these rows and `'eval'` for everything the eval runners write (existing rows became `'eval'`).
+
+**Stored for a request:**
+- the question, with emails, phone numbers, SSN-like numbers and 8-digit CUNY ID numbers replaced by `[EMAIL]`, `[PHONE]`, `[SSN]`, `[ID]` (`cta.redact`), and the answer text, redacted the same way;
+- the route (calendar, chain or retrieve), whether it abstained, the abstain code (never the model's sentence), the contact office key if a contact card was shown, the answer type, the status (`ok`, or an error code such as `provider_error`);
+- which sources were used: chunk ids and similarity scores (public documents; no chunk text), the reranker's order, calendar rows or chain courses chosen;
+- stage latencies, token counts, cost, whether the embedding was cached, the model name, the date the assistant used, a random request id, and the time.
+- A rejected question (empty or over 500 characters) stores only its length, not its text; a malformed or oversized request stores nothing.
+
+**Not stored:** IP address, user agent, cookies, headers, any account or session identifier, anything about the person. The rate limiter (step 7) keeps addresses in memory only.
+
+**Known limit of the redaction:** it is a pattern filter. It cannot recognise a name, an address, or a free-text circumstance ("my mom died", "my GPA is 2.1"), and it misses an ID that is not exactly eight digits or has a space in it. The page therefore tells people not to type personal information, and rows are kept for 30 days.
+
+**Retention and inspection:** `uv run python -m cta.api.purge --days 30` deletes only `source = 'api'` rows older than that and prints how many (`--dry-run` shows the count first; eval rows are never touched). `uv run python -m cta.api.logs --last 5` prints the last API requests (time, redacted question, route, abstained, office, status, latency, tokens, cost) and the total number and cost; `--since DATE` and `--route R` filter. **A failed log write never fails a request:** the answer is returned, a fixed-text warning ("request log write failed", no question text) is logged, and `GET /health` shows the count as `log_failures`.
+
