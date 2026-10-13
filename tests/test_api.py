@@ -67,7 +67,8 @@ def make_app(**kw):
 def test_health_is_ok_with_the_database_up():
     body = TestClient(make_app()).get("/health").json()
     assert body["status"] == "ok" and body["db"] == "ok" and body["router"] == "on"
-    assert set(body) == {"status", "db", "version", "router"}  # nothing else is shown
+    assert set(body) == {"status", "db", "version", "router", "log_failures"}  # nothing else
+    assert body["log_failures"] == 0
 
 
 def test_health_is_503_with_the_database_down_and_shows_no_driver_text():
@@ -232,7 +233,7 @@ def cfg_for(**api):
 
 
 def make_client_app(client, monkeypatch, stub=None, cfg=None, tmp_root=None, connect=ok_connect,
-                    clock=lambda: TODAY):  # fmt: skip
+                    clock=lambda: TODAY, log_writer=None):  # fmt: skip
     cfg = cfg or cfg_for()
     if stub is not None:
         monkeypatch.setattr(build, "answer", lambda *a, **k: stub)
@@ -241,9 +242,13 @@ def make_client_app(client, monkeypatch, stub=None, cfg=None, tmp_root=None, con
     def factory(conn, cfg):
         return Router(conn, cfg, lambda: client, events=EVENTS, contact=REGISTRAR)
 
+    logs = []  # the rows the API would have written
+    writer = log_writer or (lambda conn, record: logs.append(record))
     app = api_app.create_app(cfg, connect=connect, check_startup=False, router_factory=factory,
-                             root=tmp_root or ROOT, clock=clock)  # fmt: skip
-    return TestClient(app, raise_server_exceptions=False)
+                             root=tmp_root or ROOT, clock=clock, log_writer=writer)  # fmt: skip
+    test_client = TestClient(app, raise_server_exceptions=False)
+    test_client.logs = logs
+    return test_client
 
 
 def ask(client, question="How do I apply for graduation?"):
@@ -629,3 +634,114 @@ def test_abstain_code_unit():
     assert convert.abstain_code("some sentence", "my transcript", t) == "personal_account"
     assert convert.abstain_code("some sentence", "hello", t) == "model"
     assert convert.abstain_code("chain_no_record", "my gpa", t) == "chain_no_record"
+
+
+# ================= request logging (step 5) =================
+
+import logging  # noqa: E402
+
+from cta.api import requestlog  # noqa: E402
+
+ALLOWED_COLUMNS = set(requestlog.COLUMNS) - {"source"}  # `source` is added by the writer ('api')
+
+
+def test_an_answered_request_writes_one_row_with_the_redacted_text_and_the_numbers(monkeypatch):
+    c = make_client_app(Client(), monkeypatch, retrieve_answer())
+    r = ask(c, "My email is jane.doe@example.com, how do I apply for graduation?")
+    assert r.status_code == 200 and len(c.logs) == 1
+    row = c.logs[0]
+    assert set(row) <= ALLOWED_COLUMNS  # no ip, user agent, cookie or other identifier column
+    assert row["request_id"] == r.json()["request_id"] and row["status"] == "ok"
+    assert "jane.doe@example.com" not in row["question"] and "[EMAIL]" in row["question"]
+    assert row["answer"] == "Yes. [1]" and row["route"] == "retrieve" and row["abstained"] is False
+    assert row["chat_model"] == "gpt-6-luna" and row["today"] == "2026-10-11"
+    assert row["prompt_tokens"] == 400 and row["embedding_tokens"] == 7
+    assert row["cost_usd"] == r.json()["how_found"]["cost_usd"]["total"] > 0
+    assert (
+        row["latency_ms"] > 0 and row["query_cache_hit"] is True and row["contact_office"] is None
+    )
+    assert row["retrieved"][0] == {"id": "page/registrar/faqs#3", "similarity": 0.6}
+    trace = row["trace"]
+    assert trace["answer_type"] == "answer" and trace["route"] == "retrieve"
+    assert trace["stages_ms"]["rerank"] == 11.0 and len(trace["retrieved"]) == 7
+    assert "Some text here" not in json.dumps(trace)  # ids and numbers only, no chunk text
+
+
+def test_an_abstention_row_has_the_code_the_office_and_the_answer_without_the_contact_line(
+    monkeypatch,
+):
+    stub = retrieve_answer(THRESHOLD_ABSTAIN, True, "below_threshold", citations=())
+    c = make_client_app(Client(), monkeypatch, stub)
+    ask(c, "Are there open seats in CST 1101?")
+    row = c.logs[0]
+    assert row["abstained"] is True and row["abstain_reason"] == "below_threshold"
+    assert row["contact_office"] == "CST-NYT" and row["trace"]["answer_type"] == "abstain"
+    assert row["answer"] == "I could not find this in the City Tech sources I have."
+    assert row["status"] == "ok"
+
+
+def test_a_not_announced_row(monkeypatch):
+    client = Client("calendar", "Spring 2027", ["spring-2027-055"])
+    c = make_client_app(client, monkeypatch)
+    ask(c, "When is commencement?")
+    row = c.logs[0]
+    assert row["trace"]["answer_type"] == "not_announced" and row["route"] == "calendar"
+    assert row["abstained"] is False and row["trace"]["calendar"]["selected"] == ["spring-2027-055"]
+    assert row["retrieved"] == [{"id": "spring-2027-055"}]  # a calendar row, not a chunk
+
+
+def test_error_rows_carry_the_status_and_no_answer(monkeypatch):
+    c = make_client_app(Client(), monkeypatch, retrieve_answer())
+
+    def fail(*a, **k):
+        raise ApiError("provider text sk-secret")
+
+    monkeypatch.setattr(build, "answer", fail)
+    assert ask(c, "Where is my GPA, jane@x.edu?").status_code == 502
+    row = c.logs[0]
+    assert row["status"] == "provider_error" and row["answer"] is None and row["route"] is None
+    assert "jane@x.edu" not in row["question"] and row["trace"] == {"error": "provider_error"}
+    assert "sk-secret" not in json.dumps(row, default=str)
+
+    def boom(*a, **k):
+        raise RuntimeError("secret trace")
+
+    monkeypatch.setattr(build, "answer", boom)
+    assert ask(c, "q").status_code == 500
+    assert c.logs[1]["status"] == "internal_error" and "secret" not in json.dumps(c.logs[1])
+
+
+def test_a_rejected_question_logs_only_its_length(monkeypatch):
+    c = make_client_app(Client(), monkeypatch, retrieve_answer())
+    assert c.post("/ask", json={"question": "x" * 501}).status_code == 422
+    row = c.logs[0]
+    assert row["status"] == "invalid_question" and row["question"] == ""
+    assert row["trace"] == {"error": "invalid_question", "chars": 501}
+    assert c.post("/ask", json={"question": "   "}).status_code == 422
+    assert c.logs[1]["trace"]["chars"] == 0
+    assert len(c.logs) == 2  # a malformed body or an oversized body writes nothing
+
+
+def test_a_failing_log_write_never_fails_the_request_and_is_counted(monkeypatch, caplog):
+    def broken(conn, record):
+        raise RuntimeError("insert failed for question: my secret question text")
+
+    c = make_client_app(Client(), monkeypatch, retrieve_answer(), log_writer=broken)
+    with caplog.at_level(logging.WARNING, logger="cta.api"):
+        r = ask(c, "my secret question text")
+    assert r.status_code == 200 and r.json()["answer"] == "Yes. [1]"
+    assert c.get("/health").json()["log_failures"] == 1
+    assert [m.getMessage() for m in caplog.records] == [requestlog.WARNING]
+    assert "secret" not in caplog.text and "question text" not in caplog.text
+    ask(c, "again")
+    assert c.get("/health").json()["log_failures"] == 2
+
+
+def test_a_database_outage_is_counted_as_an_unlogged_request(monkeypatch):
+    def broken():
+        raise psycopg.OperationalError("down")
+
+    c = make_client_app(Client(), monkeypatch, retrieve_answer(), connect=broken)
+    assert ask(c).status_code == 503 and c.logs == []
+    health = c.get("/health")
+    assert health.status_code == 503 and health.json()["log_failures"] == 1

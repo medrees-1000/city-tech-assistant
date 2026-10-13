@@ -5,6 +5,7 @@ and is only converted here (cta.api.convert); nothing of the pipeline is copied.
 """
 
 import subprocess
+import time
 import uuid
 from collections.abc import Callable
 from datetime import date
@@ -15,7 +16,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from cta.api import convert, schema
+from cta.api import convert, requestlog, schema
 from cta.api.checks import require_startup
 from cta.graph import render
 from cta.graph.build import Router, load_events
@@ -29,6 +30,9 @@ def git_version() -> str:
         ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, cwd=ROOT
     )
     return done.stdout.strip() or "unknown"
+
+
+PROVIDER_MESSAGE = "The language model service failed. Try again."
 
 
 def error(status: int, code: str, message: str, request: Request) -> JSONResponse:
@@ -47,6 +51,7 @@ def create_app(
     check_startup: bool = True,
     router_factory: Callable | None = None,
     clock: Callable[[], date] = date.today,
+    log_writer: Callable = requestlog.write,
 ) -> FastAPI:
     cfg = cfg or load_models()
     if check_startup:
@@ -62,6 +67,9 @@ def create_app(
             return Router(conn, cfg, make_client, events=events, contact=registrar)
 
     api = cfg["api"]
+    record = requestlog.Logger(
+        log_writer
+    )  # counts failed writes; a failed write never fails a request
     app = FastAPI(title="City Tech Assistant", version=version)
 
     @app.middleware("http")
@@ -92,7 +100,10 @@ def create_app(
 
     @app.get("/health")
     def health():
-        body = {"status": "ok", "db": "ok", "version": version, "router": cfg["router"]["mode"]}
+        body = {
+            "status": "ok", "db": "ok", "version": version, "router": cfg["router"]["mode"],
+            "log_failures": record.failures,
+        }  # fmt: skip
         try:
             with connect() as conn:
                 conn.execute("SELECT 1")
@@ -102,24 +113,46 @@ def create_app(
 
     @app.post("/ask", response_model=schema.AskResponse)
     def ask(body: schema.AskRequest, request: Request):
+        rid = request.state.request_id
         question = body.question.strip()
+        today = api["today"] or clock()
+        started = time.perf_counter()
+
+        def failed(status: str, conn, chars: int | None = None):
+            ms = (time.perf_counter() - started) * 1000
+            text = "" if chars is not None else question
+            record(
+                conn,
+                requestlog.error_record(rid, status, text, today, cfg["chat_model"], ms, chars),
+            )
+
         if not 1 <= len(question) <= api["max_question_chars"]:
+            try:  # no question text is stored for a rejected question, only its length
+                with connect() as conn:
+                    failed("invalid_question", conn, chars=len(question))
+            except Exception:  # noqa: BLE001
+                record.failures += 1
             return error(
                 422, "invalid_question",
                 f"The question must be 1 to {api['max_question_chars']} characters.", request,
             )  # fmt: skip
-        today = api["today"] or clock()
         try:
             with connect() as conn:
-                ans = router_factory(conn, cfg).answer(question, today, log=False)
-        except ApiError:
-            return error(
-                502, "provider_error", "The language model service failed. Try again.", request
-            )
+                try:
+                    ans = router_factory(conn, cfg).answer(question, today, log=False)
+                except ApiError:
+                    failed("provider_error", conn)
+                    return error(502, "provider_error", PROVIDER_MESSAGE, request)
+                except Exception:
+                    failed("internal_error", conn)
+                    raise
+                response = convert.to_response(
+                    ans, question, cfg, today, rid, version, url_map, by_id
+                )
+                record(conn, requestlog.success_record(response))
+                return response
         except psycopg.OperationalError:
+            record.failures += 1  # the database is down: this request cannot be logged
             return error(503, "unavailable", "The service is not available right now.", request)
-        return convert.to_response(
-            ans, question, cfg, today, request.state.request_id, version, url_map, by_id
-        )
 
     return app
