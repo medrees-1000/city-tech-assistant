@@ -201,3 +201,6 @@ The contact card is shown only when the office clearly applies (named department
 
 ## Chat polish (2026-10-13)
 Owner decisions after manual testing, details in `docs/decisions.md` ("Chat polish after manual testing"): a safe markdown subset in answers; abstain and not-announced answers as plain assistant messages with the contact card under them when present; topic-aware abstain wording written by two fixed templates from one extra model call (`src/cta/api/prompts/topic.txt`; cost and time in the trace as stage `topic`); extra account cues, login and password cues with no card; whitespace collapsed in the `logs` output.
+
+## Chat page, finishing round (2026-10-13)
+Owner decisions, recorded in `docs/decisions.md` ("Chat page, finishing round"): markdown headings; hold cues (office decided from the data); the "How this was found" panel on each answer; the privacy notice under the input with an expandable "What is saved?".
