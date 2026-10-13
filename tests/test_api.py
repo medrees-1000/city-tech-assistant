@@ -306,19 +306,45 @@ def test_how_found_has_the_pool_with_rerank_order_stages_tokens_and_cost(monkeyp
     assert hf["calendar"] is None and hf["chain"] is None
 
 
-def test_a_threshold_abstention_has_a_contact_card_and_no_contact_sentence_in_the_text(monkeypatch):
+def test_a_threshold_abstention_with_a_clear_office_has_a_card_and_no_contact_sentence(monkeypatch):
     stub = retrieve_answer(THRESHOLD_ABSTAIN, True, "below_threshold", citations=())
-    stub.sources[0]["id"] = "page/registrar/incomplete#1"
-    body = ask(make_client_app(Client(), monkeypatch, stub), "Should I take an Incomplete?").json()
+    stub.sources[0]["id"] = "page/CST-NYT/tutoring#2"
+    body = ask(
+        make_client_app(Client(), monkeypatch, stub), "Are there open seats in CST 1101?"
+    ).json()
     assert body["abstained"] and body["answer_type"] == "abstain" and body["route"] == "retrieve"
     assert body["abstain_reason"] == "below_threshold"
     assert body["answer"] == "I could not find this in the City Tech sources I have."
     assert body["citations"] == []  # an abstention cites nothing
     card = body["contact"]
-    assert card["office"] == "registrar" and card["name"] == "the Registrar"
-    assert card["emails"] == [{"address": "registrar@citytech.cuny.edu", "for": None}]
-    assert card["phones"] == ["718-260-5800"] and card["note"] is None
+    assert (
+        card["office"] == "CST-NYT" and card["name"] == "the Computer Systems Technology department"
+    )
+    assert card["emails"] == [{"address": "compsystech@citytech.cuny.edu", "for": None}]
+    assert card["phones"] == ["718-260-5170"] and card["note"] is None
     assert len(body["how_found"]["retrieved"]) == 7  # what was retrieved is still shown
+
+
+@pytest.mark.parametrize(
+    ("question", "chunk"),
+    [
+        ("what questions can I ask you", "page/MATH-NYT/faqs#12"),
+        ("my mom died", "page/financial-aid/faqs#9"),
+        ("I can't log in to CUNYfirst with my email address", "page/DENT-NYT/faq#2"),
+        ("Should I take an Incomplete?", "page/registrar/incomplete#1"),
+    ],
+)
+def test_an_abstention_with_no_clear_office_has_contact_null_and_no_contact_line(
+    monkeypatch, question, chunk
+):
+    stub = retrieve_answer(THRESHOLD_ABSTAIN, True, "below_threshold", citations=())
+    stub.sources[0]["id"] = chunk  # a low-similarity best chunk from an unrelated office
+    r = ask(make_client_app(Client(), monkeypatch, stub), question)
+    body = r.json()
+    assert body["abstained"] and body["answer_type"] == "abstain" and body["contact"] is None
+    assert body["answer"] == "I could not find this in the City Tech sources I have."
+    assert body["abstain_reason"] == "below_threshold" and body["citations"] == []
+    assert "Contact" not in body["answer"] and body["how_found"]["retrieved"]
 
 
 def test_a_model_written_abstention_is_coded_model_and_gets_a_department_card(monkeypatch):
@@ -329,17 +355,13 @@ def test_a_model_written_abstention_is_coded_model_and_gets_a_department_card(mo
     assert body["answer"] == "The sources do not list who teaches MAT 1475."
 
 
-def test_advisement_card_keeps_its_labelled_emails_and_note(monkeypatch):
+def test_advisement_is_no_longer_attached_by_a_chunk_from_its_pages(monkeypatch):
     stub = retrieve_answer(THRESHOLD_ABSTAIN, True, "below_threshold", ())
     stub.sources[0]["id"] = "page/advisement/virtual-advisors#2"
-    card = ask(
+    body = ask(
         make_client_app(Client(), monkeypatch, stub), "Apply to Architectural Technology?"
-    ).json()["contact"]
-    assert card["office"] == "advisement" and card["phones"] == []
-    assert {"address": "transferadvisement@citytech.cuny.edu", "for": "transfer students"} in card[
-        "emails"
-    ]
-    assert "virtual-advisors.aspx" in card["note"]
+    ).json()
+    assert body["contact"] is None and body["abstained"]
 
 
 # ---- the calendar and chain routes ----
@@ -414,6 +436,14 @@ def test_a_chain_with_no_record_abstains_with_the_department_card(monkeypatch):
     )
     assert body["contact"]["office"] == "CST-NYT" and "Contact" not in body["answer"]
     assert body["answer"].startswith("No record exists in the catalog data for CST 4999")
+
+
+def test_a_chain_no_record_outside_the_four_departments_has_no_contact(monkeypatch):
+    body = ask(
+        make_client_app(Client("prerequisite"), monkeypatch), "What do I need before ENG 1101?"
+    ).json()
+    assert body["route"] == "chain" and body["abstained"] and body["contact"] is None
+    assert "Contact" not in body["answer"]
 
 
 # ---- URL rules ----

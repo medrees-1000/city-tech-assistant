@@ -1,13 +1,12 @@
 """The contact line after an abstention (Phase 3, step 4c). Plain code: the model never writes it.
 
-`office_for` picks the office by the first rule that applies:
+Contact policy v2: a contact is added only when the office clearly applies, else none.
+`office_for` returns the office of the first rule that applies:
   1. a calendar abstain -> the Registrar;
-  2. a chain "no record" abstain -> the department of the code's prefix, else Advisement;
+  2. a chain "no record" abstain -> the department of the code prefix (one of four), else none;
   3. exactly one of the four departments named in the question (alias or course prefix);
-  4. a first-person account cue ("my gpa") from config/contacts.yaml;
-  5. the owner of the best-ranked chunk (page/<office>/, dept/<dept>/, contact:<owner>,
-     catalog course -> its department, pdf/<name> -> pdf_offices);
-  6. the fallback (the Registrar).
+  4. a first-person account cue ("my gpa") from config/contacts.yaml.
+Nothing else adds a contact (no chunk-source map, no fallback office).
 `add_contact` appends "Contact <name>: <email>, <phone>." to an abstained answer, once.
 """
 
@@ -40,33 +39,15 @@ def cue_office(question: str, contacts: dict) -> str | None:
     return None
 
 
-def chunk_office(chunk: dict, contacts: dict) -> str | None:
-    """The office or department that owns a retrieved chunk, from its id."""
-    offices, cid = contacts["offices"], chunk["id"]
-    if cid.startswith("catalog:"):
-        owner = chunk.get("department")
-    elif cid.startswith("contact:"):
-        owner = cid.removeprefix("contact:")
-    elif cid.startswith("pdf/"):
-        owner = contacts["pdf_offices"].get(cid.split("/")[1].split("#")[0])
-    else:  # page/<owner>/<page>#n or dept/<owner>/<file>#n
-        owner = cid.split("/")[1] if cid.count("/") >= 2 else None
-    return owner if owner in offices else None
-
-
-def office_for(question: str, ans, contacts: dict | None = None) -> str:
+def office_for(question: str, ans, contacts: dict | None = None) -> str | None:
+    """The office that clearly applies, or None (then no contact is added)."""
     contacts = contacts or load_contacts()
     reason = ans.abstain_reason or ""
     if reason.startswith("calendar_"):
         return "registrar"
     if reason == "chain_no_record":
-        return named_department(question) or "advisement"
-    return (
-        named_department(question)
-        or cue_office(question, contacts)
-        or (chunk_office(ans.sources[0], contacts) if ans.sources else None)
-        or contacts["fallback"]
-    )
+        return named_department(question)
+    return named_department(question) or cue_office(question, contacts)
 
 
 def contact_line(key: str, contacts: dict | None = None) -> str:
@@ -81,11 +62,14 @@ def contact_line(key: str, contacts: dict | None = None) -> str:
 
 def add_contact(ans, question: str, contacts: dict | None = None) -> str | None:
     """Append the line to an abstained answer unless it is already there. Returns the office key,
-    or None when the answer is not an abstention (then nothing is touched)."""
+    or None when the answer is not an abstention or no office clearly applies (then nothing is
+    touched)."""
     if not ans.abstained:
         return None
     contacts = contacts or load_contacts()
     key = office_for(question, ans, contacts)
+    if key is None:
+        return None
     line = contact_line(key, contacts)
     if line not in ans.text:
         ans.text = f"{ans.text} {line}"

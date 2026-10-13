@@ -7,6 +7,7 @@ import pytest
 from cta.answer import Answer
 from cta.graph import build, contact, render
 from cta.graph.build import Router
+from cta.index.departments import load_departments
 from cta.index.search import Search
 from cta.settings import load_models
 from tests.test_router import TODAY, Script
@@ -57,80 +58,82 @@ def test_fax_and_ai_agent_numbers_never_appear_in_any_line():
     assert "Pena" not in lines  # Special Circumstances: role only
 
 
-# ---- the rules, in order ----
+# ---- the rules (contact policy v2: a contact only when the office clearly applies) ----
 
 
 @pytest.mark.parametrize("reason", ["calendar_no_row", "calendar_unsupported_term"])
-def test_rule_1_calendar_abstains_go_to_the_registrar(reason):
+def test_rule_calendar_abstains_go_to_the_registrar(reason):
     assert office("Last day to drop in CST 1101 in Summer 2027?", reason=reason) == "registrar"
+    assert office("When does Summer 2027 start?", reason=reason) == "registrar"
 
 
-def test_rule_2_chain_no_record_goes_to_the_department_of_the_prefix_else_advisement():
+def test_rule_chain_no_record_goes_to_the_department_of_a_prefix_of_the_four_else_none():
     kw = {"reason": "chain_no_record"}
     assert office("What are the prerequisites for CST 4999?", **kw) == "CST-NYT"
-    assert office("Prerequisites for ENG 1101?", **kw) == "advisement"
+    assert office("What are the prerequisites for MAT 9999?", **kw) == "MATH-NYT"
+    assert office("Prerequisites for ENG 1101?", **kw) is None  # no longer defaults to Advisement
 
 
-def test_rule_3_one_named_department_or_prefix_wins_over_the_best_chunk():
+def test_rule_one_named_department_or_prefix():
     q = "What are the student hours for the Electrical Engineering Technology department?"
     assert office(q, first="page/advisement/virtual-advisors#15") == "EET-NYT"
     assert office("Who is teaching MAT 1475 this semester?") == "MATH-NYT"
     assert office("Are there open seats in CST 1101?") == "CST-NYT"
-    assert contact.contact_line("MATH-NYT", C) == MATH
     assert office("How do I apply to Dental Hygiene?") == "DENT-NYT"
+    assert contact.contact_line("MATH-NYT", C) == MATH
 
 
-def test_rule_3_two_departments_do_not_pick_one():
-    q = "Is CST 1101 harder than MAT 1275?"
-    assert office(q, first="page/bursar/refund-policy#1") == "bursar"
+def test_two_departments_named_do_not_pick_one():
+    assert office("Is CST 1101 harder than MAT 1275?", first="page/bursar/refund-policy#1") is None
 
 
-def test_rule_4_account_cues_come_before_the_best_chunk():
-    first = "page/MATH-NYT/faqs#12"
-    assert office("What is my GPA this semester?", first=first) == "registrar"
-    assert office("Where are my grades?", first=first) == "registrar"
-    assert office("What is my balance?", first=first) == "bursar"
-    assert office("When is my financial aid coming?", first=first) == "financial-aid"
-    assert office("what is my gpa", first=first) == "registrar"  # case does not matter
+def test_rule_account_cues_map_to_their_office():
+    assert office("What is my GPA this semester?") == "registrar"
+    assert office("Where are my grades?") == "registrar"
+    assert office("what is my gpa") == "registrar"  # case does not matter
+    assert office("What is my balance?") == "bursar"
+    assert office("When is my financial aid coming?") == "financial-aid"
 
 
-def test_rule_4_needs_the_whole_word():
-    assert office("What is the gpa of the program?") == "registrar"  # fallback, not a cue
+def test_account_cues_need_the_whole_phrase():
     assert contact.cue_office("What is the gpa of the program?", C) is None
     assert contact.cue_office("my gpas", C) is None
+    assert office("What is the gpa of the program?") is None
 
 
 @pytest.mark.parametrize(
-    ("chunk", "expected"),
+    "chunk",
     [
-        ("page/registrar/incomplete#1", "registrar"),
-        ("page/advisement/virtual-advisors#2", "advisement"),
-        ("page/admissions/tuition-refund#1", "admissions"),
-        ("page/bursar/payment-plan#3", "bursar"),
-        ("page/financial-aid/sap#1", "financial-aid"),
-        ("page/DENT-NYT/faq#4", "DENT-NYT"),
-        ("dept/EET-NYT/program-x#6", "EET-NYT"),
-        ("contact:bursar", "bursar"),
-        ("contact:MATH-NYT", "MATH-NYT"),
-        ("catalog:CST 2403", "CST-NYT"),
-        ("pdf/dropping-withdrawing-fall-2026#4", "registrar"),
-        ("pdf/financial-aid-refund-calendar-2026-2027#5", "financial-aid"),
-        ("pdf/special-circumstances-flyer#2", "special-circumstances"),
-        ("pdf/cunyfirst-student-reference#7", "financial-aid"),
+        "page/registrar/incomplete#1", "page/advisement/virtual-advisors#2",
+        "page/admissions/tuition-refund#1", "page/bursar/payment-plan#3",
+        "page/financial-aid/sap#1", "page/DENT-NYT/faq#4", "dept/EET-NYT/program-x#6",
+        "contact:bursar", "contact:MATH-NYT", "catalog:CST 2403",
+        "pdf/dropping-withdrawing-fall-2026#4", "pdf/special-circumstances-flyer#2",
+        "page/MATH-NYT/faqs#12",
+    ],
+)  # fmt: skip
+def test_the_best_ranked_chunk_no_longer_adds_a_contact(chunk):
+    for reason in ("below_threshold", "The sources do not say."):
+        assert office("Can I take a class at another college?", first=chunk, reason=reason) is None
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "what questions can I ask you",  # the screenshot cases: a low-similarity best chunk
+        "my mom died",
+        "I can't log in to CUNYfirst with my email address student@mail.citytech.cuny.edu",
     ],
 )
-def test_rule_5_the_best_ranked_chunk_names_the_office(chunk, expected):
-    assert office("Can I take a class at another college?", first=chunk) == expected
-
-
-def test_rule_6_fallback_is_the_registrar():
-    assert office("Something unrelated?") == "registrar"  # no chunk at all
-    assert office("Something unrelated?", first="pdf/unknown-file#1") == "registrar"
-    assert office("Something unrelated?", first="page/nowhere/x#1") == "registrar"
+def test_the_manual_test_questions_get_no_contact_even_with_a_low_similarity_best_chunk(question):
+    for chunk in ("page/MATH-NYT/faqs#12", "page/financial-aid/faqs#9", "page/DENT-NYT/faq#2"):
+        a = ans(first=chunk, text="ABSTAIN: I could not find this in the City Tech sources I have.")
+        assert contact.add_contact(a, question, C) is None
+        assert a.text == "ABSTAIN: I could not find this in the City Tech sources I have."
 
 
 def test_every_office_key_the_rules_can_return_has_an_entry():
-    keys = set(C["cues"]) | set(C["pdf_offices"].values()) | {C["fallback"], "advisement"}
+    keys = set(C["cues"]) | {"registrar"} | set(load_departments())
     assert keys <= set(C["offices"])
 
 
@@ -142,12 +145,18 @@ def test_a_non_abstaining_answer_is_never_touched():
     assert contact.add_contact(a, "q?", C) is None and a.text == "Yes. [1]"
 
 
-def test_an_abstention_gets_the_line_once():
-    a = ans(first="page/registrar/incomplete#1", text="ABSTAIN: I could not find this.")
-    assert contact.add_contact(a, "Should I take an Incomplete?", C) == "registrar"
+def test_an_abstention_with_a_clear_office_gets_the_line_once():
+    a = ans(first=None, text="ABSTAIN: I could not find this.")
+    assert contact.add_contact(a, "What is my GPA this semester?", C) == "registrar"
     assert a.text == f"ABSTAIN: I could not find this. {REGISTRAR}"
-    contact.add_contact(a, "Should I take an Incomplete?", C)
+    contact.add_contact(a, "What is my GPA this semester?", C)
     assert a.text.count("Contact the Registrar") == 1 and a.text.startswith("ABSTAIN:")
+
+
+def test_an_abstention_with_no_clear_office_is_left_as_it_was():
+    a = ans(first="page/registrar/incomplete#1", text="ABSTAIN: I could not find this.")
+    assert contact.add_contact(a, "Should I take an Incomplete?", C) is None
+    assert a.text == "ABSTAIN: I could not find this."
 
 
 # ---- config switch and wiring ----
@@ -197,18 +206,25 @@ def events():
     return build.load_events()
 
 
-def test_contacts_on_adds_the_line_to_a_retrieve_abstain_and_records_the_office(
+def test_contacts_on_adds_the_line_to_a_clear_retrieve_abstain_and_records_the_office(
     monkeypatch, events
 ):
     router, _ = make_router(monkeypatch, events, "on")
-    got = router.answer("Should I take an Incomplete?", TODAY, log=False)
+    got = router.answer("What is my GPA this semester?", TODAY, log=False)
     assert got.text == f"ABSTAIN: I could not find this. {REGISTRAR}" and got.abstained
     assert got.router["contact_office"] == "registrar"
 
 
+def test_contacts_on_adds_nothing_when_no_office_clearly_applies(monkeypatch, events):
+    router, _ = make_router(monkeypatch, events, "on")
+    got = router.answer("what questions can I ask you", TODAY, log=False)
+    assert got.text == "ABSTAIN: I could not find this." and got.abstained
+    assert got.router["contact_office"] is None
+
+
 def test_contacts_off_leaves_the_answer_as_it_was(monkeypatch, events):
     router, _ = make_router(monkeypatch, events, "off")
-    got = router.answer("Should I take an Incomplete?", TODAY, log=False)
+    got = router.answer("What is my GPA this semester?", TODAY, log=False)
     assert got.text == "ABSTAIN: I could not find this." and "contact_office" not in got.router
 
 
