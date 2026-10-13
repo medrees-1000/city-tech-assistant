@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import type { AskResponse } from "./api.ts";
@@ -12,6 +13,8 @@ import {
   MAX_HEIGHT,
   MIN_HEIGHT,
   PERSONAL_ACCOUNT_TEXT,
+  PERSONAL_ACCOUNT_TEXT_NO_CARD,
+  showContact,
   sourceDomId,
   startTurn,
 } from "./messages.ts";
@@ -97,7 +100,7 @@ test("a normal abstention says no answer found and keeps the API text", () => {
 });
 
 test("a personal-account abstention shows the fixed sentence, not the API text", () => {
-  const v = answerView(data({ abstained: true, answer_type: "abstain", abstain_reason: "personal_account", answer: "model words" }));
+  const v = answerView(data({ abstained: true, answer_type: "abstain", abstain_reason: "personal_account", answer: "model words", contact: card }));
   assert.equal(v.kind, "personal_account");
   assert.equal(v.text, PERSONAL_ACCOUNT_TEXT);
   assert.ok(v.text.startsWith("I can't answer questions about your personal account"));
@@ -112,4 +115,31 @@ test("a personal_account code on an answer that did not abstain is ignored", () 
 test("not announced and clarify have their own labels", () => {
   assert.equal(answerView(data({ answer_type: "not_announced" })).label, "Not announced yet");
   assert.equal(answerView(data({ answer_type: "clarify" })).kind, "clarify");
+});
+
+const card = { office: "registrar", name: "the Registrar", emails: [], phones: [], note: null };
+
+test("the contact card is shown only when the API sent a contact", () => {
+  assert.equal(showContact(data({ contact: card })), true);
+  assert.equal(showContact(data({ contact: null })), false);
+});
+
+test("an abstention with no contact is a plain abstain box: its own text, no card", () => {
+  const d = data({ abstained: true, answer_type: "abstain", abstain_reason: "below_threshold", answer: "I could not find this.", contact: null });
+  assert.equal(showContact(d), false);
+  assert.deepEqual(answerView(d), { kind: "abstain", label: "No answer found", text: "I could not find this." });
+});
+
+test("a personal-account abstention with a card says who can help; without a card it does not point at one", () => {
+  const base = { abstained: true, answer_type: "abstain" as const, abstain_reason: "personal_account" };
+  assert.equal(answerView(data({ ...base, contact: card })).text, PERSONAL_ACCOUNT_TEXT);
+  const without = answerView(data({ ...base, contact: null }));
+  assert.equal(without.text, PERSONAL_ACCOUNT_TEXT_NO_CARD);
+  assert.ok(!without.text.includes("Here is who can help"));
+});
+
+test("the stylesheet leaves no bottom margin under the last text of an answer box (no gap without a card)", () => {
+  const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(css, /\.answer-card \.answer-text:last-child\s*\{\s*margin-bottom:\s*0;/);
+  assert.match(css, /\.slot-empty\s*\{\s*display:\s*none;/); // the reserved step 6 places take no space
 });

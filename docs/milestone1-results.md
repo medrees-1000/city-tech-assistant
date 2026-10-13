@@ -223,3 +223,7 @@ New findings (first seen on test):
 - The size of OLD's abstention rate (23 of 31) next to its cost advantage: OLD is 20% cheaper per question and wrong far more often on this set.
 - NEW answered all 7 calendar-only questions with the right rows, including the Fall 2027 and Summer 2027 abstains (q25 q35 q72 -> Registrar line), on questions it had never seen.
 - The best-chunk office map (rule 5) picks CST for a Biological Sciences question, as the dev notes warned for low-similarity chunks.
+
+## Addendum (2026-10-13): contact policy
+
+The contact check above (and every "line added" in it) was made with **contact policy v1**, which also used the best-ranked chunk's owner and a Registrar fallback to choose an office. After manual testing in the chat page showed unrelated cards on low-similarity abstentions, the project moved to **contact policy v2**: a contact only when the office clearly applies (named department or course prefix, account-word cue, calendar abstention, chain no-record for a prefix of the four departments); otherwise no contact. The results, the table and the failure analysis above are not edited. The final milestone will use v2. See `docs/decisions.md` ("Contact policy v2") and `docs/step4c-plan.md` ("v2").

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { answerView, sourceDomId } from "../../lib/messages";
+import { answerView, showContact, sourceDomId } from "../../lib/messages";
 import type { Turn } from "../../lib/messages";
 import { AnswerText } from "./AnswerText";
 import { ContactCard } from "./ContactCard";
@@ -65,7 +65,7 @@ function Done({
           <AnswerText text={view.text} citations={data.citations} onCite={onCite} />
         )}
       </div>
-      {data.contact ? <ContactCard contact={data.contact} /> : null}
+      {data.contact && showContact(data) ? <ContactCard contact={data.contact} /> : null}
       <SourceList assistantId={id} citations={data.citations} open={open} onToggle={setOpen} />
       {/* STEP 6: the "How this was found" toggle for this answer goes here (data.how_found). Not built yet. */}
       <div className="slot-empty" data-slot="how-found" />

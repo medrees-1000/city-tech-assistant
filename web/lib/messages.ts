@@ -63,13 +63,22 @@ export function fitTextarea(scrollHeight: number): { height: number; scroll: boo
 export const PERSONAL_ACCOUNT_TEXT =
   "I can't answer questions about your personal account (holds, balances, grades, aid status). Here is who can help:";
 
+export const PERSONAL_ACCOUNT_TEXT_NO_CARD =
+  "I can't answer questions about your personal account (holds, balances, grades, aid status).";
+
+/** The contact card is shown only when the API sent a contact; otherwise nothing is rendered for it
+ * (no card, no empty box, so the answer box has no gap below it). */
+export const showContact = (data: AskResponse): boolean => data.contact !== null;
+
 export type AnswerKind = "answer" | "abstain" | "personal_account" | "not_announced" | "clarify";
 
 /** Which state to show, its small label (or null) and the text. A personal-account abstention
  * shows the fixed sentence, never the model's text; the contact card follows it. */
 export function answerView(data: AskResponse): { kind: AnswerKind; label: string | null; text: string } {
   if (data.abstained && data.abstain_reason === "personal_account") {
-    return { kind: "personal_account", label: "Personal account", text: PERSONAL_ACCOUNT_TEXT };
+    // "Here is who can help:" only when a contact card follows it
+    const text = showContact(data) ? PERSONAL_ACCOUNT_TEXT : PERSONAL_ACCOUNT_TEXT_NO_CARD;
+    return { kind: "personal_account", label: "Personal account", text };
   }
   if (data.abstained) return { kind: "abstain", label: "No answer found", text: data.answer };
   if (data.answer_type === "not_announced") {
