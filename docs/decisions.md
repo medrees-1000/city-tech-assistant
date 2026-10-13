@@ -521,3 +521,10 @@ How the rule will be read, fixed before the run: **K1 and K4 are deterministic**
 
 ### Chain layout step 1: result (Oct 13, 2026)
 The keep rule (K1 to K4) passed on dev (`docs/chain-layout-results.md`); `router.chain_render` is now `"code"` by default. K2 passed at the edge of what the rule allows (faithfulness 7.00 against 8.00 of 8; the one drop is q39, where the judge does not see the walk's depth-limit sentence); this is recorded so that nobody reads it as a clean improvement. `"model"` stays as the fallback until the final cleanup, as decided. The model-written chain answers of milestone 1 remain the record of the old route.
+
+## q40 gold correction: source wins (Oct 13, 2026)
+The gold check on q40 (dev) found that the last sentence of its gold_answer did not match the catalog record of CST 1204, whose prerequisite text is "PRE: CST 1100 & 1101".
+- **Old sentence:** "CST 1204 (Database Systems Fundamentals) requires CST 1100 (Intro to Computer Systems)."
+- **New sentence:** "CST 1204 (Database Systems Fundamentals) requires CST 1100 (Intro to Computer Systems) and CST 1101 (Problem Solving Comp. Program); catalog text: “PRE: CST 1100 & 1101”."
+- **Reason:** source wins: the catalog record, found by the gold check. `gold_sources` is unchanged.
+- **Made after reading the catalog record, not after reading any run's score.** It is not tuning: no retrieval, prompt or threshold changed and no run was repeated. Retrieval metrics cannot change. Only q40's answer-level verdicts (correctness, faithfulness) could change when a run is judged again. Old result files keep the verdicts they got under the old gold.
