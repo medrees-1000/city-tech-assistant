@@ -98,7 +98,11 @@ offices:
 cues:
   registrar: ["my gpa", "my grade", "my grades", "my transcript"]
   bursar: ["my balance", "my bill", "my tuition"]
-  financial-aid: ["my financial aid", "my fafsa", "my tap", "my refund"]
+  financial-aid: ["my financial aid", "my aid", "my fafsa", "my tap", "my refund"]
+
+# Account words with NO office (the data names none): the abstention is the personal-account message
+# and no card is shown. They count only when the system already abstains.
+account_only: ["emplid", "student id", "log in", "login", "password"]
 
 # Rule 5: chunk ids "pdf/<name>#n" -> office. page/, dept/, contact: and catalog: chunks need no entry
 # (their owner or department is in the id or in the chunk).

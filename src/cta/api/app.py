@@ -16,7 +16,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from cta.api import convert, requestlog, schema
+from cta.api import convert, requestlog, schema, topic
 from cta.api.checks import require_startup
 from cta.graph import render
 from cta.graph.build import Router, load_events
@@ -52,8 +52,10 @@ def create_app(
     router_factory: Callable | None = None,
     clock: Callable[[], date] = date.today,
     log_writer: Callable = requestlog.write,
+    client_factory: Callable | None = None,
 ) -> FastAPI:
     cfg = cfg or load_models()
+    client_factory = client_factory or make_client  # looked up at call time (tests replace it)
     if check_startup:
         require_startup(cfg, env=env, connect=connect, root=root)
     version = git_version()
@@ -149,6 +151,7 @@ def create_app(
                 response = convert.to_response(
                     ans, question, cfg, today, rid, version, url_map, by_id
                 )
+                topic.rewrite(question, response, cfg, client_factory)
                 record(conn, requestlog.success_record(response))
                 return response
         except psycopg.OperationalError:

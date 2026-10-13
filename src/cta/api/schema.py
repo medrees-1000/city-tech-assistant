@@ -51,6 +51,9 @@ class HowFound(BaseModel):
     tokens: dict[str, int]
     cost_usd: dict[str, float]
     cache_hits: dict[str, bool]
+    # "topic" (sentence written from the templates) or "generic"; None for other answers
+    abstain_wording: str | None = None
+    topic_in_scope: bool | None = None  # the topic call's in_scope, when it ran and was usable
 
 
 class Meta(BaseModel):

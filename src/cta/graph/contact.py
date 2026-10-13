@@ -5,7 +5,8 @@ Contact policy v2: a contact is added only when the office clearly applies, else
   1. a calendar abstain -> the Registrar;
   2. a chain "no record" abstain -> the department of the code prefix (one of four), else none;
   3. exactly one of the four departments named in the question (alias or course prefix);
-  4. a first-person account cue ("my gpa") from config/contacts.yaml.
+  4. a first-person account cue ("my gpa") from config/contacts.yaml (`account_only` words such as
+     "login" are account questions too, but name no office).
 Nothing else adds a contact (no chunk-source map, no fallback office).
 `add_contact` appends "Contact <name>: <email>, <phone>." to an abstained answer, once.
 """
@@ -29,6 +30,18 @@ def load_contacts() -> dict:
 def named_department(question: str) -> str | None:
     found = detect_departments(question)
     return next(iter(found)) if len(found) == 1 else None
+
+
+def has_word(text: str, words: list[str]) -> bool:
+    return any(re.search(rf"\b{re.escape(w)}\b", text) for w in words)
+
+
+def account_cue(question: str, contacts: dict) -> bool:
+    """Does the question hold an account word (one with an office, or one with no office)?"""
+    text = question.lower()
+    return has_word(text, contacts.get("account_only", [])) or any(
+        has_word(text, words) for words in contacts["cues"].values()
+    )
 
 
 def cue_office(question: str, contacts: dict) -> str | None:

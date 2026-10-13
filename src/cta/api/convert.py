@@ -44,7 +44,7 @@ def abstain_code(reason: str | None, question: str = "", table: dict | None = No
         return None
     if reason.startswith(OWN_CODES):
         return reason
-    if contacts.cue_office(question, table or contacts.load_contacts()):
+    if contacts.account_cue(question, table or contacts.load_contacts()):
         return "personal_account"
     return reason if reason == "below_threshold" else "model"
 
@@ -149,6 +149,7 @@ def how_found(ans, cfg: dict) -> schema.HowFound:
             "walk": chain.get("walk_ms") if chain else None,
             "answer": round(answer_ms, 1) if ans.route in ("other", "chain", "calendar_fallthrough",
                                                             "chain_fallthrough") else None,
+            "topic": None,
             "total": float(ans.latency_ms),
         },
         tokens={
@@ -156,11 +157,12 @@ def how_found(ans, cfg: dict) -> schema.HowFound:
             "embedding": search.tokens if search else 0,
             "rerank_prompt": rr.prompt_tokens if rr else 0,
             "rerank_completion": rr.completion_tokens if rr else 0,
+            "topic_prompt": 0, "topic_completion": 0,
         },
         cost_usd={
             "classify": classify["cost"], "select": select.get("cost", 0.0),
             "embedding": cost_search, "rerank": rr.cost if rr else 0.0,
-            "answer": round(max(0.0, answer_cost), 8), "total": ans.cost,
+            "answer": round(max(0.0, answer_cost), 8), "topic": 0.0, "total": ans.cost,
         },
         cache_hits={"embedding": bool(search and search.cache_hit),
                     "rerank": bool(rr and rr.cache_hit)},

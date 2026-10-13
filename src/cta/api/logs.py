@@ -44,7 +44,7 @@ def line(row) -> str:
     flag = "-" if abstained is None else ("abstained" if abstained else "answered")
     tokens = "-" if p_tok is None else f"{p_tok}/{c_tok}"
     price = "-" if cost is None else f"${float(cost):.6f}"
-    text = redact(question or "").replace("\n", " ")
+    text = " ".join(redact(question or "").split())  # any whitespace or line break -> one space
     text = text if len(text) <= 90 else text[:87] + "..."
     return (
         f"{ts:%Y-%m-%d %H:%M:%S}  {route or '-':8}  {flag:9}  office={office or '-':14} "

@@ -206,6 +206,16 @@ def test_the_purge_command_prints_the_count_and_validates_days(conn, monkeypatch
 # ---- the logs command ----
 
 
+def test_the_logs_line_collapses_whitespace_and_line_breaks_in_the_question():
+    from datetime import datetime
+
+    row = (datetime(2026, 10, 13, 12, 0, 0), "and\ntell   me\tmore\r\nplease", "retrieve", True,
+           None, "ok", 1200, 100, 10, 0.0001)  # fmt: skip
+    out = logs.line(row)
+    assert "\n" not in out and "\t" not in out and "\r" not in out
+    assert out.endswith("| and tell me more please")
+
+
 @pytest.mark.integration
 def test_the_logs_command_prints_the_last_api_requests_redacted_and_a_total(
     conn, monkeypatch, capsys

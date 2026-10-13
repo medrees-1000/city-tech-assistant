@@ -253,3 +253,35 @@ def test_the_replay_rebuilds_a_logged_calendar_abstain_exactly():
     assert rebuild(redact(real)) == real
     with pytest.raises(ValueError):
         rebuild("ABSTAIN: write to a@b.edu")  # a real email: the log would have redacted it
+
+
+# ---- account cues added in the chat polish ----
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "My EMPLID is 12345678, why is something wrong?",
+        "What is my student ID?",
+        "I forgot my password",
+        "Can I use my email to log in to CUNYfirst?",
+        "login problem",
+    ],
+)
+def test_account_only_words_are_account_questions_with_no_office(question):
+    assert contact.account_cue(question, C) is True
+    assert contact.cue_office(question, C) is None
+    assert office(question) is None  # no card: the data names no office for these
+
+
+def test_my_aid_maps_to_financial_aid_and_wins_over_an_account_only_word():
+    assert office("Why is my aid late?") == "financial-aid"
+    assert office("My EMPLID is 12345678, why is my aid late?") == "financial-aid"
+    assert contact.account_cue("Why is my aid late?", C)
+
+
+def test_account_words_need_the_whole_word_and_a_plain_question_is_not_one():
+    assert not contact.account_cue("What is a logon page?", C)
+    assert not contact.account_cue("Who can help me with aid?", C)  # not first person
+    assert not contact.account_cue("How do I apply?", C)
+    assert not contact.account_cue("A student identification card", C)

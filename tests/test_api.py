@@ -180,8 +180,10 @@ PAGE = "https://www.citytech.cuny.edu/registrar/faqs.aspx"
 class Client:
     """Scripted chat client: classifier, calendar selector, chain answer and retrieval answer."""
 
-    def __init__(self, intent="other", mention=None, row_ids=(), answer="ok [1]", fail=None):
+    def __init__(self, intent="other", mention=None, row_ids=(), answer="ok [1]", fail=None,
+                 topic=None):  # fmt: skip
         self.intent, self.mention, self.row_ids = intent, mention, list(row_ids)
+        self.topic = topic  # the topic call's reply text; None = an unusable reply
         self.answer_text, self.fail, self.calls = answer, fail, []
         self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
 
@@ -190,6 +192,7 @@ class Client:
         which = (
             "classify" if system.startswith("You route")
             else "select" if system.startswith("You choose")
+            else "topic" if system.startswith("You label")
             else "answer"
         )  # fmt: skip
         self.calls.append(which)
@@ -199,6 +202,7 @@ class Client:
             "classify": json.dumps({"intent": self.intent, "term_mention": self.mention}),
             "select": json.dumps({"row_ids": self.row_ids}),
             "answer": self.answer_text,
+            "topic": self.topic if self.topic is not None else "not json",
         }[which]
         usage = SimpleNamespace(prompt_tokens=100, completion_tokens=10)
         return SimpleNamespace(
@@ -245,7 +249,8 @@ def make_client_app(client, monkeypatch, stub=None, cfg=None, tmp_root=None, con
     logs = []  # the rows the API would have written
     writer = log_writer or (lambda conn, record: logs.append(record))
     app = api_app.create_app(cfg, connect=connect, check_startup=False, router_factory=factory,
-                             root=tmp_root or ROOT, clock=clock, log_writer=writer)  # fmt: skip
+                             root=tmp_root or ROOT, clock=clock, log_writer=writer,
+                             client_factory=lambda: client)  # fmt: skip
     test_client = TestClient(app, raise_server_exceptions=False)
     test_client.logs = logs
     return test_client
@@ -335,7 +340,6 @@ def test_a_threshold_abstention_with_a_clear_office_has_a_card_and_no_contact_se
     [
         ("what questions can I ask you", "page/MATH-NYT/faqs#12"),
         ("my mom died", "page/financial-aid/faqs#9"),
-        ("I can't log in to CUNYfirst with my email address", "page/DENT-NYT/faq#2"),
         ("Should I take an Incomplete?", "page/registrar/incomplete#1"),
     ],
 )
@@ -745,3 +749,12 @@ def test_a_database_outage_is_counted_as_an_unlogged_request(monkeypatch):
     assert ask(c).status_code == 503 and c.logs == []
     health = c.get("/health")
     assert health.status_code == 503 and health.json()["log_failures"] == 1
+
+
+def test_a_login_question_is_a_personal_account_abstention_with_no_card(monkeypatch):
+    stub = retrieve_answer(THRESHOLD_ABSTAIN, True, "below_threshold", citations=())
+    stub.sources[0]["id"] = "page/DENT-NYT/faq#2"  # an unrelated best chunk
+    c = make_client_app(Client(), monkeypatch, stub)
+    body = ask(c, "I can't log in to CUNYfirst with my email address").json()
+    assert body["abstained"] and body["abstain_reason"] == "personal_account"
+    assert body["contact"] is None and body["answer_type"] == "abstain"

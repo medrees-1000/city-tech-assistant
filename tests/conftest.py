@@ -72,3 +72,15 @@ def conn():
             c.rollback()
             c.execute(f"DROP SCHEMA {schema} CASCADE")
             c.commit()
+
+
+@pytest.fixture(autouse=True)
+def no_real_model_client_in_the_api(monkeypatch):
+    """The API looks its default model client up at call time; a test that forgot to inject one
+    must fail loudly instead of making a paid call."""
+    import cta.api.app as api_app
+
+    def refuse():
+        raise AssertionError("a test tried to create the real OpenAI client")
+
+    monkeypatch.setattr(api_app, "make_client", refuse)
