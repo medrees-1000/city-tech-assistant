@@ -1,17 +1,25 @@
 import type { Citation } from "../../lib/api";
 import { segments } from "../../lib/segments";
 
-/** The answer text with each [n] marker turned into a link to source n in the list below. */
-export function AnswerText({ text, citations }: { text: string; citations: Citation[] }) {
+/** The answer text with each [n] marker turned into a button that opens and jumps to source n. */
+export function AnswerText({
+  text,
+  citations,
+  onCite,
+}: {
+  text: string;
+  citations: Citation[];
+  onCite: (n: number) => void;
+}) {
   return (
     <p className="answer-text">
       {segments(text, citations).map((s, i) =>
         s.type === "text" ? (
           <span key={i}>{s.text}</span>
         ) : (
-          <a key={i} className="cite" href={`#source-${s.n}`} aria-label={`Source ${s.n}`}>
+          <button key={i} type="button" className="cite" aria-label={`Go to source ${s.n}`} onClick={() => onCite(s.n)}>
             {s.label}
-          </a>
+          </button>
         ),
       )}
     </p>

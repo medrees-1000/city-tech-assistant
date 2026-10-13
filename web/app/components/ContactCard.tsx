@@ -1,10 +1,13 @@
+import { useId } from "react";
+
 import type { Contact } from "../../lib/api";
 import { telHref, withUrls } from "../../lib/segments";
 
 export function ContactCard({ contact }: { contact: Contact }) {
+  const titleId = useId();
   return (
-    <section className="card contact" aria-labelledby="contact-title">
-      <h3 id="contact-title" className="card-title">
+    <section className="card contact" aria-labelledby={titleId}>
+      <h3 id={titleId} className="card-title">
         Contact {contact.name}
       </h3>
       <ul className="contact-list">
