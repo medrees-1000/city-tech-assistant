@@ -153,8 +153,9 @@ def test_an_abstention_gets_the_line_once():
 # ---- config switch and wiring ----
 
 
-def test_the_switch_defaults_to_off_and_is_validated():
-    assert load_models(env={})["router"]["contacts"] == "off"
+def test_the_switch_defaults_to_on_can_be_turned_off_and_is_validated():
+    assert load_models(env={})["router"]["contacts"] == "on"  # on since step 4c
+    assert load_models(env={"CTA_ROUTER_CONTACTS": "off"})["router"]["contacts"] == "off"
     assert load_models(env={"CTA_ROUTER_CONTACTS": "on"})["router"]["contacts"] == "on"
     with pytest.raises(ValueError, match="router.contacts"):
         load_models(env={"CTA_ROUTER_CONTACTS": "maybe"})
@@ -171,7 +172,7 @@ def test_the_cli_flag_overrides_the_config(monkeypatch):
     for flag, expected in (
         (["--contacts", "on"], "on"),
         (["--contacts", "off"], "off"),
-        ([], "off"),
+        ([], "on"),
     ):
         run_answers.main(["x", "--relabel", "some-label", *flag])
         assert seen[-1]["router"]["contacts"] == expected

@@ -52,3 +52,7 @@ Steps 4b (prerequisite chain) and 4c (contact lookup) add tool nodes next to `ca
 ## Selector versions (step 4a-2)
 
 The graph above is unchanged. The calendar node's selector has two versions (`router.selector`, default 2): version 1 chooses from the rows of the resolved term; version 2 (default) chooses from the rows of all three calendars, each line showing its term, with a stricter prompt, so a question like "register next spring" can use rows that sit in the Fall 2026 calendar. The unsupported-term path always uses version 1. The renderer names each row's own calendar in its source line.
+
+## Contact line (step 4c)
+
+After the graph, `Router.answer` calls `cta.graph.contact.add_contact` when `router.contacts` is `on` (default). If the final answer is an abstention it appends one plain-code line, `Contact <name>: <email>, <phone>.`, for the office chosen by the rules in `docs/step4c-plan.md`; the graph itself is unchanged. The route and the office are in `request_logs.router` (`contact_office`).

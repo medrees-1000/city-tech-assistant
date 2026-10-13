@@ -20,9 +20,17 @@ CFG = load_models(
         "CTA_ROUTER_MODE": "on",
         "CTA_ROUTER_SELECTOR": "1",
         "CTA_ROUTER_CHAIN": "off",
+        "CTA_ROUTER_CONTACTS": "off",
     }
 )
-OFF = load_models(env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "off", "CTA_ROUTER_CHAIN": "off"})
+OFF = load_models(
+    env={
+        "CTA_RERANK": "off",
+        "CTA_ROUTER_MODE": "off",
+        "CTA_ROUTER_CHAIN": "off",
+        "CTA_ROUTER_CONTACTS": "off",
+    }
+)
 TODAY = date(2026, 10, 11)
 
 
@@ -531,6 +539,7 @@ CFG2 = load_models(
         "CTA_ROUTER_MODE": "on",
         "CTA_ROUTER_SELECTOR": "2",
         "CTA_ROUTER_CHAIN": "off",
+        "CTA_ROUTER_CONTACTS": "off",
     }
 )
 

@@ -15,8 +15,22 @@ from cta.graph.build import Router
 from cta.index.search import Search
 from cta.settings import load_models
 
-CFG = load_models(env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "on", "CTA_ROUTER_CHAIN": "on"})
-OFF = load_models(env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "on", "CTA_ROUTER_CHAIN": "off"})
+CFG = load_models(
+    env={
+        "CTA_RERANK": "off",
+        "CTA_ROUTER_MODE": "on",
+        "CTA_ROUTER_CHAIN": "on",
+        "CTA_ROUTER_CONTACTS": "off",
+    }
+)
+OFF = load_models(
+    env={
+        "CTA_RERANK": "off",
+        "CTA_ROUTER_MODE": "on",
+        "CTA_ROUTER_CHAIN": "off",
+        "CTA_ROUTER_CONTACTS": "off",
+    }
+)
 TODAY = date(2026, 10, 11)
 
 
@@ -298,8 +312,16 @@ def test_prerequisite_is_a_valid_intent_only_with_chain_on():
 
 def test_chain_switch_default_is_on_and_the_flag_and_env_turn_it_off():
     assert load_models(env={})["router"]["chain"] == "on"  # on by default since step 4b-final
-    assert load_models(env={"CTA_ROUTER_CHAIN": "off"})["router"]["chain"] == "off"
-    assert load_models(env={"CTA_ROUTER_CHAIN": "on"})["router"]["chain"] == "on"
+    assert (
+        load_models(env={"CTA_ROUTER_CHAIN": "off", "CTA_ROUTER_CONTACTS": "off"})["router"][
+            "chain"
+        ]
+        == "off"
+    )
+    assert (
+        load_models(env={"CTA_ROUTER_CHAIN": "on", "CTA_ROUTER_CONTACTS": "off"})["router"]["chain"]
+        == "on"
+    )
     with pytest.raises(ValueError, match="router.chain"):
         load_models(env={"CTA_ROUTER_CHAIN": "maybe"})
     assert 'chain: "on"' in (ra.ROOT / "config" / "models.yaml").read_text()

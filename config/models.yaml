@@ -66,9 +66,9 @@ router:
   # "prerequisite", answered by a deterministic chain walk. CTA_ROUTER_CHAIN overrides it. Quoted (YAML booleans).
   chain: "on"
   # Contact line on every abstention (Phase 3, step 4c): off | on. Plain code (src/cta/graph/contact.py) appends
-  # "Contact <name>: <email>, <phone>." from config/contacts.yaml; the model never writes it. Off until the
-  # replay check of docs/step4c-plan.md passes. CTA_ROUTER_CONTACTS overrides it. Quoted (YAML booleans).
-  contacts: "off"
+  # "Contact <name>: <email>, <phone>." from config/contacts.yaml; the model never writes it. On since step 4c
+  # (replay check D1 to D8 of docs/step4c-plan.md passed); CTA_ROUTER_CONTACTS=off or --contacts off turns it off. Quoted (YAML booleans).
+  contacts: "on"
   temperature: 0
   reasoning_effort: none
   max_output_tokens: 300

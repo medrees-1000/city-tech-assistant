@@ -85,3 +85,6 @@ PDFs, departments, calendar). A missing input is SKIPPED, never a pass.
 
 Save each run in `docs/validation-log.md` with the date, the counts, the checks that failed and
 what was fixed. The README reports the final counts.
+### Contacts (`config/contacts.yaml`, area "contacts")
+
+Each email and phone must appear in the owner's contact record (Special Circumstances: the flyer record). A phone must be on a `Phone:` or `Office Phone:` line; a number printed only after `Fax:`, or the 24/7 AI-agent line, fails. `page` must be a source page of the record, `fetched_at` must equal the record's, and every department of `config/departments.yaml` needs an entry.
