@@ -68,6 +68,18 @@ def write(conn, record: dict) -> None:
     conn.commit()
 
 
+def write_feedback(conn, request_id: str, vote: str) -> bool:
+    """Save a vote on an API row: only `feedback` and `feedback_at` change, the latest vote wins.
+    False when no API row has this id (an unknown id, or an eval-run row)."""
+    done = conn.execute(
+        "UPDATE request_logs SET feedback = %s, feedback_at = now() "
+        "WHERE request_id = %s AND source = 'api'",
+        (vote, request_id),
+    )
+    conn.commit()
+    return done.rowcount == 1
+
+
 class Logger:
     """Writes records and counts failures; a failed write never fails a request."""
 

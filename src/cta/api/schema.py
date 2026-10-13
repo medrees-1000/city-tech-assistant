@@ -2,11 +2,24 @@
 
 from typing import Any, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class AskRequest(BaseModel):
     question: str
+
+
+class FeedbackRequest(BaseModel):
+    """A vote on one answer. Nothing else is accepted: no free text, no other field."""
+
+    model_config = ConfigDict(extra="forbid")
+    request_id: str
+    vote: Literal["up", "down"]
+
+
+class FeedbackResponse(BaseModel):
+    request_id: str
+    vote: Literal["up", "down"]
 
 
 class Citation(BaseModel):

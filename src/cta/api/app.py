@@ -52,6 +52,7 @@ def create_app(
     router_factory: Callable | None = None,
     clock: Callable[[], date] = date.today,
     log_writer: Callable = requestlog.write,
+    feedback_writer: Callable = requestlog.write_feedback,
     client_factory: Callable | None = None,
 ) -> FastAPI:
     cfg = cfg or load_models()
@@ -69,6 +70,7 @@ def create_app(
             return Router(conn, cfg, make_client, events=events, contact=registrar)
 
     api = cfg["api"]
+    feedback_failures = [0]  # a failed vote write is counted here and shown in /health
     record = requestlog.Logger(
         log_writer
     )  # counts failed writes; a failed write never fails a request
@@ -104,7 +106,7 @@ def create_app(
     def health():
         body = {
             "status": "ok", "db": "ok", "version": version, "router": cfg["router"]["mode"],
-            "log_failures": record.failures,
+            "log_failures": record.failures, "feedback_failures": feedback_failures[0],
         }  # fmt: skip
         try:
             with connect() as conn:
@@ -157,5 +159,21 @@ def create_app(
         except psycopg.OperationalError:
             record.failures += 1  # the database is down: this request cannot be logged
             return error(503, "unavailable", "The service is not available right now.", request)
+
+    @app.post("/feedback", response_model=schema.FeedbackResponse)
+    def feedback(body: schema.FeedbackRequest, request: Request):
+        try:
+            rid = uuid.UUID(body.request_id.strip()).hex  # the id format the API returns
+        except ValueError:
+            return error(404, "not_found", "No such request.", request)
+        try:
+            with connect() as conn:
+                found = feedback_writer(conn, rid, body.vote)
+        except Exception:  # noqa: BLE001 - nothing from the driver is shown
+            feedback_failures[0] += 1
+            return error(503, "unavailable", "The vote could not be saved right now.", request)
+        if not found:
+            return error(404, "not_found", "No such request.", request)
+        return schema.FeedbackResponse(request_id=rid, vote=body.vote)
 
     return app

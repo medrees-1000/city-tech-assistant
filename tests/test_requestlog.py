@@ -210,10 +210,10 @@ def test_the_logs_line_collapses_whitespace_and_line_breaks_in_the_question():
     from datetime import datetime
 
     row = (datetime(2026, 10, 13, 12, 0, 0), "and\ntell   me\tmore\r\nplease", "retrieve", True,
-           None, "ok", 1200, 100, 10, 0.0001)  # fmt: skip
+           None, "ok", 1200, 100, 10, 0.0001, "down", None)  # fmt: skip
     out = logs.line(row)
     assert "\n" not in out and "\t" not in out and "\r" not in out
-    assert out.endswith("| and tell me more please")
+    assert out.endswith("| and tell me more please") and "vote=down" in out
 
 
 @pytest.mark.integration
@@ -248,7 +248,9 @@ def test_the_logs_command_prints_the_last_api_requests_redacted_and_a_total(
     out = capsys.readouterr().out.strip().splitlines()
     assert len(out) == 2 and "retrieve" in out[0] and out[-1].startswith("1 API requests matching")
     assert logs.main(["x", "--since", "2999-01-01"]) == 0
-    assert capsys.readouterr().out.strip() == "0 API requests matching, total cost $0.000000"
+    assert capsys.readouterr().out.strip() == (
+        "0 API requests matching, total cost $0.000000; votes: 0 up, 0 down, 0 no vote"
+    )
 
 
 # ---- the privacy notice matches the code ----
