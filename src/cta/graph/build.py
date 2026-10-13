@@ -21,9 +21,9 @@ from langgraph.graph import END, START, StateGraph
 
 from cta.answer import Answer, answer, call_chat, parse_reply
 from cta.graph import chain as chains
+from cta.graph import chain_render, render, select, terms
 from cta.graph import classify as classifier
 from cta.graph import contact as contacts
-from cta.graph import render, select, terms
 from cta.graph.state import RoutedAnswer, RouterState
 from cta.index.embed import make_client
 from cta.index.search import Search
@@ -153,6 +153,25 @@ def make_nodes(d: Deps):
             ans = abstain_answer(text, "chain_no_record")
             return {"chain": info, "answer": ans, "route": "abstain"}
         sources = chains.sources_of(result, records)
+        info |= {
+            "course_count": result["course_count"], "truncated": result["truncated"],
+            "unexpanded": result["unexpanded"], "dropped": result["dropped"],
+            "no_record_codes": result["no_record"], "source_ids": [s["id"] for s in sources],
+        }  # fmt: skip
+        if d.cfg["router"].get("chain_render", "model") == "code":
+            try:  # plain code writes the whole answer: no model call after the classifier
+                text = chain_render.render(result, records)
+            except chain_render.ChainRenderError:
+                info["render_fallback"] = (
+                    True  # a catalog text that is unsafe as markdown: use the model
+                )
+            else:
+                info["rendered_by"] = "code"
+                ans = RoutedAnswer(
+                    text, False, None, sources, list(range(1, len(sources) + 1)), [],
+                    Search([], False, 0, 0, 0.0),
+                )  # fmt: skip
+                return {"chain": info, "answer": ans, "route": "chain"}
         messages = chains.build_messages(state["question"], state["today"], result, sources)
         chat_started = time.perf_counter()
         response = call_chat(d.client_factory(), d.cfg, messages)
@@ -161,9 +180,6 @@ def make_nodes(d: Deps):
         usage = response.usage
         parsed = parse_reply(text, len(sources))
         info |= {
-            "course_count": result["course_count"], "truncated": result["truncated"],
-            "unexpanded": result["unexpanded"], "dropped": result["dropped"],
-            "no_record_codes": result["no_record"], "source_ids": [s["id"] for s in sources],
             "chat_ms": chat_ms, "prompt_tokens": usage.prompt_tokens,
             "completion_tokens": usage.completion_tokens,
         }  # fmt: skip

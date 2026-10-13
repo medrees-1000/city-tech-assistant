@@ -629,6 +629,7 @@ def run(
     extra |= {
         "router_chain": cfg["router"].get("chain", "off"),
         "router_contacts": cfg["router"].get("contacts", "off"),
+        "router_chain_render": cfg["router"].get("chain_render", "model"),
         "router_selector": cfg["router"]["selector"],
     }
     extra |= {"calendar_scoring": scoring} if scoring else {}
@@ -936,6 +937,7 @@ def main(argv: list[str]) -> int:
     p.add_argument("--selector", type=int, choices=(1, 2), help="override router.selector")
     p.add_argument("--chain", choices=("off", "on"), help="override router.chain")
     p.add_argument("--contacts", choices=("off", "on"), help="override router.contacts")
+    p.add_argument("--chain-render", choices=("model", "code"), help="override router.chain_render")
     p.add_argument(
         "--calendar-scoring", type=int, nargs="?", const=1, choices=(1, 2),
         help="score calendar-only gold by the rows stated: 1 exact rows, 2 required rows "
@@ -981,6 +983,8 @@ def main(argv: list[str]) -> int:
         cfg["router"]["chain"] = args.chain
     if args.contacts:
         cfg["router"]["contacts"] = args.contacts
+    if args.chain_render:
+        cfg["router"]["chain_render"] = args.chain_render
     if args.calendar_scoring:
         cfg["eval"]["calendar_scoring"] = args.calendar_scoring
     if args.relabel:

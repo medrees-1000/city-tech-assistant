@@ -65,6 +65,10 @@ router:
   # Prerequisite-chain tool (Phase 3, step 4b): off | on (on since step 4b-final; CTA_ROUTER_CHAIN=off or --chain off turns it off). With "on" the classifier has a third intent,
   # "prerequisite", answered by a deterministic chain walk. CTA_ROUTER_CHAIN overrides it. Quoted (YAML booleans).
   chain: "on"
+  # Who writes the chain answer (chain layout, docs/chain-layout-plan.md): "model" = the answer model, from the
+  # chain description (the 4b behaviour); "code" = plain code (cta.graph.chain_render), no model call after the
+  # classifier. "model" until the pre-registered keep rule passes. CTA_ROUTER_CHAIN_RENDER overrides it.
+  chain_render: "model"
   # Contact line on every abstention (Phase 3, step 4c): off | on. Plain code (src/cta/graph/contact.py) appends
   # "Contact <name>: <email>, <phone>." from config/contacts.yaml; the model never writes it. On since step 4c
   # (replay check D1 to D8 of docs/step4c-plan.md passed); CTA_ROUTER_CONTACTS=off or --contacts off turns it off. Quoted (YAML booleans).
