@@ -22,6 +22,7 @@ from langgraph.graph import END, START, StateGraph
 from cta.answer import Answer, answer, call_chat, parse_reply
 from cta.graph import chain as chains
 from cta.graph import classify as classifier
+from cta.graph import contact as contacts
 from cta.graph import render, select, terms
 from cta.graph.state import RoutedAnswer, RouterState
 from cta.index.embed import make_client
@@ -282,6 +283,8 @@ class Router:
         started = time.perf_counter()
         state = self.graph.invoke({"question": question, "today": today, "run_id": run_id})
         ans = routed(state["answer"], state, started, today)
+        if self.deps.cfg["router"].get("contacts", "off") == "on":
+            ans.router["contact_office"] = contacts.add_contact(ans, question)
         if log:
             log_request(self.deps.conn, question, ans, self.deps.cfg, run_id)
         return ans
