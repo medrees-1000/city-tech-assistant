@@ -16,7 +16,7 @@ from cta.settings import ROOT
 PUBLIC_HOST = "www.citytech.cuny.edu"
 MARKER = "ABSTAIN:"
 EXCERPT_CHARS = 300
-CODES = ("calendar_", "chain_no_record", "below_threshold")
+OWN_CODES = ("calendar_", "chain_no_record")  # codes the graph itself sets for its two tools
 
 
 def build_url_map(pages_dir: Path = ROOT / "data" / "processed" / "pages") -> dict[str, str]:
@@ -36,10 +36,17 @@ def public_route(ans) -> str:
     return {"calendar": "calendar", "chain": "chain"}.get(ans.route, "retrieve")
 
 
-def abstain_code(reason: str | None) -> str | None:
+def abstain_code(reason: str | None, question: str = "", table: dict | None = None) -> str | None:
+    """A short code for an abstention, never the model's sentence. A retrieval abstention on a
+    question with one of the account cues of the contact mapping ("my gpa" ...) is
+    "personal_account"; calendar and chain abstentions keep their own codes."""
     if reason is None:
         return None
-    return reason if reason.startswith(CODES) else "model"
+    if reason.startswith(OWN_CODES):
+        return reason
+    if contacts.cue_office(question, table or contacts.load_contacts()):
+        return "personal_account"
+    return reason if reason == "below_threshold" else "model"
 
 
 def excerpt(text: str) -> str:
@@ -177,7 +184,7 @@ def to_response(ans, question: str, cfg: dict, today: date, request_id: str, ver
     cited = set(ans.citations)
     return schema.AskResponse(
         request_id=request_id, question=question, answer=text, answer_type=kind,
-        abstained=ans.abstained, abstain_reason=abstain_code(ans.abstain_reason),
+        abstained=ans.abstained, abstain_reason=abstain_code(ans.abstain_reason, question, table),
         route=public_route(ans),
         citations=[]
         if ans.abstained  # an abstention cites nothing; the retrieved chunks are in how_found

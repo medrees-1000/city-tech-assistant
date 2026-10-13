@@ -545,3 +545,57 @@ def test_the_router_is_called_without_writing_a_log_row_in_this_step(monkeypatch
     )  # fmt: skip
     assert TestClient(app).post("/ask", json={"question": "  hello  "}).status_code == 200
     assert seen == [("hello", TODAY, False)]  # the question is stripped; log=False
+
+
+# ---- personal-account abstentions (step 4b) ----
+
+
+def test_a_retrieval_abstention_on_an_account_question_is_coded_personal_account(monkeypatch):
+    stub = retrieve_answer(THRESHOLD_ABSTAIN, True, "below_threshold", ())
+    body = ask(make_client_app(Client(), monkeypatch, stub), "What is my GPA this semester?").json()
+    assert body["abstained"] and body["abstain_reason"] == "personal_account"
+    assert body["contact"]["office"] == "registrar"  # the contact the mapping already chose
+    assert "personal" not in body["answer"] and body["citations"] == []
+
+
+def test_a_model_written_abstention_on_an_account_question_gets_the_code_not_the_sentence(
+    monkeypatch,
+):
+    stub = retrieve_answer("ABSTAIN: The sources do not show your balance.", True,
+                           "The sources do not show your balance.", ())  # fmt: skip
+    body = ask(make_client_app(Client(), monkeypatch, stub), "What is my balance?").json()
+    assert body["abstain_reason"] == "personal_account" and body["contact"]["office"] == "bursar"
+    assert "balance" not in body["abstain_reason"]
+
+
+def test_a_normal_abstention_does_not_get_the_account_code(monkeypatch):
+    stub = retrieve_answer(THRESHOLD_ABSTAIN, True, "below_threshold", ())
+    body = ask(
+        make_client_app(Client(), monkeypatch, stub), "Are there open seats in CST 1101?"
+    ).json()
+    assert body["abstain_reason"] == "below_threshold" and body["contact"]["office"] == "CST-NYT"
+    model = retrieve_answer("ABSTAIN: Nothing.", True, "Nothing.", ())
+    body = ask(make_client_app(Client(), monkeypatch, model), "Who teaches MAT 1475?").json()
+    assert body["abstain_reason"] == "model"
+
+
+def test_calendar_and_chain_abstentions_keep_their_own_codes_even_with_an_account_word(monkeypatch):
+    client = Client("calendar", "Summer 2027", [])
+    body = ask(make_client_app(client, monkeypatch), "When is my refund in Summer 2027?").json()
+    assert body["abstain_reason"].startswith("calendar_")
+
+
+def test_an_answered_account_word_question_is_not_touched(monkeypatch):
+    body = ask(make_client_app(Client(), monkeypatch, retrieve_answer()),
+               "When is my tuition bill due this fall?").json()  # fmt: skip
+    assert not body["abstained"] and body["abstain_reason"] is None
+
+
+def test_abstain_code_unit():
+    t = convert.contacts.load_contacts()
+    assert convert.abstain_code(None, "my gpa", t) is None
+    assert convert.abstain_code("below_threshold", "my gpa", t) == "personal_account"
+    assert convert.abstain_code("below_threshold", "the gpa", t) == "below_threshold"
+    assert convert.abstain_code("some sentence", "my transcript", t) == "personal_account"
+    assert convert.abstain_code("some sentence", "hello", t) == "model"
+    assert convert.abstain_code("chain_no_record", "my gpa", t) == "chain_no_record"
