@@ -235,4 +235,4 @@ def test_the_replay_rebuilds_a_logged_calendar_abstain_exactly():
     real = render.abstain_text("I could not find that.", render.registrar_contact())
     assert rebuild(redact(real)) == real
     with pytest.raises(ValueError):
-        rebuild("ABSTAIN: text with [ID] redacted")
+        rebuild("ABSTAIN: write to a@b.edu")  # a real email: the log would have redacted it
