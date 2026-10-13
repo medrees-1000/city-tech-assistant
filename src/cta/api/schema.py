@@ -32,6 +32,7 @@ class Contact(BaseModel):
 
 class RetrievedChunk(BaseModel):
     id: str
+    title: str | None = None  # the chunk's heading path (the panel shows it instead of the id)
     first_stage_rank: int
     similarity: float | None
     rerank_score: float | None

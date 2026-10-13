@@ -758,3 +758,23 @@ def test_a_login_question_is_a_personal_account_abstention_with_no_card(monkeypa
     body = ask(c, "I can't log in to CUNYfirst with my email address").json()
     assert body["abstained"] and body["abstain_reason"] == "personal_account"
     assert body["contact"] is None and body["answer_type"] == "abstain"
+
+
+# ---- fields the "How this was found" panel reads ----
+
+
+def test_the_pool_chunks_carry_their_title_for_the_panel(monkeypatch):
+    hf = ask(make_client_app(Client(), monkeypatch, retrieve_answer())).json()["how_found"]
+    assert all(c["title"] == "FAQ > Question" for c in hf["retrieved"])
+
+
+def test_a_course_chunk_title_has_the_catalog_prefix():
+    chunk_ = chunk("catalog:CST 1", "catalog_course", kind="course", heading_path="CST 1 - Intro")
+    assert convert.pool_title(chunk_) == "City Tech course catalog: CST 1 - Intro"
+    assert convert.pool_title({"id": "x"}) is None
+
+
+def test_the_chain_block_names_the_courses_without_a_record(monkeypatch):
+    client = Client("prerequisite", answer="AA 1001 needs BB 1001 [1][2].")
+    body = ask(make_client_app(client, monkeypatch), "What do I need before AA 1001?").json()
+    assert body["how_found"]["chain"]["no_record_codes"] == ["ENG 1101"]

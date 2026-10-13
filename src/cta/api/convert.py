@@ -16,6 +16,8 @@ from cta.settings import ROOT
 PUBLIC_HOST = "www.citytech.cuny.edu"
 MARKER = "ABSTAIN:"
 EXCERPT_CHARS = 300
+CHAIN_KEYS = ("extraction", "code", "course_count", "truncated", "unexpanded", "no_record",
+              "no_record_codes")  # fmt: skip
 OWN_CODES = ("calendar_", "chain_no_record")  # codes the graph itself sets for its two tools
 
 
@@ -94,6 +96,13 @@ def contact_card(key: str, table: dict) -> schema.Contact:
     )  # fmt: skip
 
 
+def pool_title(chunk: dict) -> str | None:
+    title = chunk.get("heading_path") or None
+    return (
+        f"City Tech course catalog: {title}" if title and chunk.get("kind") == "course" else title
+    )
+
+
 def retrieved_block(search, k: int) -> list[schema.RetrievedChunk]:
     """The candidate pool in first-stage order, with the reranker's score and final rank."""
     if search is None or not search.results:
@@ -111,6 +120,7 @@ def retrieved_block(search, k: int) -> list[schema.RetrievedChunk]:
         out.append(
             schema.RetrievedChunk(
                 id=c["id"],
+                title=pool_title(c),
                 first_stage_rank=c.get("rank", i + 1),
                 similarity=c.get("similarity"),
                 rerank_score=score,
@@ -141,8 +151,7 @@ def how_found(ans, cfg: dict) -> schema.HowFound:
         calendar={k: router[k] for k in ("term_status", "term", "selector_version", "pool_size",
                                           "selected", "weekday_mismatches", "invalid_ids")
                   if k in router} or None,
-        chain={k: chain[k] for k in ("extraction", "code", "course_count", "truncated",
-                                      "unexpanded", "no_record") if k in chain} if chain else None,
+        chain={k: chain[k] for k in CHAIN_KEYS if k in chain} if chain else None,
         stages_ms={
             "classify": classify["ms"], "select": select.get("ms"),
             "retrieval": retrieval_ms, "rerank": rr.ms if rr else None,
