@@ -266,6 +266,10 @@ def test_the_replay_rebuilds_a_logged_calendar_abstain_exactly():
         "I forgot my password",
         "Can I use my email to log in to CUNYfirst?",
         "login problem",
+        "Do I have a hold on my account?",
+        "How do I remove my hold?",
+        "Why are there holds? Where are my holds listed?",
+        "What is the balance on my account?",
     ],
 )
 def test_account_only_words_are_account_questions_with_no_office(question):
@@ -285,3 +289,16 @@ def test_account_words_need_the_whole_word_and_a_plain_question_is_not_one():
     assert not contact.account_cue("Who can help me with aid?", C)  # not first person
     assert not contact.account_cue("How do I apply?", C)
     assert not contact.account_cue("A student identification card", C)
+
+
+def test_hold_and_account_cues_name_no_office_because_the_data_names_none():
+    for word in ("my hold", "my holds", "a hold on my", "my account"):
+        assert word in C["account_only"]
+        assert not any(word in words for words in C["cues"].values())
+    assert office("Do I have a hold on my account?") is None
+
+
+def test_a_hold_question_that_is_not_about_the_students_own_account_is_not_a_cue():
+    assert not contact.account_cue("What is a hold?", C)
+    assert not contact.account_cue("Can a hold be placed by the Bursar?", C)
+    assert not contact.account_cue("Do holds stop registration?", C)

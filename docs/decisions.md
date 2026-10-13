@@ -478,3 +478,13 @@ Reason for both: owner decision after the 4a run; the 4a result is not changed (
 2. **"Hold" cues.** The processed data (chunks and contacts) is searched for which office, if any, it says handles account holds. If it names one office clearly, "my hold", "my holds", "a hold on my" and "my account" become account cues mapped to that office; if not, the same cues map to no office (personal-account message, no card). Cues apply only when the system already abstains. The evidence and the result are recorded below once the search is done.
 3. **"How this was found" panel** on each assistant answer: a collapsed toggle built from the API's `how_found` data, in plain language (route in words, sources in the order shown to the model with the rerank order and a note on a weak best match, calendar term and row, chain courses and "no record" ones, time per step, tokens and cost in cents, and for abstentions why, with the top similarity and the cutoff). Nothing is shown that the API did not send. Pure helpers with node:test tests.
 4. **Privacy notice** under the input: one short line and an expandable "What is saved?". The text is checked against migration 005 and the log writer; where it differs from the plan, the true statement is used.
+
+### Hold cues: the evidence and the decision (Oct 13, 2026)
+
+Search of `data/processed/chunks.jsonl` (every chunk, including the contact chunks) for "hold(s)": the data does **not** name one office that handles account holds.
+- `page/bursar/payment-deadlines#1` (https://www.citytech.cuny.edu/bursar/payment-deadlines.aspx): "If your tuition remains unpaid after enrollment a hold will be placed on your account that will prevent you from adding or swapping courses." (names a cause, not an office that handles holds)
+- `page/registrar/epermit#1`: "Must not have any holds on academic record." (a condition, no office)
+- `pdf/cunyfirst-student-reference#2` (CUNY-wide guide, data/pdfs/cunyfirst_student_reference.pdf): "On the left sidebar the Holds option will show all holds. By clicking on each Hold, you can view the details, including the office contact information, and instructions on how to resolve it." (the hold itself names its office, in CUNYfirst, which is behind a login and out of scope)
+- the contact chunks mention no holds; the other matches are the verb ("holds a master's degree", "hold an integral role").
+
+**Decision:** not clear, so "my hold", "my holds", "a hold on my" and "my account" are added to `account_only` (account questions with no office): the page shows the personal-account message and no card. They count only when the system already abstains.
