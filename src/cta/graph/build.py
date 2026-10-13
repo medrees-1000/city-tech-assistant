@@ -141,11 +141,16 @@ def make_nodes(d: Deps):
         records = chains.load_records()
         found = chains.extract_course(state["question"], records)
         info = {"extraction": found.status, "code": found.code, "detail": found.detail}
-        if found.status not in ("code", "title"):
-            info["fallthrough"] = True
+        several = found.status == "codes"
+        by_code = d.cfg["router"].get("chain_render", "model") == "code"
+        if found.status not in ("code", "title", "codes") or (several and not by_code):
+            info["fallthrough"] = True  # several courses have no model path: retrieval, as in 4b
             return {"chain": info, "chain_fallthrough": True}
         started = time.perf_counter()
-        result = chains.prerequisite_chain.invoke({"course_code": found.code})
+        if several:
+            result = chains.combined_chain(found.detail)
+        else:
+            result = chains.prerequisite_chain.invoke({"course_code": found.code})
         info["walk_ms"] = round((time.perf_counter() - started) * 1000, 3)
         if not result["found"]:
             text = chains.no_record_text(result["code"])
@@ -162,9 +167,9 @@ def make_nodes(d: Deps):
             try:  # plain code writes the whole answer: no model call after the classifier
                 text = chain_render.render(result, records)
             except chain_render.ChainRenderError:
-                info["render_fallback"] = (
-                    True  # a catalog text that is unsafe as markdown: use the model
-                )
+                info["render_fallback"] = True  # a catalog text that is unsafe as markdown
+                if several:  # no model path for several courses: retrieval
+                    return {"chain": info, "chain_fallthrough": True}
             else:
                 info["rendered_by"] = "code"
                 ans = RoutedAnswer(

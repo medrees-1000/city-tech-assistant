@@ -21,6 +21,11 @@ RISKY = re.compile(r'(^|\n)\s*(#{1,3} |- )|\*\*|\[\d+\]|<|"')  # markdown, a lin
 NO_PREREQUISITE = "No prerequisite listed in the catalog."
 UNREADABLE = "cannot be read from this text"
 NO_RECORD = "no catalog record"
+NO_RECORD_ASKED = (
+    "There is no catalog record for {code} "
+    "in the four departments (CST, Math, EET, Dental Hygiene)."
+)
+ALREADY_SHOWN = "{code} is already shown above."
 
 
 class ChainRenderError(ValueError):
@@ -53,26 +58,61 @@ def block(number: int, course: dict, titles: dict[str, str]) -> str:
     return "\n".join(lines)
 
 
-def render(result: dict, records: dict[str, dict]) -> str:
-    """The answer for a found chain (the dict `prerequisite_chain` returns)."""
-    titles = {code: r["title"].strip() for code, r in records.items()}
-    parts = [f"Here are the prerequisites for {result['root']}, from the catalog:"]
-    parts += [block(n, c, titles) for n, c in enumerate(result["courses"], 1)]
-    closing = []
-    if result["no_record"]:
-        closing.append(
-            f"No catalog record in the four departments for: {', '.join(result['no_record'])}."
-        )
+def closing(result: dict, skip: set[str] = frozenset()) -> str:
+    """The sentences after the blocks: codes without a record (except the asked ones in `skip`,
+    which have their own section), a chain cut at the depth limit, courses left out by the cap."""
+    lines = []
+    missing = [c for c in result["no_record"] if c not in skip]
+    if missing:
+        lines.append(f"No catalog record in the four departments for: {', '.join(missing)}.")
     for u in result["unexpanded"]:
-        closing.append(
+        lines.append(
             f"The list stops at {u['code']}, which names {', '.join(u['names'])}; "
             "prerequisites of the last courses are not shown."
         )
     for d in result["dropped"]:
-        closing.append(
+        lines.append(
             f"{d['code']}, named by {d['named_by']}, is not shown because the list is limited "
             f"to {MAX_COURSES} courses."
         )
-    if closing:
-        parts.append("\n".join(closing))
+    return "\n".join(lines)
+
+
+def codes_phrase(codes: list[str]) -> str:
+    """ "A", "A and B" or "A, B and C"."""
+    return codes[0] if len(codes) == 1 else f"{', '.join(codes[:-1])} and {codes[-1]}"
+
+
+def render(result: dict, records: dict[str, dict]) -> str:
+    """The answer for a found chain (the dict `prerequisite_chain` returns), or for several asked
+    courses (`combined_chain`: the result has `sections`)."""
+    titles = {code: r["title"].strip() for code, r in records.items()}
+    if "sections" in result:
+        return render_sections(result, titles)
+    parts = [f"Here are the prerequisites for {result['root']}, from the catalog:"]
+    parts += [block(n, c, titles) for n, c in enumerate(result["courses"], 1)]
+    if text := closing(result):
+        parts.append(text)
+    return "\n\n".join(parts)
+
+
+def render_sections(result: dict, titles: dict[str, str]) -> str:
+    """One section per asked course in the order asked; a course is shown once, in the first section
+    that reaches it, and a later section says so. Numbers run on across the sections."""
+    number = {c["code"]: n for n, c in enumerate(result["courses"], 1)}
+    by_code = {c["code"]: c for c in result["courses"]}
+    parts = [f"Here are the prerequisites for {codes_phrase(result['asked'])}, from the catalog:"]
+    for s in result["sections"]:
+        parts.append(f"## Prerequisites for {s['root']}")
+        if not s["found"]:
+            parts.append(NO_RECORD_ASKED.format(code=s["root"]))
+        elif s["already_shown"]:
+            parts.append(ALREADY_SHOWN.format(code=s["root"]))
+        else:
+            parts += [block(number[c], by_code[c], titles) for c in s["courses"]]
+        if s["shared"]:
+            parts.append("\n".join(ALREADY_SHOWN.format(code=c) for c in s["shared"]))
+    unknown = {s["root"] for s in result["sections"] if not s["found"]}
+    if text := closing(result, unknown):
+        parts.append(text)
     return "\n\n".join(parts)

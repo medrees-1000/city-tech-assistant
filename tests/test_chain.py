@@ -179,11 +179,16 @@ def test_code_forms_are_normalised_and_a_repeat_counts_once(question):
     assert (got.status, got.code) == ("code", "CST 2412")
 
 
-def test_two_distinct_codes_fall_through_and_seasons_are_not_codes():
+def test_two_or_three_codes_are_asked_four_fall_through_and_seasons_are_not_codes():
     got = ch.extract_course(
         "What are the prerequisites for MAT 1190CO and how do they differ from MAT 1190?", RECORDS
     )
-    assert got.status == "many" and got.detail == ["MAT 1190CO", "MAT 1190"]
+    assert got.status == "codes" and got.detail == ["MAT 1190CO", "MAT 1190"]
+    assert got.code == "MAT 1190CO"
+    three = ch.extract_course("Prerequisites of CST 1204, CST 2403 and CST 3601?", RECORDS)
+    assert three.status == "codes" and three.detail == ["CST 1204", "CST 2403", "CST 3601"]
+    four = ch.extract_course("CST 1204, CST 2403, CST 3601 and CST 3504?", RECORDS)
+    assert four.status == "many" and four.code is None and len(four.detail) == 4
     assert (
         ch.extract_course("What do I need before CST 2412 in Fall 2026?", RECORDS).code
         == "CST 2412"

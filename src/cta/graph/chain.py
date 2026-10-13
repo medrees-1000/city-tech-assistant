@@ -27,6 +27,7 @@ COURSES_DIR = ROOT / "data" / "processed" / "courses"
 PROMPTS = Path(__file__).resolve().parent / "prompts"
 MAX_DEPTH = 4
 MAX_COURSES = 15  # courses with a catalog record; no-record codes are listed but not counted
+MAX_ASKED = 3  # a question may name up to three courses; more falls through to retrieval
 SCOPE = "the four departments (CST, Math, EET, Dental Hygiene)"
 
 CODE = re.compile(r"\b([A-Za-z]{2,5}) ?(\d{3,4})([A-Za-z]{0,2})\b(?!-?\s*level)", re.I)
@@ -73,6 +74,9 @@ class Chain:
     nodes: list[Node]
     unexpanded: list[dict] = field(default_factory=list)  # level-limit nodes that name codes
     dropped: list[dict] = field(default_factory=list)  # codes named but not added (the course cap)
+    asked: list[str] = field(default_factory=list)  # every asked course, in the order asked
+    owner: dict[str, str] = field(default_factory=dict)  # code -> the asked course that shows it
+    shared: dict[str, list[str]] = field(default_factory=dict)  # asked -> codes shown above it
 
     @property
     def truncated(self) -> bool:
@@ -132,18 +136,29 @@ def parse_text(text: str | None, style: str = "text", own: str | None = None) ->
 def walk(
     root: str, records: dict[str, dict], max_depth=MAX_DEPTH, max_courses=MAX_COURSES
 ) -> Chain:
-    """The chain of `root` (which must have a record), breadth-first. A course at the depth limit is
-    shown but not expanded; once `max_courses` records are in, further named codes with a record are
-    not added. Both are recorded exactly."""
+    """The chain of one course: `walk_many` with a single asked course."""
+    return walk_many([root], records, max_depth, max_courses)
+
+
+def walk_many(
+    roots: list[str], records: dict[str, dict], max_depth=MAX_DEPTH, max_courses=MAX_COURSES
+) -> Chain:
+    """The chain of each asked course, one after the other, breadth-first, with one visited set and
+    one cap. A course reached again is not added again: it stays in the section of the first asked
+    course that reached it (`owner`); later asked courses list it in `shared`. An asked course that
+    an earlier section already shows is not walked again. The cap leaves room for the asked courses
+    still to come. A course at the depth limit is shown but not expanded; both limits are recorded
+    exactly."""
     nodes: dict[str, Node] = {}
-    chain = Chain(root, [])
+    chain = Chain(roots[0], [], asked=list(roots), shared={r: [] for r in roots})
     queue: deque[str] = deque()
 
-    def add(code: str, level: int, via: str | None) -> None:
+    def add(code: str, level: int, via: str | None, owner: str) -> None:
         record = records.get(code)
         style = record.get("prereq_style", "text") if record else "text"
         parsed = parse_text(record["prerequisite_text"], style, code) if record else Parsed()
         nodes[code] = Node(code, level, record, parsed, via)
+        chain.owner[code] = owner
         if record:
             if level < max_depth:
                 queue.append(code)
@@ -157,19 +172,34 @@ def walk(
                     }
                 )
 
-    add(root, 0, None)
-    while queue:
-        node = nodes[queue.popleft()]
-        for code in node.parsed.codes:
-            if code in nodes:
-                continue
-            if code in records and sum(n.record is not None for n in nodes.values()) >= max_courses:
-                if not any(d["code"] == code for d in chain.dropped):
-                    chain.dropped.append(
-                        {"code": code, "named_by": node.code, "reason": "course cap"}
-                    )
-                continue
-            add(code, node.level + 1, node.code)
+    for i, root in enumerate(roots):
+        if root in nodes:
+            continue  # shown in an earlier section
+        add(root, 0, None, root)
+        while queue:
+            node = nodes[queue.popleft()]
+            for code in node.parsed.codes:
+                if code in nodes:
+                    if chain.owner[code] != root and code in records:
+                        if code not in chain.shared[root]:
+                            chain.shared[root].append(code)
+                        cut = [u for u in chain.unexpanded if u["code"] == code]
+                        if cut and node.level + 1 < max_depth:  # an earlier section stopped here,
+                            chain.unexpanded.remove(cut[0])  # this one is nearer: go on from it
+                            nodes[code].level = node.level + 1
+                            queue.append(code)
+                    continue
+                waiting = [
+                    r for r in roots[i + 1 :] if r in records and r not in nodes and r != code
+                ]
+                held = sum(n.record is not None for n in nodes.values()) + len(waiting)
+                if code in records and held >= max_courses:
+                    if not any(d["code"] == code for d in chain.dropped):
+                        chain.dropped.append(
+                            {"code": code, "named_by": node.code, "reason": "course cap"}
+                        )
+                    continue
+                add(code, node.level + 1, node.code, root)
     chain.nodes = list(nodes.values())
     return chain
 
@@ -189,11 +219,23 @@ def chain_to_dict(chain: Chain) -> dict:
             "or_wording": p.or_branch,
             "named_by": n.via,
         })  # fmt: skip
-    return {
+    result = {
         "root": chain.root, "courses": courses, "course_count": chain.course_count,
         "no_record": [n.code for n in chain.nodes if n.record is None],
         "unexpanded": chain.unexpanded, "dropped": chain.dropped, "truncated": chain.truncated,
     }  # fmt: skip
+    if len(chain.asked) > 1:  # several asked courses: one section each, in the order asked
+        has_record = {c["code"] for c in courses}
+        result["asked"] = chain.asked
+        result["sections"] = [
+            {
+                "root": r, "found": r in has_record, "already_shown": chain.owner.get(r) != r,
+                "courses": [c["code"] for c in courses if chain.owner[c["code"]] == r],
+                "shared": chain.shared[r],
+            }
+            for r in chain.asked
+        ]  # fmt: skip
+    return result
 
 
 # ---- records and the tool ----
@@ -228,12 +270,22 @@ def prerequisite_chain(course_code: str) -> dict:
     return {"found": True, **chain_to_dict(walk(code, records))}
 
 
+def combined_chain(course_codes: list[str]) -> dict:
+    """The tool's answer for 2 or 3 asked courses: one combined walk (`walk_many`). {"found": false}
+    only when none of the codes has a record; a code without one keeps its own section."""
+    records = load_records()
+    codes = list(dict.fromkeys(normalise_code(c) for c in course_codes))
+    if not any(c in records for c in codes):
+        return {"found": False, "code": ", ".join(codes)}
+    return {"found": True, **chain_to_dict(walk_many(codes, records))}
+
+
 # ---- extraction ----
 
 
 @dataclass
 class Extraction:
-    status: str  # code | title | many | ambiguous | none
+    status: str  # code | codes (2 or 3) | title | many (more than 3) | ambiguous | none
     code: str | None = None
     detail: list[str] = field(default_factory=list)
 
@@ -265,11 +317,14 @@ def title_matches(question: str, records: dict[str, dict]) -> dict[str, list[str
 
 
 def extract_course(question: str, records: dict[str, dict]) -> Extraction:
-    """Exactly one distinct course code, or no code and exactly one unique exact course title."""
+    """One distinct course code, or two or three (the first is `code`, all are `detail`), or no code
+    and exactly one unique exact course title. Titles are never mixed with codes."""
     codes = question_codes(question)
     if len(codes) == 1:
         return Extraction("code", codes[0])
-    if len(codes) > 1:
+    if 1 < len(codes) <= MAX_ASKED:
+        return Extraction("codes", codes[0], codes)
+    if len(codes) > MAX_ASKED:
         return Extraction("many", None, codes)
     hits = title_matches(question, records)
     if len(hits) == 1:
