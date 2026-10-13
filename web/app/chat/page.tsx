@@ -10,7 +10,7 @@ import { AssistantMessage } from "../components/AssistantMessage";
 import { Composer } from "../components/Composer";
 import { PrivacyNotice } from "../components/PrivacyNotice";
 
-// Questions that exist in the current data: a calendar row, a prerequisite chain, a payment
+// Questions that exist in the current data: a calendar row, a prerequisite list, a payment
 // deadline, a department rule.
 const EXAMPLES = [
   "When is the last day to withdraw from a class in Fall 2026?",

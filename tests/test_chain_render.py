@@ -151,9 +151,7 @@ def test_truncation_and_no_record_sentences_appear_if_and_only_if_the_walk_repor
         if result["no_record"]:
             no_rec += 1
             assert f"for: {', '.join(result['no_record'])}." in text
-        stops = re.findall(
-            r"The chain stops here: (\S+ \S+) names (.+?), which is not followed", text
-        )
+        stops = re.findall(r"The list stops at (\S+ \S+), which names (.+?); prerequisites", text)
         assert [(a, b) for a, b in stops] == [
             (u["code"], ", ".join(u["names"])) for u in result["unexpanded"]
         ]
@@ -260,7 +258,7 @@ def test_with_code_only_the_classifier_is_called_and_route_sources_and_citations
     assert [s["id"] for s in new.sources] == [s["id"] for s in old.sources]
     assert new.citations == [1, 2, 3, 4] and new.invalid_citations == []
     assert new.router["chain"]["rendered_by"] == "code"
-    assert new.text.startswith("Here is the prerequisite chain for CST 3504, from the catalog:")
+    assert new.text.startswith("Here are the prerequisites for CST 3504, from the catalog:")
     assert (
         new.chat_cost == old.chat_cost - old.router["chain"].get("x", 0)
         or new.chat_cost < old.chat_cost
@@ -288,3 +286,29 @@ def test_the_chain_with_no_record_and_the_fall_through_do_not_use_the_renderer(m
 def test_the_cost_of_a_code_rendered_chain_is_only_the_classifier(monkeypatch):
     out = route(CFG_CODE, Client("prerequisite"), monkeypatch)
     assert out.chat_cost == out.router["classify"]["cost"] and out.prompt_tokens == 100
+
+
+# ---- the word "chain" is internal: no student sees it (C1 of the round of 2026-10-13) ----
+
+PAGE_STRINGS = [
+    ROOT / "web" / "lib" / "howfound.ts",
+    ROOT / "web" / "app" / "chat" / "page.tsx",
+    ROOT / "web" / "lib" / "testdata" / "chain_cst3504.md",
+    ROOT / "web" / "lib" / "testdata" / "chain_mat2440.md",
+]
+
+
+def test_no_course_answer_shows_the_word_chain_or_level():
+    for code in CODES:
+        text = rendered(code)[1]
+        own_words = re.sub(r'"[^"]*"', "", text)  # the catalog's own text is quoted verbatim
+        assert "chain" not in text.lower() and "level" not in own_words.lower(), code
+
+
+def test_page_strings_do_not_show_the_word_chain():
+    import re as _re
+
+    for path in PAGE_STRINGS:
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            code = _re.sub(r"[A-Za-z_.]*\bchain[A-Za-z_]*|chain_|\"chain\"|'chain'", "", line)
+            assert "chain" not in code.lower(), f"{path.name}:{number}: {line}"

@@ -27,7 +27,7 @@ const cite = (n: number, title: string): Citation => ({
 test("the route is said in words", () => {
   assert.equal(routeWords(response({ route: "calendar" })), "Looked up in the verified calendar");
   assert.equal(routeWords(response({ route: "calendar", abstained: true })), "Checked the verified calendar");
-  assert.equal(routeWords(response({ route: "chain" })), "Walked the prerequisite chain");
+  assert.equal(routeWords(response({ route: "chain" })), "Looked up the prerequisites in the catalog");
   assert.equal(routeWords(response({ route: "chain", abstained: true })), "Looked for the course in the prerequisite data");
   assert.equal(routeWords(response({ route: "retrieve" })), "Searched City Tech pages and documents");
 });
@@ -186,7 +186,7 @@ test("describe: calendar and chain answers have their own section and no source 
   const cal = describe(response({ route: "calendar", how_found: howFound({ calendar: { term: "Fall 2026", term_status: "explicit" } }) }));
   assert.ok(cal.sections.some((s) => s.title === "Calendar") && !cal.sections.some((s) => s.title.startsWith("Sources")));
   const ch = describe(response({ route: "chain", how_found: howFound({ chain: { code: "CST 3504" } }) }));
-  assert.ok(ch.sections.some((s) => s.title === "Prerequisite chain"));
+  assert.ok(ch.sections.some((s) => s.title === "Prerequisites"));
 });
 
 test("describe never invents data: with an empty how_found it shows only route, time and cost", () => {

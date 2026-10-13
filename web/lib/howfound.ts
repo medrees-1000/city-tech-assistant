@@ -17,7 +17,7 @@ export function routeWords(data: AskResponse): string {
     return data.abstained ? "Checked the verified calendar" : "Looked up in the verified calendar";
   }
   if (data.route === "chain") {
-    return data.abstained ? "Looked for the course in the prerequisite data" : "Walked the prerequisite chain";
+    return data.abstained ? "Looked for the course in the prerequisite data" : "Looked up the prerequisites in the catalog";
   }
   return "Searched City Tech pages and documents";
 }
@@ -199,7 +199,7 @@ export function describe(data: AskResponse): View {
     },
     { title: "Confidence", lines: !data.abstained && data.route === "retrieve" ? [weakNote(hf)].filter((x): x is string => x !== null) : [] },
     { title: "Calendar", lines: calendarLines(data) },
-    { title: "Prerequisite chain", lines: chainLines(data) },
+    { title: "Prerequisites", lines: chainLines(data) },
     { title: "Time", lines: stepLines(hf) },
     { title: "Tokens and cost", lines: usageLines(hf) },
   ];

@@ -1,4 +1,4 @@
-Here is the prerequisite chain for MAT 2440, from the catalog:
+Here are the prerequisites for MAT 2440, from the catalog:
 
 ### MAT 2440 — Data Structures and Algorithms [1]
 **Courses named:** MAT 1375 (Precalculus), CST 1201 (Programming Fundamentals), CST 2403 (Intro C++ Programming I), MAT 1630 (Intro to Computational Science), MTEC 1202 (no catalog record)

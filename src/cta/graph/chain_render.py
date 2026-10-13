@@ -56,7 +56,7 @@ def block(number: int, course: dict, titles: dict[str, str]) -> str:
 def render(result: dict, records: dict[str, dict]) -> str:
     """The answer for a found chain (the dict `prerequisite_chain` returns)."""
     titles = {code: r["title"].strip() for code, r in records.items()}
-    parts = [f"Here is the prerequisite chain for {result['root']}, from the catalog:"]
+    parts = [f"Here are the prerequisites for {result['root']}, from the catalog:"]
     parts += [block(n, c, titles) for n, c in enumerate(result["courses"], 1)]
     closing = []
     if result["no_record"]:
@@ -65,12 +65,12 @@ def render(result: dict, records: dict[str, dict]) -> str:
         )
     for u in result["unexpanded"]:
         closing.append(
-            f"The chain stops here: {u['code']} names {', '.join(u['names'])}, "
-            f"which is not followed further ({u['reason']})."
+            f"The list stops at {u['code']}, which names {', '.join(u['names'])}; "
+            "prerequisites of the last courses are not shown."
         )
     for d in result["dropped"]:
         closing.append(
-            f"{d['code']}, named by {d['named_by']}, is not shown because the chain is limited "
+            f"{d['code']}, named by {d['named_by']}, is not shown because the list is limited "
             f"to {MAX_COURSES} courses."
         )
     if closing:

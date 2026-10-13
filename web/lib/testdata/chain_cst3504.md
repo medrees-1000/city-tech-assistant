@@ -1,4 +1,4 @@
-Here is the prerequisite chain for CST 3504, from the catalog:
+Here are the prerequisites for CST 3504, from the catalog:
 
 ### CST 3504 — Database Design [1]
 **Courses named:** CST 1204 (Database Systems Fundamentals)
