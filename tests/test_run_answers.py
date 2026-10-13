@@ -386,7 +386,7 @@ def test_new_questions_are_classified_as_intended():
     assert unscored == {"q31", "q32", "q33", "q34", "q35", "q36", "q37", "q38", "q44", "q45", "q46"}
     # the 14 calendar questions of step 4a-1 are never retrieval-scored, so the 30 scored dev
     # questions (and the baseline-dev-60 retrieval numbers) did not change when they were added
-    new_calendar = [q for q in qs if "calendar" in qs[q].get("tags", [])]
+    new_calendar = [q for q in qs if "calendar" in qs[q].get("tags", []) and int(q[1:]) <= 87]
     assert len(new_calendar) == 14 and not any(scorable_gold(qs[q]) for q in new_calendar)
     kinds = {q: ra.gold_kind(qs[q]) for q in new_calendar}
     assert {q: k for q, k in kinds.items() if k != "calendar_only"} == {
@@ -399,7 +399,8 @@ def test_chain_tags_are_exactly_the_chain_questions():
     qs = real_questions()
     tagged = sorted(q for q, row in qs.items() if "chain" in row.get("tags", []))
     # the five of Phase 3 step 0, then q76 to q86 of step 4b-1 (q87 is the non-chain control)
-    assert tagged == ["q20", "q22", "q39", "q40", "q41"] + [f"q{n}" for n in range(76, 87)]
+    assert tagged == ["q20", "q22", "q39", "q40", "q41"] + [f"q{n}" for n in range(76, 87)] + [
+        "q93", "q94"]  # fmt: skip
 
 
 def test_chain_row_is_separate_and_all_row_is_unchanged():

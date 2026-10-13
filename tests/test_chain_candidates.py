@@ -360,4 +360,8 @@ def test_the_74_rows_before_the_merge_are_unchanged_and_the_12_are_appended():
         pytest.skip("history not available")
     before = old.stdout.splitlines()
     now = mcc.QUESTIONS.read_text(encoding="utf-8").splitlines()
-    assert len(before) == 74 and now[:74] == before and len(now) == 86
+    # q40's gold was corrected later (source wins, docs/decisions.md); q88 to q95 came after
+    q40 = next(i for i, line in enumerate(before) if line.startswith('{"id":"q40"'))
+    assert len(before) == 74 and len(now) == 94
+    assert now[:q40] == before[:q40] and now[q40 + 1 : 74] == before[q40 + 1 :]
+    assert json.loads(now[q40])["gold_sources"] == json.loads(before[q40])["gold_sources"]

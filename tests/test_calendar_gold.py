@@ -59,11 +59,13 @@ def test_the_real_file_uses_the_field_only_where_the_owner_decided():
     rows = {r["id"]: r for r in load_questions()}
     assert all(row_problems(r) == [] for r in rows.values())
     with_field = {i for i, r in rows.items() if "calendar_acceptable_extra" in r}
-    assert with_field == {"q33", "q63"}
+    assert with_field == {"q33", "q63", "q95"}
     assert [g["id"] for g in rows["q33"]["gold_sources"]] == ["spring-2027-007"]
     assert rows["q33"]["calendar_acceptable_extra"] == ["spring-2027-006"]
     assert [g["id"] for g in rows["q63"]["gold_sources"]] == ["winter-2027-004"]
     assert rows["q63"]["calendar_acceptable_extra"] == ["winter-2027-005"]
+    assert [g["id"] for g in rows["q95"]["gold_sources"]] == ["winter-2027-004", "winter-2027-023"]
+    assert rows["q95"]["calendar_acceptable_extra"] == ["winter-2027-005"]
 
 
 # ---- scoring v1 and v2 ----

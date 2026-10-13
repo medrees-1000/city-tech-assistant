@@ -30,7 +30,10 @@ TEST = ["q62", "q66", "q69", "q72", "q73", "q74"]
 
 
 def calendar_rows():
-    return [q for q in load_questions() if "calendar" in q.get("tags", [])]
+    # q88 and later are the dev questions of the chain layout round (docs/chain-layout-plan.md)
+    return [
+        q for q in load_questions() if "calendar" in q.get("tags", []) and int(q["id"][1:]) <= 87
+    ]
 
 
 def test_the_14_approved_questions_are_merged_with_the_owner_split():
@@ -72,8 +75,8 @@ def test_the_old_baseline_questions_are_all_still_dev_and_unchanged_in_number():
     ids = {r["id"] for r in baseline["per_question"]}
     dev = {q["id"] for q in load_questions() if q["split"] == "dev"}
     assert (
-        len(ids) == 40 and ids <= dev and len(dev - ids) == 15
-    )  # 8 calendar (4a-1) + 7 chain (4b-1)
+        len(ids) == 40 and ids <= dev and len(dev - ids) == 23
+    )  # 8 calendar (4a-1) + 7 chain (4b-1) + 8 of the chain layout round (q88 to q95)
 
 
 # ---- selecting questions, recording the set ----
