@@ -56,3 +56,7 @@ The graph above is unchanged. The calendar node's selector has two versions (`ro
 ## Contact line (step 4c)
 
 After the graph, `Router.answer` calls `cta.graph.contact.add_contact` when `router.contacts` is `on` (default). If the final answer is an abstention it appends one plain-code line, `Contact <name>: <email>, <phone>.`, for the office chosen by the rules in `docs/step4c-plan.md`; the graph itself is unchanged. The route and the office are in `request_logs.router` (`contact_office`).
+
+## Chain answer (chain layout, 2026-10-13)
+With `router.chain_render: "code"` (default since the pre-registered keep rule passed, `docs/chain-layout-results.md`) the chain node writes its answer with `cta.graph.chain_render`: plain code, no model call after the classifier; one block per course ("CODE — Title [n]", "Courses named", "Catalog says" verbatim), fixed sentences for exclusions, unreadable text, codes without a record and a cut chain. A catalog text that holds markup characters makes the renderer raise, and the node then uses the model path (`chain_render: "model"` is also the explicit fallback). The graph itself is unchanged.
+

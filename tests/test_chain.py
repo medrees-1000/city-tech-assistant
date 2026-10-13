@@ -21,6 +21,7 @@ CFG = load_models(
         "CTA_ROUTER_MODE": "on",
         "CTA_ROUTER_CHAIN": "on",
         "CTA_ROUTER_CONTACTS": "off",
+        "CTA_ROUTER_CHAIN_RENDER": "model",  # these tests are about the model-written answer
     }
 )
 OFF = load_models(

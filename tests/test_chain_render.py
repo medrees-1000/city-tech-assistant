@@ -228,6 +228,7 @@ CFG_MODEL = load_models(
         "CTA_ROUTER_MODE": "on",
         "CTA_ROUTER_CHAIN": "on",
         "CTA_ROUTER_CONTACTS": "off",
+        "CTA_ROUTER_CHAIN_RENDER": "model",
     }  # fmt: skip
 )
 
@@ -239,9 +240,11 @@ def route(cfg, client, monkeypatch, question="What are the prerequisites for CST
     return router.answer(question, build.date(2026, 10, 13), log=False)
 
 
-def test_the_switch_defaults_to_model_and_is_validated():
-    assert load_models(env={})["router"]["chain_render"] == "model"
-    assert load_models(env={"CTA_ROUTER_CHAIN_RENDER": "code"})["router"]["chain_render"] == "code"
+def test_the_switch_defaults_to_code_since_the_keep_rule_passed_and_is_validated():
+    assert load_models(env={})["router"]["chain_render"] == "code"
+    assert (
+        load_models(env={"CTA_ROUTER_CHAIN_RENDER": "model"})["router"]["chain_render"] == "model"
+    )
     with pytest.raises(ValueError, match="chain_render"):
         load_models(env={"CTA_ROUTER_CHAIN_RENDER": "both"})
 
