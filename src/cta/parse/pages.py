@@ -138,6 +138,8 @@ def build_contacts(records: list[dict]) -> dict[str, dict]:
             "panels": panel_list(best["contact"]),
             "emails": best["contact"]["emails"],
             "phones": best["contact"]["phones"],
+            "fax": best["contact"]["fax"],
+            "ai_agent_line": best["contact"]["ai_agent_line"],
             "hours": hours_entries(panel_list(best["contact"])),
             "source_pages": best["pages"],
             "fetched_at": max(r["fetched_at"] for r in pages),

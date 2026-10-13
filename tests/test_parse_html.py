@@ -120,6 +120,27 @@ def test_promo_panels_are_dropped():
     assert "Big sale" not in render_markdown(rec)
 
 
+def test_only_phone_lines_are_phones_fax_and_the_ai_agent_line_have_their_own_fields():
+    panel = (
+        '<div class="panel"><div class="panel-heading"><h2>CONTACT US</h2></div>'
+        '<div class="panel-body">'
+        "<p>Room 1</p><p>Office Phone: 718-111-2222</p><p>Phone: 718-333-4444</p>"
+        "<p>Fax: 718-555-6666</p><p>Call or chat 24/7 with our AI agent: 718-777-8888</p>"
+        "<p>x@citytech.cuny.edu</p></div></div>"
+    )
+    contact = inline_page("<h1>A</h1><p>x</p>", panel)["contact"]
+    assert contact["phones"] == ["718-111-2222", "718-333-4444"]
+    assert contact["fax"] == ["718-555-6666"]
+    assert contact["ai_agent_line"] == ["718-777-8888"]
+    text = "\n".join(p["markdown"] for p in contact["panels"])  # the labels stay in the text
+    assert "Fax: 718-555-6666" in text and "with our AI agent: 718-777-8888" in text
+
+
+def test_a_page_without_contact_numbers_has_empty_lists():
+    contact = parse("bursar_refund_policy", "/bursar/refund-policy.aspx")["contact"]
+    assert contact["fax"] == [] and contact["ai_agent_line"] == []
+
+
 def test_faq_accordion_questions_become_sections_and_layout_tables_are_not_tables():
     rec = parse("math_faqs", "/mathematics/faqs.aspx", "department", "MATH-NYT")
     q = next(s for s in rec["sections"] if s["heading"] == "What determines my math placement?")

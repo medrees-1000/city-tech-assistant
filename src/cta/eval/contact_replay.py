@@ -112,7 +112,7 @@ def d6_check() -> bool:
 
     _, found = run_contact_checks(cfg, ROOT, list(load_departments()))
     record = json.loads((ROOT / "data/processed/contacts/EET-NYT.json").read_text(encoding="utf-8"))
-    fax = record["phones"][0]  # the record lists the fax first; the panel prints it after Fax:
+    fax = record["fax"][0]  # the panel prints it after Fax:
     refused = check_entry("EET-NYT", cfg["offices"]["EET-NYT"] | {"phones": [fax]}, record)
     return not found and any("only a fax" in f.message for f in refused)
 

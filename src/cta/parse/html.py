@@ -22,6 +22,13 @@ PLACEHOLDER = re.compile(r"\{\{.*?\}\}")
 SPACED_EMAIL = re.compile(r"([\w.+-]+)\s+(@[\w-]+(?:\.[\w-]+)*\.(?:edu|org|com|gov))", re.I)
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 PHONE = re.compile(r"\b\d{3}[-.]\d{3}[-.]\d{4}\b")
+PHONE_LINE = re.compile(
+    r"^\s*(?:Office\s+)?Phone:", re.IGNORECASE
+)  # "Phone: ..." / "Office Phone: ..."
+FAX_LINE = re.compile(r"^\s*Fax:", re.IGNORECASE)
+AI_AGENT_LINE = re.compile(
+    r"\bAI agent\b", re.IGNORECASE
+)  # "Call or chat 24/7 with our AI agent: ..."
 ROOM = re.compile(r"\([A-Z]{1,3}-\d+\)")  # e.g. Namm Hall 1000 (N-1000)
 
 MAX_QUERY = 100  # a longer query string is dropped from a link (tracking or meeting parameters)
@@ -344,6 +351,13 @@ def to_sections(found: list[Block]) -> list[dict]:
     return sections
 
 
+def numbers_on_lines(text: str, label: re.Pattern) -> list[str]:
+    """The phone numbers printed on the lines of `text` that match `label`."""
+    return sorted(
+        {n for line in text.splitlines() if label.search(line) for n in PHONE.findall(line)}
+    )
+
+
 def contact_block(soup: BeautifulSoup, ctx: Ctx) -> dict:
     """Keep the "CONTACT US" panel and any panel with HOURS in its heading; drop promo panels."""
     panels = []
@@ -368,7 +382,11 @@ def contact_block(soup: BeautifulSoup, ctx: Ctx) -> dict:
         "embed": False,  # the per-owner contact record is used instead; chunking skips this
         "panels": panels,
         "emails": sorted(set(EMAIL.findall(text))),
-        "phones": sorted(set(PHONE.findall(text))),
+        # Only a number on a "Phone:" or "Office Phone:" line is a phone. The fax and the 24/7
+        # AI-agent number keep their own fields; the panel text keeps their labels.
+        "phones": numbers_on_lines(text, PHONE_LINE),
+        "fax": numbers_on_lines(text, FAX_LINE),
+        "ai_agent_line": numbers_on_lines(text, AI_AGENT_LINE),
     }
 
 
@@ -412,7 +430,8 @@ def not_collected(meta: dict, reason: str, title: str | None = None) -> dict:
     return {**meta, "title": title, "status": "not_collected", "reason": reason,
             "index": False, "index_reason": f"not collected: {reason}", "doc_type": None,
             "note": None, "stripped_urls": [], "sections": [],
-            "contact": {"embed": False, "panels": [], "emails": [], "phones": []}, "chair": None,
+            "contact": {"embed": False, "panels": [], "emails": [], "phones": [], "fax": [],
+                        "ai_agent_line": []}, "chair": None,
             "pdf_links": [], "email_repairs": []}  # fmt: skip
 
 

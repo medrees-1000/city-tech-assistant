@@ -63,7 +63,14 @@ def test_build_pages_writes_one_json_per_page_and_uses_manifest_owner(tmp_path):
 
 
 def collected(owner, panels, url, **over):
-    contact = {"embed": False, "panels": panels, "emails": ["a@citytech.cuny.edu"], "phones": []}
+    contact = {
+        "embed": False,
+        "panels": panels,
+        "emails": ["a@citytech.cuny.edu"],
+        "phones": [],
+        "fax": [],
+        "ai_agent_line": [],
+    }
     return {"status": "collected", "owner": owner, "kind": "office", "source_url": url,
             "fetched_at": "2026-10-11T00:00:00+00:00", "contact": contact, **over}  # fmt: skip
 
@@ -266,3 +273,10 @@ def test_page_records_carry_department_scope_term_and_last_updated(tmp_path):
     e["kind"], e["owner"] = "department", "DENT-NYT"
     dept = record_for(e, tmp_path / "raw_root", None, None, RULES)
     assert (dept["department"], dept["scope"]) == ("DENT-NYT", "department")
+
+
+def test_the_contact_record_carries_fax_and_the_ai_agent_line_next_to_phones():
+    contact = {"embed": False, "panels": CONTACT, "emails": [], "phones": ["718-1"],
+               "fax": ["718-2"], "ai_agent_line": ["718-3"]}  # fmt: skip
+    rec = build_contacts([collected("admissions", CONTACT, "u1", contact=contact)])["admissions"]
+    assert (rec["phones"], rec["fax"], rec["ai_agent_line"]) == (["718-1"], ["718-2"], ["718-3"])
