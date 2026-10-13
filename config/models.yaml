@@ -73,6 +73,13 @@ router:
   reasoning_effort: none
   max_output_tokens: 300
 
+# Local demo API (Phase 4, docs/phase4-plan.md). `today`: the date the API gives the pipeline; null = the server
+# date; CTA_API_TODAY=YYYY-MM-DD overrides it (demos, tests). The API listens on 127.0.0.1 only.
+api:
+  today: null
+  max_question_chars: 500
+  max_body_bytes: 4096
+
 max_chunk_tokens: 6000          # the loader fails instead of truncating (embedding limit is 8192)
 
 eval:

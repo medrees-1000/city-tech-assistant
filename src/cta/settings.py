@@ -1,6 +1,7 @@
 """Load config/sources.yaml and the contact email from .env."""
 
 import os
+from datetime import date
 from pathlib import Path
 
 import yaml
@@ -82,6 +83,13 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
     cfg["router"]["selector"] = int(cfg["router"]["selector"])
     if cfg["router"]["mode"] not in ("off", "on"):
         raise ValueError(f"router.mode must be off or on, not {cfg['router']['mode']!r}")
+    if env.get("CTA_API_TODAY", "").strip():
+        cfg["api"]["today"] = env["CTA_API_TODAY"].strip()
+    if cfg["api"]["today"] is not None:
+        try:
+            cfg["api"]["today"] = date.fromisoformat(str(cfg["api"]["today"]))
+        except ValueError:
+            raise ValueError(f"api.today must be YYYY-MM-DD, not {cfg['api']['today']!r}") from None
     if cfg["retrieval"]["dept_filter"] not in ("off", "on"):
         raise ValueError(
             f"retrieval.dept_filter must be off or on, not {cfg['retrieval']['dept_filter']!r}"
