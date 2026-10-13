@@ -1,0 +1,1264 @@
+{
+ "label": "chain-code-run2",
+ "split": "dev",
+ "retrieval": {
+  "n": 9,
+  "recall@1": 0.4103174603174603,
+  "precision@1": 0.7777777777777778,
+  "hit@1": 0.7777777777777778,
+  "recall@3": 0.4936507936507937,
+  "precision@3": 0.4074074074074074,
+  "hit@3": 0.7777777777777778,
+  "recall@5": 0.4936507936507937,
+  "precision@5": 0.24444444444444446,
+  "hit@5": 0.7777777777777778,
+  "recall@10": 0.5253968253968254,
+  "precision@10": 0.14444444444444446,
+  "hit@10": 0.7777777777777778,
+  "mrr": 0.7777777777777778
+ },
+ "retrieval_chain": {
+  "n": 8,
+  "recall@1": 0.3366071428571429,
+  "precision@1": 0.75,
+  "hit@1": 0.75,
+  "recall@3": 0.4303571428571429,
+  "precision@3": 0.41666666666666663,
+  "hit@3": 0.75,
+  "recall@5": 0.4303571428571429,
+  "precision@5": 0.25,
+  "hit@5": 0.75,
+  "recall@10": 0.4660714285714286,
+  "precision@10": 0.15,
+  "hit@10": 0.75,
+  "mrr": 0.75
+ },
+ "excluded_from_retrieval": [
+  "q83"
+ ],
+ "answers": {
+  "correctness": {
+   "n": 9,
+   "correct": 0.7777777777777778,
+   "partial": 0.2222222222222222,
+   "incorrect": 0.0
+  },
+  "faithfulness": {
+   "n": 9,
+   "yes": 0.8888888888888888,
+   "partly": 0.1111111111111111,
+   "no": 0.0
+  },
+  "no_advice_correct": {
+   "n": 0,
+   "correct": null,
+   "partial": null,
+   "incorrect": null
+  },
+  "abstention_accuracy": {
+   "n": 1,
+   "share": 1.0
+  },
+  "wrongly_abstained": {
+   "n": 9,
+   "share": 0.0
+  },
+  "citation_rate": {
+   "n": 9,
+   "share": 1.0,
+   "invalid_citations": 0
+  },
+  "judge_failed": 0,
+  "cost": {
+   "n": 10,
+   "per_request_usd": 0.00469195,
+   "answer_usd": 0.0010755,
+   "judge_usd": 0.045844
+  },
+  "latency_ms": {
+   "n": 10,
+   "total_median": 939.0,
+   "total_p95": 3379,
+   "chat_n": 10,
+   "chat_median": 935.5,
+   "chat_p95": 1994,
+   "retrieval_n": 10,
+   "retrieval_median": 0.0,
+   "retrieval_p95": 1381.8,
+   "query_cache_hits": 1
+  },
+  "chain": {
+   "correctness": {
+    "n": 8,
+    "correct": 0.75,
+    "partial": 0.25,
+    "incorrect": 0.0
+   },
+   "faithfulness": {
+    "n": 8,
+    "yes": 0.875,
+    "partly": 0.125,
+    "no": 0.0
+   },
+   "no_advice_correct": {
+    "n": 0,
+    "correct": null,
+    "partial": null,
+    "incorrect": null
+   },
+   "abstention_accuracy": {
+    "n": 1,
+    "share": 1.0
+   },
+   "wrongly_abstained": {
+    "n": 8,
+    "share": 0.0
+   },
+   "citation_rate": {
+    "n": 8,
+    "share": 1.0,
+    "invalid_citations": 0
+   },
+   "judge_failed": 0,
+   "cost": {
+    "n": 9,
+    "per_request_usd": 0.0046884,
+    "answer_usd": 0.0003776,
+    "judge_usd": 0.041818
+   },
+   "latency_ms": {
+    "n": 9,
+    "total_median": 925,
+    "total_p95": 1231,
+    "chat_n": 9,
+    "chat_median": 922,
+    "chat_p95": 1221,
+    "retrieval_n": 9,
+    "retrieval_median": 0.0,
+    "retrieval_p95": 0.0,
+    "query_cache_hits": 0
+   }
+  }
+ },
+ "failure_labels": {
+  "not supported yet (chained prerequisite)": 2
+ },
+ "per_question": [
+  {
+   "id": "q22",
+   "type": "multi_chunk",
+   "department": "MATH-NYT",
+   "gold_kind": "normal",
+   "tags": [
+    "chain"
+   ],
+   "retrieved": [
+    {
+     "id": "catalog:MAT 2675",
+     "similarity": 0.6482
+    },
+    {
+     "id": "catalog:MAT 1575",
+     "similarity": 0.5731
+    },
+    {
+     "id": "page/MATH-NYT/faqs#10",
+     "similarity": 0.6582
+    },
+    {
+     "id": "catalog:MAT 1475",
+     "similarity": 0.6103
+    },
+    {
+     "id": "catalog:MAT 1375",
+     "similarity": 0.5937
+    },
+    {
+     "id": "catalog:MAT 2630",
+     "similarity": 0.5872
+    },
+    {
+     "id": "page/MATH-NYT/student-resources#7",
+     "similarity": 0.5668
+    },
+    {
+     "id": "page/MATH-NYT/student-resources#1",
+     "similarity": 0.5588
+    },
+    {
+     "id": "catalog:MAT 4050",
+     "similarity": 0.5559
+    },
+    {
+     "id": "catalog:MAT 2680",
+     "similarity": 0.545
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It correctly identifies MAT 1575 and MAT 2580 as the direct requirements for MAT 2675 and accurately lays out their prerequisite paths and placement alternatives.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All course requirements, quoted catalog language, and the clarification that MAT 2675 is an exclusion for MAT 1575 are supported by the provided sources.",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4.21e-05,
+   "judge_cost": 0.006154,
+   "latency_ms": 1231,
+   "chat_ms": 1221,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "chain",
+   "router": {
+    "route": "chain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 326,
+     "completion_tokens": 19,
+     "cost": 4.21e-05,
+     "ms": 1220.6,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "MAT 2675",
+     "detail": [],
+     "walk_ms": 1.035,
+     "course_count": 7,
+     "truncated": true,
+     "unexpanded": [
+      {
+       "code": "MAT 1275CO",
+       "level": 4,
+       "names": [
+        "MAT 1275"
+       ],
+       "reason": "depth limit"
+      }
+     ],
+     "dropped": [],
+     "no_record_codes": [],
+     "source_ids": [
+      "catalog:MAT 2675",
+      "catalog:MAT 1575",
+      "catalog:MAT 2580",
+      "catalog:MAT 1475",
+      "catalog:MAT 1375",
+      "catalog:MAT 1275",
+      "catalog:MAT 1275CO"
+     ],
+     "rendered_by": "code"
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q39",
+   "type": "multi_chunk",
+   "department": "CST-NYT",
+   "gold_kind": "normal",
+   "tags": [
+    "chain"
+   ],
+   "retrieved": [
+    {
+     "id": "catalog:CST 3602",
+     "similarity": 0.7279
+    },
+    {
+     "id": "catalog:CST 3512",
+     "similarity": 0.5606
+    },
+    {
+     "id": "catalog:CST 2402",
+     "similarity": 0.6122
+    },
+    {
+     "id": "catalog:CST 3604",
+     "similarity": 0.5883
+    },
+    {
+     "id": "dept/CST-NYT/program-data-science-bs#8",
+     "similarity": 0.5877
+    },
+    {
+     "id": "dept/CST-NYT/program-data-science-bs#9",
+     "similarity": 0.5809
+    },
+    {
+     "id": "catalog:CST 3613",
+     "similarity": 0.5707
+    },
+    {
+     "id": "catalog:CST 3607",
+     "similarity": 0.5693
+    },
+    {
+     "id": "catalog:CST 3650",
+     "similarity": 0.5675
+    },
+    {
+     "id": "catalog:CST 3508",
+     "similarity": 0.5654
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+   ],
+   "invalid_citations": [],
+   "correctness": "partial",
+   "correctness_reason": "It accurately traces the listed course prerequisites through MAT 1375 but omits the final MAT 1275 and MAT 1275CO prerequisite details and incorrectly attributes stopping there to a depth limit.",
+   "faithfulness": "partly",
+   "faithfulness_reason": "The catalog quotations and course relationships are supported, but the claim that the chain stops because of a \"depth limit\" is unsupported by the provided sources.",
+   "judge_status": "ok",
+   "label": "not supported yet (chained prerequisite)",
+   "label_reason": "needs the prerequisites of the prerequisites (chained prerequisite)",
+   "answer_cost": 4.1899999999999995e-05,
+   "judge_cost": 0.007106,
+   "latency_ms": 953,
+   "chat_ms": 949,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "chain",
+   "router": {
+    "route": "chain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 324,
+     "completion_tokens": 19,
+     "cost": 4.1899999999999995e-05,
+     "ms": 949.1,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "CST 3602",
+     "detail": [],
+     "walk_ms": 0.485,
+     "course_count": 8,
+     "truncated": true,
+     "unexpanded": [
+      {
+       "code": "MAT 1375",
+       "level": 4,
+       "names": [
+        "MAT 1275",
+        "MAT 1275CO"
+       ],
+       "reason": "depth limit"
+      }
+     ],
+     "dropped": [],
+     "no_record_codes": [],
+     "source_ids": [
+      "catalog:CST 3602",
+      "catalog:CST 3512",
+      "catalog:MAT 2572",
+      "catalog:CST 2312",
+      "catalog:MAT 1575",
+      "catalog:CST 1101",
+      "catalog:MAT 1475",
+      "catalog:MAT 1375"
+     ],
+     "rendered_by": "code"
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q40",
+   "type": "multi_chunk",
+   "department": "CST-NYT",
+   "gold_kind": "normal",
+   "tags": [
+    "chain"
+   ],
+   "retrieved": [
+    {
+     "id": "catalog:CST 3613",
+     "similarity": 0.7006
+    },
+    {
+     "id": "catalog:CST 1204",
+     "similarity": 0.6237
+    },
+    {
+     "id": "catalog:CST 1201",
+     "similarity": 0.5999
+    },
+    {
+     "id": "catalog:CST 3615",
+     "similarity": 0.6448
+    },
+    {
+     "id": "catalog:CST 4714",
+     "similarity": 0.6253
+    },
+    {
+     "id": "catalog:CST 3504",
+     "similarity": 0.625
+    },
+    {
+     "id": "catalog:CST 3601",
+     "similarity": 0.6232
+    },
+    {
+     "id": "catalog:CST 4706",
+     "similarity": 0.6151
+    },
+    {
+     "id": "catalog:CST 3608",
+     "similarity": 0.6124
+    },
+    {
+     "id": "catalog:CST 3604",
+     "similarity": 0.6106
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "invalid_citations": [],
+   "correctness": "partial",
+   "correctness_reason": "It correctly gives CST 3613's prerequisites and CST 1201's requirements, but incorrectly states that CST 1204 requires both CST 1100 and CST 1101 rather than only CST 1100 as specified by the gold answer.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "Every claim in the answer, including CST 1204's stated prerequisite of CST 1100 and CST 1101, is supported by the provided numbered sources.",
+   "judge_status": "ok",
+   "label": "not supported yet (chained prerequisite)",
+   "label_reason": "needs the prerequisites of the prerequisites (chained prerequisite)",
+   "answer_cost": 4.33e-05,
+   "judge_cost": 0.005498,
+   "latency_ms": 1034,
+   "chat_ms": 1031,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "chain",
+   "router": {
+    "route": "chain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 338,
+     "completion_tokens": 19,
+     "cost": 4.33e-05,
+     "ms": 1030.7,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "CST 3613",
+     "detail": [],
+     "walk_ms": 0.482,
+     "course_count": 5,
+     "truncated": false,
+     "unexpanded": [],
+     "dropped": [],
+     "no_record_codes": [],
+     "source_ids": [
+      "catalog:CST 3613",
+      "catalog:CST 1201",
+      "catalog:CST 1204",
+      "catalog:CST 1100",
+      "catalog:CST 1101"
+     ],
+     "rendered_by": "code"
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q76",
+   "type": "multi_chunk",
+   "department": "CST-NYT",
+   "gold_kind": "normal",
+   "tags": [
+    "chain"
+   ],
+   "retrieved": [
+    {
+     "id": "page/CST-NYT/tutoring#2",
+     "similarity": 0.6811
+    },
+    {
+     "id": "catalog:CST 2403",
+     "similarity": 0.63
+    },
+    {
+     "id": "catalog:CST 2410",
+     "similarity": 0.6294
+    },
+    {
+     "id": "catalog:CST 2415",
+     "similarity": 0.6291
+    },
+    {
+     "id": "catalog:CST 2406",
+     "similarity": 0.625
+    },
+    {
+     "id": "catalog:CST 2400",
+     "similarity": 0.6223
+    },
+    {
+     "id": "catalog:CST 2405",
+     "similarity": 0.6198
+    },
+    {
+     "id": "catalog:CST 3510",
+     "similarity": 0.6136
+    },
+    {
+     "id": "dept/CST-NYT/program-cybersecurity-bs#9",
+     "similarity": 0.6091
+    },
+    {
+     "id": "catalog:CST 4710",
+     "similarity": 0.6083
+    }
+   ],
+   "first_gold_rank": null,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "The answer accurately gives the complete prerequisite chain for CST 2412, including the alternative/conditional prerequisites and terminal courses.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "Every course title, prerequisite statement, and claim about no listed prerequisite is directly supported by the corresponding numbered catalog source.",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4.24e-05,
+   "judge_cost": 0.007804,
+   "latency_ms": 917,
+   "chat_ms": 912,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "chain",
+   "router": {
+    "route": "chain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 329,
+     "completion_tokens": 19,
+     "cost": 4.24e-05,
+     "ms": 912.2,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "CST 2412",
+     "detail": [],
+     "walk_ms": 1.271,
+     "course_count": 9,
+     "truncated": false,
+     "unexpanded": [],
+     "dropped": [],
+     "no_record_codes": [],
+     "source_ids": [
+      "catalog:CST 2412",
+      "catalog:CST 2402",
+      "catalog:CST 1201",
+      "catalog:CST 1204",
+      "catalog:MAT 1375",
+      "catalog:CST 1100",
+      "catalog:CST 1101",
+      "catalog:MAT 1275",
+      "catalog:MAT 1275CO"
+     ],
+     "rendered_by": "code"
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q77",
+   "type": "multi_chunk",
+   "department": "EET-NYT",
+   "gold_kind": "normal",
+   "tags": [
+    "chain"
+   ],
+   "retrieved": [
+    {
+     "id": "catalog:EET 2150",
+     "similarity": 0.5557
+    },
+    {
+     "id": "catalog:EET 2251",
+     "similarity": 0.6014
+    },
+    {
+     "id": "catalog:EET 2141",
+     "similarity": 0.6001
+    },
+    {
+     "id": "catalog:EET 2271",
+     "similarity": 0.5886
+    },
+    {
+     "id": "catalog:EET 2261",
+     "similarity": 0.5886
+    },
+    {
+     "id": "catalog:EET 2140",
+     "similarity": 0.5874
+    },
+    {
+     "id": "catalog:EET 3122",
+     "similarity": 0.585
+    },
+    {
+     "id": "catalog:EET 1241",
+     "similarity": 0.5755
+    },
+    {
+     "id": "catalog:EET 1102",
+     "similarity": 0.5743
+    },
+    {
+     "id": "catalog:EET 1122",
+     "similarity": 0.5715
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It accurately gives EET 1222 and PHYS 1433 as the direct requirements for EET 2150 and correctly expands the documented prerequisite chain.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All course titles, prerequisite text, and statements about absent catalog records are supported by the provided sources.",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4.1800000000000006e-05,
+   "judge_cost": 0.006916,
+   "latency_ms": 870,
+   "chat_ms": 866,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "chain",
+   "router": {
+    "route": "chain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 323,
+     "completion_tokens": 19,
+     "cost": 4.1800000000000006e-05,
+     "ms": 866.4,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "EET 2150",
+     "detail": [],
+     "walk_ms": 0.598,
+     "course_count": 7,
+     "truncated": false,
+     "unexpanded": [],
+     "dropped": [],
+     "no_record_codes": [
+      "PHYS 1433",
+      "ENG 1101",
+      "PHYS 1434",
+      "PHYS 1442",
+      "PHYS 1441"
+     ],
+     "source_ids": [
+      "catalog:EET 2150",
+      "catalog:EET 1222",
+      "catalog:EET 1122",
+      "catalog:MAT 1375",
+      "catalog:EET 1102",
+      "catalog:MAT 1275",
+      "catalog:MAT 1275CO"
+     ],
+     "rendered_by": "code"
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q79",
+   "type": "lookup",
+   "department": "EET-NYT",
+   "gold_kind": "normal",
+   "tags": [
+    "chain"
+   ],
+   "retrieved": [
+    {
+     "id": "catalog:EET 3572",
+     "similarity": 0.668
+    },
+    {
+     "id": "catalog:EET 2261",
+     "similarity": 0.6769
+    },
+    {
+     "id": "catalog:EET 1102",
+     "similarity": 0.6707
+    },
+    {
+     "id": "catalog:EET 4112",
+     "similarity": 0.6662
+    },
+    {
+     "id": "catalog:EET 2220",
+     "similarity": 0.6633
+    },
+    {
+     "id": "catalog:EET 3102",
+     "similarity": 0.6624
+    },
+    {
+     "id": "catalog:EET 2271",
+     "similarity": 0.6589
+    },
+    {
+     "id": "catalog:EET 3212",
+     "similarity": 0.658
+    },
+    {
+     "id": "catalog:EET 3222",
+     "similarity": 0.6523
+    },
+    {
+     "id": "catalog:EET 3122",
+     "similarity": 0.6518
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It correctly states that EET 3572 has no prerequisite listed in the catalog.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "The source explicitly says, \"Prerequisites: none listed in the catalog.\"",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4.16e-05,
+   "judge_cost": 0.00198,
+   "latency_ms": 1008,
+   "chat_ms": 1002,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "chain",
+   "router": {
+    "route": "chain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 321,
+     "completion_tokens": 19,
+     "cost": 4.16e-05,
+     "ms": 1002.1,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "EET 3572",
+     "detail": [],
+     "walk_ms": 0.352,
+     "course_count": 1,
+     "truncated": false,
+     "unexpanded": [],
+     "dropped": [],
+     "no_record_codes": [],
+     "source_ids": [
+      "catalog:EET 3572"
+     ],
+     "rendered_by": "code"
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q81",
+   "type": "lookup",
+   "department": "CST-NYT",
+   "gold_kind": "normal",
+   "tags": [
+    "chain"
+   ],
+   "retrieved": [
+    {
+     "id": "catalog:CST 3510",
+     "similarity": 0.6581
+    },
+    {
+     "id": "catalog:CST 2403",
+     "similarity": 0.6548
+    },
+    {
+     "id": "catalog:CST 2309",
+     "similarity": 0.6518
+    },
+    {
+     "id": "page/CST-NYT/tutoring#2",
+     "similarity": 0.6511
+    },
+    {
+     "id": "catalog:CST 2400",
+     "similarity": 0.6387
+    },
+    {
+     "id": "catalog:CST 2307",
+     "similarity": 0.6375
+    },
+    {
+     "id": "catalog:CST 2410",
+     "similarity": 0.6336
+    },
+    {
+     "id": "catalog:CST 3610",
+     "similarity": 0.6306
+    },
+    {
+     "id": "catalog:CST 2900",
+     "similarity": 0.6282
+    },
+    {
+     "id": "catalog:CST 2405",
+     "similarity": 0.6246
+    }
+   ],
+   "first_gold_rank": null,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It correctly states that CST 2304 has no prerequisite listed in the catalog.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "The source explicitly says, \"Prerequisites: none listed in the catalog.\"",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4.15e-05,
+   "judge_cost": 0.00196,
+   "latency_ms": 925,
+   "chat_ms": 922,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "chain",
+   "router": {
+    "route": "chain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 320,
+     "completion_tokens": 19,
+     "cost": 4.15e-05,
+     "ms": 922.2,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "CST 2304",
+     "detail": [],
+     "walk_ms": 0.37,
+     "course_count": 1,
+     "truncated": false,
+     "unexpanded": [],
+     "dropped": [],
+     "no_record_codes": [],
+     "source_ids": [
+      "catalog:CST 2304"
+     ],
+     "rendered_by": "code"
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q83",
+   "type": "unanswerable",
+   "department": "CST-NYT",
+   "gold_kind": "abstain",
+   "tags": [
+    "chain"
+   ],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "chain_no_record",
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4.15e-05,
+   "judge_cost": 0.0,
+   "latency_ms": 901,
+   "chat_ms": 898,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "abstain",
+   "router": {
+    "route": "abstain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 320,
+     "completion_tokens": 19,
+     "cost": 4.15e-05,
+     "ms": 897.9,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "CST 4999",
+     "detail": [],
+     "walk_ms": 0.383,
+     "course_count": 0,
+     "truncated": false,
+     "no_record": true
+    },
+    "contact_office": "CST-NYT"
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q85",
+   "type": "multi_chunk",
+   "department": "CST-NYT",
+   "gold_kind": "normal",
+   "tags": [
+    "chain"
+   ],
+   "retrieved": [
+    {
+     "id": "catalog:CST 3504",
+     "similarity": 0.5549
+    },
+    {
+     "id": "catalog:CST 1204",
+     "similarity": 0.419
+    },
+    {
+     "id": "page/CST-NYT/student-resources#2",
+     "similarity": 0.4739
+    },
+    {
+     "id": "catalog:CST 3604",
+     "similarity": 0.4627
+    },
+    {
+     "id": "catalog:CST 4714",
+     "similarity": 0.4457
+    },
+    {
+     "id": "catalog:CST 4706",
+     "similarity": 0.4252
+    },
+    {
+     "id": "catalog:CST 2304",
+     "similarity": 0.4234
+    },
+    {
+     "id": "catalog:MST 1204",
+     "similarity": 0.4221
+    },
+    {
+     "id": "catalog:CST 3613",
+     "similarity": 0.4177
+    },
+    {
+     "id": "catalog:CST 3606",
+     "similarity": 0.4079
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It accurately gives CST 1204 with a C or higher as the direct prerequisite and correctly traces CST 1100 and CST 1101 as its prerequisites, with none listed for either.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "Every course title, prerequisite statement, grade requirement, and claim of no listed prerequisite is directly supported by the cited catalog sources.",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4.15e-05,
+   "judge_cost": 0.0044,
+   "latency_ms": 869,
+   "chat_ms": 856,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "chain",
+   "router": {
+    "route": "chain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 320,
+     "completion_tokens": 19,
+     "cost": 4.15e-05,
+     "ms": 856.3,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "title",
+     "code": "CST 3504",
+     "detail": [
+      "database design"
+     ],
+     "walk_ms": 0.49,
+     "course_count": 4,
+     "truncated": false,
+     "unexpanded": [],
+     "dropped": [],
+     "no_record_codes": [],
+     "source_ids": [
+      "catalog:CST 3504",
+      "catalog:CST 1204",
+      "catalog:CST 1100",
+      "catalog:CST 1101"
+     ],
+     "rendered_by": "code"
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q87",
+   "type": "lookup",
+   "department": "MATH-NYT",
+   "gold_kind": "normal",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "catalog:MAT 2440",
+     "similarity": 0.6383
+    },
+    {
+     "id": "catalog:MAT 4800",
+     "similarity": 0.6134
+    },
+    {
+     "id": "catalog:MAT 1475",
+     "similarity": 0.6085
+    },
+    {
+     "id": "catalog:MAT 4900",
+     "similarity": 0.6054
+    },
+    {
+     "id": "catalog:MAT 2580",
+     "similarity": 0.6016
+    },
+    {
+     "id": "catalog:MAT 1630",
+     "similarity": 0.5887
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-information-systems-aas#9",
+     "similarity": 0.5759
+    },
+    {
+     "id": "catalog:MAT 1575",
+     "similarity": 0.5744
+    },
+    {
+     "id": "catalog:MAT 2540",
+     "similarity": 0.5738
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-information-systems-aas#14",
+     "similarity": 0.565
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It accurately identifies MAT 2440's title, describes its listed topics, and states that it is worth 3 credits.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All claims in the answer are directly supported by source [1].",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0006979,
+   "judge_cost": 0.004026,
+   "latency_ms": 3379,
+   "chat_ms": 1994,
+   "retrieval_ms": 1381.8,
+   "cache_hit": true,
+   "rerank_cost": 0.000493,
+   "rerank_ms": 1347.4,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 325,
+     "completion_tokens": 17,
+     "cost": 4.1e-05,
+     "ms": 900.5,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  }
+ ],
+ "question_ids": [
+  "q22",
+  "q39",
+  "q40",
+  "q76",
+  "q77",
+  "q79",
+  "q81",
+  "q83",
+  "q85",
+  "q87"
+ ],
+ "question_ids_hash": "46f67a2ecb62",
+ "git": {
+  "commit": "a5f8e52",
+  "dirty": true
+ }
+}
