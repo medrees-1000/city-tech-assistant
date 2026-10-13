@@ -65,6 +65,11 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
         )
     if env.get("CTA_ROUTER_MODE", "").strip():
         cfg["router"]["mode"] = env["CTA_ROUTER_MODE"].strip()
+    if env.get("CTA_ROUTER_CHAIN", "").strip():
+        cfg["router"]["chain"] = env["CTA_ROUTER_CHAIN"].strip()
+    cfg["router"].setdefault("chain", "off")
+    if cfg["router"]["chain"] not in ("off", "on"):
+        raise ValueError(f"router.chain must be off or on, not {cfg['router']['chain']!r}")
     if env.get("CTA_ROUTER_SELECTOR", "").strip():
         cfg["router"]["selector"] = env["CTA_ROUTER_SELECTOR"].strip()
     if str(cfg["router"]["selector"]) not in ("1", "2"):

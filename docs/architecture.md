@@ -14,12 +14,16 @@ graph TD;
 	__start__([<p>__start__</p>]):::first
 	classify(classify)
 	calendar(calendar)
+	chain(chain)
 	retrieve(retrieve)
 	__end__([<p>__end__</p>]):::last
 	__start__ --> classify;
 	calendar -.-> __end__;
 	calendar -.-> retrieve;
+	chain -.-> __end__;
+	chain -.-> retrieve;
 	classify -.-> calendar;
+	classify -.-> chain;
 	classify -.-> retrieve;
 	retrieve --> __end__;
 	classDef default fill:#f2f0ff,line-height:1.2
@@ -35,11 +39,12 @@ graph TD;
   2. `select.select_rows` (one model call) chooses row ids from the term's rows (link rows removed). Ids outside the pool are dropped and counted.
   3. `render.render_rows` (plain code, the only code that writes dates) writes the answer from the row fields and numbers the rows `[1]`, `[2]` ... as sources.
   - A valid empty selection for a supported term goes on to **retrieve** (Amendment 1). A failed or malformed selector call, an unsupported term with no usable row, or a selection whose ids are all outside the pool abstains (`ABSTAIN: ...` plus the Registrar contact).
+- **chain** (step 4b, only reachable when `router.chain` is `on`: the classifier then has a third intent, `prerequisite`): `chain.extract_course` takes exactly one course code or one exact unique course title from the question (else the question falls through to **retrieve**, route `chain_fallthrough`); a code with no record in the four departments abstains; otherwise the `prerequisite_chain` LangChain `@tool` walks the catalog prerequisite text (plain, deterministic code: breadth-first, depth at most 4, at most 15 courses, exclusions not followed, UNPARSED text verbatim) and a chain answer step writes the answer from the numbered course records (route `chain`).
 - **retrieve**: the existing pipeline, unchanged (`cta.answer.answer`: vector top 20, rerank, top 5, abstain threshold, answer model).
 
 ## Routes written to `request_logs` (columns `route` and `router`)
 
-`calendar`, `other`, `abstain` (the calendar node refused), `calendar_fallthrough` (the calendar node found no row and retrieve answered). The `router` column holds the classifier and selector tokens, cost and latency, the invalid ids and the weekday mismatches.
+`calendar`, `other`, `abstain` (the calendar node refused, or the chain node found no record), `calendar_fallthrough` (the calendar node found no row and retrieve answered), `chain`, `chain_fallthrough`. The `router` column holds the classifier and selector tokens, cost and latency, the invalid ids and the weekday mismatches.
 
 Steps 4b (prerequisite chain) and 4c (contact lookup) add tool nodes next to `calendar`.
 

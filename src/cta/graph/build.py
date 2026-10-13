@@ -19,14 +19,15 @@ from datetime import date
 
 from langgraph.graph import END, START, StateGraph
 
-from cta.answer import Answer, answer
+from cta.answer import Answer, answer, call_chat, parse_reply
+from cta.graph import chain as chains
 from cta.graph import classify as classifier
 from cta.graph import render, select, terms
 from cta.graph.state import RoutedAnswer, RouterState
 from cta.index.embed import make_client
 from cta.index.search import Search
 from cta.redact import redact
-from cta.settings import ROOT
+from cta.settings import ROOT, cost_usd
 from cta.validate.calendar import load_events_for_indexing
 
 EVENTS_FILE = ROOT / "data" / "calendar" / "calendar_events.json"  # the file load_calendar.py loads
@@ -79,6 +80,8 @@ def make_nodes(d: Deps):
         return {"intent": result.intent, "term_mention": result.term_mention, "classify": info}
 
     def after_classify(state: RouterState) -> str:
+        if state["intent"] == "prerequisite":
+            return "chain"
         return "calendar" if state["intent"] == "calendar" else "retrieve"
 
     def calendar_node(state: RouterState) -> dict:
@@ -133,28 +136,80 @@ def make_nodes(d: Deps):
     def after_calendar(state: RouterState) -> str:
         return "retrieve" if state.get("fallthrough") else END
 
+    def chain_node(state: RouterState) -> dict:
+        records = chains.load_records()
+        found = chains.extract_course(state["question"], records)
+        info = {"extraction": found.status, "code": found.code, "detail": found.detail}
+        if found.status not in ("code", "title"):
+            info["fallthrough"] = True
+            return {"chain": info, "chain_fallthrough": True}
+        started = time.perf_counter()
+        result = chains.prerequisite_chain.invoke({"course_code": found.code})
+        info["walk_ms"] = round((time.perf_counter() - started) * 1000, 3)
+        if not result["found"]:
+            text = chains.no_record_text(result["code"])
+            info |= {"course_count": 0, "truncated": False, "no_record": True}
+            ans = abstain_answer(text, "chain_no_record")
+            return {"chain": info, "answer": ans, "route": "abstain"}
+        sources = chains.sources_of(result, records)
+        messages = chains.build_messages(state["question"], state["today"], result, sources)
+        chat_started = time.perf_counter()
+        response = call_chat(d.client_factory(), d.cfg, messages)
+        chat_ms = round((time.perf_counter() - chat_started) * 1000)
+        text = (response.choices[0].message.content or "").strip()
+        usage = response.usage
+        parsed = parse_reply(text, len(sources))
+        info |= {
+            "course_count": result["course_count"], "truncated": result["truncated"],
+            "unexpanded": result["unexpanded"], "dropped": result["dropped"],
+            "no_record_codes": result["no_record"], "source_ids": [s["id"] for s in sources],
+            "chat_ms": chat_ms, "prompt_tokens": usage.prompt_tokens,
+            "completion_tokens": usage.completion_tokens,
+        }  # fmt: skip
+        spent = cost_usd(d.cfg, d.cfg["chat_model"], usage.prompt_tokens, usage.completion_tokens)
+        ans = RoutedAnswer(
+            text, parsed["abstained"], parsed["reason"], sources, parsed["citations"],
+            parsed["invalid"], Search([], False, 0, 0, 0.0), messages, usage.prompt_tokens,
+            usage.completion_tokens, spent, 0, chat_ms,
+        )  # fmt: skip
+        return {"chain": info, "answer": ans, "route": "chain"}
+
+    def after_chain(state: RouterState) -> str:
+        return "retrieve" if state.get("chain_fallthrough") else END
+
     def retrieve_node(state: RouterState) -> dict:
         found = answer(
             d.conn, state["question"], state["today"], cfg=d.cfg,
             client_factory=d.client_factory, log=False, run_id=state.get("run_id"),
         )  # fmt: skip
-        route = "calendar_fallthrough" if state.get("fallthrough") else "other"
+        if state.get("chain_fallthrough"):
+            route = "chain_fallthrough"
+        else:
+            route = "calendar_fallthrough" if state.get("fallthrough") else "other"
         return {"answer": found, "route": route}
 
-    return classify_node, after_classify, calendar_node, after_calendar, retrieve_node
+    return (
+        classify_node, after_classify, calendar_node, after_calendar, chain_node, after_chain,
+        retrieve_node,
+    )  # fmt: skip
 
 
 def build_graph(d: Deps):
     """The compiled graph. Nodes close over the dependencies; the state carries the question."""
-    classify_node, after_classify, calendar_node, after_calendar, retrieve_node = make_nodes(d)
+    (classify_node, after_classify, calendar_node, after_calendar, chain_node, after_chain,
+     retrieve_node) = make_nodes(d)  # fmt: skip
     graph = StateGraph(RouterState)
     graph.add_node("classify", classify_node)
     graph.add_node("calendar", calendar_node)
+    graph.add_node("chain", chain_node)
     graph.add_node("retrieve", retrieve_node)
     graph.add_edge(START, "classify")
     graph.add_conditional_edges(
-        "classify", after_classify, {"calendar": "calendar", "retrieve": "retrieve"}
+        "classify",
+        after_classify,
+        {"calendar": "calendar", "chain": "chain", "retrieve": "retrieve"},
     )
+    graph.add_conditional_edges("chain", after_chain, {"retrieve": "retrieve", END: END})
     graph.add_conditional_edges("calendar", after_calendar, {"retrieve": "retrieve", END: END})
     graph.add_edge("retrieve", END)
     return graph.compile()
@@ -182,7 +237,9 @@ def routed(found: Answer, state: RouterState, started: float, today: date) -> Ro
     ans.router = {
         "route": state["route"], "intent": state["intent"], "term_mention": state["term_mention"],
         "classify": state["classify"], "fallthrough": bool(state.get("fallthrough")),
+        "chain_fallthrough": bool(state.get("chain_fallthrough")),
         **{k: v for k, v in cal.items()},
+        **({"chain": state["chain"]} if state.get("chain") else {}),
     }  # fmt: skip
     ans.latency_ms = round((time.perf_counter() - started) * 1000)
     return ans

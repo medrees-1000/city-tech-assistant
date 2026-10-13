@@ -626,6 +626,10 @@ def run(
     routing = cfg["router"]["mode"] == "on"
     scoring = int(cfg["eval"].get("calendar_scoring") or (1 if routing else 0))
     extra = question_ids_record(questions) | {"router": cfg["router"]["mode"]}
+    extra |= {
+        "router_chain": cfg["router"].get("chain", "off"),
+        "router_selector": cfg["router"]["selector"],
+    }
     extra |= {"calendar_scoring": scoring} if scoring else {}
     run_id = start_run(conn, label, split, cfg, extra)
     router = Router(conn, cfg, client_factory) if routing else None
@@ -929,6 +933,7 @@ def main(argv: list[str]) -> int:
     p.add_argument("--tag", help="only questions with this tag, for example calendar")
     p.add_argument("--router", choices=("off", "on"), help="override router.mode")
     p.add_argument("--selector", type=int, choices=(1, 2), help="override router.selector")
+    p.add_argument("--chain", choices=("off", "on"), help="override router.chain")
     p.add_argument(
         "--calendar-scoring", type=int, nargs="?", const=1, choices=(1, 2),
         help="score calendar-only gold by the rows stated: 1 exact rows, 2 required rows "
@@ -970,6 +975,8 @@ def main(argv: list[str]) -> int:
         cfg["router"]["mode"] = args.router
     if args.selector:
         cfg["router"]["selector"] = args.selector
+    if args.chain:
+        cfg["router"]["chain"] = args.chain
     if args.calendar_scoring:
         cfg["eval"]["calendar_scoring"] = args.calendar_scoring
     if args.relabel:
