@@ -74,11 +74,14 @@ def required_courses(record: dict) -> list[str]:
 
 def program_row(record: dict) -> str:
     prog = record["program"]
-    maps = "<br>".join(
-        f"{m['label']}: {m['total_credits']}" for m in prog["degree_maps"]
-    ) or "no degree map"
+    maps = (
+        "<br>".join(f"{m['label']}: {m['total_credits']}" for m in prog["degree_maps"])
+        or "no degree map"
+    )
     earn = [
-        x for x in prog["credit_totals"]["overall_requirement_lines"] if x.startswith("Earn at least")
+        x
+        for x in prog["credit_totals"]["overall_requirement_lines"]
+        if x.startswith("Earn at least")
     ]
     courses = "<br>".join(cell(c) for c in required_courses(record)) or "none listed"
     name = f"{record['department']}: {record['title']}"
@@ -129,9 +132,9 @@ def contacts_doc() -> str:
         "",
         "## Office and department contact blocks",
         "",
-        "| Owner | Kind | Room / address | Phone | Email | Hours | Source URL (first of N pages) "
-        "| Result |",
-        "|---|---|---|---|---|---|---|---|",
+        "| Owner | Kind | Room / address | Phone | Fax / AI-agent line | Email | Hours "
+        "| Source URL (first of N pages) | Result |",
+        "|---|---|---|---|---|---|---|---|---|",
     ]
     printed = raw_hours_by_owner()
     for path in sorted((PROCESSED / "contacts").glob("*.json")):
@@ -148,9 +151,22 @@ def contacts_doc() -> str:
             c["kind"],
             place or "-",
             ", ".join(c["phones"]) or "-",
+            ", ".join(
+                [
+                    *(f"{n} (fax)" for n in c["fax"]),
+                    *(f"{n} (24/7 AI agent)" for n in c["ai_agent_line"]),
+                ]
+            )
+            or "-",
             ", ".join(c["emails"]) or "-",
-            "@@" + (hours_text(c["hours"]) if c["hours"] else
-                    "NOT STORED (printed on the page)" if printed.get(c["owner"]) else "none printed"),
+            "@@"
+            + (
+                hours_text(c["hours"])
+                if c["hours"]
+                else "NOT STORED (printed on the page)"
+                if printed.get(c["owner"])
+                else "none printed"
+            ),
             f"{c['source_pages'][0]} ({n} pages)",
             "",
         ]
@@ -176,7 +192,7 @@ def contacts_doc() -> str:
     lines += [
         "",
         "Look at when checking: the financial aid page's PHONE HOURS table prints Tuesday as "
-        "'9:00 PM - 5:00 PM' (probably AM; left as printed). The EET and financial aid blocks also list a fax number (it is in the Phone column).",
+        "'9:00 PM - 5:00 PM' (probably AM; left as printed). The EET and financial aid blocks also print a fax number and the Admissions block prints the 24/7 AI-agent line; they are in the Fax / AI-agent line column, not in Phone (fixed in step 4c-data).",
         "",
         "Note: the PDF 'Chair' blocks are not listed here. They are department office contacts, "
         "are not indexed, and match the department root page blocks (see `docs/validation-log.md`).",
