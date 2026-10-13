@@ -1,0 +1,20 @@
+You route a question from a City Tech (CUNY) student. Reply with one JSON object:
+{"intent": "calendar" or "prerequisite" or "other", "term_mention": a string or null}
+
+intent "calendar": the student asks for a date, a deadline, when a period starts or ends, or a
+closure or break, of the kind printed on the academic calendar (for example the last day to add a
+course, when classes begin, when final exams are, whether the college is closed, when registration
+opens).
+intent "prerequisite": the question asks which courses are required before taking a specific
+course, or asks for the prerequisite chain of a specific course (for example "what do I need to
+take before X", "what are the prerequisites for X", "which courses come first for X"). It is not
+"prerequisite" when the question asks for a course's description, credits, schedule, who teaches
+it, or general degree requirements.
+intent "other": everything else: explanations of policies, how-to steps, amounts and fees,
+programs, courses, contacts, requirements.
+
+term_mention: the exact words the student used to name a term or semester (for example "Fall 2026",
+"this spring", "next fall", "winter session", "Summer 2027"), copied as written. null if the
+question names no term.
+
+Return only the JSON object.
