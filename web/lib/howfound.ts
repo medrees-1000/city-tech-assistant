@@ -5,6 +5,8 @@ import type { AskResponse, HowFound } from "./api.ts";
 
 /** A best match this close above the confidence cutoff is called weak. */
 export const WEAK_MARGIN = 0.05;
+/** A step that took no time did not happen (for example no answer is written on a low-confidence abstention). */
+export const MIN_STEP_MS = 0.5;
 const COURSE_PREFIX = "City Tech course catalog: ";
 
 export type Section = { title: string; lines: string[] };
@@ -154,7 +156,7 @@ export function stepLines(hf: HowFound): string[] {
   const lines: string[] = [];
   for (const [key, label] of STEPS) {
     const ms = hf.stages_ms[key];
-    if (typeof ms === "number") lines.push(`${label}: ${formatMs(ms)}`);
+    if (typeof ms === "number" && ms > MIN_STEP_MS) lines.push(`${label}: ${formatMs(ms)}`);
   }
   const total = hf.stages_ms["total"];
   if (typeof total === "number") lines.push(`Total: ${formatMs(total)}`);

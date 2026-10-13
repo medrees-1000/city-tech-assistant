@@ -193,3 +193,8 @@ test("describe never invents data: with an empty how_found it shows only route, 
   const view = describe(response({ how_found: howFound({ stages_ms: {}, tokens: {}, cost_usd: {} }) }));
   assert.deepEqual(view.sections.map((s) => s.title), ["What the assistant did", "Tokens and cost"]);
 });
+
+test("a step with no time did not happen and is not listed", () => {
+  const lines = stepLines(howFound({ stages_ms: { classify: 900, answer: 0, rerank: 0.2, total: 900 } }));
+  assert.deepEqual(lines, ["Understanding the question: 900 ms", "Total: 900 ms"]);
+});
