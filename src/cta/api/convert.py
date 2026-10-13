@@ -67,7 +67,6 @@ def citation(n: int, chunk: dict, cited: bool, url_map: dict, events: dict) -> s
     return schema.Citation(
         n=n, id=chunk["id"], title=title, url=url, file=file,
         doc_type="calendar" if kind == "calendar" else chunk.get("doc_type"),
-        scope=chunk.get("scope") or ("city_tech" if kind == "calendar" else None),
         term=chunk.get("term") or (chunk.get("terms") or [None])[0],
         last_updated=chunk.get("last_updated"), excerpt=excerpt(chunk.get("text", "")),
         cited=cited,

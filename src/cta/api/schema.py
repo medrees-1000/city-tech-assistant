@@ -16,7 +16,6 @@ class Citation(BaseModel):
     url: str | None  # only where the data proves it (never invented)
     file: str | None
     doc_type: str | None
-    scope: str | None
     term: str | None
     last_updated: str | None
     excerpt: str

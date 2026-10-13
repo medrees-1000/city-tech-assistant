@@ -277,6 +277,7 @@ def test_citations_are_the_numbered_sources_with_a_cited_flag_and_a_short_excerp
         False,
     ]
     assert cites[0]["url"] == PAGE and cites[0]["file"] is None and cites[0]["doc_type"] == "faq"
+    assert "scope" not in cites[0]  # dropped from the contract (owner decision)
     assert cites[0]["title"] == "FAQ > Question" and cites[0]["excerpt"] == "Some text here."
 
 

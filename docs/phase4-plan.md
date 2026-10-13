@@ -32,7 +32,7 @@ Module `src/cta/api/` (`app.py` the FastAPI app and routes, `schema.py` the resp
   "citations": [
     {"n": 1, "id": "winter-2027-0NN", "title": "Winter 2027: End of Winter 2027 session",
      "url": "https://www.citytech.cuny.edu/registrar/docs/winter_2027.pdf", "file": "winter_2027.pdf",
-     "doc_type": "calendar", "scope": "city_tech", "term": "Winter 2027", "last_updated": "2026-09-15",
+     "doc_type": "calendar", "term": "Winter 2027", "last_updated": "2026-09-15",
      "excerpt": "Monday, January 25, 2027: ...", "cited": true}
   ],
   "contact": null,
@@ -46,7 +46,7 @@ Fields:
 - `answer_type`: `"answer"` | `"abstain"` | `"not_announced"` (a calendar row with no date yet; the Registrar line stays in the text) | `"clarify"` (reserved for step 5, never returned now).
 - `route`: `"calendar"` | `"chain"` | `"retrieve"`. The internal route names map as: `calendar` -> calendar; `chain` -> chain; `other`, `calendar_fallthrough`, `chain_fallthrough` -> retrieve; `abstain` -> calendar or chain by which node refused. The internal name is in `how_found.route_detail`.
 - `abstain_reason`: a short code (`below_threshold`, `model`, `calendar_no_row`, `calendar_unsupported_term`, `calendar_selector_failed`, `chain_no_record`), never the model's sentence.
-- `citations`: the numbered sources the answerer was given, in order, so the `[n]` markers in the text map to them; `cited` is true for the numbers the answer actually used. Fields come from the chunk: `title` = `heading_path`, `doc_type`, `scope`, `term`, `last_updated`, `excerpt` (first 300 characters of the chunk text; the data is public, text is not logged). **URLs are never invented**: a web page or contact chunk uses its own `source` URL; a calendar row or PDF chunk gets a public URL only if the page records contain that file as a `pdf_links` entry (e.g. `fall_2026.pdf` is linked from `registrar/academic-calendar.aspx`; a map file name -> URL is built at startup from the processed page records); otherwise `url` is null and `file` carries the file name. Course chunks have no URL in the data (the catalog page URL needs a slug that is not stored), so `url` is null and the title reads "City Tech course catalog: CST 1101 ..."; whether `https://citytech.catalog.cuny.edu/courses/<courseGroupId>` alone resolves is a free GET I can check in step 3 if you want it.
+- `citations`: the numbered sources the answerer was given, in order, so the `[n]` markers in the text map to them; `cited` is true for the numbers the answer actually used. Fields come from the chunk: `title` = `heading_path`, `doc_type`, `term`, `last_updated`, `excerpt` (first 300 characters of the chunk text; the data is public, text is not logged). **URLs are never invented**: a web page or contact chunk uses its own `source` URL; a calendar row or PDF chunk gets a public URL only if the page records contain that file as a `pdf_links` entry (e.g. `fall_2026.pdf` is linked from `registrar/academic-calendar.aspx`; a map file name -> URL is built at startup from the processed page records); otherwise `url` is null and `file` carries the file name. Course chunks have no URL in the data (the catalog page URL needs a slug that is not stored), so `url` is null and the title reads "City Tech course catalog: CST 1101 ..."; whether `https://citytech.catalog.cuny.edu/courses/<courseGroupId>` alone resolves is a free GET I can check in step 3 if you want it.
 - `contact`: present when an office contact was attached (abstentions): `{"office": "registrar", "name": "the Registrar", "emails": [{"address": "...", "for": null}], "phones": ["..."], "note": null}` read from `contacts.yaml` through the same loader (Advisement carries its two labelled emails and the virtual-advisors pointer in `note`). Null otherwise.
 - `how_found`, built once and also the object stored in the log (section 2): `route_detail`, `intent`, `top_vector_similarity` and `abstain_threshold`, `retrieved` (the 20-chunk pool with first-stage rank and similarity, rerank score and final rank, and which five went to the answerer; empty on the calendar and chain routes), `calendar` (term, how it was resolved, selected row ids) or `chain` (code, course count, truncated, courses not expanded), `stages_ms` (classify, select or search, rerank, answer, total), `tokens` (prompt, completion, embedding), `cost_usd` (total and by component), `cache_hits`.
 - `meta`: today's date used, git short hash, model name.
@@ -153,3 +153,19 @@ Node 22.23.2 and npm 10.9.8 are what this machine has (Next 16.4.0 needs Node >=
 4. The contact is shown as a card and removed from the API answer text.
 5. Course citations without a link are fine for the demo; never invent a URL.
 6. Order as in section 8 above (logging after the first web page).
+
+## Owner decisions (2026-10-13, after steps 1 to 3)
+1. `typescript` 5.9.3 and `@types/node` 22.20.5 are accepted.
+2. The API answer text drops the `ABSTAIN:` marker; `citations` is empty on an abstention.
+3. `scope` is dropped from the API contract (the search result columns do not carry it). `last_updated` stays null for web pages.
+4. The contact card belongs in step 4: the API strips the contact sentence, so the page must show the card.
+5. The page says "Unofficial student project, not affiliated with City Tech".
+6. No third-party requests: system fonts, no analytics, no cookies, no localStorage; the conversation is kept in memory only.
+7. Step 4 builds `web/` with exact npm pins and a committed lockfile and nothing else; any extra package: stop and ask. The "how this was found" panel and the logging notice are step 6 (a marked empty place is left for them).
+
+## Running it locally (two terminals)
+```
+uv run python -m cta.api              # terminal 1: API on 127.0.0.1:8000 (needs docker compose up -d, .env)
+npm run dev --prefix web              # terminal 2: page on http://127.0.0.1:3000
+```
+The dev server is bound to 127.0.0.1 (`next dev -H 127.0.0.1`), so the proxy is not reachable from the network. WSL2: opening `http://localhost:3000` in the Windows browser normally works, because WSL2 forwards localhost ports to Windows. If it does not: restart WSL (`wsl --shutdown` from PowerShell) and start both commands again; check that `curl http://127.0.0.1:3000/` works inside WSL; or set `localhostForwarding=true` under `[wsl2]` in `%UserProfile%\.wslconfig`; as a last resort start the dev server with `-H 0.0.0.0` for that one session (this makes the page and the `/api` proxy reachable from your network; go back to the default afterwards).
