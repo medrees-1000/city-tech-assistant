@@ -590,6 +590,8 @@ button:disabled {
 }
 
 .privacy ul {
+  max-height: 35vh; /* the dock is sticky: an opened list must never push the input off a small screen */
+  overflow-y: auto;
   margin: 0 0 0.5rem;
   padding: 0.5rem 1rem 0.5rem 2rem;
   background: var(--surface);

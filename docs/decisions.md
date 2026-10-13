@@ -488,3 +488,7 @@ Search of `data/processed/chunks.jsonl` (every chunk, including the contact chun
 - the contact chunks mention no holds; the other matches are the verb ("holds a master's degree", "hold an integral role").
 
 **Decision:** not clear, so "my hold", "my holds", "a hold on my" and "my account" are added to `account_only` (account questions with no office): the page shows the personal-account message and no card. They count only when the system already abstains.
+
+### Privacy notice: what was checked against the code (Oct 13, 2026)
+
+`web/lib/notice.ts` holds the text; `tests/test_requestlog.py` checks it against the code. Verified true: only emails, phone numbers, SSN-like numbers and 8-digit IDs are removed (`cta.redact`); names are not (tested); `request_logs` has no column for an IP address, user agent, cookie or header (migration 005 and the writer's column list), and neither the API nor the page sets a cookie or uses browser storage; the stored trace holds ids, scores, times, tokens and cost, no chunk text. **Two statements in the plan were not exactly true, and the notice uses the true ones:** (1) rows are deleted after 30 days only when the purge command is run, which is by hand, so the notice says so; (2) uvicorn's access log would print each client address to the terminal (not to the database), so the launcher now starts the server with `access_log=False` and a test checks it.

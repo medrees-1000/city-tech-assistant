@@ -194,7 +194,7 @@ The contact card is shown only when the office clearly applies (named department
 
 **Not stored:** IP address, user agent, cookies, headers, any account or session identifier, anything about the person. The rate limiter (step 7) keeps addresses in memory only.
 
-**Known limit of the redaction:** it is a pattern filter. It cannot recognise a name, an address, or a free-text circumstance ("my mom died", "my GPA is 2.1"), and it misses an ID that is not exactly eight digits or has a space in it. The page therefore tells people not to type personal information, and rows are kept for 30 days.
+**Known limit of the redaction:** it is a pattern filter. It cannot recognise a name, an address, or a free-text circumstance ("my mom died", "my GPA is 2.1"), and it misses an ID that is not exactly eight digits or has a space in it. The page therefore tells people not to type personal information. Rows are meant to be kept for 30 days: `cta.api.purge --days 30` deletes older ones, but it is a command that is run by hand; nothing deletes rows automatically.
 
 **Retention and inspection:** `uv run python -m cta.api.purge --days 30` deletes only `source = 'api'` rows older than that and prints how many (`--dry-run` shows the count first; eval rows are never touched). `uv run python -m cta.api.logs --last 5` prints the last API requests (time, redacted question, route, abstained, office, status, latency, tokens, cost) and the total number and cost; `--since DATE` and `--route R` filter. **A failed log write never fails a request:** the answer is returned, a fixed-text warning ("request log write failed", no question text) is logged, and `GET /health` shows the count as `log_failures`.
 
