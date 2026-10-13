@@ -143,3 +143,14 @@ test("the stylesheet gives headings small sizes", () => {
   const size = css.match(/\.answer-text \.answer-heading\s*\{[^}]*font-size:\s*([\d.]+)rem/);
   assert.ok(size && Number(size[1]) <= 1.25, "headings must not be page-title sized");
 });
+
+test("course-name headings use the body colour, bold, at body size", () => {
+  const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+  const rule = css.match(/\.answer-text h4\.answer-heading\s*\{([^}]*)\}/);
+  assert.ok(rule, "the h4 rule exists");
+  assert.match(rule[1], /color:\s*var\(--text\)/);
+  assert.match(rule[1], /font-weight:\s*(700|bold)/);
+  const body = css.match(/\.answer-text\s*\{[^}]*font-size:\s*([\d.]+)rem/);
+  const size = rule[1].match(/font-size:\s*([\d.]+)rem/);
+  assert.ok(body && size && body[1] === size[1], "same size as the body text");
+});

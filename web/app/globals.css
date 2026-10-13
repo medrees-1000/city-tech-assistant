@@ -403,9 +403,11 @@ button:disabled {
   line-height: 1.35;
 }
 
+/* the course names of a prerequisite answer: body colour, bold, body size */
 .answer-text h4.answer-heading {
-  font-size: 1rem;
-  color: var(--muted);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .answer-text > .answer-heading:first-child {
