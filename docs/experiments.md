@@ -551,3 +551,24 @@ Pre-registration above (`3161c8e`, before any paid call). Three variants (v3 con
 **Decision by the pre-registered rule: keep v3.** No switch was added, `RUBRIC_VERSION` stays 3, nothing stored was re-judged. By the rule, **the faithfulness numbers of steps 3b, 4a and 4a-2 are recorded as unreliable on "the sources do not state X" answers** (caveat lines added under those results; the numbers are not changed).
 **Findings.** The mismatches are the known ones (q03; q22 and q52 on the stored baseline answers). v4-claims fixes q22 (baseline) but adds false "partly" and "no" verdicts (q01, q12, q15 on-run1). v4-reason does not change faithfulness but matches the labels better on correctness (15 and 16 of 16 against 12), which the rule did not ask for and does not act on; if the owner wants it, a pre-registered experiment on correctness would be the way. The earlier v3 row in the `docs/judge-check.md` agreement table compared different answers for 5 of the 8 items (see the pre-registration); the corrected v3 figures are 6 / 8 correctness and 7 / 8 faithfulness on the labeled `baseline-dev` answers.
 **Caveats.** 16 labeled items; 8 labels from a second reader accepted by the owner; nearly all real labels are yes so the planted items carry the detection test; the planted errors are crude; the judge sees only the answer and the sources; v4-reason is stochastic by construction (temperature cannot be set with reasoning on).
+
+## Experiment 4b: prerequisite-chain tool in the router, 2026-10-12 — rules R1 to R6 pass on the corrected measurement; default NOT switched (owner to decide)
+
+**What was run.** `4b-run1..3`: `router.mode on`, selector 2, `router.chain on` (classifier v2 with a third intent "prerequisite", a `chain` node with a LangChain `@tool` walk, a chain answer step), rerank pool_a, calendar scoring 2, all 55 dev questions, rubric v3, same judge; compared with `router2-run1..3` (the 48 dev ids they share). Plan and prompts were committed before any code or paid call (`c173a7a`, `docs/step4b-plan.md`); code `06c022a`; the dry check of the walk against the golds (`docs/step4b-dry-check.md`) reproduced all 12 candidate golds (q39's older gold is unreachable at depth 5, as predicted). Test split not run, read or opened. Tables, every CH and AB question per run: `docs/step4b-chain-results.md`.
+
+| Rule | Result | |
+|---|---|---|
+| R1 q87 not answered by the chain node in 3 of 3 runs; M2 at most 1 other id | q87 never; M2 = {q21} in each run (q42, intent prerequisite, fell through) | pass |
+| R2 M1 misses at most 1 per run | 8 of 8 CH answered by the chain node in every run | pass |
+| R3 M3 at least 0.80 each run and higher than the router2 mean | 0.80, 0.80, 0.80 (q39 not covered, predicted); on q39 and q40: 4b 0.50 against router2 0.00 | pass |
+| R4 calendar-only 12 of 13 each run, 0 wrong rows, no new calendar misroute | 13, 13, 13 of 13; 0 wrong rows; misroutes q09 q13 q30 only | pass (see the measurement note) |
+| R5 mean M5 correct share not below the router2 mean minus 0.03 | 0.744 (0.692 to 0.808) against 0.679 | pass |
+| R6 q83 abstains 3 of 3 | abstained, route abstain, in all three runs | pass |
+
+**Verdict by the pre-registered rule, on the corrected measurement: KEEP. Not applied.** A first computation of the report counted q83 as a calendar misroute (the route name `abstain` is shared by the calendar node and the chain node's no-record abstain) and so showed R4 as FAIL and the verdict as REJECT; the helper was corrected to the classifier's intent after seeing results (`docs/step4b-chain-results.md`, "Measurement note"). Since that fix was made after the numbers were visible, `router.chain` stays `"off"` and the owner decides whether to switch it. The switch would be a one-line change in `config/models.yaml`.
+
+**Other findings.** Judged correctness on the 48 shared dev ids rose from 0.679 to 0.744 (faithfulness yes 0.949 to 0.974; abstention, citations unchanged), driven by the chain questions q22 (correct in all runs) and the new ones; q39 and q40 stay partial. The chain route answers in a median of about 3.3 s (p95 3.5 to 5.1 s), the classifier costs $0.000041 per request (router2: $0.000031), the chain answer step about $0.0003 per question; three runs cost $0.6092 of the $2.00 allowance.
+
+> **Caveat (as in earlier steps; numbers unchanged):** the faithfulness verdicts are unreliable on answers that say "the sources do not state X" (`docs/step4-judge-results.md`); read faithfulness differences of one or two questions as noise.
+
+**Caveats.** Dev only; 8 CH questions, q87 as the only clear non-chain control among prerequisite-looking questions (q21 and q42 are untagged prerequisite questions); the same model classifies and answers; three runs; the golds follow the same rule as the walk (checked against the raw JSON), so M3 mostly shows that the walk delivers its own chain to the answerer; q39 shows the depth limit of 4 truncating a real chain.
