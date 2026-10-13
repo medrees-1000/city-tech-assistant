@@ -1,9 +1,10 @@
 """Run every automatic check of docs/data-validation.md and print one table.
 
 Run: uv run python -m cta.validate
-Areas: courses, pages, PDFs, departments, metadata, calendar, eval. Each area checks the records on
-disk (what would be indexed) against their sources. A missing input (for example a PDF that is
-not committed) is reported as SKIPPED, never as a pass. The exit code is 1 if any check fails.
+Areas: courses, pages, PDFs, departments, metadata, calendar, entities, eval, contacts. Each
+area checks the records on disk (what would be indexed) against their sources. A missing input
+(for example a PDF that is not committed) is reported as SKIPPED, never as a pass. The exit
+code is 1 if any check fails.
 """
 
 import json
@@ -184,9 +185,26 @@ def check_calendar() -> Area:
     return area
 
 
+def check_contacts() -> Area:
+    import yaml
+
+    from cta.index.departments import load_departments
+    from cta.validate.contacts import run_contact_checks
+
+    area = Area("contacts")
+    path = ROOT / "config" / "contacts.yaml"
+    if not path.exists() or not (PROCESSED / "contacts").exists():
+        area.skipped = "config/contacts.yaml or the contact records are missing"
+        return area
+    cfg = yaml.safe_load(path.read_text(encoding="utf-8"))
+    area.checked, area.findings = run_contact_checks(cfg, ROOT, list(load_departments()))
+    area.checked = f"{area.checked} entries"
+    return area
+
+
 AREAS = [
     check_courses, check_pages, check_pdfs, check_departments, check_metadata, check_calendar,
-    check_entities, check_eval,
+    check_entities, check_eval, check_contacts,
 ]  # fmt: skip
 
 

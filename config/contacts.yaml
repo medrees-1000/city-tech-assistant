@@ -1,0 +1,112 @@
+# Office and department contacts that are appended to an abstention (Phase 3, step 4c).
+# Every value is copied from data/processed (the contact record of the owner, or for Special
+# Circumstances the flyer record). `uv run python -m cta.validate` (area "contacts") checks that
+# each email and phone appears there, that each phone sits on a "Phone:" or "Office Phone:" line
+# (never a fax or the 24/7 AI-agent line), and that source page and fetched_at match the record.
+# Printed: email and phone only. `room` and `hours` are stored, never printed (owner decision).
+#
+# Derived with the dev abstentions in view; the test split at the final milestone is the real check
+# of the office table, the cues and the chunk map (docs/step4c-plan.md).
+
+offices:
+  registrar:
+    name: the Registrar
+    emails: [registrar@citytech.cuny.edu]
+    phones: [718-260-5800]
+    room: Namm Hall, Room NG-15
+    source: data/processed/contacts/registrar.json
+    page: https://www.citytech.cuny.edu/registrar/academic-calendar.aspx
+    fetched_at: "2026-10-11T16:49:37+00:00"
+  advisement:
+    name: Advisement
+    emails:
+      - {address: Advisement4u@citytech.cuny.edu, for: prospective and new students}
+      - {address: transferadvisement@citytech.cuny.edu, for: transfer students}
+    phones: []   # none in the data
+    also: Continuing students can find their department's advisor at https://www.citytech.cuny.edu/advisement/virtual-advisors.aspx
+    room: 300 Jay Street
+    source: data/processed/contacts/advisement.json
+    page: https://www.citytech.cuny.edu/advisement/six-steps.aspx
+    fetched_at: "2026-10-11T17:12:33+00:00"
+  bursar:
+    name: the Bursar
+    emails: [bursar@citytech.cuny.edu]
+    phones: []   # none in the data
+    room: Namm Hall, Room NG-06
+    hours: Monday - Friday 9:30 AM - 4:00 PM; Saturday - Sunday closed
+    source: data/processed/contacts/bursar.json
+    page: https://www.citytech.cuny.edu/bursar/payment-deadlines.aspx
+    fetched_at: "2026-10-11T16:49:46+00:00"
+  financial-aid:
+    name: the Financial Aid office
+    emails: [financialaid@citytech.cuny.edu]
+    phones: [718-260-5700]   # 718-254-8525 is printed as Fax: and is not used
+    room: Namm Hall, Room NG-13
+    source: data/processed/contacts/financial-aid.json
+    page: https://www.citytech.cuny.edu/financial-aid/financial-payment-calendar.aspx
+    fetched_at: "2026-10-11T16:49:50+00:00"
+  admissions:
+    name: the Admissions office
+    emails: [admissions@citytech.cuny.edu]
+    phones: [718-260-5500]   # 718-682-7179 is the 24/7 AI-agent line and is not used
+    room: Namm Hall, Room NG-17
+    source: data/processed/contacts/admissions.json
+    page: https://www.citytech.cuny.edu/admissions/dates-deadlines.aspx
+    fetched_at: "2026-10-11T16:49:53+00:00"
+  special-circumstances:   # role only, no personal name (owner decision); aid years 2025-26 and 2026-27
+    name: the Financial Aid Professional Judgment / Special Circumstances Coordinator
+    emails: [finaidspecialcircumstances@citytech.cuny.edu]
+    phones: [718-260-5714]
+    source: data/processed/pdfs/special-circumstances-flyer.json
+    page: data/pdfs/Special_Circumstances_Flyer_2025_2026_2026_2027.pdf
+    fetched_at: "2026-01-16T15:31:41"   # the PDF's file creation date; the record has no fetch time
+  CST-NYT:
+    name: the Computer Systems Technology department
+    emails: [compsystech@citytech.cuny.edu]
+    phones: [718-260-5170]
+    room: Namm Hall 914 (N-914)
+    hours: "Monday - Thursday 9:00 AM - 7:00 PM; Friday 9:00 AM - 5:00 PM"
+    source: data/processed/contacts/CST-NYT.json
+    page: https://www.citytech.cuny.edu/computer-systems/
+    fetched_at: "2026-10-11T16:50:01+00:00"
+  MATH-NYT:
+    name: the Mathematics department
+    emails: [mathematics@citytech.cuny.edu]
+    phones: [718-260-5380]
+    room: Namm Hall 711 (N-711)
+    source: data/processed/contacts/MATH-NYT.json
+    page: https://www.citytech.cuny.edu/mathematics/
+    fetched_at: "2026-10-11T16:50:09+00:00"
+  EET-NYT:
+    name: the Electrical and Telecommunications Engineering Technology department
+    emails: [electricaltelecomm@citytech.cuny.edu]
+    phones: [718-260-5300]   # 718-254-8643 is printed as Fax: and is not used
+    room: Voorhees Hall 733 (V-733)
+    source: data/processed/contacts/EET-NYT.json
+    page: https://www.citytech.cuny.edu/electrical-telecomm/
+    fetched_at: "2026-10-11T16:50:16+00:00"
+  DENT-NYT:
+    name: the Dental Hygiene department
+    emails: [DentalHygiene@citytech.cuny.edu]
+    phones: [718-260-5070]
+    room: Academic Building 701 (A-701)
+    source: data/processed/contacts/DENT-NYT.json
+    page: https://www.citytech.cuny.edu/dental/
+    fetched_at: "2026-10-11T16:50:28+00:00"
+
+# Rule 4: first-person account words (lowercase, whole words) -> office. Written knowing dev q44.
+cues:
+  registrar: ["my gpa", "my grade", "my grades", "my transcript"]
+  bursar: ["my balance", "my bill", "my tuition"]
+  financial-aid: ["my financial aid", "my fafsa", "my tap", "my refund"]
+
+# Rule 5: chunk ids "pdf/<name>#n" -> office. page/, dept/, contact: and catalog: chunks need no entry
+# (their owner or department is in the id or in the chunk).
+pdf_offices:
+  dropping-withdrawing-fall-2026: registrar
+  financial-aid-refund-calendar-2026-2027: financial-aid
+  special-circumstances-flyer: special-circumstances
+  cunyfirst-student-reference: financial-aid
+
+# Rule 7: nothing above applies.
+fallback: registrar
