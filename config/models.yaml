@@ -62,9 +62,9 @@ router:
   # Selector version (step 4a-2): 1 = the pool is the rows of the resolved term; 2 = the rows of all
   # calendars with a stricter prompt. CTA_ROUTER_SELECTOR overrides it.
   selector: 2
-  # Prerequisite-chain tool (Phase 3, step 4b): off | on. With "on" the classifier has a third intent,
+  # Prerequisite-chain tool (Phase 3, step 4b): off | on (on since step 4b-final; CTA_ROUTER_CHAIN=off or --chain off turns it off). With "on" the classifier has a third intent,
   # "prerequisite", answered by a deterministic chain walk. CTA_ROUTER_CHAIN overrides it. Quoted (YAML booleans).
-  chain: "off"
+  chain: "on"
   temperature: 0
   reasoning_effort: none
   max_output_tokens: 300

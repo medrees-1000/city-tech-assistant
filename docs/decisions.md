@@ -436,3 +436,9 @@ Reason for both: owner decision after the 4a run; the 4a result is not changed (
 
 - The chain lookup is a `@tool` from `langchain_core.tools`. Reason: it replaces hand-written tool plumbing (a name, a description from the docstring, an argument schema and one `invoke` call that the graph node uses) and later tools (4c contact lookup) follow the same shape. No new dependency: `langchain-core` is already installed as part of `langgraph==1.2.14`. The walk itself stays plain, deterministic code; no model chooses which courses are in the chain. If a new package were needed, the step stops and asks.
 - Prompts of the route (`src/cta/graph/prompts/classify_v2.txt`, `chain_answer.txt`) are committed with `docs/step4b-plan.md` before any paid call and are not edited after results.
+
+## Prerequisite-chain tool on by default (Oct 12, 2026; step 4b-final)
+
+- `router.chain` is `"on"` in `config/models.yaml`. Why: experiment 4b passed its pre-registered rules R1 to R6 on dev (`docs/experiments.md`): all 8 chain questions answered by the chain node in every run, the control q87 never, calendar questions unchanged (13 of 13, 0 wrong rows), judged correctness on the 48 shared dev ids 0.744 against 0.679, q83 abstains. `--chain off` and `CTA_ROUTER_CHAIN=off` still turn it off (tests pin it off where they need the old classifier).
+- **Disclosed:** the first computation of the report counted q83's chain no-record abstain as a calendar misroute (a shared route name) and showed R4 as FAIL; the measurement helper was corrected to the classifier's intent after the first numbers were seen. The correction and the reason are in `docs/step4b-chain-results.md` ("Measurement note"); the owner decided to switch the default on knowing this.
+- Known limits are listed in `docs/phase3-plan.md` (q39 beyond depth 4, q40 graded partial although every gold source was received).

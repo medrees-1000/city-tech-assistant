@@ -14,8 +14,15 @@ from cta.graph.state import RoutedAnswer
 from cta.index.search import Search
 from cta.settings import load_models
 
-CFG = load_models(env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "on", "CTA_ROUTER_SELECTOR": "1"})
-OFF = load_models(env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "off"})
+CFG = load_models(
+    env={
+        "CTA_RERANK": "off",
+        "CTA_ROUTER_MODE": "on",
+        "CTA_ROUTER_SELECTOR": "1",
+        "CTA_ROUTER_CHAIN": "off",
+    }
+)
+OFF = load_models(env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "off", "CTA_ROUTER_CHAIN": "off"})
 TODAY = date(2026, 10, 11)
 
 
@@ -518,7 +525,14 @@ def test_request_log_row_carries_route_and_router_numbers_and_is_redacted(conn):
 
 # ---- selector v2 (step 4a-2) ----
 
-CFG2 = load_models(env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "on", "CTA_ROUTER_SELECTOR": "2"})
+CFG2 = load_models(
+    env={
+        "CTA_RERANK": "off",
+        "CTA_ROUTER_MODE": "on",
+        "CTA_ROUTER_SELECTOR": "2",
+        "CTA_ROUTER_CHAIN": "off",
+    }
+)
 
 
 def test_selector_switch_values_and_validation():
