@@ -147,3 +147,18 @@ Also on dev, not abstaining now: all other 46 questions must come out byte-ident
 8. q47 and q49: 4c only adds the contact line; their behaviour is for step 5.
 
 Rule order is as written in section 3(c): calendar and chain rules, then a named department or course prefix, then account-word cues, then the chunk-source map, then the Registrar fallback. The rules D1 to D8 and the per-question table above are the pre-registration; they are not adjusted after the replay. If any D fails, `router.contacts` stays `off` and the failure is reported.
+
+
+## v2: a contact only when the office clearly applies (written 2026-10-13, before any v2 code)
+
+**Why.** See `docs/decisions.md`, "Contact policy v2": manual chat tests showed wrong cards on low-similarity abstentions. Rules that add a contact, with the v1 precedence kept for the existing tests: calendar abstention -> Registrar; chain no-record for a code with a prefix of the four departments -> that department; the question names one of the four departments (alias or course prefix) -> that department; an account-word cue -> the office of the table. **Removed:** the chunk-source map, the Registrar fallback, the Advisement default for a chain no-record outside the four departments. No match: no contact, no line in the text.
+
+**Predicted replay (stored dev answers `4b-run1..3`, $0).** Under v1 the nine dev abstentions got: q15 EET (department), q27 CST (department), q28 Math (department), q34 Registrar (calendar), q44 Registrar (account cue), q45 Math (department), q83 CST (chain), q47 Registrar (chunk map), q49 Registrar (chunk map). **Prediction: q47 and q49 lose their line** (their only match was the chunk map); the other seven keep the identical line.
+
+**Rule (all must hold, otherwise v2 stays off and I report):**
+- V1. Every abstention whose v1 office came from a rule that stays (calendar, chain with a department prefix, department, cue) keeps the identical line (same office, same text).
+- V2. Every abstention whose office came only from the chunk map or the fallback loses the line (text unchanged apart from the removed sentence, `contact_office` null); they are listed by id with the old line. Predicted: exactly q47 and q49, in each of the three runs.
+- V3. Non-abstaining answers stay byte-identical; no abstention ends with two contact lines.
+- V4. `uv run python -m cta.validate` passes (contacts area unchanged).
+- V5. Ruff, pytest, typecheck and `next build` pass.
+The per-question table (id, old office and rule, new result) is printed by `cta.eval.contact_replay`.

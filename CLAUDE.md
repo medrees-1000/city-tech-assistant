@@ -237,7 +237,7 @@ tests/
 
 - Cite the source URL or file for every factual claim. Pass today's date to the model so
   "this fall" resolves to the right term.
-- Abstain, with the relevant office's contact, when retrieval confidence is low, the term has no
+- Abstain, with the relevant office's contact when one clearly applies, when retrieval confidence is low, the term has no
   calendar (anything other than Fall 2026, Winter 2027, Spring 2027), the question needs account
   data ("do I have a hold?"), or it asks for sections/professors/seat availability or a department
   outside the four.
