@@ -560,3 +560,21 @@ Restated for the run of this step (the 4b results themselves stay as measured; t
 1. **The "one names the other" pair is CST 3504 and CST 1204 only.** The keep rule above also said CST 3601 names CST 2301, which names CST 1204. That was wrong: the catalog text of CST 2301 is the shorthand `PRE_CST1201_CST1204`, which the walk by rule does not read (UNPARSED, shown verbatim). The test uses CST 3504 / CST 1204 in both orders.
 2. **A later section may go on from a course where an earlier section stopped at the depth limit.** Found by K1 (1) (the union of the single walks): a course that sits at level 4 in the first asked course's chain can be at level 2 in the second's. Without a rule, its prerequisites would be missing from the combined answer although a single question about the second course shows them. The course stays in the first section (shown once); its prerequisites are shown in the section that reached it nearer, and the "list stops" sentence for it is dropped.
 3. **Cross-listed codes.** EET 3672 / CET 3672 / MECH 3672: only EET 3672 is in the four departments' records here, so the other two are "no catalog record" and are never mapped onto it (tested). The never-merged test also runs on CST 1204 and CST 2304, two records that share one description.
+
+## Step 5b: formatting rule for multi-date retrieval answers, pre-registered (Oct 14, 2026; before any 5b paid run, nothing built)
+
+Source: `docs/chain-layout-plan.md`, item 5, scope update of 2026-10-13. One change: a line in the answer prompt asking for a short bullet list, one per line, when the sources give several dates, tiers or amounts, with the sentence before the list kept to one line. It sits behind `answer.format_rule: off | on`, **default `off`** until the rule below passes. Retrieval-route answers only; the calendar and chain routes are written by code and untouched.
+
+**Note on the evidence.** The judge scored the run-on q13 answer ("When is my tuition bill due this fall?") as **correct**. So the judge cannot show an improvement from the layout; the layout part of this change rests on the deterministic checks F1 to F3, which the owner can read, and F4 and F5 only guard against harm.
+
+**Keep rule (all must hold; measured on dev only; test split untouched):**
+- **F1** Over every dev retrieval answer whose cited chunk holds three or more dates in a table or list, the answer has at least three bullet lines that each contain a date, and no date of the source is missing.
+- **F2** No retrieval answer of the other kind (one fact) becomes a list of more than one bullet.
+- **F3** The condition that explains the tiers ("depends on when you first registered") is still in the text.
+- **F4** Judged correctness and faithfulness on the retrieval-route dev questions, mean of three runs, not lower than the baseline arm minus 0.03 (the tolerance of rule R5 of 4b).
+- **F5** Abstention accuracy and wrongly-abstained not worse.
+- **F6** Retrieval metrics unchanged (holds by construction: the prompt acts after retrieval).
+
+**Design of the measurement.** Two arms on the current code: the old prompt (`off`) as the baseline and the new prompt (`on`). The earlier 4b runs are **not** reused as the baseline. Three judged passes per arm, six in all.
+
+**Cost (estimate, stated before any paid call).** About 42 retrieval-route questions at about $0.0046 each, about $0.19 per judged pass, **about $1.2 for the three before and three after passes**. The tool's dry-run figure (an upper bound) is printed before any paid call. The owner approves the spend.
