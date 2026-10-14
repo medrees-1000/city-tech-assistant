@@ -59,6 +59,16 @@ def f2(answer: str) -> tuple[bool, str]:
     return n <= 1, f"{n} bullet lines"
 
 
+def f2_prime(answer: str, before_answers: list[str]) -> tuple[bool, str]:
+    """Round 2 of step 3b. FAILS if the answer has more than one bullet line while every one of
+    the question's before-arm answers had at most one. If any before answer was already a list
+    the check does not apply (passes)."""
+    n = len(bullet_lines(answer))
+    if any(len(bullet_lines(b)) > 1 for b in before_answers):
+        return True, f"{n} bullet lines (a before answer was already a list: not applicable)"
+    return n <= 1, f"{n} bullet lines (no before answer had more than one)"
+
+
 def f3(answer: str, condition: str = CONDITION) -> tuple[bool, str]:
     """The condition that explains the tiers is still stated."""
     return condition.lower() in " ".join(answer.lower().split()), f"condition {condition!r}"

@@ -44,12 +44,12 @@ def test_on_changes_only_the_system_prompt_and_only_by_the_one_rule():
     on = ans_mod.build_messages(CHUNKS, TODAY, "Q?", "on")
     assert on[1] == off[1] and on[0]["role"] == "system"
     assert on[0]["content"] == off[0]["content"] + ans_mod.FORMAT_RULE
-    assert ans_mod.FORMAT_RULE.startswith(
-        "7. When the sources give several dates, tiers or amounts, "
+    assert ans_mod.FORMAT_RULE == (
+        "7. When the sources give several dates or tiers that depend on a condition "
+        "(for example, when you first registered), write a short bullet list, one per line, "
+        "each tier with its date; keep the sentence before the list to one line and state the "
+        "condition in it. Otherwise answer in sentences, as before.\n"
     )
-    assert "short bullet list, one per line, each tier with its date" in ans_mod.FORMAT_RULE
-    assert "keep the sentence before the list to one line" in ans_mod.FORMAT_RULE
-    assert "depends on when you first registered" in ans_mod.FORMAT_RULE
 
 
 def test_the_setting_is_validated_and_the_env_override_works():
@@ -114,6 +114,18 @@ def test_the_trigger_chunk_has_three_dated_rows():
     prose = "A paragraph with August 3 and August 14 and August 27 in prose."
     assert not fc.has_date_rows(prose)
     assert not fc.has_date_rows("- one list item August 3\n- another without a date")
+
+
+def test_f2_prime_fails_only_where_every_before_answer_was_not_a_list():
+    one_fact = "The deadline is October 5, 2026. [1]"
+    listed = "- first [1]\n- second [1]"
+    assert fc.f2_prime(one_fact, [one_fact])[0]
+    assert not fc.f2_prime(listed, [one_fact, one_fact, one_fact])[0]
+    assert fc.f2_prime("- only one [1]", [one_fact])[0]
+    # one before answer was already a list: a list now is not a new failure
+    assert fc.f2_prime(listed, [one_fact, listed, one_fact])[0]
+    q13 = STORED["q13"]["luna_run1"]
+    assert not fc.f2_prime(TIERS, [q13])[0]  # a list after run-on answers: q13 is outside F2'
 
 
 # ---- the detectors on stored answers (luna, modelexp-luna-run1) ----

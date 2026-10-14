@@ -45,12 +45,13 @@ Rules:
 6. Today's date is given after the sources. Use it to decide what "this fall" or "now" means.
 """
 
-# Step 3b (docs/decisions.md): added to the system prompt only when answer.format_rule is "on".
+# Step 3b, round 2 (docs/decisions.md): added to the system prompt only when answer.format_rule
+# is "on". The round 1 sentence ("... dates, tiers or amounts ...") is quoted in docs/decisions.md.
 FORMAT_RULE = (
-    "7. When the sources give several dates, tiers or amounts, write a short bullet list, "
-    "one per line, each tier with its date; keep the sentence before the list to one line, "
-    "and state in that one line the condition that explains the tiers "
-    "(for example, that it depends on when you first registered).\n"
+    "7. When the sources give several dates or tiers that depend on a condition "
+    "(for example, when you first registered), write a short bullet list, one per line, "
+    "each tier with its date; keep the sentence before the list to one line and state the "
+    "condition in it. Otherwise answer in sentences, as before.\n"
 )
 
 
