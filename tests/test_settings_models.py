@@ -61,8 +61,8 @@ def test_redact(raw, clean):
 def test_answer_model_defaults_to_the_chat_model_and_everything_else_stays():
     cfg = load_models(env={})
     assert cfg["answer"]["model"] is None and answer_model(cfg) == cfg["chat_model"] == "gpt-6-luna"
-    cfg = load_models(env={"CTA_ANSWER_MODEL": "gpt-6.1-sol"})
-    assert answer_model(cfg) == "gpt-6.1-sol" and cfg["chat_model"] == "gpt-6-luna"
+    cfg = load_models(env={"CTA_ANSWER_MODEL": "gpt-6-sol"})
+    assert answer_model(cfg) == "gpt-6-sol" and cfg["chat_model"] == "gpt-6-luna"
     assert cfg["judge_model"] == "gpt-5.6-terra"
 
 

@@ -118,10 +118,15 @@ models:
     cached_input: 0.20
     output: 12.00
     context_tokens: 1050000
-  gpt-6.1-sol:    # candidate answer model in the experiment of docs/model-experiment-plan.md
+  gpt-6.1-sol:    # rejects reasoning_effort none, temperature 0.1 and top_p (probed 2026-10-14): not an arm
     kind: chat
     input: 2.00
     cached_input: 0.10
+    output: 10.00
+  gpt-6-sol:      # the challenger of docs/model-experiment-plan.md; accepts luna's settings (probed 2026-10-14)
+    kind: chat    # price read 2026-10-14 from https://developers.openai.com/api/docs/pricing
+    input: 2.00
+    cached_input: 0.20
     output: 10.00
   gpt-4.1-mini:
     kind: chat
