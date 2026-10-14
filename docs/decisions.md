@@ -578,3 +578,13 @@ Source: `docs/chain-layout-plan.md`, item 5, scope update of 2026-10-13. One cha
 **Design of the measurement.** Two arms on the current code: the old prompt (`off`) as the baseline and the new prompt (`on`). The earlier 4b runs are **not** reused as the baseline. Three judged passes per arm, six in all.
 
 **Cost (estimate, stated before any paid call).** About 42 retrieval-route questions at about $0.0046 each, about $0.19 per judged pass, **about $1.2 for the three before and three after passes**. The tool's dry-run figure (an upper bound) is printed before any paid call. The owner approves the spend.
+
+## Step 2 (two- and three-course questions): KEEP (owner, Oct 14, 2026)
+
+The owner read the J1 results (`docs/chain-layout-results.md`, commit `b6731f2`) and decided to **keep** step 2. There is no default to flip: `router.chain` and `router.chain_render` already carry it.
+
+**Clarification of one J1 condition, decided after reading the results; no threshold or condition was changed.** J1 says the eight earlier CH answers must be "byte-identical to the step 1 code runs (K2 says they must be)". This is read as K2 defines it: identical, by SHA-256, to the renderer at `f6cdbdc` (`tests/fixtures/chain_single_render_sha256.json`). The step 1 runs (`chain-code-run1/2`) predate C1 and contain the word "chain", so a literal text comparison cannot hold. Result: 8 of 8 in both runs.
+
+**Known limit: q42.** Judged "partial" in both runs: the answer quotes both courses' catalog texts but does not write the difference between them, as predicted before the run. Not "incorrect", so J1 held. Whether code should write a comparison sentence is not decided and not planned.
+
+**Judge noise, not an answer fault.** In run 1 the judge gave q42 faithfulness "no" because it claimed the MAT 1275 no-credit note belongs only to MAT 1190; the answer quotes each course's own text unchanged. The same text got "yes" in run 2. Likewise q22 (identical text: correct/yes, then partial/no) and q21 (partial, then correct).
