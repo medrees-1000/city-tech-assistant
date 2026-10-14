@@ -126,6 +126,29 @@ def test_normal_answer_cost_from_usage_and_log_row(db, tmp_path):
 
 
 @pytest.mark.integration
+def test_answer_model_key_changes_only_the_answer_call(db, tmp_path):
+    default = FakeChatClient(vec(1.0, 0.0))
+    a = go(db, tmp_path, default)
+    assert default.kwargs["model"] == "gpt-6-luna"
+    cfg = {**CFG, "answer": {**CFG["answer"], "model": "gpt-6.1-sol"}}
+    client = FakeChatClient(vec(1.0, 0.0))
+    b = ans_mod.answer(
+        db, "When is the deadline?", TODAY, cfg=cfg, client_factory=lambda: client,
+        cache_path=tmp_path / "c.json",
+    )  # fmt: skip
+    assert client.kwargs["model"] == "gpt-6.1-sol"
+    # same prompt, same sampling settings; only the model and so the price differ
+    assert client.messages == default.messages
+    assert {k: v for k, v in client.kwargs.items() if k != "model"} == {
+        k: v for k, v in default.kwargs.items() if k != "model"
+    }
+    assert b.chat_cost == pytest.approx((1000 * 2.00 + 500 * 10.00) / 1_000_000)
+    assert a.chat_cost == pytest.approx((1000 * 0.10 + 500 * 0.50) / 1_000_000)
+    models = [r[0] for r in db.execute("SELECT chat_model FROM request_logs ORDER BY id")]
+    assert models == ["gpt-6-luna", "gpt-6.1-sol"]
+
+
+@pytest.mark.integration
 def test_below_threshold_makes_no_chat_call(db, tmp_path):
     client = FakeChatClient(vec(0.0, 0.0, 1.0))  # orthogonal to every chunk: similarity 0
     a = go(db, tmp_path, client)

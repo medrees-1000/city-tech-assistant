@@ -21,7 +21,7 @@ from cta.index.db import connect
 from cta.index.embed import ApiError, make_client, with_retries
 from cta.index.search import Search, search
 from cta.redact import redact
-from cta.settings import cost_usd, load_models
+from cta.settings import answer_model, cost_usd, load_models
 
 THRESHOLD_ABSTAIN = "ABSTAIN: I could not find this in the City Tech sources I have."
 MARKER = "ABSTAIN:"
@@ -106,14 +106,16 @@ def estimate_cost(messages: list[dict], cfg: dict, count) -> float:
     """Chat cost before the call: prompt tokens counted with tiktoken (an approximation for this
     model) plus an assumed 300 output tokens. Full input price, no cached-input discount."""
     tokens = sum(count(m["content"]) for m in messages)
-    return cost_usd(cfg, cfg["chat_model"], tokens, ESTIMATED_OUTPUT_TOKENS)
+    return cost_usd(cfg, answer_model(cfg), tokens, ESTIMATED_OUTPUT_TOKENS)
 
 
-def call_chat(client, cfg: dict, messages: list[dict]):
+def call_chat(client, cfg: dict, messages: list[dict], model: str | None = None):
+    """The answer call. `model` defaults to chat_model (the chain node's model-written answers);
+    the retrieval answer passes answer_model(cfg)."""
     a = cfg["answer"]
     return with_retries(
         lambda: client.chat.completions.create(
-            model=cfg["chat_model"],
+            model=model or cfg["chat_model"],
             messages=messages,
             temperature=a["temperature"],
             top_p=a["top_p"],
@@ -138,7 +140,7 @@ def log_request(
         (
             run_id, redact(question), today, json.dumps(retrieved), redact(ans.text),
             ans.abstained, ans.abstain_reason and redact(ans.abstain_reason),
-            cfg["chat_model"], ans.prompt_tokens, ans.completion_tokens, found.tokens,
+            answer_model(cfg), ans.prompt_tokens, ans.completion_tokens, found.tokens,
             ans.cost, ans.latency_ms, found.cache_hit,
         ),
     )  # fmt: skip
@@ -174,12 +176,12 @@ def answer(
         if dry_run:
             return ans
         chat_started = time.perf_counter()
-        response = call_chat(client_factory(), cfg, ans.prompt)
+        response = call_chat(client_factory(), cfg, ans.prompt, answer_model(cfg))
         ans.chat_ms = round((time.perf_counter() - chat_started) * 1000)
         ans.text = (response.choices[0].message.content or "").strip()
         ans.prompt_tokens = response.usage.prompt_tokens
         ans.completion_tokens = response.usage.completion_tokens
-        ans.chat_cost = cost_usd(cfg, cfg["chat_model"], ans.prompt_tokens, ans.completion_tokens)
+        ans.chat_cost = cost_usd(cfg, answer_model(cfg), ans.prompt_tokens, ans.completion_tokens)
         parsed = parse_reply(ans.text, len(found.results))
         ans.abstained, ans.citations, ans.invalid_citations = (
             parsed["abstained"], parsed["citations"], parsed["invalid"],

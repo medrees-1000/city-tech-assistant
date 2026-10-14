@@ -28,7 +28,7 @@ from cta.graph.state import RoutedAnswer, RouterState
 from cta.index.embed import make_client
 from cta.index.search import Search
 from cta.redact import redact
-from cta.settings import ROOT, cost_usd
+from cta.settings import ROOT, answer_model, cost_usd
 from cta.validate.calendar import load_events_for_indexing
 
 EVENTS_FILE = ROOT / "data" / "calendar" / "calendar_events.json"  # the file load_calendar.py loads
@@ -267,6 +267,15 @@ def routed(found: Answer, state: RouterState, started: float, today: date) -> Ro
     return ans
 
 
+def logged_model(ans: RoutedAnswer, cfg: dict) -> str:
+    """The model that wrote the answer: answer_model for a retrieval answer, else chat_model."""
+    return (
+        answer_model(cfg)
+        if ans.route not in ("calendar", "chain", "abstain")
+        else cfg["chat_model"]
+    )
+
+
 def log_request(conn, question: str, ans: RoutedAnswer, cfg: dict, run_id: int | None) -> None:
     """One request_logs row with the route and router numbers; question and answer are redacted."""
     retrieved = [
@@ -279,7 +288,7 @@ def log_request(conn, question: str, ans: RoutedAnswer, cfg: dict, run_id: int |
         "VALUES (%s, %s, %s, %s::jsonb, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)",
         (
             run_id, redact(question), ans.today, json.dumps(retrieved), redact(ans.text),
-            ans.abstained, ans.abstain_reason and redact(ans.abstain_reason), cfg["chat_model"],
+            ans.abstained, ans.abstain_reason and redact(ans.abstain_reason), logged_model(ans, cfg),
             ans.prompt_tokens, ans.completion_tokens, ans.search.tokens, ans.cost,
             ans.latency_ms, ans.search.cache_hit, ans.route, json.dumps(ans.router),
         ),

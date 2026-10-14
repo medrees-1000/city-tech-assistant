@@ -34,7 +34,14 @@ from cta.index.db import connect
 from cta.index.embed import ApiError, make_client, with_retries
 from cta.index.search import search
 from cta.redact import redact
-from cta.settings import ROOT, cost_usd, load_models, refuse_tracing
+from cta.settings import (
+    ROOT,
+    answer_model,
+    check_answer_model,
+    cost_usd,
+    load_models,
+    refuse_tracing,
+)
 
 JUDGE_ESTIMATE_ANSWER_TOKENS = 150
 JUDGE_ESTIMATE_OUTPUT_TOKENS = 150
@@ -558,6 +565,7 @@ def start_run(conn, label: str, split: str, cfg: dict, extra: dict | None = None
         "retrieval": cfg["retrieval"],
         **(extra or {}),
         "chat_model": cfg["chat_model"],
+        "answer_model": answer_model(cfg),
         "judge_model": cfg["judge_model"],
         "embedding_model": cfg["embedding_model"],
         "answer": cfg["answer"],
@@ -937,6 +945,7 @@ def main(argv: list[str]) -> int:
     p.add_argument("--selector", type=int, choices=(1, 2), help="override router.selector")
     p.add_argument("--chain", choices=("off", "on"), help="override router.chain")
     p.add_argument("--contacts", choices=("off", "on"), help="override router.contacts")
+    p.add_argument("--answer-model", help="override answer.model (retrieval-route answers only)")
     p.add_argument("--chain-render", choices=("model", "code"), help="override router.chain_render")
     p.add_argument(
         "--calendar-scoring", type=int, nargs="?", const=1, choices=(1, 2),
@@ -985,6 +994,9 @@ def main(argv: list[str]) -> int:
         cfg["router"]["contacts"] = args.contacts
     if args.chain_render:
         cfg["router"]["chain_render"] = args.chain_render
+    if args.answer_model:
+        cfg["answer"]["model"] = args.answer_model
+        check_answer_model(cfg)
     if args.calendar_scoring:
         cfg["eval"]["calendar_scoring"] = args.calendar_scoring
     if args.relabel:

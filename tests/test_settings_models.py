@@ -1,7 +1,8 @@
 import pytest
 
+from cta import answer as ans_mod
 from cta.redact import redact
-from cta.settings import cost_usd, load_models, secret_status
+from cta.settings import answer_model, check_answer_model, cost_usd, load_models, secret_status
 
 
 def test_defaults_load_and_dimensions_follow_model():
@@ -55,3 +56,40 @@ def test_secret_status_hides_values():
 )
 def test_redact(raw, clean):
     assert redact(raw) == clean
+
+
+def test_answer_model_defaults_to_the_chat_model_and_everything_else_stays():
+    cfg = load_models(env={})
+    assert cfg["answer"]["model"] is None and answer_model(cfg) == cfg["chat_model"] == "gpt-6-luna"
+    cfg = load_models(env={"CTA_ANSWER_MODEL": "gpt-6.1-sol"})
+    assert answer_model(cfg) == "gpt-6.1-sol" and cfg["chat_model"] == "gpt-6-luna"
+    assert cfg["judge_model"] == "gpt-5.6-terra"
+
+
+def test_answer_model_must_be_priced_and_a_chat_model():
+    with pytest.raises(ValueError, match="no price entry"):
+        load_models(
+            env={"CTA_ANSWER_MODEL": "gpt-6-astra"}
+        )  # not priced here: not an experiment arm
+    with pytest.raises(ValueError, match="expected chat"):
+        load_models(env={"CTA_ANSWER_MODEL": "text-embedding-3-small"})
+    cfg = load_models(env={})
+    cfg["answer"]["model"] = "nope"
+    with pytest.raises(ValueError, match="no price entry"):
+        check_answer_model(cfg)
+
+
+def test_call_chat_uses_chat_model_unless_told_otherwise():
+    seen = []
+
+    class Client:
+        class chat:  # noqa: N801
+            class completions:  # noqa: N801
+                @staticmethod
+                def create(**kw):
+                    seen.append(kw["model"])
+
+    cfg = load_models(env={})
+    ans_mod.call_chat(Client, cfg, [])
+    ans_mod.call_chat(Client, cfg, [], "gpt-6.1-sol")
+    assert seen == ["gpt-6-luna", "gpt-6.1-sol"]

@@ -34,6 +34,23 @@ MODEL_OVERRIDES = {
 }
 
 
+def check_answer_model(cfg: dict) -> None:
+    """answer.model must be null or a priced chat model (an unpriced one would make cost zero)."""
+    name = cfg["answer"].get("model")
+    if name is None:
+        return
+    entry = cfg["models"].get(name)
+    if entry is None:
+        raise ValueError(f"answer.model '{name}' has no price entry in models.yaml; add one first")
+    if entry["kind"] != "chat":
+        raise ValueError(f"answer.model '{name}' is a {entry['kind']} model, expected chat")
+
+
+def answer_model(cfg: dict) -> str:
+    """The model that writes retrieval-route answers: answer.model, else chat_model."""
+    return cfg["answer"].get("model") or cfg["chat_model"]
+
+
 def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None = None) -> dict:
     """Read config/models.yaml, apply CTA_*_MODEL overrides, and refuse unpriced models.
 
@@ -54,6 +71,10 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
         if entry["kind"] != kind:
             raise ValueError(f"{key} '{cfg[key]}' is a {entry['kind']} model, expected {kind}")
     cfg["embedding_dimensions"] = cfg["models"][cfg["embedding_model"]]["dimensions"]
+    cfg["answer"].setdefault("model", None)
+    if env.get("CTA_ANSWER_MODEL", "").strip():
+        cfg["answer"]["model"] = env["CTA_ANSWER_MODEL"].strip()
+    check_answer_model(cfg)
     if env.get("CTA_RETRIEVAL_MODE", "").strip():
         cfg["retrieval"]["mode"] = env["CTA_RETRIEVAL_MODE"].strip()
     if env.get("CTA_DEPT_FILTER", "").strip():
