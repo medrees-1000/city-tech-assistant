@@ -53,3 +53,24 @@ controls: q87 (not a chain question) route: {'chain-code-run1': 'other', 'chain-
 - **K4 (cost lower): pass.** Route cost per chain question $0.000042 against $0.000323 (the classifier only), mean latency about 1.0 s against 2.9 s.
 - **Determinism:** the two code runs wrote identical text for 8 of 8 CH questions.
 - **Result: the rule passes; the default of `router.chain_render` flips to `"code"` in its own commit.**
+
+# Step 2 (two- and three-course questions): J1 on dev (2026-10-14)
+
+Rule: J1 in `docs/decisions.md` (step 2 keep rule, with the q42 sentence added in `1fa2930` before the run). Runs `chain2-run1` and `chain2-run2` (14 dev questions: CH q22 q39 q40 q76 q77 q79 q81 q85 q93 q94, plus q42, q21, q83, q87; `--router on --selector 2 --chain on --chain-render code --calendar-scoring 2 --rerank pool_a`). Real cost: **$0.0678 + $0.0681 = $0.136** (estimate $0.14, tool upper bound $0.10 per pass shown in the dry run; cap $0.30 not approached). Report: `uv run python scripts/chain2_report.py` (the full answers of q42, q93, q94 and the judge reasons print there; the answers are in `request_logs` under the two labels).
+
+## Deterministic conditions (no judge)
+| Condition | Result |
+|---|---|
+| M1: 10 of 10 CH answered by the chain node, both runs | **pass** (10/10, 10/10) |
+| R1: q87 never by the chain node; non-CH ids by the chain node only q21, q42 | **pass** (q87 route `other` in both; ids `[q21, q42]` in both) |
+| M3 at least 0.80 with q93, q94 counted, both runs | **pass** (6 of 7 = 0.86 in both; q39 is the miss, as in step 1 and 4b) |
+| M6: q83 abstains | pass (both) |
+| Earlier eight CH answers byte-identical to the step 1 code runs | **pass, read through the K2 hashes**: 8 of 8 equal the SHA-256 of the renderer at `f6cdbdc` in both runs. A literal text comparison with `chain-code-run1/2` fails 8 of 8 because those runs predate C1 and still contain the word "chain"; K2 was defined against `f6cdbdc` for that reason. |
+| Two runs write identical text | yes, 11 of 11 chain-node questions |
+
+## The judge's verdicts (rubric v3)
+- **q93: correct / yes in both runs. q94: correct / yes in both runs.** Condition **pass**.
+- **q42: partial in both runs** (run 1 faithfulness no, run 2 yes). The q42 sentence: J1 fails only on "incorrect"; **not incorrect, so it does not fail**. The judge's reasons: the answer states both listings but does not explain the difference, and (a judge misreading) says the MAT 1275 credit note belongs only to MAT 1190 although MAT 1190CO's text is quoted as it is; run 1's "no" faithfulness rests on that misreading. The prediction written before the run (partial, no difference sentence) held.
+- Other verdicts on the same text vary between runs: q22 correct/yes then partial/no (identical text; the run 2 reason says the answer wrongly claims MAT 1275CO names MAT 1275, which the printed block shows it does), q21 partial then correct. This is the judge's known noise, not a change of the answers.
+
+## J1: all stated conditions hold. The q42 answer text was to be shown to the owner before the keep decision (done in the report of this step). No default or setting was changed.
