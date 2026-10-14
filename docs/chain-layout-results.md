@@ -121,3 +121,37 @@ Rule: `docs/decisions.md`, "Step 5b" (F1 to F6) and its addendum (commit `c6563d
 
 ## Live check (real API with `CTA_ANSWER_FORMAT_RULE=on`, real page, headless Chrome; four real requests, $0.0029; servers stopped, ports free)
 "When is my tuition bill due this fall?" at 390 px and 1280 px, light and dark: a one-line lead ("For Fall 2026, your tuition due date depends on when you first registered:" with a small blue [1]), then four real bullets, each "First registered ...: <date>, 2026." with its [1] link, then the thumbs, "Sources (5)" and "How this was found". No horizontal scroll at either width; at 390 px each bullet wraps to two lines and is easy to read; dark mode is readable. In one request the model put the [1] before the colon, which renders as "registered [1] :" with the colon on its own after the link, a small blemish.
+
+# Step 5b, round 2 (narrower sentence): results (2026-10-14)
+
+Rule: `docs/decisions.md`, "Step 5b, round 2" (commit `262a214`, before any paid run); code `38d7ac4`. A **second attempt with a changed sentence on the same dev questions**; round 1 (above) failed F2 and stays on record. Before arm `modelexp-luna-run1..3` (reused); on arm `fmt2-on-run1..3`. Report: `PYTHONPATH=scripts uv run python scripts/format_rule_report.py fmt2-on-run`. **`answer.format_rule` stays off; nothing switched on.**
+
+## Result: the rule fails again. F1, F3, F5, F6 pass; **F2' fails and F4 fails.** Round 2 fixes the tuition question and removes most of round 1's side effects, but it still lists one resource question and the judge scores the answers lower.
+
+**Deterministic.**
+- **F1 pass** (q13: four dated bullets in all three passes, no date lost). **F3 pass** ("depends on when you first registered" in all three).
+- **F2' FAIL: 4 failing answer-passes of 81 (need at most 3), and q56 fails in two passes (need at most one).** The four: q05 (3 bullets, pass 2), q16 (2 bullets, pass 3), q56 (10 bullets pass 2, 15 bullets pass 3: the list of EET internship and research resources, which is a list in the source). Round 1 had 21 (round 1's F2 version now counts 7). q59 no longer copies the tuition tiers.
+- **F6 pass:** code-route answers byte-identical in all six runs (10 of 10 questions). q14 took the calendar-fallthrough route in pass 1 and the other retrieval route in passes 2 and 3; both are retrieval routes.
+
+**The judge (primary set, 28 questions).**
+
+| | before (luna) | rule on, round 2 |
+|---|---|---|
+| correct share, passes 1/2/3; mean | 0.923, 0.923, 0.923; **0.923** | 0.846, 0.885, 0.846; **0.859** |
+| faithfulness "yes"; mean | 0.952, 0.952, 0.905; **0.937** | 0.952, 0.905, 0.952; **0.937** |
+| wrongly abstained / abstention accuracy | 0.091 / 1.00 | 0.091 / 1.00 |
+| mean answer length | 59.2 words | 58.8 words |
+| cost per request | $0.00081 | $0.00080 |
+
+- **F4 FAIL:** correct 0.859 (floor 0.893); faithfulness 0.937 passes (floor 0.907). **F5 pass.**
+- The correct share fell by about two questions. Three questions differ in the verdict in most paired passes: **q18** (correct in all three before; partial, correct, partial after: the transfer answer put the Pathways rules in a shorter form and dropped the appeal process), **q54** (correct in all three before; partial in all three after: the model dropped the sentence on delay and STEM progression), and **q01** (partial before and after, noise-sized). None is a formatting change; the extra sentence in the prompt changes what the model includes. With 28 questions and a judge that moves 0.03 to 0.05 alone this may be partly noise, but it is the same direction in both rounds for q54 and the rule says F4 fails.
+
+**q13 before and after** (luna run 1 and the three on passes):
+- Before: "For Fall 2026, your tuition due date depends on when you first registered: March 19–July 19: August 3; July 20–August 7: August 14; August 8–27: August 27; August 28 or later: immediately upon registration. [1]"
+- After (all three passes): a one-line lead "For Fall 2026, your tuition payment due date depends on when you first registered [1]:" (pass 2 puts the `[1]` after the colon) and four bullets, "First registered March 19–July 19: August 3, 2026." and so on, with the `[1]` only on the last bullet. The condition and all four dates are kept. Compared with round 1, the citations after the first three bullets are gone (one `[1]` at the end of the list).
+
+**Cost.** Passes $0.1527, $0.1540, $0.1537 (**$0.460**); the one real request about $0.0007. Round total about **$0.46** (cap $0.80).
+
+## One real request (real API, `CTA_ANSWER_FORMAT_RULE=on`, no config change; $0.0007; server stopped, ports free)
+"When is my tuition bill due this fall?" answered:
+"For Fall 2026, your tuition bill due date depends on when you first registered: [1]" then four bullets: "First registered March 19–July 19: August 3, 2026. [1]", "First registered July 20–August 7: August 14, 2026. [1]", "First registered August 8–August 27: August 27, 2026. [1]", "First registered August 28 or later: immediately upon registration. [1]".
