@@ -588,3 +588,28 @@ The owner read the J1 results (`docs/chain-layout-results.md`, commit `b6731f2`)
 **Known limit: q42.** Judged "partial" in both runs: the answer quotes both courses' catalog texts but does not write the difference between them, as predicted before the run. Not "incorrect", so J1 held. Whether code should write a comparison sentence is not decided and not planned.
 
 **Judge noise, not an answer fault.** In run 1 the judge gave q42 faithfulness "no" because it claimed the MAT 1275 no-credit note belongs only to MAT 1190; the answer quotes each course's own text unchanged. The same text got "yes" in run 2. Likewise q22 (identical text: correct/yes, then partial/no) and q21 (partial, then correct).
+
+## Step 3a: calendar layout, keep rule pre-registered (Oct 14, 2026; before any code)
+
+Source: `docs/chain-layout-plan.md`, item 5, option A (owner approved the build on 2026-10-14). Code only, **no prompt change, no model call in the rule, no new switch**: the calendar renderer (`src/cta/graph/render.py`) is the only code that writes a calendar answer, and its old layout (one run-on sentence per row, the long provenance clause repeated on every row) is the thing being replaced. The old layout stays in git history and in milestone 1; there is no fallback switch because the rows, their order and their citation numbers do not change (check 6), so a switch would guard nothing. Where the plan's six checks said "keep provenance inline or in the line below", the choice made here is the line below.
+
+**New layout.**
+- A **row** is one line: the date in bold, a colon, the event, `[n]`, and `(applies to: ...)` after `[n]` when the row has it: `**Thursday, September 3, 2026**: Last day to add a course. [1]`. With two or more rows each is a "- " bullet; a single row is a plain paragraph.
+- A **TBA row**: `Event: not announced yet [n] Contact the Registrar: <contact>.` (no date, no bold).
+- **One provenance line per calendar** (term, PDF file name, last-updated date), after that calendar's rows, in a paragraph of its own: `From the Fall 2026 calendar (fall_2026.pdf, last updated 2026-09-15). The calendar can change.` Rows are grouped by calendar (groups in order of the earliest date), sorted by date then id inside a group; `[n]` numbers follow the displayed order.
+- The "Assuming the current term, X." line is its own paragraph above the rows.
+- The **source chunk** each row sends to the judge and the "How this was found" panel keeps the full old sentence with its provenance (so the judge sees the provenance the answer states).
+- The words "chain" and "Level" appear nowhere in these texts.
+
+**Keep rule.** All must hold; tests are deterministic and free, no model call.
+1. Every returned row's weekday-and-date text is exactly what `date_in_words` writes for it, and the rows are the same rows in the same order (by date, then id; groups by calendar).
+2. Each row's `[n]` is unique and its source (by position) is that row.
+3. The provenance line appears once per calendar, its term, file name and last-updated date equal the rows' fields, and the text "The calendar can change." is in every provenance line.
+4. A TBA row says "not announced yet", has no date and keeps the Registrar contact line.
+5. A one-row answer keeps its provenance (the line below); a two-term answer has two provenance lines, each after its own rows.
+6. **Calendar-only scoring identical on all stored dev runs:** for every stored dev run with calendar-route answers (`4b-run1..3`, `router-run1..3`, `router2-run1..3`), rendering the stored selected row ids returns exactly those ids in the stored order, so the row-id scoring (v2) cannot change; the test also runs the v2 scorer on the re-rendered ids and expects the stored verdicts.
+7. **No change to any non-calendar answer, checked by hash:** the 197 single-course chain hashes (K2, `tests/fixtures/chain_single_render_sha256.json`) still pass; the hash of `abstain_text` for fixed inputs and of the unsupported-term and selector-failed abstentions is unchanged; and the code commit touches `render.py` (and its tests, one web test and fixtures) and no other source file.
+8. **Page:** the new text, written by the Python renderer into fixtures, parses on the page into bold date, `[n]` citation links, bullets and the provenance paragraph.
+9. Ruff, pytest, `python -m cta.validate`, typecheck, `next build` and the node tests pass.
+
+**Live check (dev, allowed cost up to $0.02):** the real page in headless Chrome, "When does Winter 2027 end?" and "When does the Winter 2027 session start and end?" (q95), at 390 px and 1280 px, light and dark. The judged effect on calendar answers that are scored by text (q09, q10, q30 ...) is not measured by this rule; the next judged dev run will include them.
