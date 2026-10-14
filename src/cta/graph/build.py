@@ -289,7 +289,8 @@ def log_request(conn, question: str, ans: RoutedAnswer, cfg: dict, run_id: int |
         (
             run_id, redact(question), ans.today, json.dumps(retrieved), redact(ans.text),
             ans.abstained, ans.abstain_reason and redact(ans.abstain_reason),
-            logged_model(ans, cfg), ans.prompt_tokens, ans.completion_tokens, ans.search.tokens, ans.cost,
+            logged_model(ans, cfg), ans.prompt_tokens, ans.completion_tokens,
+            ans.search.tokens, ans.cost,
             ans.latency_ms, ans.search.cache_hit, ans.route, json.dumps(ans.router),
         ),
     )  # fmt: skip
