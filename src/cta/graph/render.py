@@ -100,21 +100,54 @@ def source_chunk(row: dict, text: str) -> dict:
     }  # fmt: skip
 
 
+def row_line(row: dict, number: int, contact: str) -> tuple[str, bool]:
+    """One row of the answer: the date in bold, the event and its citation number (no provenance:
+    that is one line per calendar). A row with no date is "not announced yet" plus the Registrar."""
+    mismatch = False
+    if row["date_start"]:
+        when, mismatch = date_in_words(row)
+        line = f"**{when}**: {row['event']} [{number}]"
+    else:
+        line = f"{row['event']}: not announced yet [{number}]"
+    if row["applies_to"]:
+        line += f" (applies to: {row['applies_to']})"
+    if not row["date_start"]:
+        line += f" Contact the Registrar: {contact}."
+    return line, mismatch
+
+
+def calendar_key(row: dict) -> tuple[str, str, str]:
+    return (row["term"], Path(row["source_pdf"]).name, row["pdf_last_updated"])
+
+
+def provenance_line(key: tuple[str, str, str]) -> str:
+    term, pdf, updated = key
+    return f"From the {term} calendar ({pdf}, last updated {updated}). The calendar can change."
+
+
 def render_rows(rows: list[dict], contact: str, assumed_term: str | None = None) -> Rendered:
-    ordered = sort_rows(rows)
-    texts, sources, mismatches, tba = [], [], 0, []
-    for n, row in enumerate(ordered, 1):
-        text, bad = row_text(row, n, contact)
-        texts.append(text)
-        sources.append(source_chunk(row, text))
-        mismatches += bad
-        if not row["date_start"]:
-            tba.append(row["id"])
-    body = texts[0] if len(texts) == 1 else "\n".join(f"- {t}" for t in texts)
+    """Rows grouped by calendar (groups in order of their earliest row, rows by date inside one),
+    numbered [1], [2] ... in the order shown, one provenance line after each group."""
+    groups: dict[tuple[str, str, str], list[dict]] = {}
+    for row in sort_rows(rows):
+        groups.setdefault(calendar_key(row), []).append(row)
+    ordered = [row for group in groups.values() for row in group]
+    several = len(ordered) > 1
+    sources, mismatches, tba, parts, n = [], 0, [], [], 0
+    for key, group in groups.items():
+        lines = []
+        for row in group:
+            n += 1
+            line, bad = row_line(row, n, contact)
+            lines.append(f"- {line}" if several else line)
+            sources.append(source_chunk(row, row_text(row, n, contact)[0]))
+            mismatches += bad
+            if not row["date_start"]:
+                tba.append(row["id"])
+        parts += ["\n".join(lines), provenance_line(key)]
     if assumed_term:
-        lead = f"Assuming the current term, {assumed_term}."
-        body = f"{lead} {body}" if len(texts) == 1 else f"{lead}\n{body}"
-    return Rendered(body, sources, [r["id"] for r in ordered], mismatches, tba)
+        parts.insert(0, f"Assuming the current term, {assumed_term}.")
+    return Rendered("\n\n".join(parts), sources, [r["id"] for r in ordered], mismatches, tba)
 
 
 def abstain_text(reason: str, contact: str) -> str:

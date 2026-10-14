@@ -210,8 +210,9 @@ def test_the_answer_text_has_event_source_line_and_applies_to():
     r = row(applies_to="all students")
     out = render.render_rows([r], "c")
     assert out.text == (
-        "Friday, November 6, 2026: Last day to withdraw. [1] (Fall 2026 calendar, fall_2026.pdf, "
-        "last updated 2026-09-15; the calendar can change) (applies to: all students)"
+        "**Friday, November 6, 2026**: Last day to withdraw. [1] (applies to: all students)\n\n"
+        "From the Fall 2026 calendar (fall_2026.pdf, last updated 2026-09-15). "
+        "The calendar can change."
     )
     assert out.row_ids == ["fall-2026-040"] and out.sources[0]["id"] == "fall-2026-040"
     assert out.sources[0]["kind"] == "calendar" and out.sources[0]["heading_path"].startswith(
@@ -224,12 +225,15 @@ def test_rows_are_sorted_by_date_and_numbered_in_that_order():
     c = row("c", date_start=None, weekday_raw="TBA")
     out = render.render_rows([c, a, b], "contact")
     assert out.row_ids == ["b", "a", "c"]
-    assert [line.split("[")[1][0] for line in out.text.splitlines()] == ["1", "2", "3"]
+    bullets = [line for line in out.text.splitlines() if line.startswith("- ")]
+    assert [line.split("[")[1][0] for line in bullets] == ["1", "2", "3"]
 
 
 def test_assumed_term_is_stated():
     out = render.render_rows([row()], "c", assumed_term="Fall 2026")
-    assert out.text.startswith("Assuming the current term, Fall 2026. Friday, November 6, 2026")
+    assert out.text.startswith(
+        "Assuming the current term, Fall 2026.\n\n**Friday, November 6, 2026**"
+    )
 
 
 def test_the_tba_rule_a_null_date_is_not_announced_yet_plus_the_registrar_contact():
@@ -239,8 +243,8 @@ def test_the_tba_rule_a_null_date_is_not_announced_yet_plus_the_registrar_contac
               pdf_last_updated="2026-07-27")  # fmt: skip
     out = render.render_rows([tba], "registrar@x.edu, 718-000-0000")
     assert out.text.startswith("87th Commencement Ceremony: not announced yet [1]")
-    assert out.text.endswith("Contact the Registrar: registrar@x.edu, 718-000-0000.")
-    assert out.tba_rows == ["spring-2027-055"] and "2027" not in out.text.split("(")[0]
+    assert "Contact the Registrar: registrar@x.edu, 718-000-0000." in out.text.splitlines()[0]
+    assert out.tba_rows == ["spring-2027-055"] and "2027" not in out.text.splitlines()[0]
 
 
 def test_registrar_contact_from_the_contacts_file(tmp_path):
@@ -354,7 +358,7 @@ def test_calendar_route_answers_from_the_rows_and_never_calls_retrieve(monkeypat
     ans = router.answer("Last day to withdraw in Fall 2026?", TODAY, log=False)
     assert script.calls == ["classify", "select"] and seen == []
     assert ans.route == "calendar" and ans.row_ids == ["fall-2026-040"] and not ans.abstained
-    assert ans.text.startswith("Friday, November 6, 2026: Last day to withdraw from a course")
+    assert ans.text.startswith("**Friday, November 6, 2026**: Last day to withdraw from a course")
     assert ans.citations == [1] and ans.sources[0]["id"] == "fall-2026-040"
     assert (
         ans.prompt_tokens == 200 and ans.chat_cost > 0 and ans.router["term_status"] == "explicit"
@@ -421,7 +425,7 @@ def test_unsupported_term_found_in_other_rows_goes_to_the_selector(monkeypatch, 
     router, _ = make_router(script, monkeypatch, events)
     ans = router.answer("When does registration for Fall 2027 begin?", TODAY, log=False)
     assert ans.route == "calendar" and ans.row_ids == ["spring-2027-040"]
-    assert "Monday, March 22, 2027: Online registration for Fall 2027" in ans.text
+    assert "**Monday, March 22, 2027**: Online registration for Fall 2027" in ans.text
 
 
 def test_unsupported_term_with_a_valid_empty_selection_abstains_not_falls_through(
@@ -605,7 +609,7 @@ def test_selector_v2_sees_all_calendars_and_a_row_of_another_term_can_be_chosen(
     assert ans.router["selector_version"] == 2 and ans.router["pool_size"] > 100
     # each row names its own calendar, although the question resolved to Spring 2027
     assert (
-        ans.text.count("(Fall 2026 calendar, fall_2026.pdf") == 2
+        ans.text.count("From the Fall 2026 calendar (fall_2026.pdf") == 1
         and "Spring 2027 calendar" not in ans.text
     )
 
@@ -640,7 +644,14 @@ def test_the_renderer_names_each_rows_own_calendar_and_sorts_across_terms():
         source_pdf="data/pdfs/spring_2027.pdf", pdf_last_updated="2026-07-27",
     )  # fmt: skip
     out = render.render_rows([spring, fall], "c", assumed_term="Fall 2026")
-    lines = out.text.splitlines()
+    paragraphs = out.text.split("\n\n")
     assert out.row_ids == ["fall-2026-039", "spring-2027-040"]
-    assert "(Fall 2026 calendar, fall_2026.pdf, last updated 2026-09-15;" in lines[1]
-    assert "(Spring 2027 calendar, spring_2027.pdf, last updated 2026-07-27;" in lines[2]
+    assert paragraphs[1].startswith("- ") and paragraphs[3].startswith("- ")
+    assert paragraphs[2] == (
+        "From the Fall 2026 calendar (fall_2026.pdf, last updated 2026-09-15). "
+        "The calendar can change."
+    )
+    assert paragraphs[4] == (
+        "From the Spring 2027 calendar (spring_2027.pdf, last updated 2026-07-27). "
+        "The calendar can change."
+    )
