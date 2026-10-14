@@ -86,3 +86,38 @@ Rule: `docs/decisions.md`, "Step 3a: calendar layout, keep rule" (commit `b6101b
 - *Start and end* (two rows): two bullets, "**Monday, January 4, 2027**: Start of Winter 2027 session. [1]" and "**Monday, January 25, 2027**: End of Winter 2027 Session [2]", then the one provenance paragraph, then thumbs, "Sources (2)", "How this was found". The old answer repeated the long provenance clause on every row.
 - At 390 px the bold date and event wrap to a second line inside the bullet and the provenance paragraph wraps over three lines; there is no horizontal scroll at either width (page width equals window width). At 1280 px each bullet fits on one line. Dark mode: white bold dates and light blue [n] links on the dark background, readable. In the full-page screenshot at 390 px the fixed input bar overlaps the "How this was found" link; that is how a full-page capture draws a fixed bar (the bar sits at the window bottom), not a layout fault.
 - The Chrome libraries were missing on this machine; I downloaded three packages (libnspr4, libnss3, libasound2t64) into the scratch folder, outside the repo, and ran the existing headless shell with them. No repo file or dependency changed.
+
+# Step 5b (answer-prompt formatting rule): results (2026-10-14)
+
+Rule: `docs/decisions.md`, "Step 5b" (F1 to F6) and its addendum (commit `c6563dd`, before any paid run). Code `9b4eec3` (`answer.format_rule: off | on`, default off). Before arm: `modelexp-luna-run1..3` (reused, not re-run). On arm: `fmt-on-run1..3` (only `--format-rule on` differs; 38 ids; primary set of 28). Report: `PYTHONPATH=scripts uv run python scripts/format_rule_report.py`. **`answer.format_rule` stays off; nothing was switched on.**
+
+## Result: F1, F3, F4, F5 and F6 pass; **F2 fails**, so the rule as pre-registered does not pass. The tuition question is fixed; the instruction also turns other answers into lists.
+
+**Deterministic (no judge).**
+- **F1 pass** (q13, all three on passes): four bullet lines, each with a date, every date the before answers stated is still there.
+- **F3 pass** (q13): "depends on when you first registered" is in all three on answers.
+- **F2 FAIL** (27 other questions x 3 passes): 21 answer-pass cases have more than one bullet. Six questions became lists in all three passes: q05 (3 to 4 bullets: CST internships), q06 (4: the four degrees), q16 (2: two drop periods), q18 (5 to 8: transfer credit rules), q24 (3: credit minimums), q56 (10 to 11: the EET internship resources). Two more did in some passes: q14 (10 bullets of refund dates in pass 1, none in the others) and q59 (a four-line tier list in passes 2 and 3, copied from the tuition table, although the question is about consequences). Several of these are sensible lists (degrees, resources, tiers); q16 and q59 are not what the rule was for. Under the rule as written they are failures.
+- **F6 pass**: code-route answers (calendar, prerequisite, code abstention) are byte-identical in all six runs for all 10 questions that took a code route; no question changed route.
+
+**The judge (primary set, 28 questions; passes 1, 2, 3 and mean).**
+
+| | before (luna) | rule on |
+|---|---|---|
+| correct share | 0.923, 0.923, 0.923; **0.923** | 0.923, 0.923, 0.885; **0.910** |
+| faithfulness "yes" | 0.952, 0.952, 0.905; **0.937** | 0.952, 0.952, 0.952; **0.952** |
+| wrongly abstained | 0.091 | 0.091 |
+| abstention accuracy | 1.00 | 1.00 |
+| mean answer length | 59.2 words | 63.3 words |
+| cost per request | $0.00081 | $0.00082 |
+
+- **F4 pass** (correct 0.910 against the 0.893 floor; faithfulness 0.952 against 0.907). **F5 pass.**
+- Two questions differ in the judged verdict in most paired passes: **q01** (partial before, one correct and two partial after: noise-sized) and **q54** (correct in all three before; correct, partial, partial after: the answer lost a sentence about delay and STEM progression, which the gold does not need but the judge liked).
+
+**q13 before and after** (luna, run 1 of each):
+- Before: "For Fall 2026, your tuition due date depends on when you first registered: March 19–July 19: August 3; July 20–August 7: August 14; August 8–27: August 27; August 28 or later: immediately upon registration. [1]"
+- After (pass 1): "For Fall 2026, your tuition payment due date depends on when you first registered [1]:" then four bullets, "First registered March 19–July 19: August 3, 2026 [1]", "First registered July 20–August 7: August 14, 2026 [1]", "First registered August 8–27: August 27, 2026 [1]", "First registered August 28 or later: immediately upon registration [1]". Passes 2 and 3 are the same four tiers (one writes "August 8–August 27"; pass 3 puts the `[1]` before the colon and a full stop after each date). The judge scored the run-on version correct as well, so the gain is layout only, which is what the rule claimed.
+
+**Cost.** On passes $0.1570, $0.1536, $0.1552 (**$0.466**); live check on the page about $0.003; the before arm was reused (no cost). Round total about **$0.47** (cap $1.00).
+
+## Live check (real API with `CTA_ANSWER_FORMAT_RULE=on`, real page, headless Chrome; four real requests, $0.0029; servers stopped, ports free)
+"When is my tuition bill due this fall?" at 390 px and 1280 px, light and dark: a one-line lead ("For Fall 2026, your tuition due date depends on when you first registered:" with a small blue [1]), then four real bullets, each "First registered ...: <date>, 2026." with its [1] link, then the thumbs, "Sources (5)" and "How this was found". No horizontal scroll at either width; at 390 px each bullet wraps to two lines and is easy to read; dark mode is readable. In one request the model put the [1] before the colon, which renders as "registered [1] :" with the colon on its own after the link, a small blemish.
