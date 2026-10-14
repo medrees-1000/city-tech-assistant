@@ -45,6 +45,14 @@ Rules:
 6. Today's date is given after the sources. Use it to decide what "this fall" or "now" means.
 """
 
+# Step 3b (docs/decisions.md): added to the system prompt only when answer.format_rule is "on".
+FORMAT_RULE = (
+    "7. When the sources give several dates, tiers or amounts, write a short bullet list, "
+    "one per line, each tier with its date; keep the sentence before the list to one line, "
+    "and state in that one line the condition that explains the tiers "
+    "(for example, that it depends on when you first registered).\n"
+)
+
 
 @dataclass
 class Answer:
@@ -83,11 +91,15 @@ def format_source(n: int, chunk: dict) -> str:
     return "\n".join(lines) + "\n\n" + chunk["text"]
 
 
-def build_messages(chunks: list[dict], today: date, question: str) -> list[dict]:
-    """Instructions first (system), then sources, then the date and the question last."""
+def build_messages(
+    chunks: list[dict], today: date, question: str, format_rule: str = "off"
+) -> list[dict]:
+    """Instructions first (system), then sources, then the date and the question last. With
+    format_rule "on" the system prompt gets one more rule; nothing else differs."""
     sources = "\n\n---\n\n".join(format_source(n, c) for n, c in enumerate(chunks, 1))
     user = f"Sources:\n\n{sources}\n\nToday's date: {today.isoformat()}\nQuestion: {question}"
-    return [{"role": "system", "content": INSTRUCTIONS}, {"role": "user", "content": user}]
+    system = INSTRUCTIONS + FORMAT_RULE if format_rule == "on" else INSTRUCTIONS
+    return [{"role": "system", "content": system}, {"role": "user", "content": user}]
 
 
 def parse_reply(reply: str, n_sources: int) -> dict:
@@ -172,7 +184,9 @@ def answer(
     if found.top_vector_similarity < cfg["answer"]["abstain_threshold"]:
         ans.text, ans.abstained, ans.abstain_reason = THRESHOLD_ABSTAIN, True, "below_threshold"
     else:
-        ans.prompt = build_messages(found.results, today, question)
+        ans.prompt = build_messages(
+            found.results, today, question, cfg["answer"].get("format_rule", "off")
+        )
         if dry_run:
             return ans
         chat_started = time.perf_counter()

@@ -945,6 +945,7 @@ def main(argv: list[str]) -> int:
     p.add_argument("--selector", type=int, choices=(1, 2), help="override router.selector")
     p.add_argument("--chain", choices=("off", "on"), help="override router.chain")
     p.add_argument("--contacts", choices=("off", "on"), help="override router.contacts")
+    p.add_argument("--format-rule", choices=("off", "on"), help="override answer.format_rule")
     p.add_argument("--answer-model", help="override answer.model (retrieval-route answers only)")
     p.add_argument("--chain-render", choices=("model", "code"), help="override router.chain_render")
     p.add_argument(
@@ -994,6 +995,8 @@ def main(argv: list[str]) -> int:
         cfg["router"]["contacts"] = args.contacts
     if args.chain_render:
         cfg["router"]["chain_render"] = args.chain_render
+    if args.format_rule:
+        cfg["answer"]["format_rule"] = args.format_rule
     if args.answer_model:
         cfg["answer"]["model"] = args.answer_model
         check_answer_model(cfg)

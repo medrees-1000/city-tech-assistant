@@ -75,6 +75,13 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
     if env.get("CTA_ANSWER_MODEL", "").strip():
         cfg["answer"]["model"] = env["CTA_ANSWER_MODEL"].strip()
     check_answer_model(cfg)
+    cfg["answer"].setdefault("format_rule", "off")
+    if env.get("CTA_ANSWER_FORMAT_RULE", "").strip():
+        cfg["answer"]["format_rule"] = env["CTA_ANSWER_FORMAT_RULE"].strip()
+    if cfg["answer"]["format_rule"] not in ("off", "on"):
+        raise ValueError(
+            f"answer.format_rule must be off or on, not {cfg['answer']['format_rule']!r}"
+        )
     if env.get("CTA_RETRIEVAL_MODE", "").strip():
         cfg["retrieval"]["mode"] = env["CTA_RETRIEVAL_MODE"].strip()
     if env.get("CTA_DEPT_FILTER", "").strip():

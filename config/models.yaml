@@ -17,6 +17,10 @@ answer:
   # behaviour). The classifier, selector, topic call, reranker and the model-written chain answers always use
   # chat_model. CTA_ANSWER_MODEL and --answer-model override it.
   model: null
+  # Step 3b: "off" | "on" (quoted: bare off/on are YAML booleans). "on" adds one formatting rule to the retrieval
+  # answer prompt (cta.answer.FORMAT_RULE); calendar and prerequisite answers are written by code and unaffected.
+  # CTA_ANSWER_FORMAT_RULE and --format-rule override it. Default off until its pre-registered rule is decided.
+  format_rule: "off"
   # Checked 2026-10-12 with one real call to gpt-6-luna (Chat Completions): temperature, top_p and
   # reasoning_effort "none" were all accepted without error (docs/decisions.md).
   temperature: 0.1
