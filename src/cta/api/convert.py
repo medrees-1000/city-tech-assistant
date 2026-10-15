@@ -18,6 +18,7 @@ MARKER = "ABSTAIN:"
 EXCERPT_CHARS = 300
 CHAIN_KEYS = ("extraction", "code", "detail", "course_count", "truncated", "unexpanded",
               "no_record", "no_record_codes")  # fmt: skip
+ANSWER_ROUTES = ("other", "chain", "calendar_fallthrough", "chain_fallthrough", "advice")
 OWN_CODES = ("calendar_", "chain_no_record")  # codes the graph itself sets for its two tools
 
 
@@ -157,8 +158,7 @@ def how_found(ans, cfg: dict) -> schema.HowFound:
             "classify": classify["ms"], "select": select.get("ms"),
             "retrieval": retrieval_ms, "rerank": rr.ms if rr else None,
             "walk": chain.get("walk_ms") if chain else None,
-            "answer": round(answer_ms, 1) if ans.route in ("other", "chain", "calendar_fallthrough",
-                                                            "chain_fallthrough") else None,
+            "answer": round(answer_ms, 1) if ans.route in ANSWER_ROUTES else None,
             "topic": None,
             "total": float(ans.latency_ms),
         },

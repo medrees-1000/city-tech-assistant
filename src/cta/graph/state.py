@@ -21,6 +21,7 @@ class RouterState(TypedDict, total=False):
     calendar: dict  # what the calendar node did (term, status, selector numbers, row ids ...)
     fallthrough: bool  # the calendar node found no row and hands over to retrieve
     chain: dict  # what the chain node did (extraction, course count, truncation, ...)
+    advice: dict  # what the advice node did (actions, fixed query, calendar rows)
     chain_fallthrough: bool  # the chain node could not name one course and hands over to retrieve
     answer: Answer  # the final answer (from the calendar renderer or the existing pipeline)
     route: str  # calendar | other | abstain | calendar_fallthrough | chain | chain_fallthrough

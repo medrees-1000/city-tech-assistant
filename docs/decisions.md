@@ -744,3 +744,5 @@ Plan: item 3 of `docs/chain-layout-plan.md`, with the owner decisions of 2026-10
 10. Ruff, pytest, `python -m cta.validate`, typecheck, `next build` and the node tests pass.
 
 **Judged part (reported, not a rule).** One paid dev pass (hard cap **$0.30**, expected about $0.05) over q30, q47, q91, q92 and the controls q16, q31, q71, judged as usual; the answers and the judge's reasons for q30, q47, q91 and q92 are shown in full. The judge for a NO ADVICE gold only checks "gives advice: yes or no". Then one live check ("Should I withdraw from my biology class?", 390 px and 1280 px, light and dark, up to $0.02).
+
+**Amendment to check 4 (Oct 15, 2026, found while writing the tests, before any paid run).** The owner's fixed sentence says "whether you should", which contains the banned phrase "you should". The check therefore removes that one fixed sentence from the text before it looks for banned phrases; every other word of every answer is checked as written. Nothing else in the rule changes.

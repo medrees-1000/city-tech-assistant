@@ -14,6 +14,7 @@ graph TD;
 	__start__([<p>__start__</p>]):::first
 	classify(classify)
 	clarify(clarify)
+	advice(advice)
 	calendar(calendar)
 	chain(chain)
 	retrieve(retrieve)
@@ -23,10 +24,12 @@ graph TD;
 	calendar -.-> retrieve;
 	chain -.-> __end__;
 	chain -.-> retrieve;
+	classify -.-> advice;
 	classify -.-> calendar;
 	classify -.-> chain;
 	classify -.-> clarify;
 	classify -.-> retrieve;
+	advice --> __end__;
 	clarify --> __end__;
 	retrieve --> __end__;
 	classDef default fill:#f2f0ff,line-height:1.2

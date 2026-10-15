@@ -6,9 +6,11 @@ answers. Built with LangGraph.
                  +--other-----------> retrieve <--(valid empty selection)--+
                  |                       |
                  +--clarify--> END       v
-                                        END
+                 |                      END
+                 +--advice--> END
 
-(clarify: a short, generic deadline question gets a fixed question back; no model call.)
+(clarify: a short, generic deadline question gets a fixed question back; no model call.
+ advice: "should I drop ...?" gets a fixed sentence, the rules and the dates, never a verdict.)
 
 The retrieve node calls the existing pipeline (cta.answer.answer) unchanged. With router.mode "off"
 answer_question calls it directly and the graph is never built.
@@ -22,8 +24,8 @@ from datetime import date
 from langgraph.graph import END, START, StateGraph
 
 from cta.answer import Answer, answer, call_chat, parse_reply
+from cta.graph import advice, chain_render, clarify, render, select, terms
 from cta.graph import chain as chains
-from cta.graph import chain_render, clarify, render, select, terms
 from cta.graph import classify as classifier
 from cta.graph import contact as contacts
 from cta.graph.state import RoutedAnswer, RouterState
@@ -85,6 +87,8 @@ def make_nodes(d: Deps):
     def after_classify(state: RouterState) -> str:
         if clarify.needs_clarification(state["question"], state["intent"]):
             return "clarify"
+        if advice.needs_advice_rules(state["question"], state["intent"]):
+            return "advice"
         if state["intent"] == "prerequisite":
             return "chain"
         return "calendar" if state["intent"] == "calendar" else "retrieve"
@@ -94,6 +98,28 @@ def make_nodes(d: Deps):
             clarify.reply_text(), False, None, [], [], [], Search([], False, 0, 0, 0.0)
         )  # fmt: skip
         return {"answer": ans, "route": "clarify"}
+
+    def advice_node(state: RouterState) -> dict:
+        actions = advice.matched_actions(state["question"], state["intent"])
+        query = advice.rule_query(actions)  # a fixed question: the student's text is not used
+        found = answer(
+            d.conn, query, state["today"], cfg=d.cfg, client_factory=d.client_factory,
+            log=False, run_id=state.get("run_id"),
+        )  # fmt: skip
+        info = {"actions": [a.name for a in actions], "query": query, "row_ids": [], "term": None}
+        if found.abstained:  # no source covers the action: the usual abstention
+            return {"answer": found, "route": "advice", "advice": info}
+        resolution = terms.resolve_term(state["term_mention"], state["today"], d.events)
+        rendered = None
+        if resolution.status != "unsupported":
+            pool = terms.term_pool(d.events, resolution.term)
+            rows = advice.calendar_rows(pool, actions)
+            assumed = resolution.term if resolution.status == "assumed" else None
+            rendered = render.render_rows(rows, d.contact, assumed) if rows else None
+            info["term"] = resolution.term
+        ans = advice.compose(found, rendered)
+        info["row_ids"] = ans.row_ids
+        return {"answer": ans, "route": "advice", "advice": info}
 
     def calendar_node(state: RouterState) -> dict:
         resolution = terms.resolve_term(state["term_mention"], state["today"], d.events)
@@ -221,18 +247,19 @@ def make_nodes(d: Deps):
         return {"answer": found, "route": route}
 
     return (
-        classify_node, after_classify, clarify_node, calendar_node, after_calendar, chain_node,
-        after_chain, retrieve_node,
+        classify_node, after_classify, clarify_node, advice_node, calendar_node, after_calendar,
+        chain_node, after_chain, retrieve_node,
     )  # fmt: skip
 
 
 def build_graph(d: Deps):
     """The compiled graph. Nodes close over the dependencies; the state carries the question."""
-    (classify_node, after_classify, clarify_node, calendar_node, after_calendar, chain_node,
-     after_chain, retrieve_node) = make_nodes(d)  # fmt: skip
+    (classify_node, after_classify, clarify_node, advice_node, calendar_node, after_calendar,
+     chain_node, after_chain, retrieve_node) = make_nodes(d)  # fmt: skip
     graph = StateGraph(RouterState)
     graph.add_node("classify", classify_node)
     graph.add_node("clarify", clarify_node)
+    graph.add_node("advice", advice_node)
     graph.add_node("calendar", calendar_node)
     graph.add_node("chain", chain_node)
     graph.add_node("retrieve", retrieve_node)
@@ -240,9 +267,13 @@ def build_graph(d: Deps):
     graph.add_conditional_edges(
         "classify",
         after_classify,
-        {"calendar": "calendar", "chain": "chain", "retrieve": "retrieve", "clarify": "clarify"},
+        {
+            "calendar": "calendar", "chain": "chain", "retrieve": "retrieve", "clarify": "clarify",
+            "advice": "advice",
+        },
     )
     graph.add_edge("clarify", END)
+    graph.add_edge("advice", END)
     graph.add_conditional_edges("chain", after_chain, {"retrieve": "retrieve", END: END})
     graph.add_conditional_edges("calendar", after_calendar, {"retrieve": "retrieve", END: END})
     graph.add_edge("retrieve", END)
@@ -274,6 +305,7 @@ def routed(found: Answer, state: RouterState, started: float, today: date) -> Ro
         "chain_fallthrough": bool(state.get("chain_fallthrough")),
         **{k: v for k, v in cal.items()},
         **({"chain": state["chain"]} if state.get("chain") else {}),
+        **({"advice": state["advice"]} if state.get("advice") else {}),
     }  # fmt: skip
     ans.latency_ms = round((time.perf_counter() - started) * 1000)
     return ans

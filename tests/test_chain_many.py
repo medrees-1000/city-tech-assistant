@@ -7,6 +7,7 @@ import re
 
 import pytest
 
+from cta.graph import advice
 from cta.graph import chain as ch
 from cta.graph import chain_render as cr
 from cta.settings import ROOT
@@ -243,6 +244,8 @@ def test_k3_two_or_three_codes_go_to_the_chain_node_iff_the_stored_intent_is_pre
         n = len(ch.question_codes(question))
         if intent == "calendar":
             continue  # the calendar node needs the calendar table; its routing is not touched
+        if advice.needs_advice_rules(question, intent):
+            continue  # step 5: the four NO ADVICE questions take the advice route on purpose
         out = route(CFG_CODE, Client(intent), monkeypatch, question)
         chain_family = out.route == "chain" or out.abstain_reason == "chain_no_record"
         if intent != "prerequisite":

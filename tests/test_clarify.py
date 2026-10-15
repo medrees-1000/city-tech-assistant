@@ -8,7 +8,7 @@ import pytest
 from cta.api import convert, requestlog, schema
 from cta.eval import run_answers as ra
 from cta.eval.questions import load_questions
-from cta.graph import build, clarify
+from cta.graph import advice, build, clarify
 from cta.settings import ROOT, load_models
 from tests.test_api import Client, ask, make_client_app
 from tests.test_router import TODAY, Script, make_router
@@ -59,6 +59,8 @@ def test_the_routing_function_is_unchanged_for_every_question_that_does_not_fire
         state = {"question": text, "intent": intent}
         if clarify.needs_clarification(text, intent):
             assert after_classify(state) == "clarify"
+        elif advice.needs_advice_rules(text, intent):
+            assert after_classify(state) == "advice"  # step 5: the NO ADVICE questions
         else:
             assert after_classify(state) == old.get(intent, "retrieve")
 
