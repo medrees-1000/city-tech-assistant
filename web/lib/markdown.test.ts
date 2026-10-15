@@ -154,3 +154,15 @@ test("course-name headings use the body colour, bold, at body size", () => {
   const size = rule[1].match(/font-size:\s*([\d.]+)rem/);
   assert.ok(body && size && body[1] === size[1], "same size as the body text");
 });
+
+test("UI polish (b): a group heading (h3) is larger than a course heading (h4) and has a thin rule above, except as the first block", () => {
+  const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+  const group = css.match(/\.answer-text h3\.answer-heading\s*\{([^}]*)\}/);
+  const course = css.match(/\.answer-text h4\.answer-heading\s*\{([^}]*)\}/);
+  assert.ok(group && course);
+  const size = (rule: string) => Number(rule.match(/font-size:\s*([\d.]+)rem/)?.[1]);
+  assert.ok(size(group[1]) > size(course[1]), "the group heading is larger than the course heading");
+  assert.ok(size(group[1]) <= 1.25, "and still not page-title sized");
+  assert.match(group[1], /border-top:\s*1px solid var\(--line\)/);
+  assert.match(css, /\.answer-text > h3\.answer-heading:first-child\s*\{[^}]*border-top:\s*0/);
+});
