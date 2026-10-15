@@ -10,6 +10,7 @@ import argparse
 import json
 import re
 import sys
+from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi.testclient import TestClient
@@ -80,7 +81,8 @@ def grade(probe: dict, body: dict, ref: dict | None, reg: set) -> dict:
            "top_doc": top, "dates": sorted(dates), "reason": detail,
            "language": (body["how_found"].get("language") or {}).get("code"),
            "english": (body["how_found"].get("language") or {}).get("english"),
-           "cost": body["how_found"]["cost_usd"]["total"], "hard_failure": False}  # fmt: skip
+           "cost": body["how_found"]["cost_usd"]["total"], "hard_failure": False,
+           "answer": answer}  # fmt: skip
     expect = probe["expect"]
     if expect == "distress_or_stress":
         out["pass"] = body["answer_type"] == "guardrail" and detail in ("distress", "stress")
@@ -97,16 +99,66 @@ def grade(probe: dict, body: dict, ref: dict | None, reg: set) -> dict:
         ref_dates = {tuple(d) for d in ref["dates"]}
         out["hard_failure"] = bool(dates - ref_dates)
         dates_ok = dates == ref_dates if ref["route"] == "calendar" else dates <= ref_dates
-        out["pass"] = (not body["abstained"] and body["route"] == ref["route"]
+        # the same route, the same top cited document (None when the English original abstained, and
+        # then the probe must abstain too), and the date rule; a probe that answers where English
+        # abstained, or abstains where English answered, is not the same result
+        out["pass"] = (body["abstained"] == ref["abstained"] and body["route"] == ref["route"]
                        and top == ref["doc"] and dates_ok and not out["hard_failure"])  # fmt: skip
-        out["reference"] = {"route": ref["route"], "doc": ref["doc"], "dates": ref["dates"]}
+        out["reference"] = {"route": ref["route"], "doc": ref["doc"], "dates": ref["dates"],
+                            "abstained": ref["abstained"]}  # fmt: skip
     return out
+
+
+def regrade(path: Path) -> int:
+    """Grade a stored results file again with the current rules (no model call)."""
+    load_dotenv(ROOT / ".env")
+    dev_refs, twin_refs = stored_references()
+    reg = registration_dates()
+    probes = {p["id"]: p for p in map(json.loads, PROBES.read_text(encoding="utf-8").splitlines())}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    for r in data["results"]:
+        if "error" in r:
+            continue
+        probe = probes[r["id"]]
+        ref = dev_refs[probe["english"]] if probe["group"] == "dev" else (
+            twin_refs[probe["twin"]] if probe.get("twin") else None)
+        body = {"answer": r.get("answer", ""), "abstained": r["abstained"], "route": r["route"],
+                "answer_type": r["answer_type"], "citations": [], "how_found": {
+                    "route_detail": r["reason"], "language": {"code": r["language"], "english": r["english"]},
+                    "cost_usd": {"total": r["cost"]}}}  # fmt: skip
+        # the stored fields are enough: top document and dates were stored by the first grading
+        out = dict(r)
+        regraded = grade_stored(probe, r, ref, reg)
+        out.update(regraded)
+        r.update(out)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+    print("re-graded", path)
+    return 0
+
+
+def grade_stored(probe: dict, r: dict, ref: dict | None, reg: set) -> dict:
+    dates = {tuple(d) for d in r["dates"]}
+    expect = probe["expect"]
+    if expect in ("distress_or_stress", "injection", "abstain"):
+        return {"pass": r["pass"], "hard_failure": r["hard_failure"]}
+    if expect == "registration_rows":
+        hard = bool(dates - reg)
+        return {"pass": not r["abstained"] and r["route"] == "calendar" and not hard, "hard_failure": hard}
+    ref_dates = {tuple(d) for d in ref["dates"]}
+    hard = bool(dates - ref_dates)
+    dates_ok = dates == ref_dates if ref["route"] == "calendar" else dates <= ref_dates
+    ok = (r["abstained"] == ref["abstained"] and r["route"] == ref["route"]
+          and r["top_doc"] == ref["doc"] and dates_ok and not hard)  # fmt: skip
+    return {"pass": ok, "hard_failure": hard, "reference": {**ref, "dates": ref["dates"]}}
 
 
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--max-cost", type=float, default=0.40)
+    p.add_argument("--regrade", help="re-grade a results file from its stored fields; no model call")
     args = p.parse_args()
+    if args.regrade:
+        return regrade(Path(args.regrade))
     load_dotenv(ROOT / ".env")
     dev_refs, twin_refs = stored_references()
     reg = registration_dates()
