@@ -251,3 +251,13 @@ def test_only_the_advice_call_gets_the_larger_limit(monkeypatch, events):
     assert {k: v for k, v in advice_cfg["answer"].items() if k != "max_output_tokens"} == {
         k: v for k, v in other_cfg["answer"].items() if k != "max_output_tokens"
     }
+
+
+def test_todays_date_is_allowed_and_no_other_untraceable_date_is(events):
+    rendered = render.render_rows(rows(events), "r@x.edu", "Fall 2026")
+    text = "Drop by September 3 [1]. Since today is October 11, 2026, that has passed. Also Oct 31."
+    ans = advice.compose(policy_answer(text), rendered)
+    assert advice.untraceable_dates(ans) == {(10, 11)}  # without today: October 11 is flagged
+    assert advice.untraceable_dates(ans, TODAY) == set()  # TODAY is 2026-10-11
+    other = advice.compose(policy_answer("Drop by October 31 [1]."), rendered)
+    assert advice.untraceable_dates(other, TODAY) == {(10, 31)}

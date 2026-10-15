@@ -11,6 +11,7 @@ answer. The answer has three parts (docs/decisions.md, "Step 5: NO ADVICE"):
 
 import re
 from dataclasses import dataclass
+from datetime import date
 
 from cta.answer import Answer
 from cta.graph import render
@@ -139,9 +140,10 @@ def dates_in(text: str) -> set[tuple[int, int]]:
     return found | {(int(m.group(1)), int(m.group(2))) for m in SLASH_DATE.finditer(text)}
 
 
-def untraceable_dates(ans: Answer) -> set[tuple[int, int]]:
-    """Dates in the answer that no cited source holds (an empty set is what the rule asks for)."""
-    held: set[tuple[int, int]] = set()
+def untraceable_dates(ans: Answer, today: date | None = None) -> set[tuple[int, int]]:
+    """Dates in the answer that no cited source holds (an empty set is what the rule asks for).
+    Today's date is allowed: it is the date the pipeline gives the model (docs/decisions.md)."""
+    held: set[tuple[int, int]] = {(today.month, today.day)} if today else set()
     for n in ans.citations:
         if 1 <= n <= len(ans.sources):
             held |= dates_in(ans.sources[n - 1].get("text", ""))
