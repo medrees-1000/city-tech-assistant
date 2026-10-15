@@ -683,3 +683,25 @@ The rule F1 to F6 above stands **unchanged**. This addendum fixes the prompt sen
 **The model experiment is closed: luna stays.** gpt-6-sol scored 0.86 correct against luna's 0.92 (B1 failed, -0.064, 0 of 3 passes) at 5.5 times the cost. gpt-6.1-sol rejects luna's settings and gpt-6-astra was excluded; neither is used. The `answer.model` key exists with default null (= `chat_model`).
 
 **Current default settings** (`config/models.yaml`): chat_model gpt-6-luna; judge gpt-5.6-terra; embedding text-embedding-3-small; answer: model null, format_rule off, temperature 0.1, top_p 0.3, reasoning none, k 5, 600 output tokens, abstain_threshold 0.59; router mode on, selector 2, chain on, chain_render code, contacts on; rerank pool_a on eval runs; API on 127.0.0.1 only, 500 characters per question. Eval file: 94 questions (63 dev, 31 test); the test split stays locked until the final `--final` run. Total spend so far about $6.5.
+
+## Step 4: CLARIFY, keep rule pre-registered (Oct 15, 2026; before any code)
+
+Plan: item 2 of `docs/chain-layout-plan.md`. Owner decisions of 2026-10-15 on top of it: the reply has **no suggestion buttons**; `answer_type: "clarify"` is added to the API contract, the web types and the log row (and a route value `clarify` where the logs need one); the eval runner gets a deterministic CLARIFY rule; the detector is plain code, zero added model calls, placed **after the classifier and before retrieval** (so before the calendar selector too: a clarified question makes no model call after the classifier).
+
+**The detector** (`cta.graph.clarify.needs_clarification`). True only if all hold: the question is short (at most 8 words); it contains a generic deadline cue ("deadline", "due date", "last day"); it contains no topic noun (a closed list taken from the data: registration, add, drop, withdraw, tuition, payment, refund, aid, graduation, class, exam, ... fixed in the code before it is run on any question), no course code and no department (`detect_departments` empty); and the classifier did not say "prerequisite". When it fires the reply is a fixed template, written by the code: it asks which deadline (registration, tuition payment, dropping or withdrawing, applying to graduate, financial aid) and which term (Fall 2026, Winter 2027, Spring 2027, the terms read from `config/calendar_terms.yaml`). No sources, no contact card, no model call after the classifier.
+
+**Eval rule (deterministic, in the runner).** A clarify reply passes **only** on a question typed `ambiguous` (it is scored correct, with the reason "rule: clarify reply on an ambiguous question"). A clarify reply on any other question is scored incorrect ("rule: clarified a question that is not ambiguous"). An ambiguous question that is not clarified (q24, q49 today) is scored as before ("not supported yet", not judged). No judge call is added or removed.
+
+**Keep rule.** All must hold; checks are free and deterministic (no model call, no database write):
+1. The detector fires on **q88 and q89**, never on **q90**, and fires on **zero other dev questions**: checked by code over all 63 dev questions (the test split is not read), with the stored classifier outputs (the `router.intent` of the stored dev runs) for the "prerequisite" condition.
+2. A clear question never clarifies: the detector is false for the four example chips, the other manual-check questions and the 'clear' controls added in the tests; a property test shows that any question holding a topic noun, a course code or a department never fires.
+3. The API contract (`AskResponse`) and the page types accept `answer_type` "clarify" and the route "clarify"; the log row stores the type (in the trace) and the route.
+4. On the page a clarify reply is a normal assistant message: no sources, no contact card, no "no sources" notice, the thumbs buttons are shown, and "How this was found" says "Asked for more detail".
+5. Nothing else changes: for every stored dev question that does not fire, the graph takes the same route as before (replay of the stored classifier intents through the new routing function), and the existing hash tests (single-chain render hashes, calendar layout, abstain text, format-rule prompt hash) still pass unchanged.
+6. No new model call: a clarified request makes exactly the classifier call and no other (tested with a fake client).
+7. The privacy statements stay true: the clarify reply is fixed text with no user input in it; the logged question and answer still go through `redact`; nothing new is stored.
+8. Ruff, pytest, `python -m cta.validate`, typecheck, `next build` and the node tests pass.
+
+**Live check** (dev, real page in headless Chrome, allowed cost up to $0.05): "When is the due date?" must clarify; "When is the filing period for February 2027 graduation?" must not (it must answer from the calendar). 390 px and 1280 px, light and dark. The servers are stopped afterwards, by port.
+
+**Not decided here:** NO ADVICE (step 5) and everything after it.
