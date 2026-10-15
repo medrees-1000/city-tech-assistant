@@ -58,7 +58,14 @@ ORDINARY = [  # near the patterns, and not guardrail cases: all must pass throug
 
 def test_the_lists_are_the_fixed_ones():
     assert len(screen.DISTRESS) == 21 and "suicide" in screen.DISTRESS
-    assert screen.REASONS == ("distress", "bereavement", "personal_data", "injection", "output")
+    assert screen.REASONS == (
+        "distress",
+        "bereavement",
+        "personal_data",
+        "injection",
+        "output",
+        "stress",
+    )  # stress: tester round 1
 
 
 # ---- 1. every listed phrase fires ----
@@ -322,3 +329,141 @@ def test_the_replies_are_pinned_and_the_modules_are_in_the_api_layer_only():
     assert (ROOT / "src" / "cta" / "api" / "screen.py").exists()
     assert not (ROOT / "src" / "cta" / "graph" / "screen.py").exists()
     assert convert.guardrail_response and requestlog.blocked_record
+
+
+# ---- tester round 1, item A: two distress tiers (phrase sets written before the code) ----
+
+TIER1_POSITIVES = [
+    "i feel like giving up on everything",  # F02
+    "I want to give up on everything",
+    "honestly im giving up on everything",
+    "i cant do this anymore",
+    "I can't take it anymore",
+    "i just can't take this anymore, everything is too much",
+    "there's no point in anything anymore",
+    "i feel like there is no point in going on",
+    "I want to disappear",
+    "i just wanna disappear",
+    "i dont want to be here anymore",
+    "I don't want to be here.",
+]
+TIER2_POSITIVES = [
+    "im so stressed about failing out of city tech i dont know what to do",  # F01
+    "I'm so overwhelmed right now",
+    "i am really anxious about everything",
+    "im panicking, i dont know what to do",
+    "I'm freaking out about school",
+    "i think im failing out",
+    "I'm so worried about my future here",
+    "I feel so stressed and lost",
+    "im stressed",
+    "I am overwhelmed and I don't know who to talk to",
+]
+NEAR_MISSES = [
+    "I can't go on the waitlist",
+    "I gave up my seat, how do I get it back",
+    "what's the point of contact for the registrar",
+    "I'm stressed about the tuition deadline",
+    "no point of contact listed",
+    "how do I give up my financial aid",
+    "can I give up my spot in CST 1101",
+    "I can't do this assignment in Brightspace, the page won't load",
+    "I can't take it out of my account, how do I leave the payment plan",
+    "I can't take this class anymore, how do I drop it",
+    "I'm overwhelmed by the degree requirements",
+    "I'm overwhelmed by the number of pathways requirements",
+    "do I have to pay if I give up my seat",
+    "how do I disappear from the waitlist",
+    "I don't want to be here at 8am, are there later sections",
+    "what is the point of the Pathways requirements",
+    "I can't go to class anymore because of my job, what are my options",
+    "she is stressed about her exam",
+    "my roommate is overwhelmed, who can she talk to",
+    "how do I find help for stressed students",
+    "I'm giving up on trying to reach the registrar by phone, is there an email",
+    "I am stressed about MAT 1475",
+]
+
+
+def test_the_phrase_sets_have_the_pre_registered_sizes():
+    assert (len(TIER1_POSITIVES), len(TIER2_POSITIVES), len(NEAR_MISSES)) == (12, 10, 22)
+
+
+@pytest.mark.parametrize("question", TIER1_POSITIVES)
+def test_tier_1_hopeless_phrases_get_the_988_reply(question):
+    got = screen.screen(question, G)
+    assert got.reason == "distress"
+    assert screen.reply("distress", G) == screen.TEXTS["distress"]
+
+
+@pytest.mark.parametrize("question", TIER2_POSITIVES)
+def test_tier_2_stress_phrases_get_the_stress_reply(question):
+    got = screen.screen(question, G)
+    assert (
+        got.reason == "stress" and screen.is_stress(question) and not screen.is_distress(question)
+    )
+
+
+@pytest.mark.parametrize("question", NEAR_MISSES)
+def test_near_misses_fire_neither_tier(question):
+    assert not screen.is_distress(question), question
+    assert not screen.is_stress(question), question
+    assert screen.screen(question, G).reason is None
+
+
+def test_no_dev_question_fires_either_new_tier():
+    for q in DEV:
+        assert not screen.is_stress(q["question"]) and not screen.is_distress(q["question"]), q[
+            "id"
+        ]
+
+
+def test_the_stress_reply_is_fixed_has_no_number_contact_or_claim():
+    text = screen.TEXTS["stress"]
+    assert text.startswith("That sounds really stressful, and I'm sorry you're dealing with it.")
+    assert not any(ch.isdigit() for ch in text) and "@" not in text and "http" not in text.lower()
+    assert "988" not in text and "911" not in text and "[" not in text
+    assert "stress" in screen.REASONS
+
+
+def test_the_stress_tier_needs_first_person_a_stress_word_and_at_most_20_words():
+    assert not screen.is_stress("stressed students need help")  # no first person
+    assert not screen.is_stress("I am happy about the new building")  # no stress word
+    long = "I'm stressed " + "and tired " * 12
+    assert len(long.split()) > 20 and not screen.is_stress(long)
+
+
+def test_short_topic_stems_match_whole_words_only():
+    assert not screen.names_stress_topic(["feel", "lately", "tapping", "address", "ending"][:3])
+    assert screen.names_stress_topic(["fee"]) and screen.names_stress_topic(["fees"])
+    assert screen.names_stress_topic(["registration"]) and screen.names_stress_topic(["tuition"])
+    assert screen.names_stress_topic(["requirements"]) and screen.names_stress_topic(["pathways"])
+
+
+@pytest.mark.parametrize(
+    "question", ["I'm stressed about the tuition deadline", "im stressed about CST 1101"]
+)
+def test_a_stressed_question_that_names_a_topic_is_answered_normally(monkeypatch, question):
+    client = Client()
+    c = make_client_app(client, monkeypatch, retrieve_answer())
+    body = ask(c, question).json()
+    assert body["answer_type"] != "guardrail" and client.calls  # the pipeline ran
+
+
+@pytest.mark.parametrize(
+    ("question", "reason"), [(TIER1_POSITIVES[0], "distress"), (TIER2_POSITIVES[0], "stress")]
+)
+def test_the_two_tester_phrases_through_the_api(monkeypatch, question, reason):
+    client = Client()
+    c = make_client_app(client, monkeypatch, retrieve_answer())
+    body = ask(c, question).json()
+    schema.AskResponse.model_validate(body)
+    assert body["answer_type"] == "guardrail" and body["route"] == "guardrail"
+    assert body["how_found"]["route_detail"] == reason and body["answer"] == screen.TEXTS[reason]
+    assert client.calls == [] and body["citations"] == [] and body["contact"] is None
+    assert (
+        body["question"] == ""
+        and c.logs[0]["question"] == ""
+        and c.logs[0]["status"] == f"blocked_{reason}"
+    )
+    assert c.get("/health").json()["blocked"][reason] == 1
