@@ -9,6 +9,7 @@ from datetime import date
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
+from cta.answer import THRESHOLD_ABSTAIN
 from cta.api import schema
 from cta.graph import contact as contacts
 from cta.settings import ROOT
@@ -135,7 +136,7 @@ def retrieved_block(search, k: int) -> list[schema.RetrievedChunk]:
     return out
 
 
-def how_found(ans, cfg: dict) -> schema.HowFound:
+def how_found(ans, cfg: dict, near_miss: bool | None = None) -> schema.HowFound:
     router, search = ans.router, ans.search
     classify = router["classify"]
     select = (router.get("select") or {}) if router.get("select") else {}
@@ -148,7 +149,7 @@ def how_found(ans, cfg: dict) -> schema.HowFound:
     cost_search = search.cost if search else 0.0
     answer_cost = ans.chat_cost - classify["cost"] - select.get("cost", 0.0)
     return schema.HowFound(
-        near_miss=bool(ans.near_miss),
+        near_miss=bool(ans.near_miss) if near_miss is None else near_miss,
         route_detail=router["route"], intent=router.get("intent"),
         top_vector_similarity=search.top_vector_similarity if search else None,
         abstain_threshold=cfg["answer"]["abstain_threshold"],
@@ -193,6 +194,12 @@ def to_response(ans, question: str, cfg: dict, today: date, request_id: str, ver
         text = text.removesuffix(contacts.contact_line(key, table)).rstrip()
     if ans.abstained:
         text = text.removeprefix(MARKER).strip()
+    code = abstain_code(ans.abstain_reason, question, table)
+    # a near-miss never applies to a personal-account refusal: the API relabels such an abstention,
+    # so its closest pages and citations are dropped and the plain text stays (as before the helper)
+    near_miss = bool(ans.near_miss) and code != "personal_account"
+    if ans.near_miss and not near_miss:
+        text = THRESHOLD_ABSTAIN.removeprefix(MARKER).strip()
     kind = (
         "abstain" if ans.abstained
         else "clarify" if ans.route == "clarify"
@@ -202,15 +209,15 @@ def to_response(ans, question: str, cfg: dict, today: date, request_id: str, ver
     cited = set(ans.citations)
     return schema.AskResponse(
         request_id=request_id, question=question, answer=text, answer_type=kind,
-        abstained=ans.abstained, abstain_reason=abstain_code(ans.abstain_reason, question, table),
+        abstained=ans.abstained, abstain_reason=code,
         route=public_route(ans),
         citations=[]
         # an abstention cites nothing (the retrieved chunks are in how_found) unless it is a
         # near-miss, whose two closest pages are its citations
-        if ans.abstained and not ans.near_miss
+        if ans.abstained and not near_miss
         else [citation(n, c, n in cited, url_map, events) for n, c in enumerate(ans.sources, 1)],
         contact=contact_card(key, table) if key else None,
-        how_found=how_found(ans, cfg),
+        how_found=how_found(ans, cfg, near_miss),
         meta=schema.Meta(today=today.isoformat(), version=version, model=cfg["chat_model"]),
     )  # fmt: skip
 

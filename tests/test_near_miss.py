@@ -323,3 +323,25 @@ def test_through_answer_a_low_second_page_is_dropped_and_a_good_one_is_kept(monk
     stub_search(monkeypatch, 0.576, two(0.551))
     ans = answer_module.answer(None, "q", TODAY, cfg=CFG, client_factory=NoModel(), log=False)
     assert ans.citations == [1, 2] and ans.text.endswith("- Second [2]")
+
+
+# ---- a near-miss never applies to a personal-account refusal (found in the cue round) ----
+
+
+def test_a_personal_account_refusal_carries_no_near_miss_pages_or_citations(monkeypatch):
+    client = Client()
+    c = make_client_app(client, monkeypatch, near_miss_stub())
+    body = ask(c, "what is my financial aid status").json()  # the API relabels this abstention
+    assert body["abstain_reason"] == "personal_account"
+    assert body["citations"] == [] and body["how_found"]["near_miss"] is False
+    assert body["answer"] == "I could not find this in the City Tech sources I have."
+    assert "closest pages" not in body["answer"]
+    assert c.logs[0]["trace"]["near_miss"] is False  # not counted as a near-miss in the log
+
+
+def test_a_plain_near_miss_is_unchanged_by_that_rule(monkeypatch):
+    body = ask(
+        make_client_app(Client(), monkeypatch, near_miss_stub()), "whats the tuition deadline"
+    ).json()
+    assert body["abstain_reason"] == "below_threshold" and body["how_found"]["near_miss"] is True
+    assert [x["n"] for x in body["citations"]] == [1, 2]
