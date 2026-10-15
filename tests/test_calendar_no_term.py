@@ -106,5 +106,7 @@ def dev_term_changes() -> list[tuple[str, str, str]]:
 def test_the_dev_questions_whose_answer_text_can_change_are_those_about_unpublished_terms():
     changed = dev_term_changes()
     print("dev questions with an unpublished term:", changed)
-    assert [c[0] for c in changed] == ["q34"]  # q34: "... Summer 2027" (gold ABSTAIN)
-    assert re.search(r"Summer 2027", changed[0][1])
+    # q34 ("... Summer 2027", gold ABSTAIN) and, since the tester round, q100 and q101 (Summer and
+    # Fall 2027), which are about unpublished terms by design
+    assert [c[0] for c in changed] == ["q100", "q101", "q34"]
+    assert re.search(r"Summer 2027", {c[0]: c[1] for c in changed}["q34"])
