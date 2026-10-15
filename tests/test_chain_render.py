@@ -76,6 +76,12 @@ def test_every_verbatim_rule_string_is_unchanged_and_empty_text_has_its_sentence
 # ---- check 3: "Courses named" equals the walk's codes, joined by commas only ----
 
 
+def untitled(code):
+    """The marking of a named code with no record (tester round 1b, 1a)."""
+    outside = code.split()[0] not in ch.known_prefixes(RECORDS)
+    return chain_render.OUTSIDE if outside else chain_render.NO_RECORD
+
+
 def test_courses_named_is_the_walks_list_joined_by_commas_and_exclusions_are_the_walks():
     names = titles()
     for code in CODES:
@@ -87,14 +93,14 @@ def test_courses_named_is_the_walks_list_joined_by_commas_and_exclusions_are_the
             if c["unparsed"]:
                 want = f"**Courses named:** {chain_render.UNREADABLE}"
             elif c["codes"]:
-                items = [f"{x} ({names.get(x) or chain_render.NO_RECORD})" for x in c["codes"]]
+                items = [f"{x} ({names.get(x) or untitled(x)})" for x in c["codes"]]
                 want = "**Courses named:** " + ", ".join(items)
             else:
                 want = "**Courses named:** none listed"  # UI polish 3b: was "none"
             assert want in blocks[n].splitlines(), (code, c["code"])
             excluded = [ln for ln in blocks[n].splitlines() if ln.startswith("**Must not have")]
             if c["exclusions"]:
-                items = [f"{x} ({names.get(x) or chain_render.NO_RECORD})" for x in c["exclusions"]]
+                items = [f"{x} ({names.get(x) or untitled(x)})" for x in c["exclusions"]]
                 label = "**Must not have taken (as the catalog text says):** "
                 assert excluded == [label + ", ".join(items)]
             else:
@@ -153,7 +159,7 @@ def test_truncation_and_no_record_sentences_appear_if_and_only_if_the_walk_repor
         assert closing == (bool(result["no_record"]) and not set(result["no_record"]) <= marked)
         if result["no_record"]:
             no_rec += 1
-            assert all(f"{c} (no catalog record)" in text or c in text for c in result["no_record"])
+            assert all(c in text for c in result["no_record"])
             if closing:
                 assert f"for: {', '.join(result['no_record'])}." in text
         stops = re.findall(r"The list stops at (\S+ \S+), which names (.+?); prerequisites", text)

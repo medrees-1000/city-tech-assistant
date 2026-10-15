@@ -48,6 +48,14 @@ def apply_the_three_rewrites(old: str) -> str:
     return text
 
 
+def with_outside_marking(text: str) -> str:
+    """Tester round 1b (1a) came after this polish round: it also rewrites the marking of a named
+    course whose prefix is in no record (docs/decisions.md)."""
+    from tests.test_outside_marking import outside_rewrite
+
+    return outside_rewrite(text)
+
+
 def new_render(code_or_codes) -> str:
     if isinstance(code_or_codes, list):
         return cr.render(ch.combined_chain(code_or_codes), RECORDS)
@@ -61,13 +69,14 @@ def test_the_fixture_is_the_197_single_chains_and_42_multi_renders():
 
 @pytest.mark.parametrize("code", sorted(BEFORE["single"]))
 def test_single_chain_differs_from_before_only_by_the_three_rewrites(code):
-    assert new_render(code) == apply_the_three_rewrites(BEFORE["single"][code])
+    old = BEFORE["single"][code]
+    assert new_render(code) == with_outside_marking(apply_the_three_rewrites(old))
 
 
 @pytest.mark.parametrize("key", sorted(BEFORE["multi"]))
 def test_multi_course_render_differs_from_before_only_by_the_three_rewrites(key):
     item = BEFORE["multi"][key]
-    assert new_render(item["codes"]) == apply_the_three_rewrites(item["text"])
+    assert new_render(item["codes"]) == with_outside_marking(apply_the_three_rewrites(item["text"]))
 
 
 def test_every_verbatim_text_every_date_and_every_citation_number_is_still_there():

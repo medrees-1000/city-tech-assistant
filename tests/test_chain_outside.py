@@ -71,7 +71,9 @@ def test_through_the_api_it_is_a_chain_abstention_with_its_own_code_and_no_card(
 def test_named_courses_and_the_chain_renderer_are_untouched():
     # a course named inside prerequisite text keeps "(no catalog record)", and the asked-course
     # sentence of a multi-course answer is the same one as before
-    assert chain_render.named("MAT 1476", {}) == "MAT 1476 (no catalog record)"
+    titles = {c: r["title"].strip() for c, r in RECORDS.items()}
+    # MAT is in the data, so MAT 1476 keeps "(no catalog record)"
+    assert chain_render.named("MAT 1476", titles) == "MAT 1476 (no catalog record)"
     assert "There is no catalog record for {code} " in chain_render.NO_RECORD_ASKED
     assert convert.abstain_code("chain_outside_departments") == "chain_outside_departments"
     assert (

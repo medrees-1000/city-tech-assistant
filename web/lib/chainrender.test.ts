@@ -108,7 +108,7 @@ test("two courses: the shared course sentence is a plain paragraph and the no-re
     .map((p) => flat(p.inlines));
   assert.ok(paragraphs.includes("CST 1101 is already shown above."));
   assert.ok(!paragraphs.some((p) => p.startsWith("No catalog record in the four departments")));
-  assert.ok(text.includes("MAT 1476 (no catalog record), EMT 1111 (no catalog record)"));
+  assert.ok(text.includes("MAT 1476 (no catalog record), EMT 1111 (outside the four departments I cover)")); // tester round 1b, 1a
   assert.ok(paragraphs[0].startsWith("Here are the prerequisites for CST 1204 and CST 2403, from the catalog:"));
   assert.ok(!/chain|level/i.test(text.replace(/"[^"]*"/g, "")));
 });

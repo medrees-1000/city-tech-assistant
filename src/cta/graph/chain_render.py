@@ -15,12 +15,14 @@ tests and safely in production.
 
 import re
 
-from cta.graph.chain import MAX_COURSES
+from cta.graph.chain import MAX_COURSES, known_prefixes, outside_sentence
 
 RISKY = re.compile(r'(^|\n)\s*(#{1,3} |- )|\*\*|\[\d+\]|<|"')  # markdown, a link marker or a quote
 NO_PREREQUISITE = "No prerequisite listed in the catalog."
 UNREADABLE = "cannot be read from this text"
 NO_RECORD = "no catalog record"
+# a named course whose subject prefix is in no record we hold
+OUTSIDE = "outside the four departments I cover"
 NO_RECORD_ASKED = (
     "There is no catalog record for {code} "
     "in the four departments (CST, Math, EET, Dental Hygiene)."
@@ -33,8 +35,12 @@ class ChainRenderError(ValueError):
 
 
 def named(code: str, titles: dict[str, str]) -> str:
-    """ "CODE (Title)", or "CODE (no catalog record)" for a code that has no record."""
-    return f"{code} ({titles.get(code) or NO_RECORD})"
+    """ "CODE (Title)"; for a code with no record "CODE (no catalog record)", or, when its subject
+    prefix is in no record we hold, "CODE (outside the four departments I cover)"."""
+    if titles.get(code):
+        return f"{code} ({titles[code]})"
+    outside = code.split()[0] not in known_prefixes(titles)  # the prefixes of the records
+    return f"{code} ({OUTSIDE if outside else NO_RECORD})"
 
 
 def block(number: int, course: dict, titles: dict[str, str]) -> str:
@@ -119,7 +125,11 @@ def render_sections(result: dict, titles: dict[str, str]) -> str:
     for s in result["sections"]:
         parts.append(f"## Prerequisites for {s['root']}")
         if not s["found"]:
-            parts.append(NO_RECORD_ASKED.format(code=s["root"]))
+            if s["root"].split()[0] not in known_prefixes(titles):
+                # the same sentence as the single-course answer (item D)
+                parts.append(outside_sentence(s["root"]))
+            else:
+                parts.append(NO_RECORD_ASKED.format(code=s["root"]))
         elif s["already_shown"]:
             parts.append(ALREADY_SHOWN.format(code=s["root"]))
         else:

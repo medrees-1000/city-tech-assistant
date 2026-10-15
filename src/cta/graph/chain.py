@@ -422,3 +422,8 @@ def outside_departments(code: str, records: dict[str, dict]) -> bool:
 
 def outside_text(code: str) -> str:
     return OUTSIDE_TEXT.format(code=code, url=catalog_url())
+
+
+def outside_sentence(code: str) -> str:
+    """The same text without the "ABSTAIN:" marker, for a section of a longer answer."""
+    return outside_text(code).removeprefix("ABSTAIN: ")

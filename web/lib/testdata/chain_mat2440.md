@@ -1,7 +1,7 @@
 Here are the prerequisites for MAT 2440, from the catalog:
 
 ### MAT 2440 — Data Structures and Algorithms [1]
-**Courses named:** MAT 1375 (Precalculus), CST 1201 (Programming Fundamentals), CST 2403 (Intro C++ Programming I), MAT 1630 (Intro to Computational Science), MTEC 1202 (no catalog record)
+**Courses named:** MAT 1375 (Precalculus), CST 1201 (Programming Fundamentals), CST 2403 (Intro C++ Programming I), MAT 1630 (Intro to Computational Science), MTEC 1202 (outside the four departments I cover)
 **Catalog says:** "Prerequisites of MAT 1375 or higher AND (CST 1201 or CST 2403 or MAT 1630 or MTEC 1202)."
 
 ### MAT 1375 — Precalculus [2]
@@ -14,7 +14,7 @@ Here are the prerequisites for MAT 2440, from the catalog:
 PRE: FOR NON-CST MAJORS: CST 1101"
 
 ### CST 2403 — Intro C++ Programming I [4]
-**Courses named:** CST 1101 (Problem Solving Comp. Program), MAT 1275 (College Algebra/Trigonometry), MAT 1275CO (College Algebra & Trig w Coreq), MAT 1476 (no catalog record), EMT 1111 (no catalog record)
+**Courses named:** CST 1101 (Problem Solving Comp. Program), MAT 1275 (College Algebra/Trigonometry), MAT 1275CO (College Algebra & Trig w Coreq), MAT 1476 (no catalog record), EMT 1111 (outside the four departments I cover)
 **Catalog says:** "Pre-requisite: (CST 1101 and MAT 1275 or MAT1275CO or higher) or MAT 1476 or (EMT 1111 and MAT 1275 or MAT 1275CO or higher)"
 
 ### MAT 1630 — Intro to Computational Science [5]

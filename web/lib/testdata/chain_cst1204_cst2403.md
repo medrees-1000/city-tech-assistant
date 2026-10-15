@@ -15,7 +15,7 @@ No prerequisite listed in the catalog.
 ## Prerequisites for CST 2403
 
 ### CST 2403 — Intro C++ Programming I [4]
-**Courses named:** CST 1101 (Problem Solving Comp. Program), MAT 1275 (College Algebra/Trigonometry), MAT 1275CO (College Algebra & Trig w Coreq), MAT 1476 (no catalog record), EMT 1111 (no catalog record)
+**Courses named:** CST 1101 (Problem Solving Comp. Program), MAT 1275 (College Algebra/Trigonometry), MAT 1275CO (College Algebra & Trig w Coreq), MAT 1476 (no catalog record), EMT 1111 (outside the four departments I cover)
 **Catalog says:** "Pre-requisite: (CST 1101 and MAT 1275 or MAT1275CO or higher) or MAT 1476 or (EMT 1111 and MAT 1275 or MAT 1275CO or higher)"
 
 ### MAT 1275 — College Algebra/Trigonometry [5]

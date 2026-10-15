@@ -127,7 +127,11 @@ def test_k1_at_most_15_courses_and_everything_cut_is_named_exactly_as_the_walk_r
             # UI polish 3a: the closing sentence is left out when every such code is already marked
             # "(no catalog record)" in a "Courses named" line above; either way each is stated once
             closing_has = "No catalog record in the four departments for:" in text
-            marked = {c for c in left if f"{c} (no catalog record)" in text}
+            marked = {
+                c
+                for c in left
+                if f"{c} (no catalog record)" in text or f"{c} ({cr.OUTSIDE})" in text
+            }
             assert closing_has == (bool(left) and marked != set(left))
             assert all(c in text for c in left)
     assert cut > 0  # the capped combination does cut
@@ -177,16 +181,21 @@ def test_k1_cross_listed_codes_stay_separate_never_merged():
     result, text = combined(CROSS_LISTED)
     assert [s["found"] for s in result["sections"]] == [True, False, False]
     assert text.count("### EET 3672 — ") == 1 and "### CET 3672" not in text
-    assert text.count("There is no catalog record for") == 2
+    # tester round 1b (1a): CET and MECH are subjects of no record we hold, so their sections use
+    # the sentence of item D ("I only have catalog records for ...") not "no catalog record"
+    assert text.count("so I can't tell you about CET 3672.") == 1
+    assert text.count("so I can't tell you about MECH 3672.") == 1
+    assert text.count("There is no catalog record for") == 0
 
 
 def test_k1_an_unknown_code_among_several_has_its_own_section_and_the_others_are_walked():
     result, text = combined(["CST 1204", "XYZ 1000", "CST 3504"])
     assert result["found"] and [s["found"] for s in result["sections"]] == [True, False, True]
+    # XYZ is a subject of no record we hold: the asked-code section uses the item D sentence (1a)
     assert (
-        text.count("## Prerequisites for XYZ 1000\n\nThere is no catalog record for XYZ 1000 in")
-        == 1
+        text.count("## Prerequisites for XYZ 1000\n\nI only have catalog records for Computer") == 1
     )
+    assert text.count("There is no catalog record for") == 0
     assert "### CST 1204 — " in text and "### CST 3504 — " in text
     assert "No catalog record in the four departments for: XYZ 1000" not in text  # said once
     only = ch.combined_chain(["XYZ 1000", "ABC 2000"])
