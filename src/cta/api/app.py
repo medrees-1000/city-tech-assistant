@@ -20,7 +20,7 @@ from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from cta.api import convert, language, requestlog, schema, screen, topic, tracing
+from cta.api import convert, hygiene, language, requestlog, schema, screen, topic, tracing
 from cta.api import guard as guard_mod
 from cta.api.checks import require_startup
 from cta.graph import render
@@ -86,10 +86,10 @@ def create_app(
 
     api = cfg["api"]
     feedback_failures = [0]  # a failed vote write is counted here and shown in /health
-    record = requestlog.Logger(
-        log_writer
-    )  # counts failed writes; a failed write never fails a request
     guard = guard_mod.Guard(guards, root=root)
+    # counts failed writes; a failed write never fails a request, and its cost still counts for
+    # the daily cap (tester round 2, T13)
+    record = requestlog.Logger(log_writer, on_lost=guard.add_unlogged)
 
     @asynccontextmanager
     async def lifespan(_app):
@@ -158,6 +158,7 @@ def create_app(
                 record(conn, rec)
         except Exception:  # noqa: BLE001 - a row that cannot be written never fails the reply
             record.failures += 1
+            record.lost(rec)
         return resp
 
     def serve(question: str, rid: str, today: date, started: float, abandoned: threading.Event,
@@ -270,7 +271,7 @@ def create_app(
     @app.post("/ask", response_model=schema.AskResponse)
     async def ask(body: schema.AskRequest, request: Request):
         rid = request.state.request_id
-        question = body.question.strip()
+        question = hygiene.normalize(body.question)  # before any screen, redaction or log
         today = api["today"] or clock()
         started = time.perf_counter()
         reason = await run_in_threadpool(guard.stage1, request, connect)

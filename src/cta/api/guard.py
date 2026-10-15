@@ -56,6 +56,8 @@ class Guard:
         self.spend_check_failures = 0
         self.redacted = 0  # questions scrubbed since the start (a count, no text)
         self._spend: tuple[float, float] | None = None  # (monotonic time, sum)
+        # cost of requests whose log row could not be written, for the current UTC day (memory only)
+        self._unlogged: tuple[datetime, float] = (day_start(self.now()), 0.0)
 
     # ---- 1. the kill switch ----
 
@@ -101,6 +103,20 @@ class Guard:
         ).fetchone()
         return float(row[0])
 
+    def add_unlogged(self, record: dict) -> None:
+        """Count the cost of a request whose log row failed, so the cap still sees it (T13)."""
+        cost = record.get("cost_usd")
+        if cost is None:  # a failed request: the same flat estimate the database sum uses
+            cost = (
+                self.s["failed_request_cost_usd"] if record.get("status") in FAILED_STATUSES else 0
+            )
+        with self.lock:
+            self._unlogged = (day_start(self.now()), self.unlogged_today() + float(cost))
+
+    def unlogged_today(self) -> float:
+        day, total = self._unlogged
+        return total if day == day_start(self.now()) else 0.0
+
     def cached_spend(self, connect: Callable) -> float | None:
         """The sum, cached for spend_cache_s. None when the query failed (the caller fails open)."""
         now = self.monotonic()
@@ -117,7 +133,7 @@ class Guard:
 
     def over_cap(self, connect: Callable) -> bool:
         total = self.cached_spend(connect)
-        return total is not None and total >= self.s["daily_spend_cap_usd"]
+        return total is not None and total + self.unlogged_today() >= self.s["daily_spend_cap_usd"]
 
     # ---- the order of the checks ----
 
@@ -136,6 +152,8 @@ class Guard:
 
     def health(self, connect: Callable) -> dict:
         total = self.cached_spend(connect)
+        if total is not None:
+            total += self.unlogged_today()
         cap = self.s["daily_spend_cap_usd"]
         return {
             "disabled": self.disabled(),

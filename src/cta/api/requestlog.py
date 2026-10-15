@@ -103,15 +103,22 @@ def write_feedback(conn, request_id: str, vote: str) -> bool:
 class Logger:
     """Writes records and counts failures; a failed write never fails a request."""
 
-    def __init__(self, writer=write):
+    def __init__(self, writer=write, on_lost=None):
         self.writer = writer
+        self.on_lost = on_lost  # called with the record that could not be written
         self.failures = 0
+
+    def lost(self, record: dict) -> None:
+        """A record that could not be written (the caller counts the failure itself)."""
+        if self.on_lost:
+            self.on_lost(record)
 
     def __call__(self, conn, record: dict) -> None:
         try:
             self.writer(conn, record)
         except Exception:  # noqa: BLE001 - any failure: count it, say so without any question text
             self.failures += 1
+            self.lost(record)
             log.warning(WARNING)
             try:
                 conn.rollback()
