@@ -467,3 +467,66 @@ def test_the_two_tester_phrases_through_the_api(monkeypatch, question, reason):
         and c.logs[0]["status"] == f"blocked_{reason}"
     )
     assert c.get("/health").json()["blocked"][reason] == 1
+
+
+# ---- tester round 1, item E: a note when personal details were removed ----
+
+NOTE = "I removed what looked like personal details from your question before answering."
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "my phone is 718-260-5800, whats the tuition due date",
+        "email me at jane.doe@example.edu about the tuition deadline",
+        "my emplid is 23456789, how do I pay",
+    ],
+)
+def test_the_note_is_added_when_an_email_phone_or_id_was_removed(monkeypatch, question):
+    c = make_client_app(Client(), monkeypatch, retrieve_answer("The deadline is Sept 3. [1]"))
+    body = ask(c, question).json()
+    assert body["answer"] == f"{NOTE}\n\nThe deadline is Sept 3. [1]"
+    assert screen.screen(question, G).removed_details is True
+    assert c.get("/health").json()["redacted"] == 1
+    logged = json.dumps(c.logs, default=str)
+    for value in ("718-260-5800", "jane.doe", "23456789"):
+        assert value not in logged and value not in body["question"]
+    assert c.logs[0]["answer"].startswith(NOTE)  # the note holds no personal data
+
+
+def test_nothing_else_in_the_answer_changes_when_the_note_is_added(monkeypatch):
+    plain = ask(
+        make_client_app(Client(), monkeypatch, retrieve_answer()), "when is the deadline"
+    ).json()
+    noted = ask(
+        make_client_app(Client(), monkeypatch, retrieve_answer()),
+        "when is the deadline, call 718-260-5800",
+    ).json()
+    assert noted["answer"] == f"{NOTE}\n\n{plain['answer']}"
+    for key in ("citations", "contact", "answer_type", "route", "abstained"):
+        assert noted[key] == plain[key], key
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "when is the deadline",  # nothing to remove
+        "my name is Jane Doe, when is the deadline",  # a name only: not one of the three kinds
+        "[PHONE] was already scrubbed upstream, when is the deadline",  # nothing newly removed
+    ],
+)
+def test_no_note_without_one_of_the_three_kinds(monkeypatch, question):
+    body = ask(make_client_app(Client(), monkeypatch, retrieve_answer()), question).json()
+    assert NOTE not in body["answer"] and not screen.screen(question, G).removed_details
+
+
+def test_an_ssn_shaped_question_is_refused_not_noted(monkeypatch):
+    body = ask(
+        make_client_app(Client(), monkeypatch, retrieve_answer()), "my ssn is 123-45-6789"
+    ).json()
+    assert body["answer"] == screen.TEXTS["personal_data"] and NOTE not in body["answer"]
+
+
+def test_the_note_text_is_fixed_and_no_dev_question_gets_it():
+    assert screen.PERSONAL_NOTE == NOTE
+    assert not any(screen.screen(q["question"], G).removed_details for q in DEV)

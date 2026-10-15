@@ -121,11 +121,18 @@ INJECTION = tuple(
 KEY_SHAPE = re.compile(r"sk-[A-Za-z0-9_-]{20,}")
 
 
+# Said at the start of an answer when an e-mail, phone number or ID-shaped number was removed from
+# the question (tester round 1, item E). Not for an SSN-shaped number (refused) and not for a name.
+PERSONAL_NOTE = "I removed what looked like personal details from your question before answering."
+NOTE_TAGS = ("EMAIL", "PHONE", "ID")
+
+
 @dataclass
 class Screened:
     reason: str | None  # one of REASONS, or None when the question may go on
     question: str  # the question as it goes to the model and the log (scrubbed)
     scrubbed: bool = False  # something was replaced
+    removed_details: bool = False  # an e-mail, phone or ID-shaped number was removed
 
 
 def lowered(text: str) -> str:
@@ -208,6 +215,12 @@ def scrub(question: str) -> str:
     return NAME.sub(lambda m: m.group(0).replace(m.group(1), "[NAME]"), redact(question))
 
 
+def removed_personal_details(original: str, clean: str) -> bool:
+    """True when `clean` holds an [EMAIL], [PHONE] or [ID] tag that `original` did not have."""
+    pattern = re.compile(r"\[(?:" + "|".join(NOTE_TAGS) + r")\]")
+    return len(pattern.findall(clean)) > len(pattern.findall(original))
+
+
 def screen(question: str, g: dict) -> Screened:
     """The first guardrail that applies, in the order of the plan: distress, bereavement,
     personal data, injection; else the scrubbed question."""
@@ -222,7 +235,7 @@ def screen(question: str, g: dict) -> Screened:
     if is_stress(question):
         return Screened("stress", question)
     clean = scrub(question) if g["personal_data"] != "off" else question
-    return Screened(None, clean, clean != question)
+    return Screened(None, clean, clean != question, removed_personal_details(question, clean))
 
 
 def reply(reason: str, g: dict) -> str:

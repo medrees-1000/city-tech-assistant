@@ -682,7 +682,10 @@ def test_an_answered_request_writes_one_row_with_the_redacted_text_and_the_numbe
     assert set(row) <= ALLOWED_COLUMNS  # no ip, user agent, cookie or other identifier column
     assert row["request_id"] == r.json()["request_id"] and row["status"] == "ok"
     assert "jane.doe@example.com" not in row["question"] and "[EMAIL]" in row["question"]
-    assert row["answer"] == "Yes. [1]" and row["route"] == "retrieve" and row["abstained"] is False
+    # tester round 1, item E: an e-mail was removed, so the answer starts with the plain note
+    note = "I removed what looked like personal details from your question before answering."
+    assert row["answer"] == f"{note}\n\nYes. [1]"
+    assert row["route"] == "retrieve" and row["abstained"] is False
     assert row["chat_model"] == "gpt-6-luna" and row["today"] == "2026-10-11"
     assert row["prompt_tokens"] == 400 and row["embedding_tokens"] == 7
     assert row["cost_usd"] == r.json()["how_found"]["cost_usd"]["total"] > 0

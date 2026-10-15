@@ -145,7 +145,8 @@ def create_app(
             record.failures += 1
         return resp
 
-    def serve(question: str, rid: str, today: date, started: float, abandoned: threading.Event):
+    def serve(question: str, rid: str, today: date, started: float, abandoned: threading.Event,
+              note: str | None = None):  # fmt: skip
         """The pipeline for one question (the body of /ask before step 7)."""
         retry_limit.set(guards["model_retries"])  # the API retries less than the eval does
 
@@ -187,6 +188,8 @@ def create_app(
                     ans, question, cfg, today, rid, version, url_map, by_id
                 )
                 topic.rewrite(question, response, cfg, client_factory)
+                if note:  # personal details were removed from the question: say so first
+                    response.answer = f"{note}\n\n{response.answer}"
                 if screen.leaks_key(response.answer):  # never return a key-shaped answer
                     guard.blocked["output"] += 1
                     return block("output", question, rid, today, started,
@@ -219,11 +222,12 @@ def create_app(
                 block, verdict.reason, question, rid, today, started, text, None, 0.0, True
             )
         guard.redacted += verdict.scrubbed
+        note = screen.PERSONAL_NOTE if verdict.removed_details else None
         question = verdict.question  # what the model and the log see: emails, numbers, names gone
         abandoned = threading.Event()
         try:
             return await asyncio.wait_for(
-                run_in_threadpool(serve, question, rid, today, started, abandoned),
+                run_in_threadpool(serve, question, rid, today, started, abandoned, note),
                 timeout=guards["request_timeout_s"],
             )
         except TimeoutError:
