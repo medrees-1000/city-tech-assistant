@@ -1,0 +1,14 @@
+# Known limits (a list for the README)
+
+Kept here so the README's "failures and known limits" section can be written from it. Each item says what happens, not what is planned. Last updated 2026-10-15 (tester round 1).
+
+1. **Two-part questions answer only one part, silently.** A question that asks two different things ("when is X and how do I do Y") gets an answer to one of them and no sign that the other was dropped. (Questions about two courses are handled: up to three course codes are answered together.)
+2. **A rate-limited request returns HTTP 200 by design.** The reply is a normal assistant message ("You're asking quickly. Please wait a moment and try again.") with `answer_type: "guardrail"`; the reason is in the log row, in `/health` and in `how_found.route_detail`. Likewise the daily-cap, kill-switch and timeout replies.
+3. **"How this was found" shows the confidence cutoff and the cost on purpose.** The panel is meant to be inspected: the best match's similarity, the cutoff, the sources and the cost per step are shown to every visitor.
+4. **Non-English handling is being decided separately.** Nothing is claimed about it here.
+5. **Noisy questions can still fall under the confidence cutoff.** Markup, emoji and redaction placeholders are removed from the search text and the classifier input, but a short question can still score just under the cutoff of 0.59 and be answered with "I could not find this" (tester round 1: four such questions stayed under it after cleaning; the cutoff was not lowered).
+6. **The tuition due dates come out as one run-on sentence** (the Bursar payment table is read by the model). An optional code-written route needs owner-verified rows and is deferred.
+7. **Advice answers are long.** A "should I drop or withdraw" answer holds the rules, the dates and a calendar list; the list collapses to five items on the page, but the text still repeats some dates.
+8. **Courses outside the four departments are not covered.** The assistant says so and points to the catalog; a course named inside a prerequisite text but absent from the data is marked "(no catalog record)".
+9. **Distress and stress detection is plain phrase matching.** It can miss a worried student who uses other words and can catch an ordinary sentence that happens to use one of the phrases; the replies are fixed and kind, and the student can ask again.
+10. **The rate limit counts per network address in memory.** Students behind one shared address (a campus gateway, or a proxy that hides the visitor) share one count; the counts reset when the service restarts.
