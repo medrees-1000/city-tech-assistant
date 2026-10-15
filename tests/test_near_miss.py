@@ -274,10 +274,33 @@ def two(second_sim, third=None):
     return out + ([third] if third else [])
 
 
-def test_the_first_page_is_always_listed_even_with_a_low_similarity():
-    assert [p["id"] for p in closest_pages([chunk("a#1", PAGE_A, "First", 0.40)], floor=FLOOR)] == [
+def test_the_first_page_needs_the_floor_too():
+    # round 1b follow-up: the first page is no longer listed unconditionally
+    low = [chunk("a#1", PAGE_A, "First", 0.40)]
+    assert closest_pages(low, floor=FLOOR) == []  # none qualifies: not a near-miss
+    assert [p["id"] for p in closest_pages([chunk("a#1", PAGE_A, "F", 0.55)], floor=FLOOR)] == [
         "a#1"
     ]
+    assert closest_pages([chunk("a#1", PAGE_A, "F", 0.5499)], floor=FLOOR) == []  # just below
+    assert [
+        p["id"]
+        for p in closest_pages([chunk("a#1", PAGE_A, "F", round(0.59 - 0.04, 10))], floor=FLOOR)
+    ] == ["a#1"]  # floating-point safe
+
+
+def test_a_non_qualifying_first_page_is_skipped_and_the_next_qualifying_pages_are_taken():
+    results_ = [chunk("a#1", PAGE_A, "Weak first", 0.50), chunk("b#1", PAGE_B, "Second", 0.57),
+                chunk("c#1", PAGE_C, "Third", 0.56)]  # fmt: skip
+    assert [p["id"] for p in closest_pages(results_, floor=FLOOR)] == ["b#1", "c#1"]
+
+
+def test_through_answer_none_qualifying_gives_the_old_wording_with_no_flag_or_pages(monkeypatch):
+    # the best vector similarity is inside the band, but no page's own chunk similarity qualifies
+    weak = [chunk("a#1", PAGE_A, "First", 0.50), chunk("b#1", PAGE_B, "Second", 0.52)]
+    stub_search(monkeypatch, 0.57, weak)
+    ans = answer_module.answer(None, "q", TODAY, cfg=CFG, client_factory=NoModel(), log=False)
+    assert ans.abstained and ans.abstain_reason == "below_threshold" and not ans.near_miss
+    assert ans.text == THRESHOLD_ABSTAIN and ans.citations == [] and len(ans.sources) == 2
 
 
 def test_a_second_page_exactly_at_cutoff_minus_margin_is_included_and_just_below_is_not():

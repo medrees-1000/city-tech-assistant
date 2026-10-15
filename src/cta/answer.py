@@ -99,23 +99,18 @@ def page_key(chunk: dict) -> str:
 def closest_pages(
     results: list[dict], limit: int = NEAR_MISS_PAGES, floor: float | None = None
 ) -> list[dict]:
-    """The first chunk of each of up to `limit` distinct pages, in the order of `results`. The first
-    page is always listed. With a `floor` a further page is listed only if its own similarity (the
-    highest vector similarity among its chunks in `results`; a missing one never qualifies) is at or
-    above the floor: the next page in order that qualifies is taken."""
+    """The first chunk of each of up to `limit` distinct pages, in the order of `results`. With a
+    `floor` a page is listed only if its own similarity (the highest vector similarity among its
+    chunks in `results`; a missing one never qualifies) is at or above the floor, so the pages that
+    do not qualify are skipped and the next ones in order are taken; none may qualify, and then the
+    list is empty (not a near-miss). Without a floor the first `limit` distinct pages are listed."""
     pages: dict[str, dict] = {}
     best: dict[str, float] = {}
     for chunk in results:
         key = page_key(chunk)
         pages.setdefault(key, chunk)
         best[key] = max(best.get(key, float("-inf")), chunk.get("similarity", float("-inf")))
-    keys = list(pages)
-    chosen = keys[:1]
-    for key in keys[1:]:
-        if len(chosen) == limit:
-            break
-        if floor is None or best[key] >= floor:
-            chosen.append(key)
+    chosen = [k for k in pages if floor is None or best[k] >= floor][:limit]
     return [pages[k] for k in chosen]
 
 
