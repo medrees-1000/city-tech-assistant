@@ -709,3 +709,38 @@ Plan: item 2 of `docs/chain-layout-plan.md`. Owner decisions of 2026-10-15 on to
 ## Step 4 disclosure (Oct 15, 2026)
 
 The first CLARIFY detector scan covered the whole question file, so the owner now knows the detector fires on test question q23 ("When is the deadline?", typed ambiguous). No behaviour was changed because of it; all later checks used the dev split only.
+
+## Step 5: NO ADVICE, keep rule pre-registered (Oct 15, 2026; before any code)
+
+Plan: item 3 of `docs/chain-layout-plan.md`, with the owner decisions of 2026-10-15. **Dev only:** every scan and run below is filtered to the dev split; no test-split line is opened or printed. Dev advice-type questions: **q30, q47, q91, q92** (all four are dev; q48 is test and is not touched).
+
+**The detector** (`cta.graph.advice`, plain code, no model call). It fires when **both** hold: (a) an advice cue and (b) an action word, and the classifier did not say "prerequisite". It runs after the classifier; a clarify question never has an action word, so the two never overlap, and clarify is tried first.
+- **Advice cues** (whole phrases, case-insensitive): "should i", "should we", "do you think i should", "is it a good idea", "is it a bad idea", "would you recommend", "do you recommend", "what do you recommend", "would you advise", "would you suggest", "is it better to", "would it be better", "is it worth", "is it wise", "is it smart".
+- **Action words** (regular expressions, whole words, case-insensitive; every one that matches adds its rule query and its calendar pattern):
+  - incomplete: `incomplete`
+  - drop or withdraw: `drop`, `dropping`, `withdraw`, `withdrawing`, `withdrawal`
+  - audit: `audit`, `auditing`
+  - payment plan: `payment plan`, `nelnet`
+  - sign up: `sign up`, `signing up`
+  - change major: `change my major`, `changing my major`, `change major`, `switch my major`, `switching my major`, `declare a major`, `declaring a major`
+  - transfer: `transfer`, `transferring`
+  - take or retake a class: `take|taking|retake|retaking` followed by optionally `a|an|the|this|that|my|another` and then `class|classes|course|courses`
+
+**The answer** is built by code from three parts, in this order:
+1. **One fixed sentence**, written once in code: "I can't tell you whether you should, but here are the rules and dates that apply." No student text is copied into it.
+2. **The rules**: the existing retrieve-and-answer path (existing answer model, existing "no advice" prompt) run on a **fixed question written in code for the action** (for example "What are the rules and deadlines for dropping or withdrawing from a class?"), never on the student's own text; the rule queries are in `cta.graph.advice.ACTIONS`. If this retrieval abstains (nothing covers the action), the whole answer is the usual abstention, with the usual polite wording and the usual contact policy v2 (no Advisement rule is added; no contact card is attached to an answer).
+3. **The dates**: calendar rows of the term the classifier found (the current term if none is named; no rows for a term with no calendar), chosen by code from that term's rows by a fixed pattern per action (drop or withdraw: `drop|withdraw|grade of W`; incomplete: `incomplete`; payment plan: `payment plan`; sign up: `regist|add a course`; change major: `major`; the other actions have no calendar rows), rendered by the existing calendar renderer and numbered after the policy sources. No selector call.
+
+**Keep rule.** All must hold; checks are deterministic and free (no model call, no database write):
+1. The detector fires on **q30, q47, q91 and q92** and on **none of the other 59 dev questions** (scan by code over the dev split only).
+2. The controls do not fire: "How do I sign up for a payment plan?" (an action word, no cue) and "When is the last day to drop?", "How do I withdraw from a course?", "What is the payment plan?". No other dev question mentions a payment plan or signing up (checked by code over dev); the dev questions with an action word and no cue (q16, q18, q31, q34, q65, q71) do not fire. A property test: no cue, never fires; no action word, never fires; a prerequisite classification never fires.
+3. The fixed sentence appears **exactly once** in a fired, non-abstained answer.
+4. **No advice phrase** in any produced answer. Banned phrases (case-insensitive): "i recommend", "i'd recommend", "i would recommend", "my recommendation", "you should", "you ought", "i suggest", "i'd suggest", "i advise", "it is best", "it's best", "it would be better", "you'd be better", "better off", "consider dropping", "consider withdrawing", "is a good idea", "is a bad idea". Checked by code on the code-written parts (the fixed sentence and the calendar block, always) and on every produced answer of the paid dev pass.
+5. **Every date in the answer is traceable:** each date in the text is a date of a cited calendar row or occurs in a cited policy source (tested with made-up sources, and on the paid pass's answers).
+6. Every `[n]` maps to a source of the answer (policy sources first, calendar rows after them).
+7. A fired question never gets a contact card (the answer is not an abstention, so `add_contact` returns none; tested). An abstained advice question follows contact policy v2 unchanged.
+8. **Nothing else changes:** for every stored dev question that does not fire, the routing function returns the same route as before (replay of the stored classifier intents), and the existing hash tests pass unchanged.
+9. **No new answer type and no page change is needed:** `answer_type` is "answer" and the public route "retrieve" (the log row's route is "advice"); the page shows a normal answer with its sources. Stated now; if a type turns out to be needed it is reported, not slipped in.
+10. Ruff, pytest, `python -m cta.validate`, typecheck, `next build` and the node tests pass.
+
+**Judged part (reported, not a rule).** One paid dev pass (hard cap **$0.30**, expected about $0.05) over q30, q47, q91, q92 and the controls q16, q31, q71, judged as usual; the answers and the judge's reasons for q30, q47, q91 and q92 are shown in full. The judge for a NO ADVICE gold only checks "gives advice: yes or no". Then one live check ("Should I withdraw from my biology class?", 390 px and 1280 px, light and dark, up to $0.02).
