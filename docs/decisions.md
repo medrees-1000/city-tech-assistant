@@ -746,3 +746,19 @@ Plan: item 3 of `docs/chain-layout-plan.md`, with the owner decisions of 2026-10
 **Judged part (reported, not a rule).** One paid dev pass (hard cap **$0.30**, expected about $0.05) over q30, q47, q91, q92 and the controls q16, q31, q71, judged as usual; the answers and the judge's reasons for q30, q47, q91 and q92 are shown in full. The judge for a NO ADVICE gold only checks "gives advice: yes or no". Then one live check ("Should I withdraw from my biology class?", 390 px and 1280 px, light and dark, up to $0.02).
 
 **Amendment to check 4 (Oct 15, 2026, found while writing the tests, before any paid run).** The owner's fixed sentence says "whether you should", which contains the banned phrase "you should". The check therefore removes that one fixed sentence from the text before it looks for banned phrases; every other word of every answer is checked as written. Nothing else in the rule changes.
+
+## Step 5 kept; the advice route's output limit, pre-registered (Oct 15, 2026; before the code)
+
+**Owner decision:** step 5 (NO ADVICE) is KEPT. The amendment to check 4 (the banned-phrase check ignores the fixed sentence) is accepted.
+
+**The defect.** In the dev pass `step5-dev`, q47's rules text stopped in the middle of a sentence ("... it is assigned"): the answer used 604 completion tokens against the limit `answer.max_output_tokens: 600`, which every retrieval answer shares. q47 matches two actions (incomplete, and drop or withdraw), so it asks retrieval for two rule sets.
+
+**The change (one thing).** A new key `answer.advice_max_output_tokens`, used **only** by the advice route's retrieval call; `answer.max_output_tokens` stays **600** for everything else. **Old 600, new 1000.** 1000 is the smallest round value that leaves clear margin over the 604 tokens q47 needed (it was cut off, so its natural length is at least that); a value close to 604 would leave none. Cost: the output price of gpt-6-luna is $0.50 per 1M tokens, so the extra 400 tokens cost at most $0.0002 per advice request; an advice request costs about $0.0003 to $0.0006 today and at most about $0.0009 with the new limit (all steps included). No other call (classifier, reranker, calendar selector, topic call, chain answer, other retrieval answers) changes.
+
+**Checks.** All must hold. If any fails, the round fails and is reported; no second value is tried without the owner.
+1. On q30, q47, q91 and q92, **three repeat requests each (12 real requests)**: no answer is truncated, meaning the finish reason of the answer call is not "length" (recorded by a wrapper around the client, not by new production code), and the policy part of the text ends with a full sentence (a full stop, question mark or exclamation mark, with or without a citation marker after it).
+2. **Every other route and the non-advice retrieval request are unchanged:** the limit read by the non-advice retrieval call is 600 (tested with a fake client that records `max_completion_tokens`, for an advice question and a non-advice question); the routing replay over the stored dev classifier outputs and the existing hash tests (chain render, calendar layout, format-rule prompt, abstain text) pass unchanged.
+3. The fixed sentence appears exactly once in each of the 12 answers, and the other step 5 deterministic checks (no banned phrase, traceable dates, valid `[n]`, no contact) hold on them.
+4. Ruff, pytest, `python -m cta.validate`, typecheck, `next build` and the node tests pass.
+
+**Cost.** Expected about $0.01 to $0.05 for the 12 requests; the cap for the whole round (A to D) is $0.15.
