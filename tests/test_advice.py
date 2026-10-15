@@ -230,3 +230,24 @@ def test_the_api_answer_is_a_normal_answer_with_no_card(monkeypatch):
     assert len(body["citations"]) >= 2 and body["how_found"]["route_detail"] == "advice"
     (row,) = c.logs
     assert row["trace"]["route"] == "retrieve" and row["abstained"] is False
+
+
+# ---- the advice route's output limit (docs/decisions.md) ----
+
+
+def test_the_advice_limit_is_1000_and_the_shared_limit_stays_600():
+    assert CFG["answer"]["advice_max_output_tokens"] == 1000
+    assert CFG["answer"]["max_output_tokens"] == 600
+
+
+def test_only_the_advice_call_gets_the_larger_limit(monkeypatch, events):
+    router, seen = make_router(Script("other"), monkeypatch, events, CFG)
+    router.answer("Should I withdraw from my biology class?", TODAY, log=False)
+    router.answer("How do I apply for graduation?", TODAY, log=False)
+    advice_cfg, other_cfg = seen[0][1]["cfg"], seen[1][1]["cfg"]
+    assert advice_cfg["answer"]["max_output_tokens"] == 1000
+    assert other_cfg["answer"]["max_output_tokens"] == 600
+    assert CFG["answer"]["max_output_tokens"] == 600  # the shared config is not changed
+    assert {k: v for k, v in advice_cfg["answer"].items() if k != "max_output_tokens"} == {
+        k: v for k, v in other_cfg["answer"].items() if k != "max_output_tokens"
+    }

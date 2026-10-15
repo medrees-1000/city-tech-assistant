@@ -28,6 +28,9 @@ answer:
   reasoning_effort: none
   k: 5
   max_output_tokens: 600
+  # The advice route's retrieval call only (docs/decisions.md, "the advice route's output limit"): q47 needs
+  # two rule sets and was cut off at 600. Every other call keeps max_output_tokens.
+  advice_max_output_tokens: 1000
   # Chosen on dev only (step 8): the lowest top-1 similarity of an answerable, scored dev question is
   # 0.591 (q24); this is just below it, so no answerable dev question is blocked. It separates little:
   # see docs/decisions.md. Do not change it after looking at the test split.

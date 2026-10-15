@@ -102,8 +102,10 @@ def make_nodes(d: Deps):
     def advice_node(state: RouterState) -> dict:
         actions = advice.matched_actions(state["question"], state["intent"])
         query = advice.rule_query(actions)  # a fixed question: the student's text is not used
+        a = d.cfg["answer"]  # two rule sets need more room than the shared limit (decisions.md)
+        cfg = {**d.cfg, "answer": {**a, "max_output_tokens": a["advice_max_output_tokens"]}}
         found = answer(
-            d.conn, query, state["today"], cfg=d.cfg, client_factory=d.client_factory,
+            d.conn, query, state["today"], cfg=cfg, client_factory=d.client_factory,
             log=False, run_id=state.get("run_id"),
         )  # fmt: skip
         info = {"actions": [a.name for a in actions], "query": query, "row_ids": [], "term": None}
