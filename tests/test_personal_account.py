@@ -141,7 +141,7 @@ HYPOTHETICAL_CHANGES = {
 
 def test_exactly_these_dev_questions_would_be_relabelled_differently_and_none_else():
     dev = dev_questions()
-    assert len(dev) == 71
+    assert len(dev) == 90
     differ = set()
     for qid, question in dev.items():
         for reason in ("below_threshold", "some model sentence", "calendar_unsupported_term", None):

@@ -33,7 +33,7 @@ def test_dev_questions_that_clarify_are_the_same_as_before():
     # q88 and q89 were the only ones before this round (tests/test_clarify.py); the vague pattern
     # adds none
     assert sorted(q["id"] for q in DEV if clarify.needs_clarification(q["question"])) == [
-        "q88", "q89",
+        "q109", "q88", "q89",
     ]  # fmt: skip
 
 

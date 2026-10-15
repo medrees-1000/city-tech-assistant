@@ -99,7 +99,7 @@ def test_at_least_95_percent_of_the_original_63_dev_questions_skip_the_step():
     skipped = [q for q in original if language.looks_english(q)]
     print("original dev questions that skip:", len(skipped), "of", len(original))
     assert len(original) == 63 and len(skipped) >= 60
-    assert len(DEV) == 71  # all 71 still go through the stubbed R1 test below
+    assert len(DEV) == 90  # all 90 still go through the stubbed R1 test below
 
 
 # ---- R1: English is unchanged ----

@@ -25,9 +25,9 @@ def events():
 # ---- the detector ----
 
 
-def test_the_four_advice_questions_are_dev_and_the_dev_split_is_71():
-    # 63 + the 8 questions of the tester round (q96 to q103)
-    assert len(DEV) == 71 and ADVICE_IDS <= {q["id"] for q in DEV}
+def test_the_four_advice_questions_are_dev_and_the_dev_split_is_90():
+    # 63 + the 8 questions of the tester round (q96 to q103) + 19 casual rows (q104 to q122)
+    assert len(DEV) == 90 and ADVICE_IDS <= {q["id"] for q in DEV}
 
 
 def test_fires_on_q30_q47_q91_q92_and_on_no_other_dev_question():
@@ -36,9 +36,10 @@ def test_fires_on_q30_q47_q91_q92_and_on_no_other_dev_question():
 
 
 def test_dev_has_no_question_about_a_payment_plan_or_signing_up():
-    assert not [
+    # the casual round added q107 ("payment plan?") and q112 (the payment plan advice question)
+    assert [
         q["id"] for q in DEV if re.search(r"payment plan|sign(ing)? up", q["question"], re.I)
-    ]
+    ] == ["q107", "q112"]
 
 
 @pytest.mark.parametrize("qid", ["q16", "q18", "q31", "q34", "q65", "q71"])
