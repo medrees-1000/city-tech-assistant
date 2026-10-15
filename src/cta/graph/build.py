@@ -28,6 +28,7 @@ from cta.graph import advice, chain_render, clarify, render, select, terms
 from cta.graph import chain as chains
 from cta.graph import classify as classifier
 from cta.graph import contact as contacts
+from cta.graph.clean import clean_for_search
 from cta.graph.state import RoutedAnswer, RouterState
 from cta.index.embed import make_client
 from cta.index.search import Search
@@ -80,7 +81,7 @@ def abstain_answer(text: str, reason: str) -> RoutedAnswer:
 def make_nodes(d: Deps):
     def classify_node(state: RouterState) -> dict:
         client = d.client_factory()
-        result = classifier.classify(client, d.cfg, state["question"])
+        result = classifier.classify(client, d.cfg, clean_for_search(state["question"]))
         info = call_numbers(result.call) | {"failed": result.failed}
         return {"intent": result.intent, "term_mention": result.term_mention, "classify": info}
 

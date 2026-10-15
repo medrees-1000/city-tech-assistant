@@ -16,6 +16,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import date
 
+from cta.graph.clean import clean_for_search
 from cta.index.chunks import token_counter
 from cta.index.db import connect
 from cta.index.embed import ApiError, make_client, with_retries
@@ -176,9 +177,12 @@ def answer(
     cfg = cfg or load_models()
     started = time.perf_counter()
     kwargs = {"cache_path": cache_path} if cache_path else {}
+    # The query is the cleaned text (markup, emoji and placeholders removed); the answer prompt
+    # below still gets the question as it came (tester round 1, item B).
     found = search(
-        conn, question, k or cfg["answer"]["k"], cfg=cfg, client_factory=client_factory, **kwargs
-    )
+        conn, clean_for_search(question), k or cfg["answer"]["k"], cfg=cfg,
+        client_factory=client_factory, **kwargs,
+    )  # fmt: skip
     ans = Answer("", False, None, found.results, search=found)
     # The threshold is on the best VECTOR cosine similarity in both retrieval modes,
     # never on a fused score.
