@@ -6,6 +6,7 @@ import dataclasses
 import json
 import logging
 import os
+import time
 from types import SimpleNamespace
 
 import langsmith as ls
@@ -96,8 +97,19 @@ def app_with(monkeypatch, tracer, client=None, cfg=None, stub=None):
     return make_client_app(client, monkeypatch, stub, cfg=cfg)
 
 
-def flush(tracer):
+def flush(tracer, session=None):
+    """Flush the client, then wait until the captured traffic is quiet (the SDK posts from background
+    threads, so reading the captured calls at once would race)."""
     tracer.client.flush()
+    session = session or tracer.client.session
+    last, quiet = -1, 0
+    for _ in range(60):
+        n = len(session.calls)
+        quiet = quiet + 1 if n == last else 0
+        if quiet >= 3:
+            return
+        last = n
+        time.sleep(0.05)
 
 
 # ---- the scrubber ----
@@ -421,3 +433,18 @@ def test_stopping_the_api_flushes_the_queued_traces(monkeypatch):
         raise RuntimeError("boom")
 
     tracing.Tracing(SimpleNamespace(flush=boom), "p").flush()  # a failing flush never raises
+
+
+def test_the_privacy_notice_says_plainly_that_tracing_is_optional_off_and_redacted():
+    notice = (ROOT / "web" / "lib" / "notice.ts").read_text(encoding="utf-8")
+    assert "Optional developer tracing is off by default" in notice
+    assert "LangSmith (a third party)" in notice and "after personal details are removed" in notice
+    assert "no IP address and no cookies are sent" in notice
+    assert load_models(env={})["tracing"]["enabled"] is False  # and the code default is off
+
+
+def test_env_example_has_the_names_and_no_values():
+    text = (ROOT / ".env.example").read_text(encoding="utf-8")
+    for name in ("LANGSMITH_API_KEY", "LANGSMITH_PROJECT", "CTA_TRACING"):
+        assert f"\n{name}=\n" in text, name  # present, with nothing after the equals sign
+    assert "LANGSMITH_TRACING=true" not in text
