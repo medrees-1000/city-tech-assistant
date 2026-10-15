@@ -193,6 +193,16 @@ def create_app(
             router_text, lang_note, details = verdict.question, lang.note, verdict.removed_details
             lang.english = router_text  # the scrubbed translation is what is stored and shown
             scrubbed_translation = verdict.scrubbed
+            if guards["non_english"] == "english_only":
+                # option 3: the screens above ran on the translation; now a fixed English notice, no
+                # retrieval, no answer. If the original needed scrubbing, the scrubbed translation
+                # is what gets logged.
+                guard.blocked["non_english"] += 1
+                shown = router_text if scrubbed_translation else question
+                text = f"{lang.note}\n\n{language.NON_ENGLISH_REPLY}"
+                return block(
+                    "non_english", shown, rid, today, started, text, None, 0.0, False, lang
+                )
         try:
             with connect() as conn:
                 try:

@@ -28,6 +28,12 @@ ENGLISH_WORDS = frozenset(
 WORD = re.compile(r"[a-z]+")
 MIN_ENGLISH_WORDS = 2
 
+# Option 3 (the default while option 1 fails its rule): what a non-English question gets, after the
+# note line in the student's language. A fixed English reply; nothing the student typed is in it.
+NON_ENGLISH_REPLY = (
+    "I can currently answer questions in English only. Please ask your question again in English, "
+    "and I'll show you the rules and dates that apply."
+)
 FALLBACK_NOTE = "This answer is in English; the sources are in English."
 NOTE_MAX_CHARS = 160
 ENGLISH_MAX_CHARS = 1000
