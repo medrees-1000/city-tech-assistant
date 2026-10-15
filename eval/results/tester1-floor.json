@@ -1,0 +1,290 @@
+{
+ "label": "tester1-floor",
+ "split": "dev",
+ "retrieval": {
+  "n": 1,
+  "recall@1": 1.0,
+  "precision@1": 1.0,
+  "hit@1": 1.0,
+  "recall@3": 1.0,
+  "precision@3": 0.3333333333333333,
+  "hit@3": 1.0,
+  "recall@5": 1.0,
+  "precision@5": 0.2,
+  "hit@5": 1.0,
+  "recall@10": 1.0,
+  "precision@10": 0.1,
+  "hit@10": 1.0,
+  "mrr": 1.0
+ },
+ "retrieval_chain": null,
+ "excluded_from_retrieval": [
+  "q45"
+ ],
+ "answers": {
+  "correctness": {
+   "n": 1,
+   "correct": 0.0,
+   "partial": 0.0,
+   "incorrect": 1.0
+  },
+  "faithfulness": {
+   "n": 1,
+   "yes": 1.0,
+   "partly": 0.0,
+   "no": 0.0
+  },
+  "no_advice_correct": {
+   "n": 0,
+   "correct": null,
+   "partial": null,
+   "incorrect": null
+  },
+  "abstention_accuracy": {
+   "n": 1,
+   "share": 1.0
+  },
+  "wrongly_abstained": {
+   "n": 1,
+   "share": 1.0
+  },
+  "citation_rate": {
+   "n": 0,
+   "share": null,
+   "invalid_citations": 0
+  },
+  "judge_failed": 0,
+  "cost": {
+   "n": 2,
+   "per_request_usd": 0.0023769000000000004,
+   "answer_usd": 0.0017538,
+   "judge_usd": 0.003
+  },
+  "latency_ms": {
+   "n": 2,
+   "total_median": 2758.5,
+   "total_p95": 2846,
+   "chat_n": 2,
+   "chat_median": 1156.5,
+   "chat_p95": 1541,
+   "retrieval_n": 2,
+   "retrieval_median": 1598.0,
+   "retrieval_p95": 1896.2,
+   "query_cache_hits": 2
+  },
+  "chain": null
+ },
+ "failure_labels": {
+  "abstention error": 1
+ },
+ "per_question": [
+  {
+   "id": "q45",
+   "type": "unanswerable",
+   "department": "MATH-NYT",
+   "gold_kind": "abstain",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "catalog:MAT 1475",
+     "similarity": 0.5675
+    },
+    {
+     "id": "catalog:MAT 1575",
+     "similarity": 0.5278
+    },
+    {
+     "id": "page/advisement/virtual-advisors#20",
+     "similarity": 0.5179
+    },
+    {
+     "id": "page/EET-NYT/student-hours#1",
+     "similarity": 0.512
+    },
+    {
+     "id": "catalog:MAT 1372",
+     "similarity": 0.51
+    },
+    {
+     "id": "page/advisement/virtual-advisors#10",
+     "similarity": 0.5097
+    },
+    {
+     "id": "catalog:MAT 1272",
+     "similarity": 0.5052
+    },
+    {
+     "id": "page/CST-NYT/advisement#1",
+     "similarity": 0.5002
+    },
+    {
+     "id": "catalog:MAT 1275CO",
+     "similarity": 0.4997
+    },
+    {
+     "id": "catalog:MAT 2440",
+     "similarity": 0.4905
+    }
+   ],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "below_threshold",
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0006776,
+   "judge_cost": 0.0,
+   "latency_ms": 2671,
+   "chat_ms": 772,
+   "retrieval_ms": 1896.2,
+   "cache_hit": true,
+   "rerank_cost": 0.0006363,
+   "rerank_ms": 1851.4,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": "this fall",
+    "classify": {
+     "prompt_tokens": 323,
+     "completion_tokens": 18,
+     "cost": 4.13e-05,
+     "ms": 771.6,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "near_miss": true,
+    "contact_office": "MATH-NYT"
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q98",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "normal",
+   "tags": [
+    "noise"
+   ],
+   "retrieved": [
+    {
+     "id": "page/bursar/payment-deadlines#1",
+     "similarity": 0.5918
+    },
+    {
+     "id": "page/bursar/payment-plan#1",
+     "similarity": 0.4718
+    },
+    {
+     "id": "page/admissions/tuition-penalty#3",
+     "similarity": 0.4923
+    },
+    {
+     "id": "page/bursar/refund-policy#4",
+     "similarity": 0.4481
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#4",
+     "similarity": 0.4436
+    },
+    {
+     "id": "page/financial-aid/faqs#2",
+     "similarity": 0.4416
+    },
+    {
+     "id": "page/admissions/tuition-penalty#1",
+     "similarity": 0.44
+    },
+    {
+     "id": "contact:bursar",
+     "similarity": 0.4361
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#3",
+     "similarity": 0.4355
+    },
+    {
+     "id": "page/financial-aid/financial-payment-calendar#1",
+     "similarity": 0.4309
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": true,
+   "abstain_reason": "below_threshold",
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "incorrect",
+   "correctness_reason": "The response abstains even though the source provides the Fall 2026 tuition due-date schedule requested.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "It makes no unsupported factual claim and accurately identifies the Bill Payment Deadlines source and its Bursar contact information.",
+   "judge_status": "ok",
+   "label": "abstention error",
+   "label_reason": "abstained (below_threshold)",
+   "answer_cost": 0.0010762,
+   "judge_cost": 0.003,
+   "latency_ms": 2846,
+   "chat_ms": 1541,
+   "retrieval_ms": 1299.8,
+   "cache_hit": true,
+   "rerank_cost": 0.0005877,
+   "rerank_ms": 1255.2,
+   "rerank_failed": false,
+   "route": "calendar_fallthrough",
+   "router": {
+    "route": "calendar_fallthrough",
+    "intent": "calendar",
+    "term_mention": "this fall",
+    "classify": {
+     "prompt_tokens": 323,
+     "completion_tokens": 18,
+     "cost": 4.13e-05,
+     "ms": 945.0,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": true,
+    "chain_fallthrough": false,
+    "term_status": "season",
+    "term": "Fall 2026",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [],
+    "select": {
+     "prompt_tokens": 4417,
+     "completion_tokens": 11,
+     "cost": 0.00044720000000000003,
+     "ms": 595.7,
+     "error": null,
+     "status": "empty"
+    },
+    "selector_version": 2,
+    "pool_size": 131,
+    "near_miss": true,
+    "contact_office": "bursar"
+   },
+   "returned_rows": []
+  }
+ ],
+ "question_ids": [
+  "q45",
+  "q98"
+ ],
+ "question_ids_hash": "f1d670f8ea26",
+ "git": {
+  "commit": "79248d2",
+  "dirty": false
+ }
+}
