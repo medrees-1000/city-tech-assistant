@@ -158,6 +158,13 @@ class Tracing:
         project = env.get("LANGSMITH_PROJECT", "").strip() or DEFAULT_PROJECT
         return cls(cls.build_client(env), project)
 
+    def flush(self) -> None:
+        """Send what is still queued (called when the API stops, so no trace is lost)."""
+        try:
+            self.client.flush()
+        except Exception:  # noqa: BLE001
+            log.warning(UPLOAD_WARNING)
+
     def wrap(self, openai_client):
         """The OpenAI client with its chat calls traced, and its embedding call traced as a small
         run that records only the number of vectors. Outside a request nothing is recorded."""

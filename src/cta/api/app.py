@@ -10,7 +10,7 @@ import threading
 import time
 import uuid
 from collections.abc import Callable
-from contextlib import ExitStack
+from contextlib import ExitStack, asynccontextmanager
 from datetime import date
 
 import psycopg
@@ -90,7 +90,14 @@ def create_app(
         log_writer
     )  # counts failed writes; a failed write never fails a request
     guard = guard_mod.Guard(guards, root=root)
-    app = FastAPI(title="City Tech Assistant", version=version)
+
+    @asynccontextmanager
+    async def lifespan(_app):
+        yield
+        if tracer:  # do not lose the last queued traces when the API stops
+            tracer.flush()
+
+    app = FastAPI(title="City Tech Assistant", version=version, lifespan=lifespan)
     app.state.guard = guard  # tests read the counters and the salt through this
 
     @app.middleware("http")

@@ -405,3 +405,19 @@ def test_the_wrapper_keeps_the_same_client_and_traces_embeddings_as_counts():
     assert wrapped is client  # wrap_openai patches in place
     assert getattr(wrapped.embeddings.create, "__wrapped__", None) is not None  # a traced function
     assert getattr(wrapped.chat.completions.create, "__wrapped__", None) is not None
+
+
+def test_stopping_the_api_flushes_the_queued_traces(monkeypatch):
+    from fastapi.testclient import TestClient
+
+    flushed = []
+    tracer = tracing.Tracing(SimpleNamespace(flush=lambda: flushed.append(True)), "p")
+    c = app_with(monkeypatch, tracer)
+    with TestClient(c.app):  # entering and leaving runs the startup and shutdown of the app
+        pass
+    assert flushed == [True]
+
+    def boom():
+        raise RuntimeError("boom")
+
+    tracing.Tracing(SimpleNamespace(flush=boom), "p").flush()  # a failing flush never raises
