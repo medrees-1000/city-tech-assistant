@@ -198,13 +198,15 @@ def main() -> int:
         if total > args.max_cost:
             print("STOP: the cost passed the limit", total)
             break
-    RESULTS.write_text(
+    out_path = Path(args.out)
+    out_path.write_text(
         json.dumps(
-            {"total_cost": round(total, 5), "results": results}, ensure_ascii=False, indent=1
+            {"mode": args.mode, "total_cost": round(total, 5), "results": results},
+            ensure_ascii=False, indent=1,
         ),
         encoding="utf-8",
     )
-    print("total cost", round(total, 5), "->", RESULTS)
+    print("total cost", round(total, 5), "->", out_path)
     return 0
 
 
