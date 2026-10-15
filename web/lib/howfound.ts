@@ -48,6 +48,8 @@ export function abstainWhy(data: AskResponse): string | null {
       return "The calendar lookup did not return a usable result.";
     case "chain_no_record":
       return "There is no record of that course in the catalog data of the four departments.";
+    case "chain_outside_departments":
+      return "That course is outside the four departments whose catalog records the assistant has.";
     default:
       return "The assistant did not answer this question.";
   }

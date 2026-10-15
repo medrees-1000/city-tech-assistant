@@ -41,6 +41,7 @@ test("each abstain reason has its own sentence; an answer has none", () => {
   assert.match(why("calendar_no_row") ?? "", /No row of the calendar/);
   assert.match(why("calendar_unsupported_term") ?? "", /no calendar for that term/);
   assert.match(why("chain_no_record") ?? "", /no record of that course/);
+  assert.match(why("chain_outside_departments") ?? "", /outside the four departments/);
   assert.match(why("calendar_selector_failed") ?? "", /did not return a usable result/);
   assert.match(why("something_new") ?? "", /did not answer/);
 });

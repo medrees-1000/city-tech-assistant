@@ -391,3 +391,34 @@ def build_messages(question: str, today: date, result: dict, sources: list[dict]
 
 def no_record_text(code: str) -> str:
     return f"ABSTAIN: No record exists in the catalog data for {code} in {SCOPE}."
+
+
+# ---- a course outside the four departments (tester round 1, item D) ----
+
+OUTSIDE_TEXT = (
+    "ABSTAIN: I only have catalog records for Computer Systems Technology, Mathematics, "
+    "Electrical and Telecommunications Engineering Technology, and Dental Hygiene, so I can't "
+    "tell you about {code}. The City Tech catalog is at {url}."
+)
+
+
+def known_prefixes(records: dict[str, dict]) -> set[str]:
+    """The subject prefixes of the catalog records we hold, read from the data (never typed)."""
+    return {code.split()[0] for code in records}
+
+
+def catalog_url() -> str:
+    """The City Tech catalog address, from config/sources.yaml (`catalog_api.origin`)."""
+    import yaml
+
+    config = yaml.safe_load((ROOT / "config" / "sources.yaml").read_text(encoding="utf-8"))
+    return config["catalog_api"]["origin"]
+
+
+def outside_departments(code: str, records: dict[str, dict]) -> bool:
+    """True when the prefix of the code the student typed appears in no record we hold."""
+    return code.split()[0] not in known_prefixes(records)
+
+
+def outside_text(code: str) -> str:
+    return OUTSIDE_TEXT.format(code=code, url=catalog_url())

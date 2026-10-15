@@ -19,7 +19,8 @@ EXCERPT_CHARS = 300
 CHAIN_KEYS = ("extraction", "code", "detail", "course_count", "truncated", "unexpanded",
               "no_record", "no_record_codes")  # fmt: skip
 ANSWER_ROUTES = ("other", "chain", "calendar_fallthrough", "chain_fallthrough", "advice")
-OWN_CODES = ("calendar_", "chain_no_record")  # codes the graph itself sets for its two tools
+CHAIN_CODES = ("chain_no_record", "chain_outside_departments")
+OWN_CODES = ("calendar_", *CHAIN_CODES)  # codes the graph itself sets for its two tools
 
 
 def build_url_map(pages_dir: Path = ROOT / "data" / "processed" / "pages") -> dict[str, str]:
@@ -35,7 +36,7 @@ def build_url_map(pages_dir: Path = ROOT / "data" / "processed" / "pages") -> di
 
 def public_route(ans) -> str:
     if ans.route == "abstain":
-        return "chain" if ans.abstain_reason == "chain_no_record" else "calendar"
+        return "chain" if ans.abstain_reason in CHAIN_CODES else "calendar"
     known = {"calendar": "calendar", "chain": "chain", "clarify": "clarify"}
     return known.get(ans.route, "retrieve")
 

@@ -60,6 +60,8 @@ def office_for(question: str, ans, contacts: dict | None = None) -> str | None:
         return "registrar"
     if reason == "chain_no_record":
         return named_department(question)
+    if reason == "chain_outside_departments":
+        return None  # the course is in none of the four departments: no office applies
     return named_department(question) or cue_office(question, contacts)
 
 

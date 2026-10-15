@@ -201,9 +201,15 @@ def make_nodes(d: Deps):
             result = chains.prerequisite_chain.invoke({"course_code": found.code})
         info["walk_ms"] = round((time.perf_counter() - started) * 1000, 3)
         if not result["found"]:
-            text = chains.no_record_text(result["code"])
             info |= {"course_count": 0, "truncated": False, "no_record": True}
-            ans = abstain_answer(text, "chain_no_record")
+            if not several and chains.outside_departments(result["code"], records):
+                # a subject we hold no record of (ENG 1101): say so, not "no record exists"
+                info["outside_departments"] = True
+                ans = abstain_answer(
+                    chains.outside_text(result["code"]), "chain_outside_departments"
+                )
+                return {"chain": info, "answer": ans, "route": "abstain"}
+            ans = abstain_answer(chains.no_record_text(result["code"]), "chain_no_record")
             return {"chain": info, "answer": ans, "route": "abstain"}
         sources = chains.sources_of(result, records)
         info |= {

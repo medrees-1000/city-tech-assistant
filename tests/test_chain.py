@@ -393,6 +393,9 @@ WORLD = recs(
     rec("AA 1001", "PRE: BB 1001"),
     rec("BB 1001", "PRE: ENG 1101"),
     rec("DD 1001", "PRE_X", "shorthand"),
+    rec(
+        "CST 1001", ""
+    ),  # a CST prefix is in the data, so CST 4999 is "no record", not "outside" (item D)
 )
 
 
@@ -453,10 +456,13 @@ def test_a_code_with_no_record_abstains_without_a_model_answer_and_without_conta
     ans = router.answer(question, TODAY, log=False)
     code = question.split(" before ")[1].rstrip("?")
     assert client.calls == ["classify"] and seen == [] and ans.route == "abstain" and ans.abstained
-    assert (
-        ans.text
-        == f"ABSTAIN: No record exists in the catalog data for {code} in the four departments (CST, Math, EET, Dental Hygiene)."
-    )
+    if code == "ENG 1101":  # item D: a subject we hold no record of gets its own text
+        assert ans.text == ch.OUTSIDE_TEXT.format(code=code, url=ch.catalog_url())
+    else:
+        assert (
+            ans.text
+            == f"ABSTAIN: No record exists in the catalog data for {code} in the four departments (CST, Math, EET, Dental Hygiene)."
+        )
     assert (
         "@" not in ans.text
         and "Contact" not in ans.text
