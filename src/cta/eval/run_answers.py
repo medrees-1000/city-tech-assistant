@@ -219,6 +219,21 @@ def label_failure(
 # ---- one question ----
 
 
+def clarify_verdict(q: dict) -> dict:
+    """A clarify reply passes only on a question typed "ambiguous"; on any other question it fails
+    (docs/decisions.md, "Step 4: CLARIFY")."""
+    ok = q["type"] == "ambiguous"
+    reason = (
+        "rule: clarify reply on an ambiguous question"
+        if ok
+        else "rule: clarified a question that is not ambiguous"
+    )
+    return {
+        "correctness": "correct" if ok else "incorrect", "faithfulness": None,
+        "correctness_reason": reason, "faithfulness_reason": None, "judge_status": "rule",
+    }  # fmt: skip
+
+
 def evaluate_question(
     q: dict, ans: Answer, top10: list[dict], judge_call, calendar_scoring: int | bool = 0
 ) -> dict:
@@ -241,6 +256,8 @@ def evaluate_question(
             "faithfulness_reason": None,
             "judge_status": "rule",
         }
+    elif getattr(ans, "route", None) == "clarify":
+        verdict = clarify_verdict(q)  # CLARIFY rule (step 4): deterministic, no judge call
     elif kind == "clarify":
         verdict = {
             "correctness": None,
@@ -258,6 +275,8 @@ def evaluate_question(
             label, reason = calendar_label, verdict["correctness_reason"]
         elif verdict["judge_status"] == "judge failed":
             label, reason = "judge failed", "no valid verdict from the judge"
+        elif getattr(ans, "route", None) == "clarify":
+            label, reason = "clarify error", verdict["correctness_reason"]
         else:
             label, reason = label_failure(kind, q, ans, top10, verdict)
     gold = scorable_gold(q)
@@ -329,7 +348,8 @@ def _aggregate(records: list[dict]) -> dict:
     normal = [r for r in records if r["gold_kind"] == "normal"]
     answerable = [r for r in records if r["gold_kind"] in ("normal", "no_advice")]
     abstain_gold = [r for r in records if r["gold_kind"] == "abstain"]
-    answered = [r for r in records if not r["abstained"]]
+    # a clarify reply has no sources to cite, so it is not part of the citation rate
+    answered = [r for r in records if not r["abstained"] and r.get("route") != "clarify"]
     lat = [r["latency_ms"] for r in records]
     chat = [r["chat_ms"] for r in records if r["chat_ms"]]
     retr = [r["retrieval_ms"] for r in records if r.get("retrieval_ms") is not None]

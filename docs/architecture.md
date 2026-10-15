@@ -13,6 +13,7 @@ config:
 graph TD;
 	__start__([<p>__start__</p>]):::first
 	classify(classify)
+	clarify(clarify)
 	calendar(calendar)
 	chain(chain)
 	retrieve(retrieve)
@@ -24,7 +25,9 @@ graph TD;
 	chain -.-> retrieve;
 	classify -.-> calendar;
 	classify -.-> chain;
+	classify -.-> clarify;
 	classify -.-> retrieve;
+	clarify --> __end__;
 	retrieve --> __end__;
 	classDef default fill:#f2f0ff,line-height:1.2
 	classDef first fill-opacity:0

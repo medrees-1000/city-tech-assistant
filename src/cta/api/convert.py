@@ -35,7 +35,8 @@ def build_url_map(pages_dir: Path = ROOT / "data" / "processed" / "pages") -> di
 def public_route(ans) -> str:
     if ans.route == "abstain":
         return "chain" if ans.abstain_reason == "chain_no_record" else "calendar"
-    return {"calendar": "calendar", "chain": "chain"}.get(ans.route, "retrieve")
+    known = {"calendar": "calendar", "chain": "chain", "clarify": "clarify"}
+    return known.get(ans.route, "retrieve")
 
 
 def abstain_code(reason: str | None, question: str = "", table: dict | None = None) -> str | None:
@@ -190,8 +191,11 @@ def to_response(ans, question: str, cfg: dict, today: date, request_id: str, ver
     if ans.abstained:
         text = text.removeprefix(MARKER).strip()
     kind = (
-        "abstain" if ans.abstained else "not_announced" if ans.router.get("tba_rows") else "answer"
-    )
+        "abstain" if ans.abstained
+        else "clarify" if ans.route == "clarify"
+        else "not_announced" if ans.router.get("tba_rows")
+        else "answer"
+    )  # fmt: skip
     cited = set(ans.citations)
     return schema.AskResponse(
         request_id=request_id, question=question, answer=text, answer_type=kind,

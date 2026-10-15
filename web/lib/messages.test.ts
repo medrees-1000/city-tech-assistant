@@ -140,3 +140,10 @@ test("the conversation area and the page leave room under the last line for the 
   const scroll = css.match(/scroll-padding-bottom:\s*([\d.]+)rem/);
   assert.ok(scroll && Number(scroll[1]) >= 12, "scroll-padding-bottom must clear the input bar");
 });
+
+test("a clarify reply is a normal assistant message: its own text, no contact card, no sources", () => {
+  const d = data({ answer_type: "clarify", route: "clarify", answer: "Which deadline do you mean?", citations: [], contact: null });
+  assert.deepEqual(answerView(d), { kind: "clarify", text: "Which deadline do you mean?" });
+  assert.equal(showContact(d), false);
+  assert.equal(d.citations.length, 0);
+});

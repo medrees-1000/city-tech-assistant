@@ -4,9 +4,11 @@ answers. Built with LangGraph.
     START -> classify --calendar--> calendar --(row found, or abstained)--> END
                  |                       |
                  +--other-----------> retrieve <--(valid empty selection)--+
-                                         |
-                                         v
+                 |                       |
+                 +--clarify--> END       v
                                         END
+
+(clarify: a short, generic deadline question gets a fixed question back; no model call.)
 
 The retrieve node calls the existing pipeline (cta.answer.answer) unchanged. With router.mode "off"
 answer_question calls it directly and the graph is never built.
@@ -21,7 +23,7 @@ from langgraph.graph import END, START, StateGraph
 
 from cta.answer import Answer, answer, call_chat, parse_reply
 from cta.graph import chain as chains
-from cta.graph import chain_render, render, select, terms
+from cta.graph import chain_render, clarify, render, select, terms
 from cta.graph import classify as classifier
 from cta.graph import contact as contacts
 from cta.graph.state import RoutedAnswer, RouterState
@@ -81,9 +83,17 @@ def make_nodes(d: Deps):
         return {"intent": result.intent, "term_mention": result.term_mention, "classify": info}
 
     def after_classify(state: RouterState) -> str:
+        if clarify.needs_clarification(state["question"], state["intent"]):
+            return "clarify"
         if state["intent"] == "prerequisite":
             return "chain"
         return "calendar" if state["intent"] == "calendar" else "retrieve"
+
+    def clarify_node(state: RouterState) -> dict:
+        ans = RoutedAnswer(
+            clarify.reply_text(), False, None, [], [], [], Search([], False, 0, 0, 0.0)
+        )  # fmt: skip
+        return {"answer": ans, "route": "clarify"}
 
     def calendar_node(state: RouterState) -> dict:
         resolution = terms.resolve_term(state["term_mention"], state["today"], d.events)
@@ -211,17 +221,18 @@ def make_nodes(d: Deps):
         return {"answer": found, "route": route}
 
     return (
-        classify_node, after_classify, calendar_node, after_calendar, chain_node, after_chain,
-        retrieve_node,
+        classify_node, after_classify, clarify_node, calendar_node, after_calendar, chain_node,
+        after_chain, retrieve_node,
     )  # fmt: skip
 
 
 def build_graph(d: Deps):
     """The compiled graph. Nodes close over the dependencies; the state carries the question."""
-    (classify_node, after_classify, calendar_node, after_calendar, chain_node, after_chain,
-     retrieve_node) = make_nodes(d)  # fmt: skip
+    (classify_node, after_classify, clarify_node, calendar_node, after_calendar, chain_node,
+     after_chain, retrieve_node) = make_nodes(d)  # fmt: skip
     graph = StateGraph(RouterState)
     graph.add_node("classify", classify_node)
+    graph.add_node("clarify", clarify_node)
     graph.add_node("calendar", calendar_node)
     graph.add_node("chain", chain_node)
     graph.add_node("retrieve", retrieve_node)
@@ -229,8 +240,9 @@ def build_graph(d: Deps):
     graph.add_conditional_edges(
         "classify",
         after_classify,
-        {"calendar": "calendar", "chain": "chain", "retrieve": "retrieve"},
+        {"calendar": "calendar", "chain": "chain", "retrieve": "retrieve", "clarify": "clarify"},
     )
+    graph.add_edge("clarify", END)
     graph.add_conditional_edges("chain", after_chain, {"retrieve": "retrieve", END: END})
     graph.add_conditional_edges("calendar", after_calendar, {"retrieve": "retrieve", END: END})
     graph.add_edge("retrieve", END)
@@ -271,7 +283,7 @@ def logged_model(ans: RoutedAnswer, cfg: dict) -> str:
     """The model that wrote the answer: answer_model for a retrieval answer, else chat_model."""
     return (
         answer_model(cfg)
-        if ans.route not in ("calendar", "chain", "abstain")
+        if ans.route not in ("calendar", "chain", "abstain", "clarify")
         else cfg["chat_model"]
     )
 

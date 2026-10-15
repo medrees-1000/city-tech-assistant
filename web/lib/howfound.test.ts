@@ -208,3 +208,16 @@ test("several courses asked: the panel lists all of them", () => {
   const one = response({ route: "chain", how_found: howFound({ chain: { code: "CST 3504", extraction: "code", detail: [] } }) });
   assert.equal(chainLines(one)[0], "Course asked about: CST 3504");
 });
+
+test("a clarify reply says it asked for more detail and shows no sources, prerequisites or calendar", () => {
+  const data = response({
+    answer_type: "clarify",
+    route: "clarify",
+    how_found: howFound({ route_detail: "clarify", intent: "calendar", top_vector_similarity: null }),
+  });
+  assert.equal(routeWords(data), "Asked for more detail");
+  const view = describe(data);
+  assert.equal(view.summary, "Asked for more detail");
+  const titles = view.sections.map((s) => s.title);
+  assert.deepEqual(titles, ["What the assistant did", "Time", "Tokens and cost"]);
+});

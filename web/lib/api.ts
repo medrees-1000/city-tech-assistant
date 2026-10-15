@@ -76,7 +76,7 @@ export type AskResponse = {
   answer_type: AnswerType;
   abstained: boolean;
   abstain_reason: string | null;
-  route: "calendar" | "chain" | "retrieve";
+  route: "calendar" | "chain" | "retrieve" | "clarify";
   citations: Citation[];
   contact: Contact | null;
   how_found: HowFound;

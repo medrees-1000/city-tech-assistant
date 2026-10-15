@@ -452,10 +452,13 @@ def test_a_failed_classifier_sends_the_question_to_the_old_pipeline(monkeypatch,
 def test_the_graph_has_the_pre_registered_nodes_and_edges():
     graph = build_graph(build.Deps(None, CFG, None, [], "c")).get_graph()
     edges = {(e.source, e.target) for e in graph.edges}
-    assert set(graph.nodes) == {"__start__", "classify", "calendar", "chain", "retrieve", "__end__"}
+    assert set(graph.nodes) == {
+        "__start__", "classify", "clarify", "calendar", "chain", "retrieve", "__end__"
+    }  # fmt: skip
     assert edges == {
         ("__start__", "classify"), ("classify", "calendar"), ("classify", "chain"),
-        ("classify", "retrieve"), ("calendar", "retrieve"), ("calendar", "__end__"),
+        ("classify", "retrieve"), ("classify", "clarify"), ("clarify", "__end__"),
+        ("calendar", "retrieve"), ("calendar", "__end__"),
         ("chain", "retrieve"), ("chain", "__end__"), ("retrieve", "__end__"),
     }  # fmt: skip
 

@@ -83,7 +83,7 @@ class AskResponse(BaseModel):
     answer_type: Literal["answer", "abstain", "not_announced", "clarify"]
     abstained: bool
     abstain_reason: str | None
-    route: Literal["calendar", "chain", "retrieve"]
+    route: Literal["calendar", "chain", "retrieve", "clarify"]
     citations: list[Citation]
     contact: Contact | None
     how_found: HowFound

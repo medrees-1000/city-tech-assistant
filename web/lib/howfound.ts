@@ -13,6 +13,7 @@ export type Section = { title: string; lines: string[] };
 export type View = { summary: string; sections: Section[] };
 
 export function routeWords(data: AskResponse): string {
+  if (data.route === "clarify") return "Asked for more detail";
   if (data.route === "calendar") {
     return data.abstained ? "Checked the verified calendar" : "Looked up in the verified calendar";
   }
