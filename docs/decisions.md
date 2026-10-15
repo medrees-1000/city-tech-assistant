@@ -673,3 +673,13 @@ The rule F1 to F6 above stands **unchanged**. This addendum fixes the prompt sen
 **Cost cap.** Hard cap **$0.80** (expected about $0.50: three passes at about $0.155 each, one real request for the tuition question at about $0.001). The round aborts and is reported if a run would exceed the cap.
 
 **After.** If all of F1, F2', F3, F4, F5, F6 pass, the owner is shown the answers and decides whether to turn the rule on. **Nothing is switched on by this round**; `answer.format_rule` stays off.
+
+## Step 5b closed and the model experiment closed: current defaults (owner handoff, Oct 15, 2026)
+
+**Step 3b (formatting rule for multi-date retrieval answers) is closed.** Both pre-registered rounds failed. Round 1 (`fmt-on-run1..3`) failed F2: six questions became bullet lists in every pass. Round 2 (`fmt2-on-run1..3`, narrower sentence) failed F2' (4 of 81 answer-passes, q56 twice; the limit was 3) and F4 (correct share 0.859 against the 0.893 minimum). F1, F3, F5 and F6 passed in both rounds, and q13 was fixed by the rule, but the side effects were not acceptable. Both failures stay on record. `answer.format_rule` stays **off**; the code switch stays in place and off is byte-identical to the old prompt. No third round is planned.
+
+**Known limit.** The tuition due dates (q13) come out as one run-on sentence. An optional later fix is a small code-written route for the Bursar payment table, which would need rows the owner has verified by hand (like the calendar table). It is deferred until after the guardrails and is **not** being built now.
+
+**The model experiment is closed: luna stays.** gpt-6-sol scored 0.86 correct against luna's 0.92 (B1 failed, -0.064, 0 of 3 passes) at 5.5 times the cost. gpt-6.1-sol rejects luna's settings and gpt-6-astra was excluded; neither is used. The `answer.model` key exists with default null (= `chat_model`).
+
+**Current default settings** (`config/models.yaml`): chat_model gpt-6-luna; judge gpt-5.6-terra; embedding text-embedding-3-small; answer: model null, format_rule off, temperature 0.1, top_p 0.3, reasoning none, k 5, 600 output tokens, abstain_threshold 0.59; router mode on, selector 2, chain on, chain_render code, contacts on; rerank pool_a on eval runs; API on 127.0.0.1 only, 500 characters per question. Eval file: 94 questions (63 dev, 31 test); the test split stays locked until the final `--final` run. Total spend so far about $6.5.
