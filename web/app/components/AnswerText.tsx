@@ -29,7 +29,7 @@ function AnswerList({ items, onCite }: { items: Inline[][]; onCite: (n: number) 
     <>
       <ul id={id} className="answer-list">
         {items.map((item, j) => (
-          <li key={j} hidden={collapsible && !open && j >= VISIBLE_ITEMS}>
+          <li key={j} dir="auto" hidden={collapsible && !open && j >= VISIBLE_ITEMS}>
             {renderInlines(item, onCite)}
           </li>
         ))}
@@ -58,12 +58,12 @@ export function AnswerText({
     <div className="answer-text">
       {parseBlocks(text, citations).map((block, i) =>
         block.type === "p" ? (
-          <p key={i}>{renderInlines(block.inlines, onCite)}</p>
+          <p key={i} dir="auto">{renderInlines(block.inlines, onCite)}</p>
         ) : block.type === "h" ? (
           block.level === 3 ? (
-            <h3 key={i} className="answer-heading">{renderInlines(block.inlines, onCite)}</h3>
+            <h3 key={i} className="answer-heading" dir="auto">{renderInlines(block.inlines, onCite)}</h3>
           ) : (
-            <h4 key={i} className="answer-heading">{renderInlines(block.inlines, onCite)}</h4>
+            <h4 key={i} className="answer-heading" dir="auto">{renderInlines(block.inlines, onCite)}</h4>
           )
         ) : (
           <AnswerList key={i} items={block.items} onCite={onCite} />

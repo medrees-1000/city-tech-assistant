@@ -31,3 +31,12 @@ test("the toggle has a visible keyboard focus style", () => {
   const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
   assert.match(css, /\.list-toggle:focus-visible/);
 });
+
+test("every paragraph, heading and list item of an answer renders with dir=\"auto\", so an Arabic note line is displayed right to left (tester round 1b, language round)", () => {
+  const code = readFileSync(new URL("../app/components/AnswerText.tsx", import.meta.url), "utf8");
+  assert.match(code, /<p key=\{i\} dir="auto">/);
+  assert.match(code, /<h3 key=\{i\} className="answer-heading" dir="auto">/);
+  assert.match(code, /<h4 key=\{i\} className="answer-heading" dir="auto">/);
+  assert.match(code, /<li key=\{j\} dir="auto"/);
+  assert.equal((code.match(/dir="auto"/g) ?? []).length, 4);
+});

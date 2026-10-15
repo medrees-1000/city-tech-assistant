@@ -207,6 +207,7 @@ class Client:
             "classify" if system.startswith("You route")
             else "select" if system.startswith("You choose")
             else "topic" if system.startswith("You label")
+            else "language" if system.startswith("You detect the language")
             else "answer"
         )  # fmt: skip
         self.calls.append(which)
@@ -217,6 +218,8 @@ class Client:
             "select": json.dumps({"row_ids": self.row_ids}),
             "answer": self.answer_text,
             "topic": self.topic if self.topic is not None else "not json",
+            # round 1b: a short English question may reach the language step; "en" means no change
+            "language": json.dumps({"language": "en", "english": "x", "note": ""}),
         }[which]
         usage = SimpleNamespace(prompt_tokens=100, completion_tokens=10)
         return SimpleNamespace(
@@ -422,7 +425,9 @@ def test_a_calendar_answer_cites_its_rows_with_a_public_pdf_url_only_when_a_page
     hf = body["how_found"]
     assert hf["retrieved"] == [] and hf["calendar"]["selected"] == ["fall-2026-040"]
     assert hf["stages_ms"]["select"] is not None and hf["stages_ms"]["answer"] is None
-    assert client.calls == ["classify", "select"]
+    # "Last day to withdraw?" holds one listed English word, so the language step runs and says "en"
+    # (tester round 1b); the pipeline calls themselves are unchanged
+    assert [c for c in client.calls if c != "language"] == ["classify", "select"]
 
 
 def test_the_same_calendar_answer_has_no_url_when_no_page_links_the_file(monkeypatch, tmp_path):

@@ -181,6 +181,12 @@ def guardrail_settings(block: dict, env: dict) -> dict:
             f"guardrails.personal_data must be off, redact or redact_and_refuse, not {shown!r}"
         )
     screen_flag = env.get("CTA_INJECTION_SCREEN", "").strip().lower()
+    language_flag = env.get("CTA_LANGUAGE_STEP", "").strip().lower()
+    out["language_step"] = (
+        language_flag in ("1", "true", "yes", "on")
+        if language_flag
+        else bool(out.get("language_step", True))
+    )
     out["injection_screen"] = (
         screen_flag in ("1", "true", "yes", "on") if screen_flag else bool(out["injection_screen"])
     )

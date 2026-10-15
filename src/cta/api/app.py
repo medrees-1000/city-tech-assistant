@@ -19,7 +19,7 @@ from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from cta.api import convert, requestlog, schema, screen, topic
+from cta.api import convert, language, requestlog, schema, screen, topic
 from cta.api import guard as guard_mod
 from cta.api.checks import require_startup
 from cta.graph import render
@@ -130,13 +130,16 @@ def create_app(
 
     def block(reason: str, question: str, rid: str, today: date, started: float,
               text: str | None = None, status: str | None = None, cost: float | None = 0.0,
-              text_blocked: bool = False):  # fmt: skip
+              text_blocked: bool = False, lang: language.Language | None = None):  # fmt: skip
         """Answer with a guardrail's fixed reply (a normal assistant message) and log one row."""
         ms = (time.perf_counter() - started) * 1000
         shown = "" if text_blocked else question
         resp = convert.guardrail_response(reason, text or guard_mod.TEXTS[reason], shown, cfg,
                                           today, rid, version, ms)  # fmt: skip
         chars = len(question) if text_blocked else None
+        if lang is not None:  # a block after the language step: its call is part of the cost
+            language.add_to_response(resp, lang)
+            cost = (cost or 0.0) + (lang.call.cost if lang.call else 0.0)
         rec = requestlog.blocked_record(resp, reason, status, text_blocked, chars, cost)
         try:
             with connect() as conn:
@@ -171,10 +174,29 @@ def create_app(
                            f"{api['max_question_chars']} characters."}, "request_id": rid},
                 status_code=422, headers={"X-Request-ID": rid},
             )  # fmt: skip
+        lang = language.Language(english=question)
+        if guards[
+            "language_step"
+        ]:  # one small call, only for a question that does not look English
+            lang = language.detect(question, cfg, client_factory)
+        router_text, lang_note, details = question, None, False
+        scrubbed_translation = False
+        if lang.code != "en":
+            # every screen runs again on the English translation: the screens are English-only
+            verdict = screen.screen(lang.english, guards)
+            if verdict.reason:
+                guard.blocked[verdict.reason] += 1
+                lang.english = ""  # a blocked message's translation is not stored: no student text
+                text = f"{lang.note}\n\n{screen.reply(verdict.reason, guards)}"
+                return block(verdict.reason, question, rid, today, started, text, None, 0.0,
+                             True, lang)  # fmt: skip
+            router_text, lang_note, details = verdict.question, lang.note, verdict.removed_details
+            lang.english = router_text  # the scrubbed translation is what is stored and shown
+            scrubbed_translation = verdict.scrubbed
         try:
             with connect() as conn:
                 try:
-                    ans = router_factory(conn, cfg).answer(question, today, log=False)
+                    ans = router_factory(conn, cfg).answer(router_text, today, log=False)
                 except ApiError:
                     failed("provider_error", conn)
                     return JSONResponse(
@@ -185,11 +207,20 @@ def create_app(
                     failed("internal_error", conn)
                     raise
                 response = convert.to_response(
-                    ans, question, cfg, today, rid, version, url_map, by_id
+                    ans, router_text, cfg, today, rid, version, url_map, by_id
                 )
-                topic.rewrite(question, response, cfg, client_factory)
-                if note:  # personal details were removed from the question: say so first
-                    response.answer = f"{note}\n\n{response.answer}"
+                # as typed (redacted); if the translation needed scrubbing (a name or number the
+                # original's wording hid) the scrubbed translation is stored instead
+                response.question = router_text if scrubbed_translation else question
+                topic.rewrite(router_text, response, cfg, client_factory)
+                language.add_to_response(response, lang)
+                # lines at the start of the answer: the language note (in the student's language),
+                # then the note that personal details were removed, then the answer
+                lines = [lang_note] if lang_note else []
+                if note or details:
+                    lines.append(screen.PERSONAL_NOTE)
+                if lines:
+                    response.answer = "\n\n".join([*lines, response.answer])
                 if screen.leaks_key(response.answer):  # never return a key-shaped answer
                     guard.blocked["output"] += 1
                     return block("output", question, rid, today, started,

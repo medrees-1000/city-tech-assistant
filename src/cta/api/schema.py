@@ -68,6 +68,9 @@ class HowFound(BaseModel):
     # "topic" (sentence written from the templates) or "generic"; None for other answers
     abstain_wording: str | None = None
     topic_in_scope: bool | None = None  # the topic call's in_scope, when it ran and was usable
+    # the language step, when it ran (tester round 1b): the detected language and, for a question
+    # that was not English, the redacted English translation every later step worked on
+    language: dict[str, str | None] | None = None
 
 
 class Meta(BaseModel):
