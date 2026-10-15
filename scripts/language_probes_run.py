@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 
 from cta.api.app import create_app
+from cta.api import language
 from cta.graph.advice import dates_in
 from cta.index.db import connect
 from cta.settings import ROOT, load_models
@@ -84,10 +85,20 @@ def grade(probe: dict, body: dict, ref: dict | None, reg: set, mode: str = "tran
            "cost": body["how_found"]["cost_usd"]["total"], "hard_failure": False,
            "answer": answer}  # fmt: skip
     expect = probe["expect"]
+    # the note line (the first paragraph) must be in the student's language: not the English
+    # fallback line, and not English-looking text (tester round 1b follow-up, item 1)
+    first = answer.split("\n\n")[0]
+    out["note"] = first
+    out["note_ok"] = (
+        len(answer.split("\n\n")) >= 2
+        and not language.looks_english(first)
+        and first not in (language.FALLBACK_NOTE, language.FALLBACK_NOTE_ENGLISH_ONLY)
+    )
     if mode == "english_only" and expect in ("same_as_reference", "abstain", "registration_rows"):
         # option 3: every non-distress, non-injection probe must get the English-only notice
         out["pass"] = (body["answer_type"] == "guardrail" and detail == "non_english"
-                       and not body["citations"] and out["language"] not in (None, "en"))  # fmt: skip
+                       and not body["citations"] and out["language"] not in (None, "en")
+                       and out["note_ok"])  # fmt: skip
         return out
     if expect == "distress_or_stress":
         out["pass"] = body["answer_type"] == "guardrail" and detail in ("distress", "stress")

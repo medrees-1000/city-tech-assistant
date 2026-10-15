@@ -3,6 +3,6 @@ You detect the language of a question from a City Tech (CUNY) student and transl
 
 language: the BCP-47 code of the language of the question ("es", "ar", "ht", "ru", "zh", ...). Use "en" if the question is English.
 english: a faithful, literal English translation of the whole question. Keep course codes, acronyms, numbers, dates, names and proper nouns exactly as written (CST 3504, CUNYfirst, Fall 2026). Do not answer the question, and do not add, explain or remove anything. If the question is already English, return it unchanged.
-note: ONE short sentence in the language of the question that says the answer will be in English and that the sources are in English. It must contain no facts, no numbers, no contact details and no links. If the language is "en", return an empty string.
+note: {note_rule} It must contain no facts, no numbers, no contact details and no links. If the language is "en", return an empty string.
 
 Return only the JSON object.

@@ -494,3 +494,94 @@ def test_an_english_or_failed_question_is_not_affected_by_option_3(monkeypatch):
         "When is my tuition bill due this fall?",
     ).json()
     assert english["answer_type"] == "answer"
+
+
+# ---- tester round 1b follow-up: the note wording follows the mode ----
+
+OPTION_1_NOTE_RULE = (
+    "ONE short sentence in the language of the question that says the answer will be in English "
+    "and that the sources are in English."
+)
+
+
+def cfg_mode(mode):
+    cfg = load_models(env={"CTA_NON_ENGLISH": mode})
+    assert cfg["guardrails"]["non_english"] == mode
+    return cfg
+
+
+def test_option_1_wording_is_unchanged_and_option_3_says_english_only():
+    one = language.system_prompt("translate")
+    three = language.system_prompt("english_only")
+    assert (
+        OPTION_1_NOTE_RULE in one
+    )  # the option 1 (translate) instruction, word for word as before
+    assert "can currently answer in English only" in three
+    assert "the answer will be in English" not in three  # option 3 has no answer to talk about
+    for text in (one, three):
+        assert "{note_rule}" not in text and "It must contain no facts, no numbers" in text
+    # everything but the note rule is the same text in both modes
+    assert one.replace(OPTION_1_NOTE_RULE, "X") == three.replace(
+        language.NOTE_RULES["english_only"], "X"
+    )
+
+
+@pytest.mark.parametrize("mode", ["translate", "english_only"])
+def test_the_call_uses_the_prompt_of_the_mode(mode):
+    seen = []
+
+    class Spy(FakeLanguage):
+        def create(self, **kw):
+            seen.append(kw["messages"][0]["content"])
+            return super().create(**kw)
+
+    language.detect("cuando es la fecha limite", cfg_mode(mode), lambda: Spy(es()))
+    assert seen == [language.system_prompt(mode)]
+
+
+@pytest.mark.parametrize(
+    ("mode", "fallback"),
+    [
+        ("translate", "This answer is in English; the sources are in English."),
+        ("english_only", "I can currently answer in English only."),
+    ],
+)
+def test_an_unusable_note_falls_back_to_the_line_of_the_mode(mode, fallback):
+    for bad in (
+        "La fecha es el 3 de septiembre",
+        "x" * 161,
+        None,
+        "two\nlines",
+        "see https://x.edu",
+    ):
+        assert language.valid_note(bad, mode) == fallback
+    got = language.detect(
+        "cuando es la fecha limite",
+        cfg_mode(mode),
+        lambda: FakeLanguage(es(note="Dia 3 de septiembre")),
+    )
+    assert got.note == fallback  # a note with a digit is replaced by the mode's English line
+
+
+def test_a_good_note_is_kept_in_both_modes():
+    good = "Por ahora solo puedo responder en inglés."
+    for mode in ("translate", "english_only"):
+        assert language.valid_note(good, mode) == good
+        got = language.detect(
+            "cuando es la fecha limite", cfg_mode(mode), lambda: FakeLanguage(es(note=good))
+        )
+        assert got.note == good
+
+
+def test_the_option_3_fallback_does_not_mention_an_answer():
+    assert "answer is" not in language.FALLBACK_NOTE_ENGLISH_ONLY
+    assert not any(ch.isdigit() for ch in language.FALLBACK_NOTE_ENGLISH_ONLY)
+
+
+def test_english_questions_are_unaffected_in_both_modes():
+    for mode in ("translate", "english_only"):
+        en = FakeLanguage(json.dumps({"language": "en", "english": "SOMETHING ELSE", "note": ""}))
+        cfg = cfg_mode(mode)
+        for q in DEV:
+            got = language.detect(q, cfg, lambda en=en: en)
+            assert got.code == "en" and got.english is q and got.note is None
