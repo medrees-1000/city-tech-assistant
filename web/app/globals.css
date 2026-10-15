@@ -58,9 +58,10 @@
 
 html {
   -webkit-text-size-adjust: 100%;
-  /* the input bar is sticky at the bottom (about 12rem with the notice): scrolling to an element
-     (the newest answer, a source opened from a [n] link) leaves it clear of the bar */
-  scroll-padding-bottom: 13rem;
+  /* the input bar is sticky at the bottom: its real height is measured by the chat page
+     (--dock-h); 20rem is the fallback. Scrolling to an element (the newest answer, a source opened
+     from a [n] link) leaves it clear of the bar, plus 1rem of air */
+  scroll-padding-bottom: calc(var(--dock-h, 20rem) + 1rem);
 }
 
 body {
@@ -700,6 +701,18 @@ button:disabled {
   bottom: 0;
   padding: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom));
   background: linear-gradient(to bottom, transparent, var(--bg) 22%);
+}
+
+/* a soft fade above the bar: text scrolling under it fades out instead of being cut off */
+.chat:not(.is-empty) .dock::before {
+  content: "";
+  position: absolute;
+  top: -1.75rem;
+  left: 0;
+  right: 0;
+  height: 1.75rem;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--bg));
 }
 
 .composer {

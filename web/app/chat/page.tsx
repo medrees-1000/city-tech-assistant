@@ -26,8 +26,25 @@ export default function ChatPage() {
   const epoch = useRef(0); // bumped by "New chat" so a late answer is dropped
   const input = useRef<HTMLTextAreaElement | null>(null);
   const end = useRef<HTMLDivElement | null>(null);
+  const dock = useRef<HTMLDivElement | null>(null);
   const empty = isEmpty(messages);
   const loading = isLoading(messages);
+
+  // The input bar is sticky and its height changes (small screens, the notice, a longer input):
+  // keep its real height in a CSS variable so scrolling to the newest answer always clears it.
+  useEffect(() => {
+    const el = dock.current;
+    if (!el) return;
+    const root = document.documentElement;
+    const update = () => root.style.setProperty("--dock-h", `${el.getBoundingClientRect().height}px`);
+    update();
+    const watcher = new ResizeObserver(update);
+    watcher.observe(el);
+    return () => {
+      watcher.disconnect();
+      root.style.removeProperty("--dock-h");
+    };
+  }, [empty]);
 
   useEffect(() => {
     if (!empty) end.current?.scrollIntoView({ block: "end" });
@@ -83,7 +100,7 @@ export default function ChatPage() {
           </section>
         )}
 
-        <div className="dock">
+        <div className="dock" ref={dock}>
           <Composer
             value={text}
             max={MAX_QUESTION_CHARS}

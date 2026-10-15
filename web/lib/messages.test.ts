@@ -137,8 +137,14 @@ test("the conversation area and the page leave room under the last line for the 
   const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
   const thread = css.match(/\.thread\s*\{[^}]*padding:\s*[\d.]+(?:rem)?\s+[\d.]+(?:rem)?\s+([\d.]+)rem/);
   assert.ok(thread && Number(thread[1]) >= 2.5, "the bottom padding of .thread must be at least 2.5rem");
-  const scroll = css.match(/scroll-padding-bottom:\s*([\d.]+)rem/);
-  assert.ok(scroll && Number(scroll[1]) >= 12, "scroll-padding-bottom must clear the input bar");
+  // UI polish (a): the padding follows the bar's measured height (--dock-h); the fallback is taller than
+  // the bar on a phone (about 18.5rem), and 1rem of air is added
+  const scroll = css.match(/scroll-padding-bottom:\s*calc\(var\(--dock-h,\s*([\d.]+)rem\)\s*\+\s*([\d.]+)rem\)/);
+  assert.ok(scroll && Number(scroll[1]) >= 18.5 && Number(scroll[2]) >= 1, "scroll-padding-bottom must clear the input bar");
+  assert.match(css, /\.dock::before\s*\{[^}]*linear-gradient\(to bottom, transparent, var\(--bg\)\)/); // the soft fade above the bar
+  const page = readFileSync(new URL("../app/chat/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /ResizeObserver/);
+  assert.match(page, /--dock-h/);
 });
 
 test("a clarify reply is a normal assistant message: its own text, no contact card, no sources", () => {
