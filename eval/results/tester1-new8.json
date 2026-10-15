@@ -1,0 +1,738 @@
+{
+ "label": "tester1-new8",
+ "split": "dev",
+ "retrieval": {
+  "n": 3,
+  "recall@1": 1.0,
+  "precision@1": 1.0,
+  "hit@1": 1.0,
+  "recall@3": 1.0,
+  "precision@3": 0.3333333333333333,
+  "hit@3": 1.0,
+  "recall@5": 1.0,
+  "precision@5": 0.2,
+  "hit@5": 1.0,
+  "recall@10": 1.0,
+  "precision@10": 0.1,
+  "hit@10": 1.0,
+  "mrr": 1.0
+ },
+ "retrieval_chain": null,
+ "excluded_from_retrieval": [
+  "q99",
+  "q100",
+  "q101",
+  "q102",
+  "q103"
+ ],
+ "answers": {
+  "correctness": {
+   "n": 3,
+   "correct": 0.6666666666666666,
+   "partial": 0.0,
+   "incorrect": 0.3333333333333333
+  },
+  "faithfulness": {
+   "n": 3,
+   "yes": 0.6666666666666666,
+   "partly": 0.3333333333333333,
+   "no": 0.0
+  },
+  "no_advice_correct": {
+   "n": 0,
+   "correct": null,
+   "partial": null,
+   "incorrect": null
+  },
+  "abstention_accuracy": {
+   "n": 4,
+   "share": 1.0
+  },
+  "wrongly_abstained": {
+   "n": 3,
+   "share": 0.3333333333333333
+  },
+  "citation_rate": {
+   "n": 3,
+   "share": 1.0,
+   "invalid_citations": 0
+  },
+  "judge_failed": 0,
+  "cost": {
+   "n": 8,
+   "per_request_usd": 0.002443,
+   "answer_usd": 0.0043,
+   "judge_usd": 0.015244
+  },
+  "latency_ms": {
+   "n": 8,
+   "total_median": 2310.0,
+   "total_p95": 7593,
+   "chat_n": 8,
+   "chat_median": 2168.5,
+   "chat_p95": 4796,
+   "retrieval_n": 8,
+   "retrieval_median": 0.0,
+   "retrieval_p95": 2792.1,
+   "query_cache_hits": 3
+  },
+  "chain": null
+ },
+ "failure_labels": {
+  "abstention error": 1
+ },
+ "per_question": [
+  {
+   "id": "q96",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "normal",
+   "tags": [
+    "noise"
+   ],
+   "retrieved": [
+    {
+     "id": "page/bursar/payment-deadlines#1",
+     "similarity": 0.6414
+    },
+    {
+     "id": "page/bursar/payment-plan#1",
+     "similarity": 0.4717
+    },
+    {
+     "id": "page/admissions/tuition-penalty#3",
+     "similarity": 0.5201
+    },
+    {
+     "id": "page/admissions/tuition-penalty#1",
+     "similarity": 0.5121
+    },
+    {
+     "id": "page/bursar/refund-policy#4",
+     "similarity": 0.5102
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#4",
+     "similarity": 0.5072
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#3",
+     "similarity": 0.4808
+    },
+    {
+     "id": "page/bursar/refund-policy#2",
+     "similarity": 0.4726
+    },
+    {
+     "id": "page/bursar/refund-policy#3",
+     "similarity": 0.4706
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#6",
+     "similarity": 0.4669
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "The answer accurately gives all Fall 2026 tuition due-date tiers based on initial registration date.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "Every stated registration range and corresponding payment deadline is directly supported by source [1].",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0012131000000000002,
+   "judge_cost": 0.004872,
+   "latency_ms": 7593,
+   "chat_ms": 4796,
+   "retrieval_ms": 2792.1,
+   "cache_hit": true,
+   "rerank_cost": 0.0005162000000000001,
+   "rerank_ms": 2734.5,
+   "rerank_failed": false,
+   "route": "calendar_fallthrough",
+   "router": {
+    "route": "calendar_fallthrough",
+    "intent": "calendar",
+    "term_mention": "this fall",
+    "classify": {
+     "prompt_tokens": 319,
+     "completion_tokens": 18,
+     "cost": 4.0900000000000005e-05,
+     "ms": 2370.8,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": true,
+    "chain_fallthrough": false,
+    "term_status": "season",
+    "term": "Fall 2026",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [],
+    "select": {
+     "prompt_tokens": 4419,
+     "completion_tokens": 11,
+     "cost": 0.00044740000000000003,
+     "ms": 830.9,
+     "error": null,
+     "status": "empty"
+    },
+    "selector_version": 2,
+    "pool_size": 131,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q97",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "normal",
+   "tags": [
+    "noise"
+   ],
+   "retrieved": [
+    {
+     "id": "page/bursar/payment-deadlines#1",
+     "similarity": 0.6589
+    },
+    {
+     "id": "page/bursar/payment-plan#1",
+     "similarity": 0.4696
+    },
+    {
+     "id": "page/bursar/refund-policy#4",
+     "similarity": 0.5177
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#4",
+     "similarity": 0.5034
+    },
+    {
+     "id": "page/admissions/tuition-penalty#3",
+     "similarity": 0.5013
+    },
+    {
+     "id": "page/admissions/tuition-penalty#1",
+     "similarity": 0.4951
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#3",
+     "similarity": 0.4919
+    },
+    {
+     "id": "page/bursar/refund-policy#2",
+     "similarity": 0.481
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#5",
+     "similarity": 0.4785
+    },
+    {
+     "id": "page/bursar/refund-policy#3",
+     "similarity": 0.4768
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It accurately gives all Fall 2026 tuition due dates based on initial registration date, which fully answers the question.",
+   "faithfulness": "partly",
+   "faithfulness_reason": "The due-date schedule is supported by source [1], but the claim that the dates had passed as of October 11, 2026 is not stated in the sources.",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0012521000000000001,
+   "judge_cost": 0.005318,
+   "latency_ms": 5673,
+   "chat_ms": 4091,
+   "retrieval_ms": 1575.4,
+   "cache_hit": true,
+   "rerank_cost": 0.0005162000000000001,
+   "rerank_ms": 1525.8,
+   "rerank_failed": false,
+   "route": "calendar_fallthrough",
+   "router": {
+    "route": "calendar_fallthrough",
+    "intent": "calendar",
+    "term_mention": "this fall",
+    "classify": {
+     "prompt_tokens": 319,
+     "completion_tokens": 18,
+     "cost": 4.0900000000000005e-05,
+     "ms": 892.1,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": true,
+    "chain_fallthrough": false,
+    "term_status": "season",
+    "term": "Fall 2026",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [],
+    "select": {
+     "prompt_tokens": 4422,
+     "completion_tokens": 12,
+     "cost": 0.00044820000000000005,
+     "ms": 1163.6,
+     "error": null,
+     "status": "empty"
+    },
+    "selector_version": 2,
+    "pool_size": 131,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q98",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "normal",
+   "tags": [
+    "noise"
+   ],
+   "retrieved": [
+    {
+     "id": "page/bursar/payment-deadlines#1",
+     "similarity": 0.5918
+    },
+    {
+     "id": "page/bursar/payment-plan#1",
+     "similarity": 0.4718
+    },
+    {
+     "id": "page/admissions/tuition-penalty#3",
+     "similarity": 0.4923
+    },
+    {
+     "id": "page/bursar/refund-policy#4",
+     "similarity": 0.4481
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#4",
+     "similarity": 0.4436
+    },
+    {
+     "id": "page/financial-aid/faqs#2",
+     "similarity": 0.4416
+    },
+    {
+     "id": "page/admissions/tuition-penalty#1",
+     "similarity": 0.44
+    },
+    {
+     "id": "contact:bursar",
+     "similarity": 0.4361
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#3",
+     "similarity": 0.4355
+    },
+    {
+     "id": "page/financial-aid/financial-payment-calendar#1",
+     "similarity": 0.4309
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": true,
+   "abstain_reason": "below_threshold",
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "incorrect",
+   "correctness_reason": "The response abstains even though the provided payment-deadlines source gives the Fall 2026 tuition due dates based on initial registration date.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "As an abstention, it makes no substantive factual claim about the tuition deadline, and the cited contact instruction does not conflict with the sources.",
+   "judge_status": "ok",
+   "label": "abstention error",
+   "label_reason": "abstained (below_threshold)",
+   "answer_cost": 0.0010762,
+   "judge_cost": 0.005054,
+   "latency_ms": 3297,
+   "chat_ms": 1731,
+   "retrieval_ms": 1559.3,
+   "cache_hit": true,
+   "rerank_cost": 0.0005877,
+   "rerank_ms": 1512.1,
+   "rerank_failed": false,
+   "route": "calendar_fallthrough",
+   "router": {
+    "route": "calendar_fallthrough",
+    "intent": "calendar",
+    "term_mention": "this fall",
+    "classify": {
+     "prompt_tokens": 323,
+     "completion_tokens": 18,
+     "cost": 4.13e-05,
+     "ms": 858.8,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": true,
+    "chain_fallthrough": false,
+    "term_status": "season",
+    "term": "Fall 2026",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [],
+    "select": {
+     "prompt_tokens": 4417,
+     "completion_tokens": 11,
+     "cost": 0.00044720000000000003,
+     "ms": 872.1,
+     "error": null,
+     "status": "empty"
+    },
+    "selector_version": 2,
+    "pool_size": 131,
+    "contact_office": "bursar"
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q99",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "calendar_only",
+   "tags": [
+    "noise"
+   ],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "faithfulness_reason": null,
+   "correctness_reason": "rule (calendar scoring 2): returned rows cover the gold rows",
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0004943,
+   "judge_cost": 0.0,
+   "latency_ms": 2178,
+   "chat_ms": 2172,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "calendar",
+   "router": {
+    "route": "calendar",
+    "intent": "calendar",
+    "term_mention": "Fall 2026",
+    "classify": {
+     "prompt_tokens": 325,
+     "completion_tokens": 20,
+     "cost": 4.25e-05,
+     "ms": 1210.5,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "term_status": "explicit",
+    "term": "Fall 2026",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [
+     "fall-2026-007"
+    ],
+    "select": {
+     "prompt_tokens": 4428,
+     "completion_tokens": 18,
+     "cost": 0.00045180000000000003,
+     "ms": 961.4,
+     "error": null,
+     "status": "ok"
+    },
+    "selector_version": 2,
+    "pool_size": 131,
+    "render_ms": 0.105,
+    "tba_rows": [],
+    "contact_office": null
+   },
+   "returned_rows": [
+    "fall-2026-007"
+   ],
+   "calendar_v1": {
+    "correctness": "correct",
+    "label": null
+   },
+   "calendar_v2": {
+    "correctness": "correct",
+    "label": null
+   }
+  },
+  {
+   "id": "q100",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "abstain",
+   "tags": [],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "calendar_unsupported_term",
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 7.63e-05,
+   "judge_cost": 0.0,
+   "latency_ms": 2442,
+   "chat_ms": 2438,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "abstain",
+   "router": {
+    "route": "abstain",
+    "intent": "calendar",
+    "term_mention": "summer 2027",
+    "classify": {
+     "prompt_tokens": 318,
+     "completion_tokens": 20,
+     "cost": 4.18e-05,
+     "ms": 1233.9,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "term_status": "unsupported",
+    "term": "Summer 2027",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [],
+    "select": {
+     "prompt_tokens": 290,
+     "completion_tokens": 11,
+     "cost": 3.45e-05,
+     "ms": 1203.9,
+     "error": null,
+     "status": "empty"
+    },
+    "selector_version": 1,
+    "pool_size": 2,
+    "contact_office": "registrar"
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q101",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "abstain",
+   "tags": [],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "calendar_unsupported_term",
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0001053,
+   "judge_cost": 0.0,
+   "latency_ms": 2168,
+   "chat_ms": 2165,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "abstain",
+   "router": {
+    "route": "abstain",
+    "intent": "calendar",
+    "term_mention": "fall 2027",
+    "classify": {
+     "prompt_tokens": 318,
+     "completion_tokens": 20,
+     "cost": 4.18e-05,
+     "ms": 1319.5,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "term_status": "unsupported",
+    "term": "Fall 2027",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [],
+    "select": {
+     "prompt_tokens": 580,
+     "completion_tokens": 11,
+     "cost": 6.35e-05,
+     "ms": 845.1,
+     "error": null,
+     "status": "empty"
+    },
+    "selector_version": 1,
+    "pool_size": 8,
+    "contact_office": "registrar"
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q102",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "abstain",
+   "tags": [],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "chain_outside_departments",
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4.1200000000000005e-05,
+   "judge_cost": 0.0,
+   "latency_ms": 962,
+   "chat_ms": 945,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "abstain",
+   "router": {
+    "route": "abstain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 317,
+     "completion_tokens": 19,
+     "cost": 4.1200000000000005e-05,
+     "ms": 945.3,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "ENG 1101",
+     "detail": [],
+     "walk_ms": 0.481,
+     "course_count": 0,
+     "truncated": false,
+     "no_record": true,
+     "outside_departments": true
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q103",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "abstain",
+   "tags": [],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "chain_outside_departments",
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4.15e-05,
+   "judge_cost": 0.0,
+   "latency_ms": 1167,
+   "chat_ms": 1150,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "abstain",
+   "router": {
+    "route": "abstain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 320,
+     "completion_tokens": 19,
+     "cost": 4.15e-05,
+     "ms": 1150.2,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "BIO 1101",
+     "detail": [],
+     "walk_ms": 0.799,
+     "course_count": 0,
+     "truncated": false,
+     "no_record": true,
+     "outside_departments": true
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  }
+ ],
+ "question_ids": [
+  "q100",
+  "q101",
+  "q102",
+  "q103",
+  "q96",
+  "q97",
+  "q98",
+  "q99"
+ ],
+ "question_ids_hash": "02920f106882",
+ "git": {
+  "commit": "31ef27e",
+  "dirty": true
+ }
+}

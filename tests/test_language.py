@@ -90,10 +90,16 @@ def test_the_prefilter(text, skips):
     assert language.looks_english(text) is skips
 
 
-def test_at_least_95_percent_of_the_63_dev_questions_skip_the_step():
-    skipped = [q for q in DEV if language.looks_english(q)]
-    print("dev questions that skip:", len(skipped), "of", len(DEV))
-    assert len(DEV) == 63 and len(skipped) >= 60
+def test_at_least_95_percent_of_the_original_63_dev_questions_skip_the_step():
+    # R1 was pre-registered for the 63 questions that existed then (ids up to q95); the 8 questions
+    # of the tester round (q96 to q103) include an emoji and short fragments, reported separately
+    original = [
+        q["question"] for q in load_questions() if q["split"] == "dev" and int(q["id"][1:]) <= 95
+    ]
+    skipped = [q for q in original if language.looks_english(q)]
+    print("original dev questions that skip:", len(skipped), "of", len(original))
+    assert len(original) == 63 and len(skipped) >= 60
+    assert len(DEV) == 71  # all 71 still go through the stubbed R1 test below
 
 
 # ---- R1: English is unchanged ----

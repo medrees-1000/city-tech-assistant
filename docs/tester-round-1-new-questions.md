@@ -1,5 +1,7 @@
 # Tester round 1: drafted new dev questions (for the owner to review)
 
+**Status (2026-10-15): the owner accepted all eight drafts; they are `q96` to `q103` in `eval/questions.jsonl` (NEW-B1 to B4 are q96 to q99, NEW-C1 and C2 are q100 and q101, NEW-D1 and D2 are q102 and q103), with the changes listed in `docs/decisions.md` ("Tester round 1 follow-up"). The text below is the original draft and is kept for the record.**
+
 **Nothing here is in `eval/questions.jsonl`.** These are drafts for the owner to accept, change or drop; every question needs the owner's review before it enters the file. All rows are `split: "dev"`. The ids are placeholders (`NEW-...`); the owner assigns the real ids. Gold answers use only facts from sources we already hold (the gold of the existing dev question each variant is built from, or the data's own statement that no calendar or record exists); nothing is invented, and unknowns are marked TODO. Question texts come from the tester's rows (the stored text) or are minimal variants of existing dev questions.
 
 ## B. Noisy-question variants (markup, emoji, a redaction placeholder)

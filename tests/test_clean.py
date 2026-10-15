@@ -38,9 +38,24 @@ TESTER = {  # request id prefix -> (the stored text, the text the search should 
 }
 
 
-@pytest.mark.parametrize("question", [q["question"] for q in DEV])
-def test_every_dev_question_is_returned_unchanged_and_as_the_same_object(question):
+ROWS = [q for q in load_questions() if q["split"] == "dev"]
+NOISE = {q["id"]: q["question"] for q in ROWS if "noise" in q.get("tags", [])}
+
+
+@pytest.mark.parametrize(
+    "question", [q["question"] for q in ROWS if "noise" not in q.get("tags", [])]
+)
+def test_every_clean_dev_question_is_returned_unchanged_and_as_the_same_object(question):
     assert clean_for_search(question) == question and clean_for_search(question) is question
+
+
+def test_the_four_noise_questions_are_cleaned_to_their_plain_text():
+    # q96 to q99 (tester round) are the only dev questions the cleaner changes, by design
+    assert sorted(NOISE) == ["q96", "q97", "q98", "q99"]
+    assert clean_for_search(NOISE["q96"]) == "When is my tuition bill due this fall?"
+    assert clean_for_search(NOISE["q97"]) == "when is my tuition bill due this fall??"
+    assert clean_for_search(NOISE["q98"]) == "my phone is, when is my tuition bill due this fall?"
+    assert clean_for_search(NOISE["q99"]) == "What is the last day to add a course in Fall 2026?"
 
 
 @pytest.mark.parametrize(("raw", "want"), list(TESTER.values()))
