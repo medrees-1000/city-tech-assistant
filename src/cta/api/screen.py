@@ -121,10 +121,11 @@ INJECTION = tuple(
 KEY_SHAPE = re.compile(r"sk-[A-Za-z0-9_-]{20,}")
 
 
-# Said at the start of an answer when an e-mail, phone number or ID-shaped number was removed from
-# the question (tester round 1, item E). Not for an SSN-shaped number (refused) and not for a name.
+# Said at the start of an answer when an e-mail, phone number, ID-shaped number or a name after
+# "my name is" was removed from the question (tester round 1 item E; names added in round 1b).
+# Not for an SSN-shaped number: that question is refused.
 PERSONAL_NOTE = "I removed what looked like personal details from your question before answering."
-NOTE_TAGS = ("EMAIL", "PHONE", "ID")
+NOTE_TAGS = ("EMAIL", "PHONE", "ID", "NAME")
 
 
 @dataclass
@@ -132,7 +133,7 @@ class Screened:
     reason: str | None  # one of REASONS, or None when the question may go on
     question: str  # the question as it goes to the model and the log (scrubbed)
     scrubbed: bool = False  # something was replaced
-    removed_details: bool = False  # an e-mail, phone or ID-shaped number was removed
+    removed_details: bool = False  # an e-mail, phone, ID-shaped number or name was removed
 
 
 def lowered(text: str) -> str:
@@ -216,7 +217,7 @@ def scrub(question: str) -> str:
 
 
 def removed_personal_details(original: str, clean: str) -> bool:
-    """True when `clean` holds an [EMAIL], [PHONE] or [ID] tag that `original` did not have."""
+    """True when `clean` holds an [EMAIL], [PHONE], [ID] or [NAME] tag `original` did not have."""
     pattern = re.compile(r"\[(?:" + "|".join(NOTE_TAGS) + r")\]")
     return len(pattern.findall(clean)) > len(pattern.findall(original))
 

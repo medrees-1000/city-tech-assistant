@@ -511,11 +511,12 @@ def test_nothing_else_in_the_answer_changes_when_the_note_is_added(monkeypatch):
     "question",
     [
         "when is the deadline",  # nothing to remove
-        "my name is Jane Doe, when is the deadline",  # a name only: not one of the three kinds
         "[PHONE] was already scrubbed upstream, when is the deadline",  # nothing newly removed
+        "I am Maria and I need the deadline",  # a name that is not after "my name is": not scrubbed
+        "My name is on the waitlist but I don't see the class",  # "my name is" but no name follows
     ],
 )
-def test_no_note_without_one_of_the_three_kinds(monkeypatch, question):
+def test_no_note_without_a_redaction(monkeypatch, question):
     body = ask(make_client_app(Client(), monkeypatch, retrieve_answer()), question).json()
     assert NOTE not in body["answer"] and not screen.screen(question, G).removed_details
 
@@ -530,3 +531,40 @@ def test_an_ssn_shaped_question_is_refused_not_noted(monkeypatch):
 def test_the_note_text_is_fixed_and_no_dev_question_gets_it():
     assert screen.PERSONAL_NOTE == NOTE
     assert not any(screen.screen(q["question"], G).removed_details for q in DEV)
+
+
+# ---- tester round 1b, item 1b: the note also covers a name after "my name is" ----
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "my name is Jane Doe, when is the tuition deadline",  # a name only (round 1: no note)
+        "My name's Maria Elena Lopez and I need the tuition due date",
+        "my name is Jane Doe, mail jane.doe@example.edu about the tuition deadline",  # both
+    ],
+)
+def test_the_note_is_added_when_a_name_was_removed(monkeypatch, question):
+    c = make_client_app(Client(), monkeypatch, retrieve_answer("The deadline is Sept 3. [1]"))
+    body = ask(c, question).json()
+    assert (
+        body["answer"] == f"{NOTE}\n\nThe deadline is Sept 3. [1]"
+    )  # one note, nothing else changed
+    assert screen.screen(question, G).removed_details is True
+    logged = json.dumps(c.logs, default=str)
+    for value in ("Jane", "Doe", "Maria", "Lopez", "jane.doe"):
+        assert value not in logged and value not in body["question"]
+    assert "[NAME]" in c.logs[0]["question"] and c.logs[0]["answer"].startswith(NOTE)
+
+
+def test_a_name_note_changes_nothing_else_in_the_answer(monkeypatch):
+    plain = ask(
+        make_client_app(Client(), monkeypatch, retrieve_answer()), "when is the tuition deadline"
+    ).json()
+    noted = ask(
+        make_client_app(Client(), monkeypatch, retrieve_answer()),
+        "my name is Jane Doe, when is the tuition deadline",
+    ).json()
+    assert noted["answer"] == f"{NOTE}\n\n{plain['answer']}"
+    for key in ("citations", "contact", "answer_type", "route", "abstained"):
+        assert noted[key] == plain[key], key
