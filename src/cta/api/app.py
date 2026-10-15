@@ -247,6 +247,11 @@ def create_app(
                     response.answer = "\n\n".join([*lines, response.answer])
                 if trace:
                     trace.finish(response)
+                if response.abstained and screen.names_self_harm(response.answer):
+                    guard.blocked["distress"] += 1  # the topic sentence must never echo it
+                    return block("distress", question, rid, today, started,
+                                 screen.reply("distress", guards), None,
+                                 response.how_found.cost_usd["total"], True)  # fmt: skip
                 if screen.leaks_key(response.answer):  # never return a key-shaped answer
                     guard.blocked["output"] += 1
                     return block("output", question, rid, today, started,

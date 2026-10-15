@@ -1,5 +1,5 @@
-"""Tester round 2, item C (T08): the vague-question sets for the CLARIFY detector, written BEFORE the
-code (docs/decisions.md, "Tester round 2, safety and small fixes"). Data only."""
+"""Tester round 2, item C (T08): the vague-question sets for the CLARIFY detector, written
+BEFORE the code (docs/decisions.md, "Tester round 2, safety and small fixes"). Data only."""
 
 # Short, vague, no topic noun, no course code, no department: must get the clarify template.
 POSITIVES = [

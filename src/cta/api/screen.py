@@ -64,15 +64,32 @@ DISTRESS = (
 # i'm, i am) near the phrase, or is a flat statement of hopelessness; "can't ... anymore" needs the
 # "anymore", and "don't want to be here" only counts at the end of the text.
 _I = r"\b(?:i|im|i'm|i am)\b"
+# "going on" is also ordinary ("no point in going on the waitlist"): not followed by these words
+GOING_ON = r"going on(?!\s+(?:the|a|this|that|my|to|with|in)\b)"
+_ANYMORE = r"(?:any ?more|any longer)"
 HOPELESS = tuple(
     re.compile(p)
     for p in (
         rf"{_I}[^.?!]{{0,25}}?\bgiv(?:e|ing) up on everything\b",
         rf"{_I}[^.?!]{{0,15}}?\b(?:can'?t|cannot|can not)\s+(?:do|take|handle)\s+(?:it|this)\s+"
         r"(?:any ?more|any longer)\b",
-        r"\b(?:there'?s|there is)\s+no point\s+(?:in|to)\s+(?:anything|going on|living|life)\b",
-        rf"{_I}[^.?!]{{0,40}}?\bno point\s+(?:in|to)\s+(?:anything|going on|living|life)\b",
-        rf"{_I}[^.?!]{{0,20}}?\b(?:want(?:ed)? to|wanna)\s+disappear\b",
+        rf"\b(?:there'?s|there is)\s+no point\s+(?:in|to)\s+(?:anything|{GOING_ON}|living|life)\b",
+        rf"{_I}[^.?!]{{0,40}}?\bno point\s+(?:in|to)\s+(?:anything|{GOING_ON}|living|life)\b",
+        rf"{_I}[^.?!]{{0,20}}?\b(?:want(?:ed)? to|wanna)\s+disappear(?!\s+(?:from|off|out)\b)",
+        # tester round 2, item A: passive ideation, first person, narrow
+        r"\b(?:don'?t|do not)\s+want to be (?:alive|dead)\b",
+        rf"\b(?:don'?t|do not)\s+want to be here\s+{_ANYMORE}\b",
+        r"\b(?:don'?t|do not)\s+want to wake up\s+(?:tomorrow|again|any ?more)\b",
+        r"\bwish\s+(?:that\s+)?(?:i|we)\s+(?:was|were)(?:n'?t| not)\s+(?:here|alive|around)\b",
+        r"\bwish\s+(?:that\s+)?i\s+(?:was|were)\s+never\s+born\b",
+        r"\bwish\s+i\s+hadn'?t\s+been born\b",
+        r"\bbetter off without me\b",
+        r"\bno reason to (?:keep going|keep living|go on)(?!\s+(?:to|the|a|with|in|for|my)\b)",
+        r"\bend(?:ing)? it all\b",
+        r"\btake my (?:own )?life\b",
+        r"\b(?:isn'?t|is not|not) worth living\b",
+        rf"\b(?:don'?t|do not) think (?:i|that i) can (?:do|take|handle)\s+(?:it|this)\s+{_ANYMORE}"
+        r"\s*[.!?,]*\s*$",
         rf"{_I}[^.?!]{{0,20}}?\b(?:don'?t|do not)\s+want to be here"
         r"(?:\s+(?:any ?more|any longer))?\s*[.!?,]*\s*$",
     )
@@ -144,12 +161,36 @@ def lowered(text: str) -> str:
 # end of a sentence or with "anymore", "any longer", "like this" or "living" (narrowed after the
 # ordinary-question set found the false positive; docs/decisions.md).
 NARROWED = {
-    "can't go on": r"can't go on(?:\s+(?:anymore|any longer|like this|living)\b|\s*[.!?,]*\s*$)"
+    "don't want to live": r"don'?t want to live(?!\s+(?:on|in|with|at|near|off|by|where|there)\b)",
+    "do not want to live": r"do not want to live(?!\s+(?:on|in|with|at|near|off|by|where|there)\b)",
+    "can't go on": r"can't go on(?:\s+(?:anymore|any longer|like this|living)\b|\s*[.!?,]*\s*$)",
 }
 
 
+# Idioms removed BEFORE matching (tester round 2, T03: "i wanna die of embarrassment" is not a
+# crisis). Only the idiom's own words go; anything else in the question is still matched.
+_FEELING = r"(?:embarrass\w*|shame|laughter|laughing|boredom|bored|cringe|hunger|thirst|curiosity)"
+IDIOMS = tuple(
+    re.compile(p)
+    for p in (
+        rf"\b(?:die|dying|dead|death)\s+(?:of|from)\s+{_FEELING}\b",
+        r"\b(?:die|dying|dead)\s+laughing\b",
+        r"\bdying to\s+\w+",
+        r"\bdead tired\b",
+        r"\bkilling me\b",
+        r"\b(?:gonna|going to|will|would|'ll)\s+kill me\b",
+    )
+)  # fmt: skip
+
+
+def without_idioms(text: str) -> str:
+    for idiom in IDIOMS:
+        text = idiom.sub(" ", text)
+    return text
+
+
 def is_distress(question: str) -> bool:
-    text = lowered(question)
+    text = without_idioms(lowered(question))
     if any(p.search(text) for p in HOPELESS):
         return True
     return any(re.search(NARROWED.get(p, rf"\b{re.escape(p)}"), text) for p in DISTRESS)
@@ -164,6 +205,15 @@ STRESS_FRAMED = re.compile(
     r"\b(?:i|im|i'm|i am|i've|ive|me|myself)\b"
     r"(?:\s+(?!(?:for|of|to|with|about|help|find)\b)[a-z']+){0,3}?"
     rf"\s+{_STRESS}\b|\b(?:i|im|i'm|i am|i've|ive)\s+{_STRESS}\b"
+)
+# tester round 2 (T02): stress said without a stress word, still first person or a fixed phrase
+STRESS_PHRASES = re.compile(
+    rf"{_I}[^.?!]{{0,15}}?\b(?:burnt|burned) out\b|{_I}[^.?!]{{0,15}}?\bfalling apart\b"
+    rf"|{_I}[^.?!]{{0,15}}?\bstressing out\b|\b(?:can'?t|cannot) cope\b"
+    r"|\btoo much for me\b|\b(?:all|everything|school|life|work|it|this) (?:is|its|it's) "
+    r"(?:just |all )?too much\b|\b(?:its|it's) all too much\b"
+    r"|\b(?:gonna|going to|will) fail everything\b"
+    rf"|\b(?:don'?t|do not) think (?:i|that i) can (?:do|take|handle)\s+(?:it|this)\s+{_ANYMORE}"
 )
 STRESS_MAX_WORDS = 20
 STRESS_TOPIC_EXTRA = ("requirement", "pathway", "elective")  # for this tier only
@@ -190,11 +240,25 @@ def is_stress(question: str) -> bool:
     words = WORD.findall(text)
     if not words or len(words) > STRESS_MAX_WORDS:
         return False
-    if not STRESS_FRAMED.search(text):
+    if not (STRESS_FRAMED.search(text) or STRESS_PHRASES.search(text)):
         return False
     if names_stress_topic(words) or detect_departments(question):
         return False
     return not COURSE_CODE.search(TERM_NAME.sub(" ", question))
+
+
+# Defence in depth (tester round 2, T01): the model-written topic sentence of an abstain must never
+# name suicide or self-harm; if it does, the whole reply becomes the Tier 1 crisis reply.
+SELF_HARM_TOPIC = re.compile(
+    r"suicid|desire to die|want(?:s|ed|ing)? to die|self[- ]harm"
+    r"|end(?:ing)? (?:my|his|her|their) life"
+    r"|kill(?:ing)? (?:my|him|her|them)self|ending it all|thoughts? of dying",
+    re.IGNORECASE,
+)
+
+
+def names_self_harm(answer: str) -> bool:
+    return bool(SELF_HARM_TOPIC.search(answer.replace("’", "'")))
 
 
 def is_bereavement(question: str) -> bool:
