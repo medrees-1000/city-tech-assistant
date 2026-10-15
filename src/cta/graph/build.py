@@ -71,6 +71,13 @@ def calendar_answer(rendered: render.Rendered) -> RoutedAnswer:
     return ans
 
 
+def no_term_text(label: str, events: list[dict]) -> str:
+    """A term with no calendar: say so, and say which calendars exist (read from the data)."""
+    names = terms.supported_terms(events)
+    listed = names[0] if len(names) == 1 else f"{', '.join(names[:-1])} and {names[-1]}"
+    return f"No calendar has been published for {label} yet. The calendars I have cover {listed}."
+
+
 def abstain_answer(text: str, reason: str) -> RoutedAnswer:
     return RoutedAnswer(text, True, reason, [], search=Search([], False, 0, 0, 0.0))
 
@@ -132,9 +139,7 @@ def make_nodes(d: Deps):
         if resolution.status == "unsupported":
             pool = resolution.pool
             if not pool:
-                text = (
-                    f"There is no published calendar for {label}, and no calendar row mentions it."
-                )
+                text = no_term_text(label, d.events)
                 ans = abstain_answer(
                     render.abstain_text(text, d.contact), "calendar_unsupported_term"
                 )
@@ -160,6 +165,10 @@ def make_nodes(d: Deps):
         if chosen.status != "ok":
             reason = "calendar_selector_failed" if chosen.status == "failed" else "calendar_no_row"
             text = f"I could not find that in the {label} calendar."
+            if resolution.status == "unsupported":  # the term has no calendar at all: say that
+                text = no_term_text(label, d.events)
+                if reason == "calendar_no_row":
+                    reason = "calendar_unsupported_term"
             ans = abstain_answer(render.abstain_text(text, d.contact), reason)
             return {"calendar": info, "answer": ans, "fallthrough": False, "route": "abstain"}
         by_id = {r["id"]: r for r in pool}
@@ -271,7 +280,10 @@ def build_graph(d: Deps):
         "classify",
         after_classify,
         {
-            "calendar": "calendar", "chain": "chain", "retrieve": "retrieve", "clarify": "clarify",
+            "calendar": "calendar",
+            "chain": "chain",
+            "retrieve": "retrieve",
+            "clarify": "clarify",
             "advice": "advice",
         },
     )
