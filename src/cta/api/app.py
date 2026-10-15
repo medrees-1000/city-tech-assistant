@@ -10,6 +10,7 @@ import threading
 import time
 import uuid
 from collections.abc import Callable
+from contextlib import ExitStack
 from datetime import date
 
 import psycopg
@@ -19,7 +20,7 @@ from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from cta.api import convert, language, requestlog, schema, screen, topic
+from cta.api import convert, language, requestlog, schema, screen, topic, tracing
 from cta.api import guard as guard_mod
 from cta.api.checks import require_startup
 from cta.graph import render
@@ -64,11 +65,15 @@ def create_app(
     guards = cfg["guardrails"]
 
     def timed_client():  # the API's own calls stop after model_call_timeout_s (the eval's do not)
-        return make_client(timeout=guards["model_call_timeout_s"])
+        client = make_client(timeout=guards["model_call_timeout_s"])
+        return tracer.wrap(client) if tracer else client  # recorded only inside a traced request
 
     client_factory = client_factory or timed_client  # looked up at call time (tests replace it)
     if check_startup:
         require_startup(cfg, env=env, connect=connect, root=root)
+    # Optional developer tracing (off unless the config flag, CTA_TRACING=on and the key are set);
+    # built after the startup checks, so a refused start never builds a client
+    tracer = tracing.Tracing.from_settings(cfg, env)
     version = git_version()
     events = load_events()
     by_id = {e["id"]: e for e in events}
@@ -204,7 +209,9 @@ def create_app(
                     "non_english", shown, rid, today, started, text, None, 0.0, False, lang
                 )
         try:
-            with connect() as conn:
+            with connect() as conn, ExitStack() as stack:
+                # the trace starts here: after the scrub and every guardrail, with the scrubbed text
+                trace = stack.enter_context(tracer.request(router_text, rid)) if tracer else None
                 try:
                     ans = router_factory(conn, cfg).answer(router_text, today, log=False)
                 except ApiError:
@@ -231,6 +238,8 @@ def create_app(
                     lines.append(screen.PERSONAL_NOTE)
                 if lines:
                     response.answer = "\n\n".join([*lines, response.answer])
+                if trace:
+                    trace.finish(response)
                 if screen.leaks_key(response.answer):  # never return a key-shaped answer
                     guard.blocked["output"] += 1
                     return block("output", question, rid, today, started,

@@ -126,6 +126,12 @@ guardrails:
   non_english: "english_only"
   personal_data: "redact_and_refuse"   # off | redact | redact_and_refuse
 
+# Optional developer tracing with LangSmith (docs/decisions.md, "Near-miss floor and tracing"). OFF by default and only
+# in the API process. It is on only if this flag, the environment variable CTA_TRACING=on and LANGSMITH_API_KEY are all
+# present. Turning it on for a public deployment is a separate owner decision (docs/phase4-plan.md).
+tracing:
+  enabled: false
+
 max_chunk_tokens: 6000          # the loader fails instead of truncating (embedding limit is 8192)
 
 eval:

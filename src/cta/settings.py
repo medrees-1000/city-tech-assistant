@@ -143,6 +143,7 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
             f"retrieval.mode must be one of {RETRIEVAL_MODES}, not {cfg['retrieval']['mode']!r}"
         )
     cfg["guardrails"] = guardrail_settings(cfg.get("guardrails") or {}, env)
+    cfg["tracing"] = {"enabled": bool((cfg.get("tracing") or {}).get("enabled", False))}
     return cfg
 
 
