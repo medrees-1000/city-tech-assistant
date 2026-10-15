@@ -43,13 +43,14 @@ def public_route(ans) -> str:
 
 def abstain_code(reason: str | None, question: str = "", table: dict | None = None) -> str | None:
     """A short code for an abstention, never the model's sentence. A retrieval abstention on a
-    question with one of the account cues of the contact mapping ("my gpa" ...) is
-    "personal_account"; calendar and chain abstentions keep their own codes."""
+    question about the student's own account data ("my gpa", "my financial aid status" ...; a
+    possessive plus an office noun alone is not enough) is "personal_account"; calendar and chain
+    abstentions keep their own codes."""
     if reason is None:
         return None
     if reason.startswith(OWN_CODES):
         return reason
-    if contacts.account_cue(question, table or contacts.load_contacts()):
+    if contacts.personal_account_cue(question, table or contacts.load_contacts()):
         return "personal_account"
     return reason if reason == "below_threshold" else "model"
 

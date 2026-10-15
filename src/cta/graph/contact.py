@@ -44,6 +44,22 @@ def account_cue(question: str, contacts: dict) -> bool:
     )
 
 
+def personal_account_cue(question: str, contacts: dict) -> bool:
+    """Is this abstention shown as a personal-account refusal? An `account_only` word always counts;
+    so does an office cue that names account data by itself (my gpa, my balance ...); a possessive
+    plus an office noun ("my financial aid", "my tuition") counts only together with an account
+    signal ("status", "did my", "why is my" ...). `account_cue` is unchanged and still chooses the
+    card."""
+    text = question.lower().replace("\u2019", "'")
+    if has_word(text, contacts.get("account_only", [])):
+        return True
+    nouns = contacts.get("noun_cues", [])
+    data_cues = [w for words in contacts["cues"].values() for w in words if w not in nouns]
+    if has_word(text, data_cues):
+        return True
+    return has_word(text, nouns) and has_word(text, contacts.get("account_signals", []))
+
+
 def cue_office(question: str, contacts: dict) -> str | None:
     text = question.lower()
     for office, words in contacts["cues"].items():

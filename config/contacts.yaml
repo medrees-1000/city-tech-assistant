@@ -102,7 +102,17 @@ cues:
 
 # Account words with NO office (the data names none): the abstention is the personal-account message
 # and no card is shown. They count only when the system already abstains.
-account_only: ["emplid", "student id", "log in", "login", "password", "my hold", "my holds", "a hold on my", "my account"]
+account_only: ["emplid", "student id", "log in", "login", "password", "my hold", "my holds", "a hold on my", "my account",
+               "how much do i owe", "is my application complete"]   # the last two: tester round 1b follow-up
+
+# Which retrieval abstentions are shown as the personal-account refusal (docs/decisions.md, "Near-miss polish and
+# possessive cue"). The cues above still choose the contact card; this only decides the refusal.
+# A "noun cue" (a possessive plus an office noun, such as "my financial aid") is NOT enough by itself: it needs an
+# account signal. Every other office cue above (my gpa, my grades, my transcript, my balance) names account data
+# by itself. The account_only words always count.
+noun_cues: ["my financial aid", "my aid", "my fafsa", "my tap", "my refund", "my tuition", "my bill"]
+account_signals: ["status", "approved", "denied", "deposited", "pending", "owe", "owed", "did my", "has my", "have my",
+                  "why is my", "why was my", "why did my", "why hasn't my", "where is my", "wheres my", "where's my"]
 
 # Rule 5: chunk ids "pdf/<name>#n" -> office. page/, dept/, contact: and catalog: chunks need no entry
 # (their owner or department is in the id or in the chunk).
