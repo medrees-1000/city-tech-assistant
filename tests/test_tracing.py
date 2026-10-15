@@ -98,8 +98,8 @@ def app_with(monkeypatch, tracer, client=None, cfg=None, stub=None):
 
 
 def flush(tracer, session=None):
-    """Flush the client, then wait until the captured traffic is quiet (the SDK posts from background
-    threads, so reading the captured calls at once would race)."""
+    """Flush the client, then wait until the captured traffic is quiet (the SDK posts from
+    background threads, so reading the captured calls at once would race)."""
     tracer.client.flush()
     session = session or tracer.client.session
     last, quiet = -1, 0
