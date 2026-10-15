@@ -1,19 +1,46 @@
+import { useId, useState } from "react";
 import type { ReactNode } from "react";
 
 import type { Citation } from "../../lib/api";
-import { parseBlocks } from "../../lib/markdown";
+import { bindCitations, parseBlocks } from "../../lib/markdown";
 import type { Inline } from "../../lib/markdown";
+import { shouldCollapse, toggleLabel, VISIBLE_ITEMS } from "../../lib/lists";
 
-function renderInlines(items: Inline[], onCite: (n: number) => void): ReactNode[] {
-  return items.map((item, i) => {
+function renderInlines(items: Inline[], onCite: (n: number) => void, bound = false): ReactNode[] {
+  return (bound ? items : bindCitations(items)).map((item, i) => {
     if (item.type === "text") return <span key={i}>{item.text}</span>;
-    if (item.type === "bold") return <strong key={i}>{renderInlines(item.children, onCite)}</strong>;
+    if (item.type === "nowrap") return <span key={i} className="nowrap">{renderInlines(item.children, onCite, true)}</span>;
+    if (item.type === "bold") return <strong key={i}>{renderInlines(item.children, onCite, true)}</strong>;
     return (
       <button key={i} type="button" className="cite" aria-label={`Go to source ${item.n}`} onClick={() => onCite(item.n)}>
         {item.label}
       </button>
     );
   });
+}
+
+/** A bullet list. A long one (more than five items) shows the first five and keeps the rest behind a
+ * "Show all N items" button; the hidden items stay in the page (hidden attribute), so no text changes. */
+function AnswerList({ items, onCite }: { items: Inline[][]; onCite: (n: number) => void }) {
+  const [open, setOpen] = useState(false);
+  const id = useId();
+  const collapsible = shouldCollapse(items.length);
+  return (
+    <>
+      <ul id={id} className="answer-list">
+        {items.map((item, j) => (
+          <li key={j} hidden={collapsible && !open && j >= VISIBLE_ITEMS}>
+            {renderInlines(item, onCite)}
+          </li>
+        ))}
+      </ul>
+      {collapsible ? (
+        <button type="button" className="list-toggle" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
+          {toggleLabel(items.length, open)}
+        </button>
+      ) : null}
+    </>
+  );
 }
 
 /** The answer as paragraphs and bullet lists with bold text; each [n] marker is a button that opens
@@ -39,11 +66,7 @@ export function AnswerText({
             <h4 key={i} className="answer-heading">{renderInlines(block.inlines, onCite)}</h4>
           )
         ) : (
-          <ul key={i} className="answer-list">
-            {block.items.map((item, j) => (
-              <li key={j}>{renderInlines(item, onCite)}</li>
-            ))}
-          </ul>
+          <AnswerList key={i} items={block.items} onCite={onCite} />
         ),
       )}
     </div>

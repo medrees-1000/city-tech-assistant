@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-import { inlines, parseBlocks } from "./markdown.ts";
+import { bindCitations, inlines, parseBlocks } from "./markdown.ts";
 import type { Block, Inline } from "./markdown.ts";
 
-const cites = [{ n: 1 }, { n: 2 }];
+const cites = [{ n: 1 }, { n: 2 }, { n: 3 }, { n: 7 }];
 const t = (text: string): Inline => ({ type: "text", text });
 const cite = (n: number): Inline => ({ type: "cite", n, label: `[${n}]` });
 const bold = (...children: Inline[]): Inline => ({ type: "bold", children });
@@ -165,4 +165,48 @@ test("UI polish (b): a group heading (h3) is larger than a course heading (h4) a
   assert.ok(size(group[1]) <= 1.25, "and still not page-title sized");
   assert.match(group[1], /border-top:\s*1px solid var\(--line\)/);
   assert.match(css, /\.answer-text > h3\.answer-heading:first-child\s*\{[^}]*border-top:\s*0/);
+});
+
+// ---- UI polish (d): a [n] marker never starts a line ----
+
+const flat = (items: Inline[]): string =>
+  items.map((i) => (i.type === "text" ? i.text : i.type === "cite" ? i.label : flat(i.children))).join("");
+
+test("a marker is bound to the last word before it; the characters are unchanged", () => {
+  const items = inlines("Last day to drop for 75% tuition refund. [7] Next", cites);
+  const bound = bindCitations(items);
+  assert.equal(flat(bound), flat(items));
+  const group = bound.find((i) => i.type === "nowrap");
+  assert.ok(group && group.type === "nowrap");
+  assert.equal(flat(group.children), "refund. [7]");
+  assert.deepEqual(bound[0], { type: "text", text: "Last day to drop for 75% tuition " });
+});
+
+test("consecutive markers and a bolded phrase stay together", () => {
+  for (const text of ["A W is non-punitive. [3][1]", "A W is non-punitive. [3] [1]", "the **W grade** [2] applies"]) {
+    const bound = bindCitations(inlines(text, cites));
+    assert.equal(flat(bound), text.replaceAll("**", ""));
+    for (const [i, item] of bound.entries()) {
+      if (item.type === "cite") assert.fail(`a loose marker at ${i} in "${text}"`);
+    }
+  }
+  const two = bindCitations(inlines("done. [3][1]", cites)).find((i) => i.type === "nowrap");
+  assert.ok(two && two.type === "nowrap" && two.children.filter((c) => c.type === "cite").length === 2);
+});
+
+test("a marker with nothing before it, and an input without markers, are returned as they are", () => {
+  assert.deepEqual(bindCitations(inlines("no markers here", cites)), inlines("no markers here", cites));
+  assert.equal(flat(bindCitations(inlines("[1] first", cites))), "[1] first");
+});
+
+test("the input is not modified", () => {
+  const items = inlines("word [1]", cites);
+  const copy = JSON.stringify(items);
+  bindCitations(items);
+  assert.equal(JSON.stringify(items), copy);
+});
+
+test("the stylesheet makes the group nowrap", () => {
+  const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(css, /\.nowrap\s*\{\s*white-space:\s*nowrap;/);
 });

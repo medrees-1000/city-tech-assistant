@@ -8,7 +8,8 @@ import { segments } from "./segments.ts";
 export type Inline =
   | { type: "text"; text: string }
   | { type: "bold"; children: Inline[] }
-  | { type: "cite"; n: number; label: string };
+  | { type: "cite"; n: number; label: string }
+  | { type: "nowrap"; children: Inline[] }; // made by bindCitations at render time, never by the parser
 
 export type Block =
   | { type: "p"; inlines: Inline[] }
@@ -95,4 +96,41 @@ export function parseBlocks(text: string, citations: Known): Block[] {
   flushPara();
   flushList();
   return blocks;
+}
+
+
+const LAST_WORD = /(\S+\s*)$/;
+
+/** Bind each [n] marker to the word just before it (and consecutive markers to each other) in a
+ * "nowrap" group, so the browser never breaks a line right before a marker. The text is unchanged:
+ * the same characters in the same order, only grouped. Pure; the input is not modified. */
+export function bindCitations(items: Inline[]): Inline[] {
+  const out: Inline[] = [];
+  for (const item of items) {
+    if (item.type !== "cite") {
+      out.push(item.type === "bold" ? { ...item, children: bindCitations(item.children) } : item);
+      continue;
+    }
+    const prev = out[out.length - 1];
+    const before = out[out.length - 2];
+    if (prev?.type === "nowrap") {
+      prev.children.push(item); // "[2][1]": the second marker joins the first one's group
+    } else if (prev?.type === "text" && prev.text.trim() === "" && before?.type === "nowrap") {
+      before.children.push(prev, item); // "[3] [1]": the space and the marker join the group
+      out.pop();
+    } else if (prev?.type === "text" && prev.text.trim() === "" && before?.type === "bold") {
+      out.splice(out.length - 2, 2, { type: "nowrap", children: [before, prev, item] });
+    } else if (prev?.type === "text" && LAST_WORD.test(prev.text)) {
+      const at = LAST_WORD.exec(prev.text)!.index;
+      const word = prev.text.slice(at);
+      out.pop();
+      if (at > 0) out.push({ type: "text", text: prev.text.slice(0, at) });
+      out.push({ type: "nowrap", children: [{ type: "text", text: word }, item] });
+    } else if (prev?.type === "bold") {
+      out[out.length - 1] = { type: "nowrap", children: [prev, item] };
+    } else {
+      out.push(item);
+    }
+  }
+  return out;
 }

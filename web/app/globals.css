@@ -439,6 +439,43 @@ button:disabled {
   margin: 0.15rem 0;
 }
 
+.answer-list li[hidden] {
+  display: none;
+}
+
+/* UI polish (d): the last word before a [n] marker and the marker(s) never break apart, so a marker
+   is never alone at the start of a line */
+.nowrap {
+  white-space: nowrap;
+}
+
+/* UI polish (c): the toggle under a long list */
+.list-toggle {
+  margin: 0 0 0.75rem;
+  padding: 0.35rem 0;
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--link);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.list-toggle:hover {
+  text-decoration: underline;
+}
+
+.list-toggle:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.answer-text > .list-toggle:last-child {
+  margin-bottom: 0;
+}
+
 .cite {
   padding: 0 0.15em;
   font-size: 0.8em;
