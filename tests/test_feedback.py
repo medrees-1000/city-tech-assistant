@@ -188,7 +188,7 @@ def test_an_unknown_id_and_an_eval_row_can_never_be_voted_on(conn):
 
 
 @pytest.mark.integration
-def test_vote_end_to_end_through_the_api_into_the_database(conn):
+def test_vote_end_to_end_through_the_api_into_the_database(conn, monkeypatch):
     client = Client()
     from cta.graph import build
     from cta.graph.build import Router
@@ -203,8 +203,11 @@ def test_vote_end_to_end_through_the_api_into_the_database(conn):
     web = TestClient(app, raise_server_exceptions=False)
     import cta.graph.chain as chains
 
-    chains.load_records = lambda *a, **k: WORLD  # the chain walk is not used here
-    build.answer = lambda *a, **k: retrieve_answer()
+    # monkeypatch, so the replacements end with this test (they used to leak into later tests)
+    monkeypatch.setattr(
+        chains, "load_records", lambda *a, **k: WORLD
+    )  # the chain walk is not used here
+    monkeypatch.setattr(build, "answer", lambda *a, **k: retrieve_answer())
     rid = web.post("/ask", json={"question": "How do I apply?"}).json()["request_id"]
     assert web.post("/feedback", json={"request_id": rid, "vote": "down"}).json()["vote"] == "down"
     assert conn.execute(

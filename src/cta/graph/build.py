@@ -112,14 +112,14 @@ def make_nodes(d: Deps):
         if found.abstained:  # no source covers the action: the usual abstention
             return {"answer": found, "route": "advice", "advice": info}
         resolution = terms.resolve_term(state["term_mention"], state["today"], d.events)
-        rendered = None
+        rendered = assumed = None
         if resolution.status != "unsupported":
             pool = terms.term_pool(d.events, resolution.term)
             rows = advice.calendar_rows(pool, actions)
             assumed = resolution.term if resolution.status == "assumed" else None
-            rendered = render.render_rows(rows, d.contact, assumed) if rows else None
+            rendered = render.render_rows(rows, d.contact) if rows else None
             info["term"] = resolution.term
-        ans = advice.compose(found, rendered)
+        ans = advice.compose(found, rendered, assumed if rendered else None)
         info["row_ids"] = ans.row_ids
         return {"answer": ans, "route": "advice", "advice": info}
 

@@ -49,13 +49,14 @@ test("CST 3504: bold labels, the courses named, and the catalog text exactly as 
   assert.equal(flat(paragraphs[3].inlines), "No prerequisite listed in the catalog.");
 });
 
-test("MAT 2440: ten blocks, text with two spaces and a closing no-record line survive as written", () => {
+test("MAT 2440: ten blocks and text with two spaces survive as written; a code without a record is marked once, in its Courses named line (UI polish 3a)", () => {
   const text = fixture("chain_mat2440.md");
   const blocks = parseBlocks(text, cites(10));
   assert.equal(blocks.filter((b) => b.type === "h").length, 10);
   const all = blocks.map((b) => (b.type === "p" ? flat(b.inlines) : b.type === "h" ? flat(b.inlines) : "")).join("\n");
   assert.ok(all.includes('"CUNY proficiency in mathematics.  High School Math GPA 70'));
-  assert.ok(all.endsWith("No catalog record in the four departments for: MTEC 1202, MAT 1476, EMT 1111."));
+  assert.ok(all.includes("MAT 1476 (no catalog record)"));
+  assert.ok(!all.includes("No catalog record in the four departments")); // every code is marked above, so the closing line is left out
   assert.ok(!/level/i.test(text));
 });
 
@@ -100,13 +101,14 @@ test("two courses: a section heading per asked course, then the course headings 
   }
 });
 
-test("two courses: the shared course sentence and the no-record line are plain paragraphs", () => {
+test("two courses: the shared course sentence is a plain paragraph and the no-record codes are marked in their lines (UI polish 3a)", () => {
   const text = fixture("chain_cst1204_cst2403.md");
   const paragraphs = parseBlocks(text, cites(6))
     .filter((b): b is Extract<Block, { type: "p" }> => b.type === "p")
     .map((p) => flat(p.inlines));
   assert.ok(paragraphs.includes("CST 1101 is already shown above."));
-  assert.ok(paragraphs.includes("No catalog record in the four departments for: MAT 1476, EMT 1111."));
+  assert.ok(!paragraphs.some((p) => p.startsWith("No catalog record in the four departments")));
+  assert.ok(text.includes("MAT 1476 (no catalog record), EMT 1111 (no catalog record)"));
   assert.ok(paragraphs[0].startsWith("Here are the prerequisites for CST 1204 and CST 2403, from the catalog:"));
   assert.ok(!/chain|level/i.test(text.replace(/"[^"]*"/g, "")));
 });

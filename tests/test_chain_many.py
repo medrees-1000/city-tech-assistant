@@ -124,7 +124,12 @@ def test_k1_at_most_15_courses_and_everything_cut_is_named_exactly_as_the_walk_r
         if result["no_record"]:
             asked_unknown = {s["root"] for s in result["sections"] if not s["found"]}
             left = [c for c in result["no_record"] if c not in asked_unknown]
-            assert ("No catalog record in the four departments for:" in text) == bool(left)
+            # UI polish 3a: the closing sentence is left out when every such code is already marked
+            # "(no catalog record)" in a "Courses named" line above; either way each is stated once
+            closing_has = "No catalog record in the four departments for:" in text
+            marked = {c for c in left if f"{c} (no catalog record)" in text}
+            assert closing_has == (bool(left) and marked != set(left))
+            assert all(c in text for c in left)
     assert cut > 0  # the capped combination does cut
 
 

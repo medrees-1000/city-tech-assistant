@@ -90,7 +90,7 @@ def test_courses_named_is_the_walks_list_joined_by_commas_and_exclusions_are_the
                 items = [f"{x} ({names.get(x) or chain_render.NO_RECORD})" for x in c["codes"]]
                 want = "**Courses named:** " + ", ".join(items)
             else:
-                want = "**Courses named:** none"
+                want = "**Courses named:** none listed"  # UI polish 3b: was "none"
             assert want in blocks[n].splitlines(), (code, c["code"])
             excluded = [ln for ln in blocks[n].splitlines() if ln.startswith("**Must not have")]
             if c["exclusions"]:
@@ -107,7 +107,7 @@ def test_no_word_or_or_and_is_added_between_codes():
         for ln in text.splitlines():
             if ln.startswith("**Courses named:** ") and chain_render.UNREADABLE not in ln:
                 body = ln.removeprefix("**Courses named:** ")
-                if body == "none":
+                if body == "none listed":  # UI polish 3b: was "none"
                     continue
                 pieces = re.split(r"(?<=\)), (?=[A-Z]{2,5} ?\d)", body)
                 assert all(
@@ -145,12 +145,17 @@ def test_truncation_and_no_record_sentences_appear_if_and_only_if_the_walk_repor
     cut = no_rec = 0
     for code in CODES:
         result, text = rendered(code)
-        assert ("No catalog record in the four departments for:" in text) == bool(
-            result["no_record"]
-        )
+        # UI polish 3a: the closing sentence stays unless every code in it is already marked
+        # "(no catalog record)" in a block above; then each code is still stated, once
+        names = {c: r["title"].strip() for c, r in RECORDS.items()}
+        marked = chain_render.marked_codes(result["courses"], names)
+        closing = "No catalog record in the four departments for:" in text
+        assert closing == (bool(result["no_record"]) and not set(result["no_record"]) <= marked)
         if result["no_record"]:
             no_rec += 1
-            assert f"for: {', '.join(result['no_record'])}." in text
+            assert all(f"{c} (no catalog record)" in text or c in text for c in result["no_record"])
+            if closing:
+                assert f"for: {', '.join(result['no_record'])}." in text
         stops = re.findall(r"The list stops at (\S+ \S+), which names (.+?); prerequisites", text)
         assert [(a, b) for a, b in stops] == [
             (u["code"], ", ".join(u["names"])) for u in result["unexpanded"]

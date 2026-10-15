@@ -154,16 +154,20 @@ def shift(text: str, by: int) -> str:
     return CITATION.sub(lambda m: f"[{int(m.group(1)) + by}]", text)
 
 
-def compose(found: Answer, rendered: render.Rendered | None) -> RoutedAnswer:
+def compose(
+    found: Answer, rendered: render.Rendered | None, assumed: str | None = None
+) -> RoutedAnswer:
     """The answer: the fixed sentence, the policy answer, then the calendar rows. Calendar rows are
-    numbered after the policy sources."""
+    numbered after the policy sources. `assumed` (the term when the question named none) is stated
+    at the end of the provenance line, not above the rows (UI polish 3c, docs/decisions.md)."""
     policy = found.text.strip()
     parts = [SENTENCE, policy]
     sources, citations = list(found.sources), list(found.citations)
     row_ids: list[str] = []
     if rendered and rendered.sources:
         by = len(sources)
-        parts.append(shift(rendered.text, by))
+        note = f" Assuming the current term, {assumed}." if assumed else ""
+        parts.append(shift(rendered.text, by) + note)
         for i, chunk in enumerate(rendered.sources, 1):
             sources.append({**chunk, "text": shift(chunk["text"], by)})
             citations.append(by + i)

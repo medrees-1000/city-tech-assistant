@@ -19,7 +19,7 @@ No prerequisite listed in the catalog.
 **Catalog says:** "Pre-requisite: (CST 1101 and MAT 1275 or MAT1275CO or higher) or MAT 1476 or (EMT 1111 and MAT 1275 or MAT 1275CO or higher)"
 
 ### MAT 1275 — College Algebra/Trigonometry [5]
-**Courses named:** none
+**Courses named:** none listed
 **Catalog says:** "CUNY proficiency in mathematics.  High School Math GPA 70 or higher AND complete Algebra 1 OR Algebra 1 Regents score of 75 or higher OR Geometry Regents score of 70 or higher"
 
 ### MAT 1275CO — College Algebra & Trig w Coreq [6]
@@ -27,5 +27,3 @@ No prerequisite listed in the catalog.
 **Catalog says:** "CUNY proficiency in mathematics;  MAT 1275CO is equivalent to MAT 1275 for grade replacement purposes"
 
 CST 1101 is already shown above.
-
-No catalog record in the four departments for: MAT 1476, EMT 1111.

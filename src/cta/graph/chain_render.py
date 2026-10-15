@@ -50,7 +50,7 @@ def block(number: int, course: dict, titles: dict[str, str]) -> str:
     elif course["codes"]:
         lines.append("**Courses named:** " + ", ".join(named(c, titles) for c in course["codes"]))
     else:
-        lines.append("**Courses named:** none")
+        lines.append("**Courses named:** none listed")
     if course["exclusions"]:
         excluded = ", ".join(named(c, titles) for c in course["exclusions"])
         lines.append(f"**Must not have taken (as the catalog text says):** {excluded}")
@@ -58,12 +58,26 @@ def block(number: int, course: dict, titles: dict[str, str]) -> str:
     return "\n".join(lines)
 
 
-def closing(result: dict, skip: set[str] = frozenset()) -> str:
+def marked_codes(courses: list[dict], titles: dict[str, str]) -> set[str]:
+    """Codes that a rendered block already marks "(no catalog record)": the codes of a "Courses
+    named" or "Must not have taken" line that has no title. A block whose text is empty or
+    unreadable has no such line, so it marks nothing."""
+    marked: set[str] = set()
+    for course in courses:
+        if not course["text"] or course["unparsed"]:
+            continue
+        marked |= {c for c in [*course["codes"], *course["exclusions"]] if not titles.get(c)}
+    return marked
+
+
+def closing(result: dict, skip: set[str] = frozenset(), marked: set[str] = frozenset()) -> str:
     """The sentences after the blocks: codes without a record (except the asked ones in `skip`,
-    which have their own section), a chain cut at the depth limit, courses left out by the cap."""
+    which have their own section), a chain cut at the depth limit, courses left out by the cap.
+    The "No catalog record" sentence is left out only when every code in it is already marked in a
+    block above (`marked`); otherwise it stays whole (UI polish 3a, docs/decisions.md)."""
     lines = []
     missing = [c for c in result["no_record"] if c not in skip]
-    if missing:
+    if missing and not all(c in marked for c in missing):
         lines.append(f"No catalog record in the four departments for: {', '.join(missing)}.")
     for u in result["unexpanded"]:
         lines.append(
@@ -91,7 +105,7 @@ def render(result: dict, records: dict[str, dict]) -> str:
         return render_sections(result, titles)
     parts = [f"Here are the prerequisites for {result['root']}, from the catalog:"]
     parts += [block(n, c, titles) for n, c in enumerate(result["courses"], 1)]
-    if text := closing(result):
+    if text := closing(result, marked=marked_codes(result["courses"], titles)):
         parts.append(text)
     return "\n\n".join(parts)
 
@@ -113,6 +127,8 @@ def render_sections(result: dict, titles: dict[str, str]) -> str:
         if s["shared"]:
             parts.append("\n".join(ALREADY_SHOWN.format(code=c) for c in s["shared"]))
     unknown = {s["root"] for s in result["sections"] if not s["found"]}
-    if text := closing(result, unknown):
+    shown = {c for s in result["sections"] if s["found"] for c in s["courses"]}
+    marked = marked_codes([by_code[c] for c in shown], titles)
+    if text := closing(result, unknown, marked):
         parts.append(text)
     return "\n\n".join(parts)
