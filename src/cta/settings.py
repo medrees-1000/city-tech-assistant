@@ -75,6 +75,15 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
     if env.get("CTA_ANSWER_MODEL", "").strip():
         cfg["answer"]["model"] = env["CTA_ANSWER_MODEL"].strip()
     check_answer_model(cfg)
+    cfg["answer"].setdefault("near_miss_margin", 0.0)
+    if env.get("CTA_NEAR_MISS_MARGIN", "").strip():
+        cfg["answer"]["near_miss_margin"] = env["CTA_NEAR_MISS_MARGIN"].strip()
+    try:
+        cfg["answer"]["near_miss_margin"] = float(cfg["answer"]["near_miss_margin"])
+    except (TypeError, ValueError):
+        raise ValueError("answer.near_miss_margin must be a number") from None
+    if not 0 <= cfg["answer"]["near_miss_margin"] < cfg["answer"]["abstain_threshold"]:
+        raise ValueError("answer.near_miss_margin must be at least 0 and below the cutoff")
     cfg["answer"].setdefault("format_rule", "off")
     if env.get("CTA_ANSWER_FORMAT_RULE", "").strip():
         cfg["answer"]["format_rule"] = env["CTA_ANSWER_FORMAT_RULE"].strip()

@@ -67,6 +67,8 @@ def rewrite(question: str, response, cfg: dict, client_factory) -> None:
     gives a usable topic. Adds the call's tokens, cost and time to the response in every case."""
     if not (response.abstained and response.abstain_reason in GENERIC_CODES):
         return
+    if response.how_found.near_miss:  # the closest-pages reply is fixed text: no topic sentence
+        return
     messages = [
         {"role": "system", "content": PROMPT.read_text(encoding="utf-8")},
         {"role": "user", "content": f"Question: {question}"},

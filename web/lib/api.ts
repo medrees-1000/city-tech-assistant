@@ -67,6 +67,8 @@ export type HowFound = {
   cache_hits: Record<string, boolean>;
   abstain_wording?: string | null;
   topic_in_scope?: boolean | null;
+  language?: { code: string; english: string | null } | null;
+  near_miss?: boolean;
 };
 
 export type AskResponse = {

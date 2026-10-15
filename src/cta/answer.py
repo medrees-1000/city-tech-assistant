@@ -25,6 +25,12 @@ from cta.redact import redact
 from cta.settings import answer_model, cost_usd, load_models
 
 THRESHOLD_ABSTAIN = "ABSTAIN: I could not find this in the City Tech sources I have."
+# Near-miss helper (docs/decisions.md): fixed text, nothing model-written, no claim about the pages
+NEAR_MISS_INTRO = (
+    "ABSTAIN: I'm not sure my sources answer that, so I won't guess. These are the closest pages "
+    "I found, which may help:"
+)
+NEAR_MISS_PAGES = 2
 MARKER = "ABSTAIN:"
 CITATION = re.compile(r"\[(\d+)\]")
 ESTIMATED_OUTPUT_TOKENS = 300
@@ -71,10 +77,38 @@ class Answer:
     chat_cost: float = 0.0
     latency_ms: int = 0
     chat_ms: int = 0
+    near_miss: bool = False  # a below-threshold abstention that lists the closest pages
 
     @property
     def cost(self) -> float:
         return self.chat_cost + (self.search.total_cost if self.search else 0.0)
+
+
+def is_near_miss(top: float, threshold: float, margin: float) -> bool:
+    """cutoff - margin <= best < cutoff. The lower bound is rounded so that exactly cutoff - margin
+    (0.59 - 0.04) is inside; margin 0 switches the helper off."""
+    return margin > 0 and round(threshold - margin, 10) <= top < threshold
+
+
+def page_key(chunk: dict) -> str:
+    """One page or file: its source URL or file path; a catalog course is its own page."""
+    source = chunk.get("source") or ""
+    return source if source.startswith("http") or "/" in source else chunk["id"].split("#")[0]
+
+
+def closest_pages(results: list[dict], limit: int = NEAR_MISS_PAGES) -> list[dict]:
+    """The first chunk of each of up to `limit` distinct pages, in the order of `results`."""
+    pages: dict[str, dict] = {}
+    for chunk in results:
+        pages.setdefault(page_key(chunk), chunk)
+        if len(pages) == limit:
+            break
+    return list(pages.values())
+
+
+def near_miss_text(pages: list[dict]) -> str:
+    lines = [f"- {c.get('heading_path') or c['id']} [{n}]" for n, c in enumerate(pages, 1)]
+    return NEAR_MISS_INTRO + "\n\n" + "\n".join(lines)
 
 
 def source_label(chunk: dict) -> str:
@@ -188,6 +222,13 @@ def answer(
     # never on a fused score.
     if found.top_vector_similarity < cfg["answer"]["abstain_threshold"]:
         ans.text, ans.abstained, ans.abstain_reason = THRESHOLD_ABSTAIN, True, "below_threshold"
+        margin = cfg["answer"].get("near_miss_margin", 0.0)
+        pages = closest_pages(found.results)
+        if pages and is_near_miss(
+            found.top_vector_similarity, cfg["answer"]["abstain_threshold"], margin
+        ):
+            ans.sources, ans.citations = pages, list(range(1, len(pages) + 1))
+            ans.text, ans.near_miss = near_miss_text(pages), True
     else:
         ans.prompt = build_messages(
             found.results, today, question, cfg["answer"].get("format_rule", "off")

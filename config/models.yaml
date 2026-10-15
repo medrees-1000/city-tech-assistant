@@ -35,6 +35,10 @@ answer:
   # 0.591 (q24); this is just below it, so no answerable dev question is blocked. It separates little:
   # see docs/decisions.md. Do not change it after looking at the test split.
   abstain_threshold: 0.59
+  # Near-miss helper (docs/decisions.md, "Near-miss helper"): a below-threshold abstention whose best vector
+  # similarity is within this margin under the cutoff lists the two closest pages instead of the bare refusal.
+  # 0 switches it off. CTA_NEAR_MISS_MARGIN overrides it. The cutoff itself is not changed.
+  near_miss_margin: 0.04
 
 # Judge settings. Probed 2026-10-12 on gpt-5.6-terra: temperature 0 is REJECTED with the default reasoning
 # ("Only the default (1) value is supported"), but ACCEPTED with reasoning_effort "none"; JSON response

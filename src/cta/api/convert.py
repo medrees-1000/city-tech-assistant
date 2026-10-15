@@ -147,6 +147,7 @@ def how_found(ans, cfg: dict) -> schema.HowFound:
     cost_search = search.cost if search else 0.0
     answer_cost = ans.chat_cost - classify["cost"] - select.get("cost", 0.0)
     return schema.HowFound(
+        near_miss=bool(ans.near_miss),
         route_detail=router["route"], intent=router.get("intent"),
         top_vector_similarity=search.top_vector_similarity if search else None,
         abstain_threshold=cfg["answer"]["abstain_threshold"],
@@ -203,7 +204,9 @@ def to_response(ans, question: str, cfg: dict, today: date, request_id: str, ver
         abstained=ans.abstained, abstain_reason=abstain_code(ans.abstain_reason, question, table),
         route=public_route(ans),
         citations=[]
-        if ans.abstained  # an abstention cites nothing; the retrieved chunks are in how_found
+        # an abstention cites nothing (the retrieved chunks are in how_found) unless it is a
+        # near-miss, whose two closest pages are its citations
+        if ans.abstained and not ans.near_miss
         else [citation(n, c, n in cited, url_map, events) for n, c in enumerate(ans.sources, 1)],
         contact=contact_card(key, table) if key else None,
         how_found=how_found(ans, cfg),

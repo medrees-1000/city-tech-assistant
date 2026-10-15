@@ -319,6 +319,7 @@ def routed(found: Answer, state: RouterState, started: float, today: date) -> Ro
         found.chat_ms + round(sum(c["ms"] for c in calls)),
     )  # fmt: skip
     ans.route, ans.today = state["route"], today
+    ans.near_miss = found.near_miss
     ans.row_ids = found.row_ids if isinstance(found, RoutedAnswer) else []
     ans.router = {
         "route": state["route"], "intent": state["intent"], "term_mention": state["term_mention"],
@@ -327,6 +328,7 @@ def routed(found: Answer, state: RouterState, started: float, today: date) -> Ro
         **{k: v for k, v in cal.items()},
         **({"chain": state["chain"]} if state.get("chain") else {}),
         **({"advice": state["advice"]} if state.get("advice") else {}),
+        **({"near_miss": True} if found.near_miss else {}),
     }  # fmt: skip
     ans.latency_ms = round((time.perf_counter() - started) * 1000)
     return ans

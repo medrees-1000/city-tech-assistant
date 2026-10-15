@@ -71,6 +71,8 @@ class HowFound(BaseModel):
     # the language step, when it ran (tester round 1b): the detected language and, for a question
     # that was not English, the redacted English translation every later step worked on
     language: dict[str, str | None] | None = None
+    # a below-threshold abstention that lists the two closest pages (the near-miss helper)
+    near_miss: bool = False
 
 
 class Meta(BaseModel):
