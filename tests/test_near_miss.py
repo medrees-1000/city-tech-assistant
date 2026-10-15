@@ -28,9 +28,12 @@ CUTOFF, MARGIN = CFG["answer"]["abstain_threshold"], CFG["answer"]["near_miss_ma
 TODAY = date(2026, 10, 15)
 
 
-def chunk(cid, source, heading="A heading"):
-    return {"id": cid, "kind": "section", "source": source, "heading_path": heading, "text": "t",
-            "doc_type": "faq", "term": None, "terms": [], "last_updated": None}  # fmt: skip
+def chunk(cid, source, heading="A heading", sim=None):
+    row = {"id": cid, "kind": "section", "source": source, "heading_path": heading, "text": "t",
+           "doc_type": "faq", "term": None, "terms": [], "last_updated": None}  # fmt: skip
+    if sim is not None:
+        row["similarity"] = sim
+    return row
 
 
 PAGE_A = "https://www.citytech.cuny.edu/bursar/payment-deadlines.aspx"
@@ -137,9 +140,10 @@ def test_the_text_is_the_fixed_template_with_the_headings_and_markers_and_no_cla
 
 
 def results():
-    return [chunk("page/bursar/payment-deadlines#1", PAGE_A, "Bill Payment Deadlines"),
-            chunk("page/bursar/payment-deadlines#4", PAGE_A, "Dues"),
-            chunk("page/bursar/payment-plan#1", PAGE_B, "Nelnet Tuition Payment Plan")]  # fmt: skip
+    # similarities of the pages: payment-deadlines 0.576 (best chunk), payment-plan 0.562
+    return [chunk("page/bursar/payment-deadlines#1", PAGE_A, "Bill Payment Deadlines", 0.576),
+            chunk("page/bursar/payment-deadlines#4", PAGE_A, "Dues", 0.571),
+            chunk("page/bursar/payment-plan#1", PAGE_B, "Nelnet Plan", 0.562)]  # fmt: skip
 
 
 def run(monkeypatch, top, cfg=CFG, **kw):
@@ -258,3 +262,64 @@ def test_guardrails_language_and_distress_are_untouched_by_the_flag():
 
     assert screen.screen("I want to kill myself", CFG["guardrails"]).reason == "distress"
     assert "near_miss" not in json.dumps(CFG["guardrails"])
+
+
+# ---- tester round 1b, near-miss polish, item 1: a second page needs its own similarity ----
+
+FLOOR = round(CUTOFF - MARGIN, 10)  # 0.55
+
+
+def two(second_sim, third=None):
+    out = [chunk("a#1", PAGE_A, "First", 0.576), chunk("b#1", PAGE_B, "Second", second_sim)]
+    return out + ([third] if third else [])
+
+
+def test_the_first_page_is_always_listed_even_with_a_low_similarity():
+    assert [p["id"] for p in closest_pages([chunk("a#1", PAGE_A, "First", 0.40)], floor=FLOOR)] == [
+        "a#1"
+    ]
+
+
+def test_a_second_page_exactly_at_cutoff_minus_margin_is_included_and_just_below_is_not():
+    assert [p["id"] for p in closest_pages(two(0.55), floor=FLOOR)] == [
+        "a#1",
+        "b#1",
+    ]  # exactly 0.55
+    assert [p["id"] for p in closest_pages(two(0.5499), floor=FLOOR)] == ["a#1"]  # just below
+    assert [p["id"] for p in closest_pages(two(round(0.59 - 0.04, 10)), floor=FLOOR)] == [
+        "a#1",
+        "b#1",
+    ]
+
+
+def test_a_second_page_with_no_stored_similarity_never_qualifies():
+    results_ = [chunk("a#1", PAGE_A, "First", 0.576), chunk("b#1", PAGE_B, "Second")]
+    assert [p["id"] for p in closest_pages(results_, floor=FLOOR)] == ["a#1"]
+
+
+def test_a_pages_own_similarity_is_the_best_of_its_chunks():
+    results_ = [chunk("a#1", PAGE_A, "First", 0.576), chunk("b#2", PAGE_B, "Weak chunk", 0.51),
+                chunk("b#1", PAGE_B, "Strong chunk", 0.552)]  # fmt: skip
+    pages = closest_pages(results_, floor=FLOOR)
+    assert [p["id"] for p in pages] == ["a#1", "b#2"]  # the page shows its first chunk in order
+
+
+def test_the_next_page_in_order_that_qualifies_is_the_second():
+    third = chunk("c#1", PAGE_C, "Third", 0.553)
+    assert [p["id"] for p in closest_pages(two(0.50, third), floor=FLOOR)] == ["a#1", "c#1"]
+
+
+def test_without_a_floor_two_distinct_pages_are_listed_as_before_and_dedupe_is_unchanged():
+    assert len(closest_pages(two(0.30))) == 2
+    results_ = [chunk("a#1", PAGE_A, "x", 0.57), chunk("a#2", PAGE_A, "y", 0.56)]
+    assert len(closest_pages(results_, floor=FLOOR)) == 1
+
+
+def test_through_answer_a_low_second_page_is_dropped_and_a_good_one_is_kept(monkeypatch):
+    stub_search(monkeypatch, 0.576, two(0.54))
+    ans = answer_module.answer(None, "q", TODAY, cfg=CFG, client_factory=NoModel(), log=False)
+    assert ans.near_miss and [s["id"] for s in ans.sources] == ["a#1"] and ans.citations == [1]
+    assert ans.text.endswith("- First [1]") and "[2]" not in ans.text
+    stub_search(monkeypatch, 0.576, two(0.551))
+    ans = answer_module.answer(None, "q", TODAY, cfg=CFG, client_factory=NoModel(), log=False)
+    assert ans.citations == [1, 2] and ans.text.endswith("- Second [2]")

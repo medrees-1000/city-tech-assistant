@@ -96,14 +96,27 @@ def page_key(chunk: dict) -> str:
     return source if source.startswith("http") or "/" in source else chunk["id"].split("#")[0]
 
 
-def closest_pages(results: list[dict], limit: int = NEAR_MISS_PAGES) -> list[dict]:
-    """The first chunk of each of up to `limit` distinct pages, in the order of `results`."""
+def closest_pages(
+    results: list[dict], limit: int = NEAR_MISS_PAGES, floor: float | None = None
+) -> list[dict]:
+    """The first chunk of each of up to `limit` distinct pages, in the order of `results`. The first
+    page is always listed. With a `floor` a further page is listed only if its own similarity (the
+    highest vector similarity among its chunks in `results`; a missing one never qualifies) is at or
+    above the floor: the next page in order that qualifies is taken."""
     pages: dict[str, dict] = {}
+    best: dict[str, float] = {}
     for chunk in results:
-        pages.setdefault(page_key(chunk), chunk)
-        if len(pages) == limit:
+        key = page_key(chunk)
+        pages.setdefault(key, chunk)
+        best[key] = max(best.get(key, float("-inf")), chunk.get("similarity", float("-inf")))
+    keys = list(pages)
+    chosen = keys[:1]
+    for key in keys[1:]:
+        if len(chosen) == limit:
             break
-    return list(pages.values())
+        if floor is None or best[key] >= floor:
+            chosen.append(key)
+    return [pages[k] for k in chosen]
 
 
 def near_miss_text(pages: list[dict]) -> str:
@@ -223,10 +236,9 @@ def answer(
     if found.top_vector_similarity < cfg["answer"]["abstain_threshold"]:
         ans.text, ans.abstained, ans.abstain_reason = THRESHOLD_ABSTAIN, True, "below_threshold"
         margin = cfg["answer"].get("near_miss_margin", 0.0)
-        pages = closest_pages(found.results)
-        if pages and is_near_miss(
-            found.top_vector_similarity, cfg["answer"]["abstain_threshold"], margin
-        ):
+        threshold = cfg["answer"]["abstain_threshold"]
+        pages = closest_pages(found.results, floor=round(threshold - margin, 10))
+        if pages and is_near_miss(found.top_vector_similarity, threshold, margin):
             ans.sources, ans.citations = pages, list(range(1, len(pages) + 1))
             ans.text, ans.near_miss = near_miss_text(pages), True
     else:
