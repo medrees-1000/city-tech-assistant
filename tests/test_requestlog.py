@@ -286,6 +286,8 @@ def test_the_notice_claim_of_no_ip_and_no_cookies_is_true_of_the_code():
     from cta.settings import ROOT
 
     assert "No IP address and no cookies are stored" in notice_text()
+    assert "counted in memory per visitor" in notice_text()  # the step 7 sentence, true of guard.py
+    assert "cleared when the service restarts" in notice_text()
     forbidden = {"ip", "ip_address", "client_ip", "user_agent", "cookie", "cookies", "headers"}
     assert not forbidden & set(requestlog.COLUMNS)
     sources = [
@@ -299,6 +301,19 @@ def test_the_notice_claim_of_no_ip_and_no_cookies_is_true_of_the_code():
             continue
         assert "set_cookie" not in code and "document.cookie" not in code, path
         assert "localStorage" not in code and "sessionStorage" not in code, path
-        assert "request.client" not in code and "x-forwarded-for" not in code.lower(), path
+        assert "x-forwarded-for" not in code.lower(), path
+        if path.name != "guard.py":  # the one place that reads the address (step 7, rule 8)
+            assert "request.client" not in code, path
+    import inspect
+
+    from cta.api import guard
+
+    lines = [ln for ln in inspect.getsource(guard).splitlines() if "request.client" in ln]
+    assert len(lines) == 1  # one read, and it is in visitor_key, which only hashes it
+    key_source = inspect.getsource(guard.Guard.visitor_key)
+    assert "request.client" in key_source and "sha256" in key_source
+    rest = inspect.getsource(guard).replace(key_source, "")
+    assert "address" not in rest.replace("network address", "")  # no other use of it
+    assert "request.client" not in inspect.getsource(guard.Guard.stage1)
     launcher = (ROOT / "src" / "cta" / "api" / "__main__.py").read_text(encoding="utf-8")
     assert "access_log=False" in launcher  # the server's own log would print client addresses

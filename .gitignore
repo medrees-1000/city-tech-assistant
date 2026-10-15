@@ -228,3 +228,6 @@ data/processed/
 
 # Local caches (query embeddings)
 data/cache/
+
+# the kill switch file of the API (step 7)
+data/api_disabled

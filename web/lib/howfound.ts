@@ -14,6 +14,7 @@ export type View = { summary: string; sections: Section[] };
 
 export function routeWords(data: AskResponse): string {
   if (data.route === "clarify") return "Asked for more detail";
+  if (data.route === "guardrail") return "Replied with a fixed message";
   if (data.route === "calendar") {
     return data.abstained ? "Checked the verified calendar" : "Looked up in the verified calendar";
   }
@@ -190,6 +191,11 @@ export function usageLines(hf: HowFound): string[] {
 
 /** Everything the panel shows, as titled lists of plain sentences. Sections with no lines are left out. */
 export function describe(data: AskResponse): View {
+  if (data.route === "guardrail") {
+    // a fixed message: nothing was searched or written by a model, so there are no steps to show
+    const line = routeWords(data);
+    return { summary: line, sections: [{ title: "What the assistant did", lines: [line] }] };
+  }
   const hf = data.how_found;
   const why = abstainWhy(data);
   const noModelSources = data.abstain_reason === "below_threshold";

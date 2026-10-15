@@ -7,6 +7,7 @@ and is never printed or put in an error message.
 import os
 import time
 from collections.abc import Callable
+from contextvars import ContextVar
 
 import openai
 from dotenv import load_dotenv
@@ -15,18 +16,24 @@ from cta.settings import ROOT
 
 BATCH_SIZE = 64
 MAX_RETRIES = 3  # retries after the first attempt; waits 1, 2, 4 seconds
+# The API sets a smaller number for its own requests (guardrails.model_retries); the eval and the
+# indexing never set it, so they keep MAX_RETRIES.
+retry_limit: ContextVar[int] = ContextVar("retry_limit", default=MAX_RETRIES)
 
 
 class ApiError(RuntimeError):
     pass
 
 
-def make_client() -> openai.OpenAI:
-    """A client with the library's own retries off: this module does the retrying."""
+def make_client(timeout: float | None = None) -> openai.OpenAI:
+    """A client with the library's own retries off: this module does the retrying. `timeout`
+    (seconds per call) is set only by the API; None keeps the library's default (eval, indexing)."""
     load_dotenv(ROOT / ".env")
     if not os.environ.get("OPENAI_API_KEY", "").strip():
         raise ApiError("OPENAI_API_KEY is not set; add it to .env")
-    return openai.OpenAI(max_retries=0)
+    if timeout is None:
+        return openai.OpenAI(max_retries=0)
+    return openai.OpenAI(max_retries=0, timeout=timeout)
 
 
 def retryable(error: Exception) -> bool:
@@ -40,7 +47,8 @@ def retryable(error: Exception) -> bool:
 def with_retries(call, what: str, sleep: Callable[[float], None] = time.sleep):
     """Run call(); retry retryable errors up to MAX_RETRIES times (waits 1, 2, 4 seconds). Other
     errors, such as a bad key, fail at once. Error messages never contain the key."""
-    for attempt in range(MAX_RETRIES + 1):
+    limit = retry_limit.get()
+    for attempt in range(limit + 1):
         try:
             return call()
         except openai.OpenAIError as e:
@@ -49,9 +57,9 @@ def with_retries(call, what: str, sleep: Callable[[float], None] = time.sleep):
                 raise ApiError(
                     f"{what} rejected ({type(e).__name__}, status {status}); not retrying"
                 ) from None
-            if attempt == MAX_RETRIES:
+            if attempt == limit:
                 raise ApiError(
-                    f"{what} failed after {MAX_RETRIES} retries ({type(e).__name__})"
+                    f"{what} failed after {limit} retries ({type(e).__name__})"
                 ) from None
             sleep(2**attempt)
 

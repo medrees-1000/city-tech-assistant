@@ -221,3 +221,14 @@ test("a clarify reply says it asked for more detail and shows no sources, prereq
   const titles = view.sections.map((s) => s.title);
   assert.deepEqual(titles, ["What the assistant did", "Time", "Tokens and cost"]);
 });
+
+test("a guardrail reply says it is a fixed message and shows no steps, times or costs", () => {
+  const data = response({
+    answer_type: "guardrail",
+    route: "guardrail",
+    how_found: howFound({ route_detail: "daily_cap", intent: null, top_vector_similarity: null }),
+  });
+  const view = describe(data);
+  assert.equal(view.summary, "Replied with a fixed message");
+  assert.deepEqual(view.sections.map((s) => s.title), ["What the assistant did"]);
+});

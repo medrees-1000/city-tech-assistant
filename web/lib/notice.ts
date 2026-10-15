@@ -12,5 +12,6 @@ export const NOTICE_POINTS: string[] = [
   "Also saved: which pages were used, how long each step took, and what the request cost (numbers only).",
   "If you press the thumbs up or down, that vote is saved with the answer. Nothing else is saved with it.",
   "No IP address and no cookies are stored.",
+  "To prevent abuse, requests are counted in memory per visitor using a scrambled form of the network address that is never saved; the count is cleared when the service restarts.",
   "This is an unofficial student project, not affiliated with City Tech.",
 ];

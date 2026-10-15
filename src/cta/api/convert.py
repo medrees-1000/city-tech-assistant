@@ -208,3 +208,25 @@ def to_response(ans, question: str, cfg: dict, today: date, request_id: str, ver
         how_found=how_found(ans, cfg),
         meta=schema.Meta(today=today.isoformat(), version=version, model=cfg["chat_model"]),
     )  # fmt: skip
+
+
+def guardrail_response(reason: str, text: str, question: str, cfg: dict, today: date,
+                       request_id: str, version: str, ms: float) -> schema.AskResponse:
+    """A fixed reply of a guardrail as a normal answer: no sources, no card, no abstention. The
+    reason is in how_found.route_detail. `text` and `question` never hold what was blocked."""
+    zero_tokens = {k: 0 for k in ("prompt", "completion", "embedding", "rerank_prompt",
+                                  "rerank_completion", "topic_prompt", "topic_completion")}
+    steps = ("classify", "select", "retrieval", "rerank", "walk", "answer", "topic")
+    hf = schema.HowFound(
+        route_detail=reason, intent=None, top_vector_similarity=None,
+        abstain_threshold=cfg["answer"]["abstain_threshold"], retrieved=[], calendar=None,
+        chain=None, stages_ms={**{k: None for k in steps}, "total": round(ms, 1)},
+        tokens=zero_tokens, cost_usd={k: 0.0 for k in (*steps, "embedding", "total")},
+        cache_hits={"embedding": False, "rerank": False},
+    )  # fmt: skip
+    return schema.AskResponse(
+        request_id=request_id, question=question, answer=text, answer_type="guardrail",
+        abstained=False, abstain_reason=None, route="guardrail", citations=[], contact=None,
+        how_found=hf, meta=schema.Meta(today=today.isoformat(), version=version,
+                                       model=cfg["chat_model"]),
+    )  # fmt: skip

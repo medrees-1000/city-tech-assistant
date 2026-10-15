@@ -80,10 +80,10 @@ class AskResponse(BaseModel):
     request_id: str
     question: str
     answer: str
-    answer_type: Literal["answer", "abstain", "not_announced", "clarify"]
+    answer_type: Literal["answer", "abstain", "not_announced", "clarify", "guardrail"]
     abstained: bool
     abstain_reason: str | None
-    route: Literal["calendar", "chain", "retrieve", "clarify"]
+    route: Literal["calendar", "chain", "retrieve", "clarify", "guardrail"]
     citations: list[Citation]
     contact: Contact | None
     how_found: HowFound

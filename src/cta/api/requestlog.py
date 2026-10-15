@@ -37,6 +37,26 @@ def success_record(resp) -> dict:
     }  # fmt: skip
 
 
+def blocked_record(resp, reason: str, status: str | None = None, text_blocked: bool = False,
+                   chars: int | None = None, cost: float | None = 0.0) -> dict:  # fmt: skip
+    """The row for a request a guardrail answered. `text_blocked`: the reason is about what the
+    student typed (Stage 2), so no question text is stored, only the length; otherwise the question
+    is stored in its redacted form like any other. A fixed reply holds no student text."""
+    trace = resp.how_found.model_dump() | {"answer_type": "guardrail", "route": "guardrail",
+                                           "reason": reason}  # fmt: skip
+    if chars is not None:
+        trace["chars"] = chars
+    return {
+        "request_id": resp.request_id, "status": status or f"blocked_{reason}",
+        "question": "" if text_blocked else redact(resp.question), "today": resp.meta.today,
+        "retrieved": [], "answer": redact(resp.answer), "abstained": False,
+        "abstain_reason": None, "chat_model": resp.meta.model, "prompt_tokens": 0,
+        "completion_tokens": 0, "embedding_tokens": 0, "cost_usd": cost,
+        "latency_ms": round(resp.how_found.stages_ms["total"] or 0), "query_cache_hit": False,
+        "route": "guardrail", "trace": trace, "contact_office": None,
+    }  # fmt: skip
+
+
 def error_record(request_id: str, status: str, question: str, today, model: str, ms: float,
                  question_chars: int | None = None) -> dict:  # fmt: skip
     """The row for a request that failed after it was understood (status is the error code)."""

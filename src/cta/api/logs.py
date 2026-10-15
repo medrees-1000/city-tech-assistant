@@ -15,7 +15,7 @@ from datetime import date
 from cta.index.db import connect
 from cta.redact import redact
 
-ROUTES = ("calendar", "chain", "retrieve", "clarify")
+ROUTES = ("calendar", "chain", "retrieve", "clarify", "guardrail")
 FEEDBACK = ("up", "down", "any")
 
 

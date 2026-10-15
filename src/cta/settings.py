@@ -133,7 +133,40 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
         raise ValueError(
             f"retrieval.mode must be one of {RETRIEVAL_MODES}, not {cfg['retrieval']['mode']!r}"
         )
+    cfg["guardrails"] = guardrail_settings(cfg.get("guardrails") or {}, env)
     return cfg
+
+
+# (config key, environment variable, type, minimum allowed value)
+GUARDRAIL_KEYS = (
+    ("daily_spend_cap_usd", "CTA_DAILY_SPEND_CAP_USD", float, 0.0000001),
+    ("rate_per_minute", "CTA_RATE_PER_MINUTE", int, 1),
+    ("rate_per_day", "CTA_RATE_PER_DAY", int, 1),
+    ("model_call_timeout_s", "CTA_MODEL_CALL_TIMEOUT_S", float, 0.1),
+    ("model_retries", "CTA_MODEL_RETRIES", int, 0),
+    ("request_timeout_s", "CTA_REQUEST_TIMEOUT_S", float, 0.1),
+    ("failed_request_cost_usd", "", float, 0.0),
+    ("spend_cache_s", "", float, 0.0),
+    ("rate_limit_max_keys", "", int, 1),
+)  # fmt: skip
+
+
+def guardrail_settings(block: dict, env: dict) -> dict:
+    """The guardrails block with environment overrides, every number checked."""
+    out = dict(block)
+    for key, var, kind, minimum in GUARDRAIL_KEYS:
+        raw = env.get(var, "").strip() if var else ""
+        try:
+            value = kind(raw if raw else out[key])
+        except (KeyError, TypeError, ValueError):
+            shown = raw or out.get(key)
+            raise ValueError(f"guardrails.{key} must be a number, not {shown!r}") from None
+        if value < minimum:
+            raise ValueError(f"guardrails.{key} must be at least {minimum}, not {value}")
+        out[key] = value
+    flag = env.get("CTA_API_DISABLED", "").strip().lower()
+    out["disabled"] = flag in ("1", "true", "yes", "on") if flag else bool(out.get("disabled"))
+    return out
 
 
 TRACING_VARIABLES = (

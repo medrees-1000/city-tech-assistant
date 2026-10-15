@@ -23,7 +23,7 @@ export type Contact = {
   note: string | null;
 };
 
-export type AnswerType = "answer" | "abstain" | "not_announced" | "clarify";
+export type AnswerType = "answer" | "abstain" | "not_announced" | "clarify" | "guardrail";
 
 export type RetrievedChunk = {
   id: string;
@@ -76,7 +76,7 @@ export type AskResponse = {
   answer_type: AnswerType;
   abstained: boolean;
   abstain_reason: string | null;
-  route: "calendar" | "chain" | "retrieve" | "clarify";
+  route: "calendar" | "chain" | "retrieve" | "clarify" | "guardrail";
   citations: Citation[];
   contact: Contact | null;
   how_found: HowFound;

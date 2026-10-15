@@ -4,7 +4,9 @@ GET /health and POST /ask. The answer comes from the existing router graph (cta.
 and is only converted here (cta.api.convert); nothing of the pipeline is copied.
 """
 
+import asyncio
 import subprocess
+import threading
 import time
 import uuid
 from collections.abc import Callable
@@ -14,14 +16,16 @@ import psycopg
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from cta.api import convert, requestlog, schema, topic
+from cta.api import guard as guard_mod
 from cta.api.checks import require_startup
 from cta.graph import render
 from cta.graph.build import Router, load_events
 from cta.index.db import connect as default_connect
-from cta.index.embed import ApiError, make_client
+from cta.index.embed import ApiError, make_client, retry_limit
 from cta.settings import ROOT, load_models
 
 
@@ -33,6 +37,7 @@ def git_version() -> str:
 
 
 PROVIDER_MESSAGE = "The language model service failed. Try again."
+UNAVAILABLE_MESSAGE = "The service is not available right now."
 
 
 def error(status: int, code: str, message: str, request: Request) -> JSONResponse:
@@ -56,7 +61,12 @@ def create_app(
     client_factory: Callable | None = None,
 ) -> FastAPI:
     cfg = cfg or load_models()
-    client_factory = client_factory or make_client  # looked up at call time (tests replace it)
+    guards = cfg["guardrails"]
+
+    def timed_client():  # the API's own calls stop after model_call_timeout_s (the eval's do not)
+        return make_client(timeout=guards["model_call_timeout_s"])
+
+    client_factory = client_factory or timed_client  # looked up at call time (tests replace it)
     if check_startup:
         require_startup(cfg, env=env, connect=connect, root=root)
     version = git_version()
@@ -67,14 +77,16 @@ def create_app(
     if router_factory is None:
 
         def router_factory(conn, cfg):
-            return Router(conn, cfg, make_client, events=events, contact=registrar)
+            return Router(conn, cfg, timed_client, events=events, contact=registrar)
 
     api = cfg["api"]
     feedback_failures = [0]  # a failed vote write is counted here and shown in /health
     record = requestlog.Logger(
         log_writer
     )  # counts failed writes; a failed write never fails a request
+    guard = guard_mod.Guard(guards, root=root)
     app = FastAPI(title="City Tech Assistant", version=version)
+    app.state.guard = guard  # tests read the counters and the salt through this
 
     @app.middleware("http")
     async def request_id_and_size(request: Request, call_next):
@@ -107,6 +119,7 @@ def create_app(
         body = {
             "status": "ok", "db": "ok", "version": version, "router": cfg["router"]["mode"],
             "log_failures": record.failures, "feedback_failures": feedback_failures[0],
+            **guard.health(connect),
         }  # fmt: skip
         try:
             with connect() as conn:
@@ -115,14 +128,30 @@ def create_app(
             return JSONResponse({**body, "status": "degraded", "db": "down"}, status_code=503)
         return body
 
-    @app.post("/ask", response_model=schema.AskResponse)
-    def ask(body: schema.AskRequest, request: Request):
-        rid = request.state.request_id
-        question = body.question.strip()
-        today = api["today"] or clock()
-        started = time.perf_counter()
+    def block(reason: str, question: str, rid: str, today: date, started: float,
+              text: str | None = None, status: str | None = None, cost: float | None = 0.0,
+              text_blocked: bool = False):  # fmt: skip
+        """Answer with a guardrail's fixed reply (a normal assistant message) and log one row."""
+        ms = (time.perf_counter() - started) * 1000
+        shown = "" if text_blocked else question
+        resp = convert.guardrail_response(reason, text or guard_mod.TEXTS[reason], shown, cfg,
+                                          today, rid, version, ms)  # fmt: skip
+        chars = len(question) if text_blocked else None
+        rec = requestlog.blocked_record(resp, reason, status, text_blocked, chars, cost)
+        try:
+            with connect() as conn:
+                record(conn, rec)
+        except Exception:  # noqa: BLE001 - a row that cannot be written never fails the reply
+            record.failures += 1
+        return resp
+
+    def serve(question: str, rid: str, today: date, started: float, abandoned: threading.Event):
+        """The pipeline for one question (the body of /ask before step 7)."""
+        retry_limit.set(guards["model_retries"])  # the API retries less than the eval does
 
         def failed(status: str, conn, chars: int | None = None):
+            if abandoned.is_set():
+                return  # the request already got its timeout reply and row
             ms = (time.perf_counter() - started) * 1000
             text = "" if chars is not None else question
             record(
@@ -136,9 +165,10 @@ def create_app(
                     failed("invalid_question", conn, chars=len(question))
             except Exception:  # noqa: BLE001
                 record.failures += 1
-            return error(
-                422, "invalid_question",
-                f"The question must be 1 to {api['max_question_chars']} characters.", request,
+            return JSONResponse(
+                {"error": {"code": "invalid_question", "message": "The question must be 1 to "
+                           f"{api['max_question_chars']} characters."}, "request_id": rid},
+                status_code=422, headers={"X-Request-ID": rid},
             )  # fmt: skip
         try:
             with connect() as conn:
@@ -146,7 +176,10 @@ def create_app(
                     ans = router_factory(conn, cfg).answer(question, today, log=False)
                 except ApiError:
                     failed("provider_error", conn)
-                    return error(502, "provider_error", PROVIDER_MESSAGE, request)
+                    return JSONResponse(
+                        {"error": {"code": "provider_error", "message": PROVIDER_MESSAGE},
+                         "request_id": rid}, status_code=502, headers={"X-Request-ID": rid},
+                    )  # fmt: skip
                 except Exception:
                     failed("internal_error", conn)
                     raise
@@ -154,11 +187,37 @@ def create_app(
                     ans, question, cfg, today, rid, version, url_map, by_id
                 )
                 topic.rewrite(question, response, cfg, client_factory)
-                record(conn, requestlog.success_record(response))
+                if not abandoned.is_set():
+                    record(conn, requestlog.success_record(response))
                 return response
         except psycopg.OperationalError:
             record.failures += 1  # the database is down: this request cannot be logged
-            return error(503, "unavailable", "The service is not available right now.", request)
+            return JSONResponse(
+                {"error": {"code": "unavailable", "message": UNAVAILABLE_MESSAGE},
+                 "request_id": rid}, status_code=503, headers={"X-Request-ID": rid},
+            )  # fmt: skip
+
+    @app.post("/ask", response_model=schema.AskResponse)
+    async def ask(body: schema.AskRequest, request: Request):
+        rid = request.state.request_id
+        question = body.question.strip()
+        today = api["today"] or clock()
+        started = time.perf_counter()
+        reason = await run_in_threadpool(guard.stage1, request, connect)
+        if reason:
+            return await run_in_threadpool(block, reason, question, rid, today, started)
+        abandoned = threading.Event()
+        try:
+            return await asyncio.wait_for(
+                run_in_threadpool(serve, question, rid, today, started, abandoned),
+                timeout=guards["request_timeout_s"],
+            )
+        except TimeoutError:
+            abandoned.set()  # the worker finishes in the background, but writes no second row
+            guard.blocked["timeout"] += 1
+            return await run_in_threadpool(
+                block, "timeout", question, rid, today, started, None, "timeout", None
+            )
 
     @app.post("/feedback", response_model=schema.FeedbackResponse)
     def feedback(body: schema.FeedbackRequest, request: Request):

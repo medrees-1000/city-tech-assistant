@@ -147,3 +147,9 @@ test("a clarify reply is a normal assistant message: its own text, no contact ca
   assert.equal(showContact(d), false);
   assert.equal(d.citations.length, 0);
 });
+
+test("a guardrail reply is a normal assistant message: its own text, no card, no sources", () => {
+  const d = data({ answer_type: "guardrail", route: "guardrail", answer: "You're asking quickly.", citations: [], contact: null });
+  assert.deepEqual(answerView(d), { kind: "guardrail", text: "You're asking quickly." });
+  assert.equal(showContact(d), false);
+});

@@ -67,7 +67,10 @@ def make_app(**kw):
 def test_health_is_ok_with_the_database_up():
     body = TestClient(make_app()).get("/health").json()
     assert body["status"] == "ok" and body["db"] == "ok" and body["router"] == "on"
-    assert set(body) == {"status", "db", "version", "router", "log_failures", "feedback_failures"}
+    assert set(body) == {
+        "status", "db", "version", "router", "log_failures", "feedback_failures", "disabled",
+        "spend_today_usd", "spend_cap_usd", "spend_cap_reached", "spend_check_failures", "blocked",
+    }
     assert body["log_failures"] == 0 and body["feedback_failures"] == 0
 
 

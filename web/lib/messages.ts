@@ -70,7 +70,7 @@ export const PERSONAL_ACCOUNT_TEXT_NO_CARD =
  * (no card, no empty box, so the answer box has no gap below it). */
 export const showContact = (data: AskResponse): boolean => data.contact !== null;
 
-export type AnswerKind = "answer" | "abstain" | "personal_account" | "not_announced" | "clarify";
+export type AnswerKind = "answer" | "abstain" | "personal_account" | "not_announced" | "clarify" | "guardrail";
 
 /** Which kind of answer this is and the text to show. Abstain and "not announced yet" answers are
  * plain assistant messages like any other (no box, no label); the kind is for logic and tests. A
@@ -85,5 +85,6 @@ export function answerView(data: AskResponse): { kind: AnswerKind; text: string 
   if (data.abstained) return { kind: "abstain", text: data.answer };
   if (data.answer_type === "not_announced") return { kind: "not_announced", text: data.answer };
   if (data.answer_type === "clarify") return { kind: "clarify", text: data.answer };
+  if (data.answer_type === "guardrail") return { kind: "guardrail", text: data.answer };
   return { kind: "answer", text: data.answer };
 }

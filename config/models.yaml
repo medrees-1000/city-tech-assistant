@@ -95,6 +95,21 @@ api:
   max_question_chars: 500
   max_body_bytes: 4096
 
+# Guardrails (Phase 4 step 7, docs/guardrails-plan.md and docs/decisions.md). API layer only. Each value can be
+# overridden by an environment variable (CTA_API_DISABLED, CTA_DAILY_SPEND_CAP_USD, CTA_RATE_PER_MINUTE,
+# CTA_RATE_PER_DAY, CTA_MODEL_CALL_TIMEOUT_S, CTA_MODEL_RETRIES, CTA_REQUEST_TIMEOUT_S).
+guardrails:
+  disabled: false                 # the kill switch; the file data/api_disabled does the same without a restart
+  daily_spend_cap_usd: 1.00       # per UTC day, summed from request_logs rows with source "api"
+  failed_request_cost_usd: 0.002  # counted for a failed request (its real cost is not known)
+  spend_cache_s: 10               # the daily sum is cached this long
+  rate_per_minute: 10             # per visitor, in memory only
+  rate_per_day: 100
+  rate_limit_max_keys: 10000
+  model_call_timeout_s: 15        # each model call in an API request
+  model_retries: 1                # retries inside an API request (the eval keeps MAX_RETRIES = 3)
+  request_timeout_s: 45           # the whole request
+
 max_chunk_tokens: 6000          # the loader fails instead of truncating (embedding limit is 8192)
 
 eval:
