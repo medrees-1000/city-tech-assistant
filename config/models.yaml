@@ -109,6 +109,10 @@ guardrails:
   model_call_timeout_s: 15        # each model call in an API request
   model_retries: 1                # retries inside an API request (the eval keeps MAX_RETRIES = 3)
   request_timeout_s: 45           # the whole request
+  # Stage 2, content guards (src/cta/api/screen.py). CTA_DISTRESS_REPLY, CTA_INJECTION_SCREEN, CTA_PERSONAL_DATA.
+  distress_reply: "988"           # "988" names the 988 Suicide & Crisis Lifeline and 911; "none" names no number
+  injection_screen: true
+  personal_data: "redact_and_refuse"   # off | redact | redact_and_refuse
 
 max_chunk_tokens: 6000          # the loader fails instead of truncating (embedding limit is 8192)
 

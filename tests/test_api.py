@@ -68,8 +68,19 @@ def test_health_is_ok_with_the_database_up():
     body = TestClient(make_app()).get("/health").json()
     assert body["status"] == "ok" and body["db"] == "ok" and body["router"] == "on"
     assert set(body) == {
-        "status", "db", "version", "router", "log_failures", "feedback_failures", "disabled",
-        "spend_today_usd", "spend_cap_usd", "spend_cap_reached", "spend_check_failures", "blocked",
+        "status",
+        "db",
+        "version",
+        "router",
+        "log_failures",
+        "feedback_failures",
+        "disabled",
+        "spend_today_usd",
+        "spend_cap_usd",
+        "spend_cap_reached",
+        "spend_check_failures",
+        "blocked",
+        "redacted",
     }
     assert body["log_failures"] == 0 and body["feedback_failures"] == 0
 
@@ -353,7 +364,7 @@ def test_a_threshold_abstention_with_a_clear_office_has_a_card_and_no_contact_se
     ("question", "chunk"),
     [
         ("what questions can I ask you", "page/MATH-NYT/faqs#12"),
-        ("my mom died", "page/financial-aid/faqs#9"),
+        ("tell me a joke", "page/financial-aid/faqs#9"),  # (was "my mom died": step 7 answers that)
         ("Should I take an Incomplete?", "page/registrar/incomplete#1"),
     ],
 )

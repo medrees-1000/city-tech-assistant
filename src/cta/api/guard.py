@@ -30,6 +30,8 @@ TEXTS = {
 }
 # Statuses of failed requests: their cost is unknown, so each counts a flat estimate.
 FAILED_STATUSES = ("provider_error", "internal_error", "timeout")
+BLOCK_REASONS = ("kill_switch", "rate_limited", "daily_cap", "timeout", "distress", "bereavement",
+                 "personal_data", "injection", "output")  # fmt: skip
 DISABLED_FILE = Path("data") / "api_disabled"
 
 
@@ -52,6 +54,7 @@ class Guard:
         self.visitors: OrderedDict[str, dict] = OrderedDict()
         self.blocked: Counter[str] = Counter()
         self.spend_check_failures = 0
+        self.redacted = 0  # questions scrubbed since the start (a count, no text)
         self._spend: tuple[float, float] | None = None  # (monotonic time, sum)
 
     # ---- 1. the kill switch ----
@@ -140,6 +143,6 @@ class Guard:
             "spend_cap_usd": cap,
             "spend_cap_reached": total is not None and total >= cap,
             "spend_check_failures": self.spend_check_failures,
-            "blocked": {k: self.blocked.get(k, 0) for k in ("kill_switch", "rate_limited",
-                                                            "daily_cap", "timeout")},
+            "blocked": {k: self.blocked.get(k, 0) for k in BLOCK_REASONS},
+            "redacted": self.redacted,
         }  # fmt: skip

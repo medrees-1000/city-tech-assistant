@@ -210,12 +210,30 @@ def to_response(ans, question: str, cfg: dict, today: date, request_id: str, ver
     )  # fmt: skip
 
 
-def guardrail_response(reason: str, text: str, question: str, cfg: dict, today: date,
-                       request_id: str, version: str, ms: float) -> schema.AskResponse:
+def guardrail_response(
+    reason: str,
+    text: str,
+    question: str,
+    cfg: dict,
+    today: date,
+    request_id: str,
+    version: str,
+    ms: float,
+) -> schema.AskResponse:
     """A fixed reply of a guardrail as a normal answer: no sources, no card, no abstention. The
     reason is in how_found.route_detail. `text` and `question` never hold what was blocked."""
-    zero_tokens = {k: 0 for k in ("prompt", "completion", "embedding", "rerank_prompt",
-                                  "rerank_completion", "topic_prompt", "topic_completion")}
+    zero_tokens = {
+        k: 0
+        for k in (
+            "prompt",
+            "completion",
+            "embedding",
+            "rerank_prompt",
+            "rerank_completion",
+            "topic_prompt",
+            "topic_completion",
+        )
+    }
     steps = ("classify", "select", "retrieval", "rerank", "walk", "answer", "topic")
     hf = schema.HowFound(
         route_detail=reason, intent=None, top_vector_similarity=None,

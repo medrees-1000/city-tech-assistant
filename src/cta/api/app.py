@@ -19,7 +19,7 @@ from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from cta.api import convert, requestlog, schema, topic
+from cta.api import convert, requestlog, schema, screen, topic
 from cta.api import guard as guard_mod
 from cta.api.checks import require_startup
 from cta.graph import render
@@ -187,6 +187,11 @@ def create_app(
                     ans, question, cfg, today, rid, version, url_map, by_id
                 )
                 topic.rewrite(question, response, cfg, client_factory)
+                if screen.leaks_key(response.answer):  # never return a key-shaped answer
+                    guard.blocked["output"] += 1
+                    return block("output", question, rid, today, started,
+                                 screen.reply("output", guards), None,
+                                 response.how_found.cost_usd["total"])  # fmt: skip
                 if not abandoned.is_set():
                     record(conn, requestlog.success_record(response))
                 return response
@@ -206,6 +211,15 @@ def create_app(
         reason = await run_in_threadpool(guard.stage1, request, connect)
         if reason:
             return await run_in_threadpool(block, reason, question, rid, today, started)
+        verdict = screen.screen(question, guards)
+        if verdict.reason:  # a fixed reply; the text is not stored, only its length
+            guard.blocked[verdict.reason] += 1
+            text = screen.reply(verdict.reason, guards)
+            return await run_in_threadpool(
+                block, verdict.reason, question, rid, today, started, text, None, 0.0, True
+            )
+        guard.redacted += verdict.scrubbed
+        question = verdict.question  # what the model and the log see: emails, numbers, names gone
         abandoned = threading.Event()
         try:
             return await asyncio.wait_for(

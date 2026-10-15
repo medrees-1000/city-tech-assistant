@@ -165,6 +165,25 @@ def guardrail_settings(block: dict, env: dict) -> dict:
             raise ValueError(f"guardrails.{key} must be at least {minimum}, not {value}")
         out[key] = value
     flag = env.get("CTA_API_DISABLED", "").strip().lower()
+    out["distress_reply"] = (
+        env.get("CTA_DISTRESS_REPLY", "").strip() or out["distress_reply"]
+    ).lower()
+    if out["distress_reply"] not in ("988", "none"):
+        raise ValueError(
+            f"guardrails.distress_reply must be 988 or none, not {out['distress_reply']!r}"
+        )
+    out["personal_data"] = (
+        env.get("CTA_PERSONAL_DATA", "").strip() or out["personal_data"]
+    ).lower()
+    if out["personal_data"] not in ("off", "redact", "redact_and_refuse"):
+        shown = out["personal_data"]
+        raise ValueError(
+            f"guardrails.personal_data must be off, redact or redact_and_refuse, not {shown!r}"
+        )
+    screen_flag = env.get("CTA_INJECTION_SCREEN", "").strip().lower()
+    out["injection_screen"] = (
+        screen_flag in ("1", "true", "yes", "on") if screen_flag else bool(out["injection_screen"])
+    )
     out["disabled"] = flag in ("1", "true", "yes", "on") if flag else bool(out.get("disabled"))
     return out
 
