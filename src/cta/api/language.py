@@ -31,6 +31,7 @@ MIN_ENGLISH_WORDS = 2
 FALLBACK_NOTE = "This answer is in English; the sources are in English."
 NOTE_MAX_CHARS = 160
 ENGLISH_MAX_CHARS = 1000
+ECHOED_LABEL = re.compile(r"^\s*(?:question|translation|english)\s*:\s*", re.IGNORECASE)
 CODE = re.compile(r"[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*")
 UNSAFE_NOTE = re.compile(r"\d|@|https?:|www\.|[\r\n\[\]<>]", re.IGNORECASE)
 
@@ -72,7 +73,10 @@ def detect(text: str, cfg: dict, client_factory: Callable) -> Language:
         return Language(english=text)
     messages = [
         {"role": "system", "content": PROMPT.read_text(encoding="utf-8")},
-        {"role": "user", "content": f"Question: {text}"},
+        {
+            "role": "user",
+            "content": text,
+        },  # the bare text: a prefix such as "Question:" is echoed back
     ]
     try:
         call = json_call(client_factory(), cfg, messages, "language request")
@@ -94,7 +98,8 @@ def detect(text: str, cfg: dict, client_factory: Callable) -> Language:
             code="en", english=text, skipped=False, call=call
         )  # the original, byte for byte
     return Language(
-        code=code, english=" ".join(english.split()), note=valid_note(data.get("note")),
+        code=code, english=" ".join(ECHOED_LABEL.sub("", english, count=1).split()),
+        note=valid_note(data.get("note")),
         skipped=False, call=call,
     )  # fmt: skip
 

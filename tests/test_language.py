@@ -380,3 +380,36 @@ def test_the_module_is_in_the_api_layer_and_nothing_else_imports_it():
             assert not re.search(
                 r"^\s*(from|import) cta\.api", path.read_text(encoding="utf-8"), re.M
             )
+
+
+# ---- the "Question:" prefix defect found by the first probe run ----
+
+
+def test_the_model_gets_the_bare_text_not_a_labelled_one():
+    seen = []
+
+    class Spy(FakeLanguage):
+        def create(self, **kw):
+            seen.append(kw["messages"])
+            return super().create(**kw)
+
+    text = "cuando es la fecha limite para pagar la matricula"
+    language.detect(text, CFG, lambda: Spy(es()))
+    assert seen[0][1] == {"role": "user", "content": text}  # no "Question:" in front
+
+
+@pytest.mark.parametrize(
+    "echoed", ["Question: When is it?", "question:When is it?", "Translation: When is it?"]
+)
+def test_an_echoed_label_is_removed_from_the_translation(echoed):
+    got = language.detect(
+        "cuando es la fecha limite", CFG, lambda: FakeLanguage(es(english=echoed))
+    )
+    assert got.english == "When is it?"
+
+
+def test_a_translation_without_a_label_is_unchanged():
+    got = language.detect(
+        "cuando es", CFG, lambda: FakeLanguage(es(english="Question marks are fun"))
+    )
+    assert got.english == "Question marks are fun"  # only a label followed by a colon is removed
