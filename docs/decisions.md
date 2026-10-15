@@ -705,3 +705,7 @@ Plan: item 2 of `docs/chain-layout-plan.md`. Owner decisions of 2026-10-15 on to
 **Live check** (dev, real page in headless Chrome, allowed cost up to $0.05): "When is the due date?" must clarify; "When is the filing period for February 2027 graduation?" must not (it must answer from the calendar). 390 px and 1280 px, light and dark. The servers are stopped afterwards, by port.
 
 **Not decided here:** NO ADVICE (step 5) and everything after it.
+
+## Step 4 disclosure (Oct 15, 2026)
+
+The first CLARIFY detector scan covered the whole question file, so the owner now knows the detector fires on test question q23 ("When is the deadline?", typed ambiguous). No behaviour was changed because of it; all later checks used the dev split only.
