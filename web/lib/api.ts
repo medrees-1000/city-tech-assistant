@@ -93,7 +93,7 @@ export const MAX_QUESTION_CHARS = 500; // the API limit (config api.max_question
 
 const UNREACHABLE: ApiError = {
   code: "unreachable",
-  message: "Could not reach the assistant. Check that the API is running and try again.",
+  message: "Something went wrong. Please try again in a moment.",
   request_id: null,
 };
 

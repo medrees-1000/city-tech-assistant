@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from cta.answer import THRESHOLD_ABSTAIN
-from cta.api import topic
+from cta.api import convert, topic
 from cta.api.topic import NOT_FOUND, OUT_OF_SCOPE, apologize, sanitize_topic, sentence
 from cta.index.embed import ApiError
 from cta.settings import ROOT
@@ -226,7 +226,8 @@ def test_specific_messages_are_not_changed_and_make_no_topic_call(monkeypatch):
     c, client = abstain_app(monkeypatch, reply("x", False))
     body = ask(c, "What is my GPA this semester?").json()
     assert body["abstain_reason"] == "personal_account" and "topic" not in client.calls
-    assert body["answer"] == PIPELINE_GENERIC  # unchanged; the page shows its own fixed sentence
+    # tester round 2, T09: the API now says the same plain sentence as the page
+    assert body["answer"] == convert.PERSONAL_ACCOUNT_TEXT
 
 
 def test_an_answer_makes_no_topic_call(monkeypatch):

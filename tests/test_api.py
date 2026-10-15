@@ -624,7 +624,8 @@ def test_a_retrieval_abstention_on_an_account_question_is_coded_personal_account
     body = ask(make_client_app(Client(), monkeypatch, stub), "What is my GPA this semester?").json()
     assert body["abstained"] and body["abstain_reason"] == "personal_account"
     assert body["contact"]["office"] == "registrar"  # the contact the mapping already chose
-    assert "personal" not in body["answer"] and body["citations"] == []
+    # tester round 2, T09: the plain refusal sentence replaces the old "could not find" text
+    assert body["answer"] == convert.PERSONAL_ACCOUNT_TEXT and body["citations"] == []
 
 
 def test_a_model_written_abstention_on_an_account_question_gets_the_code_not_the_sentence(

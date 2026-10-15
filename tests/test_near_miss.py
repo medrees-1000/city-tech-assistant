@@ -18,6 +18,7 @@ from cta.answer import (
     near_miss_text,
     page_key,
 )
+from cta.api import convert
 from cta.eval import run_answers as ra
 from cta.index.search import Search
 from cta.settings import ROOT, load_models
@@ -357,7 +358,7 @@ def test_a_personal_account_refusal_carries_no_near_miss_pages_or_citations(monk
     body = ask(c, "what is my financial aid status").json()  # the API relabels this abstention
     assert body["abstain_reason"] == "personal_account"
     assert body["citations"] == [] and body["how_found"]["near_miss"] is False
-    assert body["answer"] == "I could not find this in the City Tech sources I have."
+    assert body["answer"] == convert.PERSONAL_ACCOUNT_TEXT  # tester round 2, T09 wording
     assert "closest pages" not in body["answer"]
     assert c.logs[0]["trace"]["near_miss"] is False  # not counted as a near-miss in the log
 

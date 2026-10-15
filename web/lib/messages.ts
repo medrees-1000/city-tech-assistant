@@ -61,10 +61,10 @@ export function fitTextarea(scrollHeight: number): { height: number; scroll: boo
 // ---- how an answer is shown ----
 
 export const PERSONAL_ACCOUNT_TEXT =
-  "I can't answer questions about your personal account (holds, balances, grades, aid status). Here is who can help:";
+  "I can't see personal account information such as holds, balances or grades. Here is who can help:";
 
 export const PERSONAL_ACCOUNT_TEXT_NO_CARD =
-  "I can't answer questions about your personal account (holds, balances, grades, aid status).";
+  "I can't see personal account information such as holds, balances or grades.";
 
 /** The contact card is shown only when the API sent a contact; otherwise nothing is rendered for it
  * (no card, no empty box, so the answer box has no gap below it). */

@@ -42,6 +42,11 @@ def public_route(ans) -> str:
     return known.get(ans.route, "retrieve")
 
 
+PERSONAL_ACCOUNT_TEXT = (
+    "I can't see personal account information such as holds, balances or grades."
+)
+
+
 def abstain_code(reason: str | None, question: str = "", table: dict | None = None) -> str | None:
     """A short code for an abstention, never the model's sentence. A retrieval abstention on a
     question about the student's own account data ("my gpa", "my financial aid status" ...; a
@@ -200,6 +205,8 @@ def to_response(ans, question: str, cfg: dict, today: date, request_id: str, ver
     near_miss = bool(ans.near_miss) and code != "personal_account"
     if ans.near_miss and not near_miss:
         text = THRESHOLD_ABSTAIN.removeprefix(MARKER).strip()
+    if code == "personal_account":  # tester round 2, T09: say plainly why (the contact card stays)
+        text = PERSONAL_ACCOUNT_TEXT
     kind = (
         "abstain" if ans.abstained
         else "clarify" if ans.route == "clarify"

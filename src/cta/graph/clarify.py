@@ -3,7 +3,8 @@
 Plain code, no model call. It runs after the classifier and before the calendar and retrieval
 nodes. It fires only when every condition holds (docs/decisions.md, "Step 4: CLARIFY"):
   1. the question is short (at most MAX_WORDS words);
-  2. it holds a generic deadline cue ("deadline", "due date", "last day");
+  2. it holds a generic deadline cue ("deadline", "due date", "last day"), or is exactly a vague
+     "when is it (due)" (tester round 2, T08);
   3. it names no topic (TOPIC_WORDS), no course code and no department;
   4. the classifier did not say "prerequisite".
 The reply is a fixed template; the terms in it are read from config/calendar_terms.yaml.
@@ -32,6 +33,9 @@ TOPIC_WORDS = (
     "audit", "waiver", "petition", "deposit", "plan", "late", "cancel", "resign", "return",
     "file", "filing", "submit", "advis", "degree", "credit", "hold", "bursar", "registrar",
 )  # fmt: skip
+# Tester round 2, T08: "when is it due" has no cue word from CUES but is just as vague. Only the
+# whole question counts ("when is it due for tuition" and "when is it open" name something).
+VAGUE_WHEN = re.compile(r"^when(?:'?s| is| are)\s+(?:it|that|this|they)(?:\s+due)?\s*[?.!]*$")
 CODE = re.compile(r"\b[A-Za-z]{2,5} ?\d{3,4}[A-Za-z]{0,2}\b")
 # a term name such as "Fall 2026" looks like a course code and is not one
 TERM_NAME = re.compile(r"\b(?:fall|winter|spring|summer)\s+20\d\d\b", re.IGNORECASE)
@@ -57,7 +61,8 @@ def needs_clarification(question: str, intent: str | None = None) -> bool:
     words = WORD.findall(text)
     if not words or len(words) > MAX_WORDS:
         return False
-    if not any(re.search(rf"\b{cue}\b", text) for cue in CUES):
+    cued = any(re.search(rf"\b{cue}\b", text) for cue in CUES)
+    if not (cued or VAGUE_WHEN.match(text.strip().replace("’", "'"))):
         return False
     if (
         names_topic(words)

@@ -91,7 +91,7 @@ test("a personal-account abstention shows the fixed sentence, not the API text",
   const v = answerView(data({ abstained: true, answer_type: "abstain", abstain_reason: "personal_account", answer: "model words", contact: card }));
   assert.equal(v.kind, "personal_account");
   assert.equal(v.text, PERSONAL_ACCOUNT_TEXT);
-  assert.ok(v.text.startsWith("I can't answer questions about your personal account"));
+  assert.ok(v.text.startsWith("I can't see personal account information such as holds, balances or grades."));
   assert.ok(v.text.endsWith("Here is who can help:"));
 });
 
