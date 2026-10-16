@@ -1,0 +1,3034 @@
+{
+ "label": "final-run",
+ "split": "test",
+ "retrieval": {
+  "n": 14,
+  "recall@1": 0.4785714285714286,
+  "precision@1": 0.7857142857142857,
+  "hit@1": 0.7857142857142857,
+  "recall@3": 0.6619047619047619,
+  "precision@3": 0.42857142857142855,
+  "hit@3": 0.7857142857142857,
+  "recall@5": 0.7380952380952381,
+  "precision@5": 0.3142857142857143,
+  "hit@5": 0.8571428571428571,
+  "recall@10": 0.7698412698412699,
+  "precision@10": 0.17142857142857143,
+  "hit@10": 0.9285714285714286,
+  "mrr": 0.8107142857142857
+ },
+ "retrieval_chain": {
+  "n": 5,
+  "recall@1": 0.2733333333333333,
+  "precision@1": 0.8,
+  "hit@1": 0.8,
+  "recall@3": 0.52,
+  "precision@3": 0.5333333333333333,
+  "hit@3": 0.8,
+  "recall@5": 0.6,
+  "precision@5": 0.4,
+  "hit@5": 0.8,
+  "recall@10": 0.6222222222222222,
+  "precision@10": 0.22,
+  "hit@10": 1.0,
+  "mrr": 0.82
+ },
+ "excluded_from_retrieval": [
+  "q11",
+  "q23",
+  "q25",
+  "q26",
+  "q29",
+  "q32",
+  "q35",
+  "q38",
+  "q46",
+  "q62",
+  "q66",
+  "q69",
+  "q72",
+  "q73",
+  "q74",
+  "q82",
+  "q84"
+ ],
+ "answers": {
+  "correctness": {
+   "n": 13,
+   "correct": 0.7692307692307693,
+   "partial": 0.23076923076923078,
+   "incorrect": 0.0
+  },
+  "faithfulness": {
+   "n": 13,
+   "yes": 1.0,
+   "partly": 0.0,
+   "no": 0.0
+  },
+  "no_advice_correct": {
+   "n": 1,
+   "correct": 1.0,
+   "partial": 0.0,
+   "incorrect": 0.0
+  },
+  "abstention_accuracy": {
+   "n": 7,
+   "share": 1.0
+  },
+  "wrongly_abstained": {
+   "n": 14,
+   "share": 0.0
+  },
+  "citation_rate": {
+   "n": 23,
+   "share": 1.0,
+   "invalid_citations": 0
+  },
+  "judge_failed": 0,
+  "cost": {
+   "n": 31,
+   "per_request_usd": 0.002605466451612903,
+   "answer_usd": 0.01233146,
+   "judge_usd": 0.068438
+  },
+  "latency_ms": {
+   "n": 31,
+   "total_median": 2331,
+   "total_p95": 7922,
+   "chat_n": 31,
+   "chat_median": 2129,
+   "chat_p95": 5433,
+   "retrieval_n": 31,
+   "retrieval_median": 0.0,
+   "retrieval_p95": 3156.1,
+   "query_cache_hits": 9
+  },
+  "chain": {
+   "correctness": {
+    "n": 6,
+    "correct": 0.8333333333333334,
+    "partial": 0.16666666666666666,
+    "incorrect": 0.0
+   },
+   "faithfulness": {
+    "n": 6,
+    "yes": 1.0,
+    "partly": 0.0,
+    "no": 0.0
+   },
+   "no_advice_correct": {
+    "n": 0,
+    "correct": null,
+    "partial": null,
+    "incorrect": null
+   },
+   "abstention_accuracy": {
+    "n": 1,
+    "share": 1.0
+   },
+   "wrongly_abstained": {
+    "n": 6,
+    "share": 0.0
+   },
+   "citation_rate": {
+    "n": 6,
+    "share": 1.0,
+    "invalid_citations": 0
+   },
+   "judge_failed": 0,
+   "cost": {
+    "n": 7,
+    "per_request_usd": 0.004010542857142857,
+    "answer_usd": 0.00029380000000000004,
+    "judge_usd": 0.02778
+   },
+   "latency_ms": {
+    "n": 7,
+    "total_median": 940,
+    "total_p95": 1306,
+    "chat_n": 7,
+    "chat_median": 936,
+    "chat_p95": 1302,
+    "retrieval_n": 7,
+    "retrieval_median": 0.0,
+    "retrieval_p95": 0.0,
+    "query_cache_hits": 0
+   }
+  }
+ },
+ "failure_labels": {
+  "generation error": 1,
+  "not supported yet": 2,
+  "not supported yet (chained prerequisite)": 1,
+  "retrieval miss": 1
+ },
+ "per_question": [
+  {
+   "id": "q02",
+   "type": "lookup",
+   "department": "MATH-NYT",
+   "gold_kind": "normal",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "page/MATH-NYT/chairperson#1",
+     "similarity": 0.6478
+    },
+    {
+     "id": "contact:MATH-NYT",
+     "similarity": 0.6293
+    },
+    {
+     "id": "page/CST-NYT/chairperson#1",
+     "similarity": 0.5152
+    },
+    {
+     "id": "dept/MATH-NYT/overview#3",
+     "similarity": 0.5124
+    },
+    {
+     "id": "dept/MATH-NYT/program-applied-mathematics-bs#5",
+     "similarity": 0.5114
+    },
+    {
+     "id": "page/MATH-NYT/student-resources#1",
+     "similarity": 0.4989
+    },
+    {
+     "id": "dept/MATH-NYT/overview#2",
+     "similarity": 0.4947
+    },
+    {
+     "id": "page/MATH-NYT/advisement#1",
+     "similarity": 0.4824
+    },
+    {
+     "id": "page/MATH-NYT/index#1",
+     "similarity": 0.4682
+    },
+    {
+     "id": "page/EET-NYT/chairperson#1",
+     "similarity": 0.4587
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It correctly identifies Jonathan Natov as chair and provides the office, phone number, and email requested.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All stated contact details and the chair title are explicitly supported by source [1].",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0008151,
+   "judge_cost": 0.0043,
+   "latency_ms": 6935,
+   "chat_ms": 4618,
+   "retrieval_ms": 2307.5,
+   "cache_hit": true,
+   "rerank_cost": 0.0005968000000000001,
+   "rerank_ms": 2250.2,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 325,
+     "completion_tokens": 17,
+     "cost": 4.1e-05,
+     "ms": 2314.1,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q07",
+   "type": "lookup",
+   "department": "EET-NYT",
+   "gold_kind": "normal",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "dept/EET-NYT/overview#4",
+     "similarity": 0.6657
+    },
+    {
+     "id": "page/EET-NYT/chairperson#1",
+     "similarity": 0.6142
+    },
+    {
+     "id": "page/EET-NYT/index#1",
+     "similarity": 0.6037
+    },
+    {
+     "id": "page/EET-NYT/degrees#1",
+     "similarity": 0.6537
+    },
+    {
+     "id": "dept/EET-NYT/overview#2",
+     "similarity": 0.7096
+    },
+    {
+     "id": "dept/EET-NYT/program-electrical-engineering-technology-btech#2",
+     "similarity": 0.6382
+    },
+    {
+     "id": "page/EET-NYT/degrees#2",
+     "similarity": 0.6263
+    },
+    {
+     "id": "dept/EET-NYT/program-electrical-engineering-technology-aas#2",
+     "similarity": 0.6082
+    },
+    {
+     "id": "dept/EET-NYT/overview#3",
+     "similarity": 0.7348
+    },
+    {
+     "id": "dept/EET-NYT/overview#5",
+     "similarity": 0.6388
+    }
+   ],
+   "first_gold_rank": 4,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    3
+   ],
+   "invalid_citations": [],
+   "correctness": "partial",
+   "correctness_reason": "It correctly identifies the AAS and BTech programs but omits the Accelerator Science and Technology Minor listed in the gold answer.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "Both degree programs and their descriptions are explicitly supported by sources 1 and 3.",
+   "judge_status": "ok",
+   "label": "retrieval miss",
+   "label_reason": "not in the top 10: page/EET-NYT/degrees#3",
+   "answer_cost": 0.0009601000000000002,
+   "judge_cost": 0.008748,
+   "latency_ms": 7048,
+   "chat_ms": 3888,
+   "retrieval_ms": 3156.1,
+   "cache_hit": true,
+   "rerank_cost": 0.0005224000000000001,
+   "rerank_ms": 3095.0,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 322,
+     "completion_tokens": 17,
+     "cost": 4.07e-05,
+     "ms": 1400.4,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q10",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "normal",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "page/financial-aid/sap#12",
+     "similarity": 0.7916
+    },
+    {
+     "id": "page/financial-aid/sap#7",
+     "similarity": 0.5989
+    },
+    {
+     "id": "page/financial-aid/faqs#8",
+     "similarity": 0.5535
+    },
+    {
+     "id": "page/financial-aid/sap#6",
+     "similarity": 0.5512
+    },
+    {
+     "id": "page/financial-aid/sap#8",
+     "similarity": 0.5456
+    },
+    {
+     "id": "page/financial-aid/sap#9",
+     "similarity": 0.5159
+    },
+    {
+     "id": "page/financial-aid/sap#10",
+     "similarity": 0.5151
+    },
+    {
+     "id": "page/financial-aid/sap#11",
+     "similarity": 0.4965
+    },
+    {
+     "id": "page/financial-aid/sap#4",
+     "similarity": 0.4843
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#6",
+     "similarity": 0.4517
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It gives the Spring 2027 SAP appeal deadline as Wednesday, March 31, 2027, matching the academic calendar in the gold answer.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All stated details, including the date, SAP appeal description, calendar filename, update date, and change caveat, are supported by source [1].",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.000493,
+   "judge_cost": 0.002364,
+   "latency_ms": 2331,
+   "chat_ms": 2324,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "calendar",
+   "router": {
+    "route": "calendar",
+    "intent": "calendar",
+    "term_mention": "Spring 2027",
+    "classify": {
+     "prompt_tokens": 324,
+     "completion_tokens": 20,
+     "cost": 4.24e-05,
+     "ms": 1175.8,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "term_status": "explicit",
+    "term": "Spring 2027",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [
+     "spring-2027-043"
+    ],
+    "select": {
+     "prompt_tokens": 4416,
+     "completion_tokens": 18,
+     "cost": 0.0004506,
+     "ms": 1148.4,
+     "error": null,
+     "status": "ok"
+    },
+    "selector_version": 2,
+    "pool_size": 131,
+    "render_ms": 0.123,
+    "tba_rows": [],
+    "contact_office": null
+   },
+   "returned_rows": [
+    "spring-2027-043"
+   ]
+  },
+  {
+   "id": "q11",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "calendar_only",
+   "tags": [],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "faithfulness_reason": null,
+   "correctness_reason": "rule (calendar scoring 2): returned rows cover the gold rows",
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0004907000000000001,
+   "judge_cost": 0.0,
+   "latency_ms": 2776,
+   "chat_ms": 2771,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "calendar",
+   "router": {
+    "route": "calendar",
+    "intent": "calendar",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 320,
+     "completion_tokens": 17,
+     "cost": 4.05e-05,
+     "ms": 1464.5,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "term_status": "assumed",
+    "term": "Fall 2026",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [
+     "spring-2027-055"
+    ],
+    "select": {
+     "prompt_tokens": 4412,
+     "completion_tokens": 18,
+     "cost": 0.00045020000000000005,
+     "ms": 1306.2,
+     "error": null,
+     "status": "ok"
+    },
+    "selector_version": 2,
+    "pool_size": 131,
+    "render_ms": 0.124,
+    "tba_rows": [
+     "spring-2027-055"
+    ],
+    "contact_office": null
+   },
+   "returned_rows": [
+    "spring-2027-055"
+   ],
+   "calendar_v1": {
+    "correctness": "correct",
+    "label": null
+   },
+   "calendar_v2": {
+    "correctness": "correct",
+    "label": null
+   }
+  },
+  {
+   "id": "q17",
+   "type": "multi_chunk",
+   "department": "DENT-NYT",
+   "gold_kind": "normal",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "page/DENT-NYT/apply#1",
+     "similarity": 0.7307
+    },
+    {
+     "id": "dept/DENT-NYT/program-dental-hygiene-aas#8",
+     "similarity": 0.7055
+    },
+    {
+     "id": "page/DENT-NYT/apply#3",
+     "similarity": 0.6403
+    },
+    {
+     "id": "page/DENT-NYT/apply#2",
+     "similarity": 0.6991
+    },
+    {
+     "id": "page/DENT-NYT/faq#22",
+     "similarity": 0.6295
+    },
+    {
+     "id": "page/DENT-NYT/faq#16",
+     "similarity": 0.6192
+    },
+    {
+     "id": "page/DENT-NYT/faq#27",
+     "similarity": 0.6622
+    },
+    {
+     "id": "page/DENT-NYT/faq#1",
+     "similarity": 0.6365
+    },
+    {
+     "id": "page/DENT-NYT/faq#6",
+     "similarity": 0.6289
+    },
+    {
+     "id": "page/DENT-NYT/faq#24",
+     "similarity": 0.6566
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    2,
+    5
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "The answer accurately states the prerequisite courses, proficiency and credit/GPA requirements, ranking limitation, and preceding-Spring City Tech enrollment requirement relevant to consideration for the clinical program.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "Every claim is supported by the cited sources, including the prerequisite list, eligibility criteria, repeated-grade policy, ranking process, and City Tech enrollment condition.",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0009633,
+   "judge_cost": 0.006342,
+   "latency_ms": 7061,
+   "chat_ms": 3336,
+   "retrieval_ms": 3721.6,
+   "cache_hit": true,
+   "rerank_cost": 0.0006204,
+   "rerank_ms": 3662.6,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 324,
+     "completion_tokens": 17,
+     "cost": 4.09e-05,
+     "ms": 1057.5,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q20",
+   "type": "multi_chunk",
+   "department": "DENT-NYT",
+   "gold_kind": "normal",
+   "tags": [
+    "chain"
+   ],
+   "retrieved": [
+    {
+     "id": "catalog:DEN 2400",
+     "similarity": 0.6412
+    },
+    {
+     "id": "catalog:DEN 2300",
+     "similarity": 0.63
+    },
+    {
+     "id": "catalog:DEN 2318",
+     "similarity": 0.5542
+    },
+    {
+     "id": "catalog:DEN 2311",
+     "similarity": 0.5342
+    },
+    {
+     "id": "catalog:DEN 2315",
+     "similarity": 0.5271
+    },
+    {
+     "id": "catalog:DEN 1200",
+     "similarity": 0.5846
+    },
+    {
+     "id": "dept/DENT-NYT/program-dental-hygiene-aas#11",
+     "similarity": 0.5237
+    },
+    {
+     "id": "catalog:DEN 1218",
+     "similarity": 0.5544
+    },
+    {
+     "id": "catalog:DEN 1217",
+     "similarity": 0.5413
+    },
+    {
+     "id": "catalog:DEN 1100",
+     "similarity": 0.5628
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "The answer accurately identifies DEN 2400's prerequisites and corequisite and traces the listed prerequisite chains through DEN 1100, DEN 1112, and DEN 1114, including required grades and conditions.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All course requirements, corequisites, grade requirements, and descriptions of enrollment restrictions stated in the answer are directly supported by the numbered catalog sources.",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4.24e-05,
+   "judge_cost": 0.008384,
+   "latency_ms": 1036,
+   "chat_ms": 1026,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "chain",
+   "router": {
+    "route": "chain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 329,
+     "completion_tokens": 19,
+     "cost": 4.24e-05,
+     "ms": 1026.4,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "DEN 2400",
+     "detail": [],
+     "walk_ms": 0.811,
+     "course_count": 12,
+     "truncated": false,
+     "unexpanded": [],
+     "dropped": [],
+     "no_record_codes": [
+      "BIO 3302",
+      "CHEM 1000",
+      "BIO 3524"
+     ],
+     "source_ids": [
+      "catalog:DEN 2400",
+      "catalog:DEN 2300",
+      "catalog:DEN 2311",
+      "catalog:DEN 2315",
+      "catalog:DEN 2318",
+      "catalog:DEN 2413",
+      "catalog:DEN 1200",
+      "catalog:DEN 1217",
+      "catalog:DEN 1218",
+      "catalog:DEN 1100",
+      "catalog:DEN 1112",
+      "catalog:DEN 1114"
+     ],
+     "rendered_by": "code"
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q23",
+   "type": "ambiguous",
+   "department": null,
+   "gold_kind": "clarify",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "page/financial-aid/sap#12",
+     "similarity": 0.4641
+    },
+    {
+     "id": "page/admissions/dates-deadlines#1",
+     "similarity": 0.4375
+    },
+    {
+     "id": "page/financial-aid/faqs#8",
+     "similarity": 0.3314
+    },
+    {
+     "id": "page/bursar/payment-deadlines#1",
+     "similarity": 0.4105
+    },
+    {
+     "id": "page/registrar/applying-graduation#2",
+     "similarity": 0.3909
+    },
+    {
+     "id": "page/bursar/refund-policy#1",
+     "similarity": 0.3829
+    },
+    {
+     "id": "page/registrar/academic-calendar#1",
+     "similarity": 0.3446
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#4",
+     "similarity": 0.3508
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#6",
+     "similarity": 0.3473
+    },
+    {
+     "id": "page/bursar/refund-policy#2",
+     "similarity": 0.331
+    }
+   ],
+   "first_gold_rank": null,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: clarify reply on an ambiguous question",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4e-05,
+   "judge_cost": 0.0,
+   "latency_ms": 922,
+   "chat_ms": 915,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "clarify",
+   "router": {
+    "route": "clarify",
+    "intent": "calendar",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 315,
+     "completion_tokens": 17,
+     "cost": 4e-05,
+     "ms": 914.9,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q25",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "abstain",
+   "tags": [],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "calendar_unsupported_term",
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 7.659999999999999e-05,
+   "judge_cost": 0.0,
+   "latency_ms": 2135,
+   "chat_ms": 2129,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "abstain",
+   "router": {
+    "route": "abstain",
+    "intent": "calendar",
+    "term_mention": "Summer 2027",
+    "classify": {
+     "prompt_tokens": 320,
+     "completion_tokens": 20,
+     "cost": 4.2e-05,
+     "ms": 1106.2,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "term_status": "unsupported",
+    "term": "Summer 2027",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [],
+    "select": {
+     "prompt_tokens": 291,
+     "completion_tokens": 11,
+     "cost": 3.46e-05,
+     "ms": 1022.6,
+     "error": null,
+     "status": "empty"
+    },
+    "selector_version": 1,
+    "pool_size": 2,
+    "contact_office": "registrar"
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q26",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "abstain",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "pdf/cunyfirst-student-reference#2",
+     "similarity": 0.4499
+    },
+    {
+     "id": "page/bursar/payment-deadlines#1",
+     "similarity": 0.275
+    },
+    {
+     "id": "page/admissions/tuition-penalty#3",
+     "similarity": 0.3829
+    },
+    {
+     "id": "page/financial-aid/faqs#3",
+     "similarity": 0.3033
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#1",
+     "similarity": 0.2665
+    },
+    {
+     "id": "page/admissions/tuition-penalty#1",
+     "similarity": 0.299
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#7",
+     "similarity": 0.3235
+    },
+    {
+     "id": "page/registrar/faqs#14",
+     "similarity": 0.2901
+    },
+    {
+     "id": "page/admissions/tuition-penalty#2",
+     "similarity": 0.2899
+    },
+    {
+     "id": "page/financial-aid/sap#6",
+     "similarity": 0.289
+    }
+   ],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "below_threshold",
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0005399000000000001,
+   "judge_cost": 0.0,
+   "latency_ms": 3343,
+   "chat_ms": 1420,
+   "retrieval_ms": 1920.8,
+   "cache_hit": true,
+   "rerank_cost": 0.0004995,
+   "rerank_ms": 1860.5,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 319,
+     "completion_tokens": 17,
+     "cost": 4.0400000000000006e-05,
+     "ms": 1419.6,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q29",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "abstain",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "page/advisement/virtual-advisors#2",
+     "similarity": 0.6462
+    },
+    {
+     "id": "dept/EET-NYT/program-electrical-engineering-technology-btech#8",
+     "similarity": 0.5961
+    },
+    {
+     "id": "dept/EET-NYT/program-electrical-engineering-technology-aas#7",
+     "similarity": 0.5675
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-systems-btech#8",
+     "similarity": 0.5587
+    },
+    {
+     "id": "dept/EET-NYT/program-electrical-engineering-technology-btech#7",
+     "similarity": 0.5541
+    },
+    {
+     "id": "page/advisement/gen-ed#3",
+     "similarity": 0.5508
+    },
+    {
+     "id": "page/advisement/virtual-advisors#12",
+     "similarity": 0.5496
+    },
+    {
+     "id": "page/advisement/degree-checklist#1",
+     "similarity": 0.5415
+    },
+    {
+     "id": "dept/EET-NYT/overview#4",
+     "similarity": 0.5389
+    },
+    {
+     "id": "dept/EET-NYT/program-electrical-engineering-technology-aas#6",
+     "similarity": 0.5376
+    }
+   ],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "The sources do not list the required courses for an Architectural Technology degree.",
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0010062,
+   "judge_cost": 0.0,
+   "latency_ms": 4046,
+   "chat_ms": 2151,
+   "retrieval_ms": 1890.5,
+   "cache_hit": true,
+   "rerank_cost": 0.0006724000000000001,
+   "rerank_ms": 1824.6,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 320,
+     "completion_tokens": 17,
+     "cost": 4.05e-05,
+     "ms": 720.4,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q32",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "calendar_only",
+   "tags": [],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "faithfulness_reason": null,
+   "correctness_reason": "rule (calendar scoring 2): returned rows cover the gold rows",
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0004946,
+   "judge_cost": 0.0,
+   "latency_ms": 2027,
+   "chat_ms": 2021,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "calendar",
+   "router": {
+    "route": "calendar",
+    "intent": "calendar",
+    "term_mention": "Winter 2027",
+    "classify": {
+     "prompt_tokens": 332,
+     "completion_tokens": 20,
+     "cost": 4.32e-05,
+     "ms": 977.4,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "term_status": "explicit",
+    "term": "Winter 2027",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [
+     "winter-2027-003"
+    ],
+    "select": {
+     "prompt_tokens": 4424,
+     "completion_tokens": 18,
+     "cost": 0.0004514,
+     "ms": 1043.8,
+     "error": null,
+     "status": "ok"
+    },
+    "selector_version": 2,
+    "pool_size": 131,
+    "render_ms": 0.105,
+    "tba_rows": [],
+    "contact_office": null
+   },
+   "returned_rows": [
+    "winter-2027-003"
+   ],
+   "calendar_v1": {
+    "correctness": "correct",
+    "label": null
+   },
+   "calendar_v2": {
+    "correctness": "correct",
+    "label": null
+   }
+  },
+  {
+   "id": "q35",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "abstain",
+   "tags": [],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "calendar_unsupported_term",
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0001059,
+   "judge_cost": 0.0,
+   "latency_ms": 3884,
+   "chat_ms": 3878,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "abstain",
+   "router": {
+    "route": "abstain",
+    "intent": "calendar",
+    "term_mention": "Fall 2027",
+    "classify": {
+     "prompt_tokens": 321,
+     "completion_tokens": 20,
+     "cost": 4.21e-05,
+     "ms": 2504.4,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "term_status": "unsupported",
+    "term": "Fall 2027",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [],
+    "select": {
+     "prompt_tokens": 583,
+     "completion_tokens": 11,
+     "cost": 6.38e-05,
+     "ms": 1373.8,
+     "error": null,
+     "status": "empty"
+    },
+    "selector_version": 1,
+    "pool_size": 8,
+    "contact_office": "registrar"
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q38",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "calendar_only",
+   "tags": [],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "faithfulness_reason": null,
+   "correctness_reason": "rule (calendar scoring 2): returned rows cover the gold rows",
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0004944,
+   "judge_cost": 0.0,
+   "latency_ms": 2461,
+   "chat_ms": 2456,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "calendar",
+   "router": {
+    "route": "calendar",
+    "intent": "calendar",
+    "term_mention": "Spring 2027",
+    "classify": {
+     "prompt_tokens": 331,
+     "completion_tokens": 20,
+     "cost": 4.3100000000000004e-05,
+     "ms": 878.7,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "term_status": "explicit",
+    "term": "Spring 2027",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [
+     "spring-2027-036"
+    ],
+    "select": {
+     "prompt_tokens": 4423,
+     "completion_tokens": 18,
+     "cost": 0.0004513,
+     "ms": 1577.7,
+     "error": null,
+     "status": "ok"
+    },
+    "selector_version": 2,
+    "pool_size": 131,
+    "render_ms": 0.071,
+    "tba_rows": [],
+    "contact_office": null
+   },
+   "returned_rows": [
+    "spring-2027-036"
+   ],
+   "calendar_v1": {
+    "correctness": "correct",
+    "label": null
+   },
+   "calendar_v2": {
+    "correctness": "correct",
+    "label": null
+   }
+  },
+  {
+   "id": "q41",
+   "type": "multi_chunk",
+   "department": "EET-NYT",
+   "gold_kind": "normal",
+   "tags": [
+    "chain"
+   ],
+   "retrieved": [
+    {
+     "id": "dept/EET-NYT/program-electrical-engineering-technology-btech#8",
+     "similarity": 0.5676
+    },
+    {
+     "id": "catalog:EET 2141",
+     "similarity": 0.5885
+    },
+    {
+     "id": "catalog:EET 2271",
+     "similarity": 0.5764
+    },
+    {
+     "id": "catalog:EET 1241",
+     "similarity": 0.5763
+    },
+    {
+     "id": "catalog:EET 1202",
+     "similarity": 0.5728
+    },
+    {
+     "id": "catalog:EET 1122",
+     "similarity": 0.5726
+    },
+    {
+     "id": "catalog:EET 4212",
+     "similarity": 0.5708
+    },
+    {
+     "id": "catalog:EET 2261",
+     "similarity": 0.5672
+    },
+    {
+     "id": "catalog:EET 2000",
+     "similarity": 0.5643
+    },
+    {
+     "id": "catalog:EET 4112",
+     "similarity": 0.5637
+    }
+   ],
+   "first_gold_rank": 10,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ],
+   "invalid_citations": [],
+   "correctness": "partial",
+   "correctness_reason": "It correctly traces the listed chain through MAT 1475 and notes the EET 3102 co-requisite/approval condition, but it fails to continue with MAT 1375 and its prerequisites, which are needed for the requested step-by-step path.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All course requirements and catalog quotations stated in the answer are supported by the provided sources, and it accurately notes that prerequisites beyond MAT 1475 were not shown.",
+   "judge_status": "ok",
+   "label": "not supported yet (chained prerequisite)",
+   "label_reason": "needs the prerequisites of the prerequisites (chained prerequisite)",
+   "answer_cost": 4.2300000000000005e-05,
+   "judge_cost": 0.00601,
+   "latency_ms": 860,
+   "chat_ms": 856,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "chain",
+   "router": {
+    "route": "chain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 328,
+     "completion_tokens": 19,
+     "cost": 4.2300000000000005e-05,
+     "ms": 856.4,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "EET 4202",
+     "detail": [],
+     "walk_ms": 0.654,
+     "course_count": 6,
+     "truncated": true,
+     "unexpanded": [
+      {
+       "code": "MAT 1475",
+       "level": 4,
+       "names": [
+        "MAT 1375"
+       ],
+       "reason": "depth limit"
+      }
+     ],
+     "dropped": [],
+     "no_record_codes": [],
+     "source_ids": [
+      "catalog:EET 4202",
+      "catalog:EET 4112",
+      "catalog:EET 3212",
+      "catalog:EET 3102",
+      "catalog:MAT 1575",
+      "catalog:MAT 1475"
+     ],
+     "rendered_by": "code"
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q43",
+   "type": "lookup",
+   "department": "EET-NYT",
+   "gold_kind": "normal",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "catalog:EET 2271",
+     "similarity": 0.644
+    },
+    {
+     "id": "catalog:EET 2261",
+     "similarity": 0.6778
+    },
+    {
+     "id": "catalog:EET 2141",
+     "similarity": 0.6404
+    },
+    {
+     "id": "catalog:EET 2220",
+     "similarity": 0.6362
+    },
+    {
+     "id": "catalog:EET 2262",
+     "similarity": 0.6223
+    },
+    {
+     "id": "catalog:EET 2251",
+     "similarity": 0.6155
+    },
+    {
+     "id": "catalog:EET 2140",
+     "similarity": 0.6053
+    },
+    {
+     "id": "catalog:EET 1122",
+     "similarity": 0.6034
+    },
+    {
+     "id": "catalog:EET 4120",
+     "similarity": 0.5949
+    },
+    {
+     "id": "catalog:EET 4112",
+     "similarity": 0.591
+    }
+   ],
+   "first_gold_rank": null,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It correctly identifies EET 2171's prerequisites as EET 1202 and EET 1241 and EET 2162's as EET 1240 and EET 1241, thereby showing they differ.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All stated course prerequisites, titles, credits, and quoted catalog language are supported by the provided numbered sources.",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4.29e-05,
+   "judge_cost": 0.007662,
+   "latency_ms": 999,
+   "chat_ms": 995,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "chain",
+   "router": {
+    "route": "chain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 334,
+     "completion_tokens": 19,
+     "cost": 4.29e-05,
+     "ms": 995.3,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "codes",
+     "code": "EET 2171",
+     "detail": [
+      "EET 2171",
+      "EET 2162"
+     ],
+     "walk_ms": 0.36,
+     "course_count": 11,
+     "truncated": false,
+     "unexpanded": [],
+     "dropped": [],
+     "no_record_codes": [
+      "ENG 1101",
+      "PHYS 1434",
+      "PHYS 1442",
+      "PHYS 1433",
+      "PHYS 1441"
+     ],
+     "source_ids": [
+      "catalog:EET 2171",
+      "catalog:EET 1202",
+      "catalog:EET 1241",
+      "catalog:EET 1102",
+      "catalog:EET 1240",
+      "catalog:EET 1222",
+      "catalog:MAT 1275",
+      "catalog:MAT 1275CO",
+      "catalog:EET 1122",
+      "catalog:MAT 1375",
+      "catalog:EET 2162"
+     ],
+     "rendered_by": "code"
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q46",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "abstain",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "page/CST-NYT/chairperson#1",
+     "similarity": 0.5341
+    },
+    {
+     "id": "page/advisement/virtual-advisors#3",
+     "similarity": 0.4741
+    },
+    {
+     "id": "page/MATH-NYT/chairperson#1",
+     "similarity": 0.4639
+    },
+    {
+     "id": "page/EET-NYT/chairperson#1",
+     "similarity": 0.4166
+    },
+    {
+     "id": "page/advisement/virtual-advisors#6",
+     "similarity": 0.4039
+    },
+    {
+     "id": "page/CST-NYT/advisement#1",
+     "similarity": 0.3892
+    },
+    {
+     "id": "page/advisement/required-core#3",
+     "similarity": 0.375
+    },
+    {
+     "id": "page/DENT-NYT/chairperson#1",
+     "similarity": 0.37
+    },
+    {
+     "id": "page/advisement/virtual-advisors#20",
+     "similarity": 0.3694
+    },
+    {
+     "id": "page/advisement/virtual-advisors#10",
+     "similarity": 0.3566
+    }
+   ],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "below_threshold",
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0006691,
+   "judge_cost": 0.0,
+   "latency_ms": 2459,
+   "chat_ms": 717,
+   "retrieval_ms": 1734.4,
+   "cache_hit": true,
+   "rerank_cost": 0.0006286,
+   "rerank_ms": 1671.9,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 320,
+     "completion_tokens": 17,
+     "cost": 4.05e-05,
+     "ms": 717.1,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q48",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "no_advice",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "page/bursar/payment-plan#1",
+     "similarity": 0.5545
+    },
+    {
+     "id": "page/financial-aid/faqs#2",
+     "similarity": 0.422
+    },
+    {
+     "id": "page/bursar/payment-deadlines#1",
+     "similarity": 0.4085
+    },
+    {
+     "id": "page/financial-aid/faqs#3",
+     "similarity": 0.3208
+    },
+    {
+     "id": "page/admissions/tuition-penalty#3",
+     "similarity": 0.4157
+    },
+    {
+     "id": "page/admissions/tuition-penalty#1",
+     "similarity": 0.4025
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#6",
+     "similarity": 0.3644
+    },
+    {
+     "id": "page/financial-aid/sap#10",
+     "similarity": 0.3436
+    },
+    {
+     "id": "page/financial-aid/financial-payment-calendar#1",
+     "similarity": 0.3376
+    },
+    {
+     "id": "pdf/special-circumstances-flyer#4",
+     "similarity": 0.3302
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    2,
+    3,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "The answer explicitly declines to recommend whether to enroll and only provides rules, dates, and consequences.",
+   "faithfulness": null,
+   "faithfulness_reason": null,
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.00099136,
+   "judge_cost": 0.001984,
+   "latency_ms": 7922,
+   "chat_ms": 5433,
+   "retrieval_ms": 2486.3,
+   "cache_hit": false,
+   "rerank_cost": 0.0005507999999999999,
+   "rerank_ms": 1925.6,
+   "rerank_failed": false,
+   "route": "advice",
+   "router": {
+    "route": "advice",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 321,
+     "completion_tokens": 17,
+     "cost": 4.0600000000000004e-05,
+     "ms": 983.5,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "advice": {
+     "actions": [
+      "payment_plan",
+      "sign_up"
+     ],
+     "query": "What are the rules and deadlines for the tuition payment plan? What are the rules and deadlines for registering for classes?",
+     "row_ids": [
+      "fall-2026-007",
+      "fall-2026-035",
+      "fall-2026-037",
+      "fall-2026-038",
+      "fall-2026-039"
+     ],
+     "term": "Fall 2026"
+    },
+    "contact_office": null
+   },
+   "returned_rows": [
+    "fall-2026-007",
+    "fall-2026-035",
+    "fall-2026-037",
+    "fall-2026-038",
+    "fall-2026-039"
+   ]
+  },
+  {
+   "id": "q50",
+   "type": "ambiguous",
+   "department": null,
+   "gold_kind": "clarify",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "page/bursar/refund-policy#4",
+     "similarity": 0.5879
+    },
+    {
+     "id": "page/admissions/tuition-refund#1",
+     "similarity": 0.5195
+    },
+    {
+     "id": "page/bursar/refund-policy#1",
+     "similarity": 0.5829
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#3",
+     "similarity": 0.5787
+    },
+    {
+     "id": "page/bursar/refund-policy#3",
+     "similarity": 0.5706
+    },
+    {
+     "id": "page/bursar/refund-policy#2",
+     "similarity": 0.5627
+    },
+    {
+     "id": "page/bursar/payment-deadlines#1",
+     "similarity": 0.4434
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#5",
+     "similarity": 0.5942
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#4",
+     "similarity": 0.5707
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#1",
+     "similarity": 0.5394
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    3
+   ],
+   "invalid_citations": [],
+   "correctness": null,
+   "faithfulness": null,
+   "correctness_reason": null,
+   "faithfulness_reason": null,
+   "judge_status": "not judged",
+   "label": "not supported yet",
+   "label_reason": "CLARIFY question",
+   "answer_cost": 0.0006881,
+   "judge_cost": 0.0,
+   "latency_ms": 4949,
+   "chat_ms": 2954,
+   "retrieval_ms": 1989.3,
+   "cache_hit": true,
+   "rerank_cost": 0.0004601,
+   "rerank_ms": 1928.5,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 325,
+     "completion_tokens": 17,
+     "cost": 4.1e-05,
+     "ms": 936.2,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q55",
+   "type": "lookup",
+   "department": "CST-NYT",
+   "gold_kind": "normal",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "page/CST-NYT/transfer-policies#1",
+     "similarity": 0.6882
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-systems-btech#4",
+     "similarity": 0.6828
+    },
+    {
+     "id": "page/MATH-NYT/student-resources#3",
+     "similarity": 0.6472
+    },
+    {
+     "id": "dept/EET-NYT/program-electrical-engineering-technology-btech#4",
+     "similarity": 0.593
+    },
+    {
+     "id": "dept/CST-NYT/program-cybersecurity-bs#4",
+     "similarity": 0.5817
+    },
+    {
+     "id": "page/DENT-NYT/accreditation#5",
+     "similarity": 0.5692
+    },
+    {
+     "id": "dept/CST-NYT/program-data-science-bs#4",
+     "similarity": 0.5566
+    },
+    {
+     "id": "dept/CST-NYT/overview#4",
+     "similarity": 0.547
+    },
+    {
+     "id": "dept/CST-NYT/overview#2",
+     "similarity": 0.5157
+    },
+    {
+     "id": "page/CST-NYT/index#1",
+     "similarity": 0.5157
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "The answer lists exactly the six community colleges named in the gold answer.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "The listed colleges and the existence of CST articulation agreements are explicitly stated in source [1].",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0006244,
+   "judge_cost": 0.003534,
+   "latency_ms": 4158,
+   "chat_ms": 2285,
+   "retrieval_ms": 1870.4,
+   "cache_hit": true,
+   "rerank_cost": 0.00045,
+   "rerank_ms": 1812.0,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 323,
+     "completion_tokens": 17,
+     "cost": 4.08e-05,
+     "ms": 848.0,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q60",
+   "type": "multi_chunk",
+   "department": null,
+   "gold_kind": "normal",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "page/financial-aid/tap-appeal#2",
+     "similarity": 0.7084
+    },
+    {
+     "id": "page/financial-aid/tap-appeal#1",
+     "similarity": 0.4629
+    },
+    {
+     "id": "page/financial-aid/faqs#8",
+     "similarity": 0.3012
+    },
+    {
+     "id": "page/financial-aid/faqs#7",
+     "similarity": 0.5359
+    },
+    {
+     "id": "page/financial-aid/faqs#2",
+     "similarity": 0.421
+    },
+    {
+     "id": "page/DENT-NYT/faq#10",
+     "similarity": 0.4095
+    },
+    {
+     "id": "page/financial-aid/faqs#3",
+     "similarity": 0.4078
+    },
+    {
+     "id": "page/financial-aid/sap#10",
+     "similarity": 0.3927
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#5",
+     "similarity": 0.344
+    },
+    {
+     "id": "page/financial-aid/sap#6",
+     "similarity": 0.3134
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "partial",
+   "correctness_reason": "It accurately defines the waiver and eligibility circumstances, but omits the requested process for obtaining one (speaking to a TAP Counselor and submitting the form).",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All statements in the answer are directly supported by source [1].",
+   "judge_status": "ok",
+   "label": "generation error",
+   "label_reason": "It accurately defines the waiver and eligibility circumstances, but omits the requested process for obtaining one (speaking to a TAP Counselor and submitting the form).",
+   "answer_cost": 0.0008071,
+   "judge_cost": 0.005724,
+   "latency_ms": 8719,
+   "chat_ms": 6678,
+   "retrieval_ms": 2035.4,
+   "cache_hit": true,
+   "rerank_cost": 0.0005026000000000001,
+   "rerank_ms": 1976.6,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 321,
+     "completion_tokens": 17,
+     "cost": 4.0600000000000004e-05,
+     "ms": 1249.4,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q62",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "calendar_only",
+   "tags": [
+    "calendar"
+   ],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "faithfulness_reason": null,
+   "correctness_reason": "rule (calendar scoring 2): returned rows cover the gold rows",
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0004928,
+   "judge_cost": 0.0,
+   "latency_ms": 2507,
+   "chat_ms": 2501,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "calendar",
+   "router": {
+    "route": "calendar",
+    "intent": "calendar",
+    "term_mention": "Fall 2026",
+    "classify": {
+     "prompt_tokens": 323,
+     "completion_tokens": 20,
+     "cost": 4.2300000000000005e-05,
+     "ms": 1001.3,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "term_status": "explicit",
+    "term": "Fall 2026",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [
+     "fall-2026-028"
+    ],
+    "select": {
+     "prompt_tokens": 4415,
+     "completion_tokens": 18,
+     "cost": 0.0004505,
+     "ms": 1499.4,
+     "error": null,
+     "status": "ok"
+    },
+    "selector_version": 2,
+    "pool_size": 131,
+    "render_ms": 0.064,
+    "tba_rows": [],
+    "contact_office": null
+   },
+   "returned_rows": [
+    "fall-2026-028"
+   ],
+   "calendar_v1": {
+    "correctness": "correct",
+    "label": null
+   },
+   "calendar_v2": {
+    "correctness": "correct",
+    "label": null
+   }
+  },
+  {
+   "id": "q66",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "calendar_only",
+   "tags": [
+    "calendar"
+   ],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "faithfulness_reason": null,
+   "correctness_reason": "rule (calendar scoring 2): returned rows cover the gold rows",
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0004928,
+   "judge_cost": 0.0,
+   "latency_ms": 2724,
+   "chat_ms": 2720,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "calendar",
+   "router": {
+    "route": "calendar",
+    "intent": "calendar",
+    "term_mention": "Spring 2027",
+    "classify": {
+     "prompt_tokens": 323,
+     "completion_tokens": 20,
+     "cost": 4.2300000000000005e-05,
+     "ms": 1733.3,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "term_status": "explicit",
+    "term": "Spring 2027",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [
+     "spring-2027-051"
+    ],
+    "select": {
+     "prompt_tokens": 4415,
+     "completion_tokens": 18,
+     "cost": 0.0004505,
+     "ms": 986.4,
+     "error": null,
+     "status": "ok"
+    },
+    "selector_version": 2,
+    "pool_size": 131,
+    "render_ms": 0.103,
+    "tba_rows": [],
+    "contact_office": null
+   },
+   "returned_rows": [
+    "spring-2027-051"
+   ],
+   "calendar_v1": {
+    "correctness": "correct",
+    "label": null
+   },
+   "calendar_v2": {
+    "correctness": "correct",
+    "label": null
+   }
+  },
+  {
+   "id": "q69",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "calendar_only",
+   "tags": [
+    "calendar"
+   ],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "faithfulness_reason": null,
+   "correctness_reason": "rule (calendar scoring 2): returned rows cover the gold rows",
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0004906,
+   "judge_cost": 0.0,
+   "latency_ms": 2236,
+   "chat_ms": 2229,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "calendar",
+   "router": {
+    "route": "calendar",
+    "intent": "calendar",
+    "term_mention": "this spring",
+    "classify": {
+     "prompt_tokens": 317,
+     "completion_tokens": 18,
+     "cost": 4.07e-05,
+     "ms": 1019.0,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "term_status": "season",
+    "term": "Spring 2027",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [
+     "spring-2027-045"
+    ],
+    "select": {
+     "prompt_tokens": 4409,
+     "completion_tokens": 18,
+     "cost": 0.00044990000000000004,
+     "ms": 1210.4,
+     "error": null,
+     "status": "ok"
+    },
+    "selector_version": 2,
+    "pool_size": 131,
+    "render_ms": 0.117,
+    "tba_rows": [],
+    "contact_office": null
+   },
+   "returned_rows": [
+    "spring-2027-045"
+   ],
+   "calendar_v1": {
+    "correctness": "correct",
+    "label": null
+   },
+   "calendar_v2": {
+    "correctness": "correct",
+    "label": null
+   }
+  },
+  {
+   "id": "q72",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "abstain",
+   "tags": [
+    "calendar"
+   ],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "calendar_unsupported_term",
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0001062,
+   "judge_cost": 0.0,
+   "latency_ms": 1998,
+   "chat_ms": 1994,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "abstain",
+   "router": {
+    "route": "abstain",
+    "intent": "calendar",
+    "term_mention": "Fall 2027",
+    "classify": {
+     "prompt_tokens": 320,
+     "completion_tokens": 20,
+     "cost": 4.2e-05,
+     "ms": 1034.2,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "term_status": "unsupported",
+    "term": "Fall 2027",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [],
+    "select": {
+     "prompt_tokens": 582,
+     "completion_tokens": 12,
+     "cost": 6.42e-05,
+     "ms": 959.4,
+     "error": null,
+     "status": "empty"
+    },
+    "selector_version": 1,
+    "pool_size": 8,
+    "contact_office": "registrar"
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q73",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "calendar_only",
+   "tags": [
+    "calendar"
+   ],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "faithfulness_reason": null,
+   "correctness_reason": "rule (calendar scoring 2): returned rows cover the gold rows",
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.00010999999999999999,
+   "judge_cost": 0.0,
+   "latency_ms": 1729,
+   "chat_ms": 1722,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "calendar",
+   "router": {
+    "route": "calendar",
+    "intent": "calendar",
+    "term_mention": "Fall 2027",
+    "classify": {
+     "prompt_tokens": 324,
+     "completion_tokens": 20,
+     "cost": 4.24e-05,
+     "ms": 823.6,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "term_status": "unsupported",
+    "term": "Fall 2027",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [
+     "spring-2027-040"
+    ],
+    "select": {
+     "prompt_tokens": 586,
+     "completion_tokens": 18,
+     "cost": 6.759999999999999e-05,
+     "ms": 898.6,
+     "error": null,
+     "status": "ok"
+    },
+    "selector_version": 1,
+    "pool_size": 8,
+    "render_ms": 0.094,
+    "tba_rows": [],
+    "contact_office": null
+   },
+   "returned_rows": [
+    "spring-2027-040"
+   ],
+   "calendar_v1": {
+    "correctness": "correct",
+    "label": null
+   },
+   "calendar_v2": {
+    "correctness": "correct",
+    "label": null
+   }
+  },
+  {
+   "id": "q74",
+   "type": "ambiguous",
+   "department": null,
+   "gold_kind": "clarify",
+   "tags": [
+    "calendar"
+   ],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    2,
+    3
+   ],
+   "invalid_citations": [],
+   "correctness": null,
+   "faithfulness": null,
+   "correctness_reason": null,
+   "faithfulness_reason": null,
+   "judge_status": "not judged",
+   "label": "not supported yet",
+   "label_reason": "CLARIFY question",
+   "answer_cost": 4.25e-05,
+   "judge_cost": 0.0,
+   "latency_ms": 729,
+   "chat_ms": 725,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "calendar",
+   "router": {
+    "route": "calendar",
+    "intent": "calendar",
+    "term_mention": "Fall 2026",
+    "classify": {
+     "prompt_tokens": 325,
+     "completion_tokens": 20,
+     "cost": 4.25e-05,
+     "ms": 725.4,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "term_status": "explicit",
+    "term": "Fall 2026",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [
+     "fall-2026-011",
+     "fall-2026-021",
+     "fall-2026-040"
+    ],
+    "select": null,
+    "selector_version": "drop_family",
+    "pool_size": 131,
+    "tba_rows": [],
+    "contact_office": null
+   },
+   "returned_rows": [
+    "fall-2026-011",
+    "fall-2026-021",
+    "fall-2026-040"
+   ]
+  },
+  {
+   "id": "q78",
+   "type": "multi_chunk",
+   "department": "MATH-NYT",
+   "gold_kind": "normal",
+   "tags": [
+    "chain"
+   ],
+   "retrieved": [
+    {
+     "id": "catalog:MAT 1375",
+     "similarity": 0.5427
+    },
+    {
+     "id": "page/MATH-NYT/faqs#10",
+     "similarity": 0.5421
+    },
+    {
+     "id": "catalog:MAT 1275CO",
+     "similarity": 0.5173
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-information-systems-aas#9",
+     "similarity": 0.4967
+    },
+    {
+     "id": "dept/MATH-NYT/program-computer-science-as#5",
+     "similarity": 0.4882
+    },
+    {
+     "id": "page/MATH-NYT/student-resources#2",
+     "similarity": 0.5337
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-information-systems-aas#14",
+     "similarity": 0.4872
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-information-systems-aas#19",
+     "similarity": 0.4832
+    },
+    {
+     "id": "catalog:MAT 1475",
+     "similarity": 0.5617
+    },
+    {
+     "id": "catalog:MAT 1372",
+     "similarity": 0.5428
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    2,
+    3
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It accurately states that MAT 1375 requires MAT 1275 or MAT 1275CO, or meeting the MAT 1375 math placement requirement, and correctly provides the relevant catalog prerequisite details for those options.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All course names, prerequisite quotations, and statements about named courses are directly supported by the provided catalog sources.",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4.1700000000000004e-05,
+   "judge_cost": 0.004158,
+   "latency_ms": 940,
+   "chat_ms": 937,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "chain",
+   "router": {
+    "route": "chain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 322,
+     "completion_tokens": 19,
+     "cost": 4.1700000000000004e-05,
+     "ms": 937.0,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "MAT 1375",
+     "detail": [],
+     "walk_ms": 0.504,
+     "course_count": 3,
+     "truncated": false,
+     "unexpanded": [],
+     "dropped": [],
+     "no_record_codes": [],
+     "source_ids": [
+      "catalog:MAT 1375",
+      "catalog:MAT 1275",
+      "catalog:MAT 1275CO"
+     ],
+     "rendered_by": "code"
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q80",
+   "type": "multi_chunk",
+   "department": "MATH-NYT",
+   "gold_kind": "normal",
+   "tags": [
+    "chain"
+   ],
+   "retrieved": [
+    {
+     "id": "catalog:MAT 1372",
+     "similarity": 0.5531
+    },
+    {
+     "id": "catalog:MAT 1475",
+     "similarity": 0.5466
+    },
+    {
+     "id": "page/MATH-NYT/faqs#10",
+     "similarity": 0.5345
+    },
+    {
+     "id": "catalog:MAT 1375",
+     "similarity": 0.5293
+    },
+    {
+     "id": "catalog:MAT 1272",
+     "similarity": 0.5236
+    },
+    {
+     "id": "page/MATH-NYT/student-resources#2",
+     "similarity": 0.5207
+    },
+    {
+     "id": "page/MATH-NYT/student-resources#6",
+     "similarity": 0.5113
+    },
+    {
+     "id": "page/MATH-NYT/student-resources#7",
+     "similarity": 0.5066
+    },
+    {
+     "id": "catalog:MAT 1575",
+     "similarity": 0.5005
+    },
+    {
+     "id": "catalog:MAT 2440",
+     "similarity": 0.5004
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    2,
+    3
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It accurately identifies MAT 1275CO or MAT 1275 (or higher) as the prerequisite route for MAT 1372 and MAT 2572 as the exclusion, while correctly providing the listed upstream requirements.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All course names, prerequisite/exclusion statements, and quoted catalog text are supported by the numbered sources.",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4.25e-05,
+   "judge_cost": 0.004122,
+   "latency_ms": 888,
+   "chat_ms": 882,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "chain",
+   "router": {
+    "route": "chain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 330,
+     "completion_tokens": 19,
+     "cost": 4.25e-05,
+     "ms": 881.7,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "MAT 1372",
+     "detail": [],
+     "walk_ms": 0.506,
+     "course_count": 3,
+     "truncated": false,
+     "unexpanded": [],
+     "dropped": [],
+     "no_record_codes": [],
+     "source_ids": [
+      "catalog:MAT 1372",
+      "catalog:MAT 1275CO",
+      "catalog:MAT 1275"
+     ],
+     "rendered_by": "code"
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q82",
+   "type": "unanswerable",
+   "department": "CST-NYT",
+   "gold_kind": "normal",
+   "tags": [
+    "chain"
+   ],
+   "retrieved": [
+    {
+     "id": "catalog:CST 3508",
+     "similarity": 0.5291
+    },
+    {
+     "id": "catalog:CST 3510",
+     "similarity": 0.5792
+    },
+    {
+     "id": "page/CST-NYT/tutoring#2",
+     "similarity": 0.5732
+    },
+    {
+     "id": "catalog:CST 4710",
+     "similarity": 0.5443
+    },
+    {
+     "id": "catalog:CST 4900",
+     "similarity": 0.5328
+    },
+    {
+     "id": "catalog:CST 4816",
+     "similarity": 0.5258
+    },
+    {
+     "id": "catalog:CST 3610",
+     "similarity": 0.5202
+    },
+    {
+     "id": "catalog:CST 4715",
+     "similarity": 0.5135
+    },
+    {
+     "id": "catalog:CST 4905",
+     "similarity": 0.513
+    },
+    {
+     "id": "catalog:CST 3607",
+     "similarity": 0.5114
+    }
+   ],
+   "first_gold_rank": null,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It accurately reports the catalog prerequisite text and appropriately says the individual courses cannot be read from that shorthand.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All claims are directly supported by the provided catalog source, including the course title and unexpanded prerequisite string.",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4.1700000000000004e-05,
+   "judge_cost": 0.0023,
+   "latency_ms": 895,
+   "chat_ms": 890,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "chain",
+   "router": {
+    "route": "chain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 322,
+     "completion_tokens": 19,
+     "cost": 4.1700000000000004e-05,
+     "ms": 890.1,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "CST 3508",
+     "detail": [],
+     "walk_ms": 0.688,
+     "course_count": 1,
+     "truncated": false,
+     "unexpanded": [],
+     "dropped": [],
+     "no_record_codes": [],
+     "source_ids": [
+      "catalog:CST 3508"
+     ],
+     "rendered_by": "code"
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q84",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "abstain",
+   "tags": [
+    "chain"
+   ],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "chain_outside_departments",
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4.1700000000000004e-05,
+   "judge_cost": 0.0,
+   "latency_ms": 949,
+   "chat_ms": 936,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "abstain",
+   "router": {
+    "route": "abstain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 322,
+     "completion_tokens": 19,
+     "cost": 4.1700000000000004e-05,
+     "ms": 936.3,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "ENG 1101",
+     "detail": [],
+     "walk_ms": 0.732,
+     "course_count": 0,
+     "truncated": false,
+     "no_record": true,
+     "outside_departments": true
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q86",
+   "type": "multi_chunk",
+   "department": "DENT-NYT",
+   "gold_kind": "normal",
+   "tags": [
+    "chain"
+   ],
+   "retrieved": [
+    {
+     "id": "catalog:DEN 1100",
+     "similarity": 0.5275
+    },
+    {
+     "id": "catalog:DEN 1112",
+     "similarity": 0.4602
+    },
+    {
+     "id": "catalog:DEN 2300",
+     "similarity": 0.5297
+    },
+    {
+     "id": "catalog:DEN 1200",
+     "similarity": 0.5181
+    },
+    {
+     "id": "catalog:DEN 1218",
+     "similarity": 0.5075
+    },
+    {
+     "id": "catalog:DEN 2400",
+     "similarity": 0.5073
+    },
+    {
+     "id": "catalog:DEN 2413",
+     "similarity": 0.481
+    },
+    {
+     "id": "catalog:DEN 1217",
+     "similarity": 0.4798
+    },
+    {
+     "id": "catalog:DEN 2318",
+     "similarity": 0.4756
+    },
+    {
+     "id": "catalog:DEN 2311",
+     "similarity": 0.4431
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "citations": [
+    1,
+    2
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It accurately states the catalog prerequisites for DEN 1100, including CUNY proficiency, department approval, and DEN 1112 as a corequisite.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All claims, including the DEN 1112 course information and reciprocal corequisite statement, are directly supported by the provided sources.",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4.15e-05,
+   "judge_cost": 0.002806,
+   "latency_ms": 1306,
+   "chat_ms": 1302,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "chain",
+   "router": {
+    "route": "chain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 320,
+     "completion_tokens": 19,
+     "cost": 4.15e-05,
+     "ms": 1302.0,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "DEN 1100",
+     "detail": [],
+     "walk_ms": 0.886,
+     "course_count": 2,
+     "truncated": false,
+     "unexpanded": [],
+     "dropped": [],
+     "no_record_codes": [],
+     "source_ids": [
+      "catalog:DEN 1100",
+      "catalog:DEN 1112"
+     ],
+     "rendered_by": "code"
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  }
+ ],
+ "question_ids": [
+  "q02",
+  "q07",
+  "q10",
+  "q11",
+  "q17",
+  "q20",
+  "q23",
+  "q25",
+  "q26",
+  "q29",
+  "q32",
+  "q35",
+  "q38",
+  "q41",
+  "q43",
+  "q46",
+  "q48",
+  "q50",
+  "q55",
+  "q60",
+  "q62",
+  "q66",
+  "q69",
+  "q72",
+  "q73",
+  "q74",
+  "q78",
+  "q80",
+  "q82",
+  "q84",
+  "q86"
+ ],
+ "question_ids_hash": "36bb1282cd31",
+ "git": {
+  "commit": "159b295",
+  "dirty": false
+ }
+}
