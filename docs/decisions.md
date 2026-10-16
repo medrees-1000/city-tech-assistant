@@ -1226,3 +1226,35 @@ cq05 "fafsa deadline" is **q123** (type lookup, department null, tag casual), ad
 - **For the owner:** q49 is a question whose gold itself allows answering ("answer both cases correctly"), so it is the one the rule catches because the answer picked one case. A narrower question is yours: reword the K2 list (drop q49, or keep it and require a clarify), or leave E1 off. No second experiment was started.
 
 **Cost of part 2:** casual-b0-cq05 $0.0041 + E1 step 2 $0.0006 + K2-repeat $0.0124 = **about $0.017** (expected under $0.15; stop level $0.40).
+
+## Final run: test split, pre-registered (Oct 16, 2026; before the run)
+
+Written and committed BEFORE the final run. Nothing may change between the freeze tag and the report.
+
+**Frozen commit rule.** The code, config, prompts, thresholds, data and eval questions are frozen at the annotated git tag `final-run-frozen` (created at the HEAD that contains this section, pushed before the run). The commit hash is written here in a follow-up commit AFTER the run, so the frozen commit itself is unchanged. Only result files, `docs/` text and the independent-recompute script are added after the tag; no file under `src/`, `config/`, `data/`, `eval/questions.jsonl` or `tests/` changes.
+
+**What is run.** The 31 test questions, once, through the product pipeline (router graph and retrieve; the eval runner), command (the flags are the runner's own; the NEW configuration of milestone 1 is every default):
+
+```
+uv run python -m cta.eval.run_answers --split test --final --label final-run --calendar-scoring 2 --budget 0.80 --budget-labels none --yes
+```
+
+Second judge pass (no pipeline re-run, no answer or embedding call; the runner's `--rejudge` re-judges the stored answers of a finished run):
+
+```
+uv run python -m cta.eval.run_answers --split test --final --rejudge final-run --label final-run-judge2 --yes
+```
+
+Both judge passes are reported, plus their mean (judge noise is 0.03 to 0.05 on dev). Pass 1 is the one stored with the run; neither pass is chosen after looking at the results. Earlier test runs exist (`baseline-final` on 10 questions, `ms1-old` and `ms1-new` on 31, milestone 1, Oct 13); nothing was tuned on them (`docs/milestone1-results.md`), and this is the planned final milestone run. The runner refuses a label that exists, so this run cannot be repeated under the same label; if it fails for an infrastructure reason I report it and ask before any re-run.
+
+**Settings in force (read from `config/models.yaml` and the environment on 2026-10-16).** Answer model `gpt-6-luna`: temperature 0.1, top_p 0.3, reasoning none, k 5, 600 output tokens (1000 on the advice route). Abstain cutoff 0.59; near-miss margin 0.04 (a page is listed only if its own similarity is at or above cutoff minus margin). Embedding `text-embedding-3-small`; retrieval mode `vector`, 20 candidates, reranker `pool_a` (`gpt-6-luna`, temperature 0), department filter off. Router on, selector 2, chain on, chain render `code`, contacts on (contact policy v2). `retrieval.fallback_rewrite` off. Judge `gpt-5.6-terra`, temperature 0, reasoning none, rubric version 3, calendar scoring v2. `eval.today` 2026-10-11. Language mode `english_only` (an API-layer setting). Tracing off (`tracing.enabled` false, `LANGSMITH_TRACING=false`, no tracing variable set in the environment). The index was checked: `cta.index.load --dry-run` reports 0 new, 0 changed, 619 unchanged, 0 stale; `cta.index.load_calendar --dry-run` reports 136 unchanged; `cta.validate` exits 0 with no errors.
+
+**What is reported.** recall@k, precision@k, hit rate and MRR (retrieval-scored questions, n stated); judged answer correctness and faithfulness (normal-gold questions); abstention accuracy and wrongly abstained; calendar-only questions under scoring v2; chain questions; cost per request and latency (median and p95 if the runner stores them); all of these overall, by question type and by department (the department table is computed by the independent script, since the runner reports by type). One question moves a rate by about 3 points: counts are given with every rate and no significance test is claimed.
+
+**What the final run measures.** The PIPELINE. The API-layer guardrails (rate limit, daily cap, kill switch, injection screening, personal-data scrub, distress and stress replies, the language step, input hygiene, the topic sentence, output checks) are not part of the eval runner; they are covered by unit tests and the two outside tester rounds. The result is therefore not a measure of the whole product.
+
+**Independent check.** A separate script (`scripts/recompute_final.py`, plain Python, it does not import the runner's metric code) recomputes the headline numbers from the saved per-question results and the gold labels and is compared with the runner's numbers. A mismatch is reported; the product is not fixed because of it and a harness bug is for the owner to decide.
+
+**Failure analysis.** After the run the per-question results may be read. Every failing test question is tabled with a category; no code, config, prompt, threshold, question or gold answer changes in response. Ideas go to a "future work" list only.
+
+**Cost.** Dry run of the runner on the frozen settings: estimated $0.173 for the 31 questions (pipeline, answer and one judge pass). The second judge pass costs about as much as the judge share of that. Expected total about $0.30; ceiling $0.80 (`--budget 0.80`; the run refuses to start and stops by itself before the next question if it would pass it). Stop and ask above the ceiling.
