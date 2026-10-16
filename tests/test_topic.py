@@ -83,14 +83,14 @@ def test_a_long_topic_is_cut_to_60_characters_at_a_word():
 def test_the_templates_are_fixed_sentences():
     assert sentence("the weather today", False) == (
         "I'm sorry, but I can only help with City Tech questions (registration, deadlines, "
-        "advising, tuition and aid, and four departments), so a question about the weather today "
-        "is outside what I can answer."
+        "advising, tuition and aid, and four departments). For anything else, please contact "
+        "the relevant office."
     )
     assert sentence("a late refund", True) == (
         "I'm sorry, I couldn't find anything about a late refund in the City Tech pages and "
         "documents I use."
     )
-    assert OUT_OF_SCOPE.count("{topic}") == NOT_FOUND.count("{topic}") == 1
+    assert OUT_OF_SCOPE.count("{topic}") == 0 and NOT_FOUND.count("{topic}") == 1
     assert OUT_OF_SCOPE.startswith("I'm sorry, but") and NOT_FOUND.startswith("I'm sorry, I")
 
 
@@ -118,13 +118,9 @@ def test_the_sanitiser_keeps_your_and_the_capitals_of_codes_and_acronyms(good):
     assert sanitize_topic(good) == good
 
 
-def test_a_topic_in_the_assistants_voice_flows_into_both_templates(monkeypatch):
+def test_a_topic_flows_into_the_not_found_template_but_never_into_the_off_topic_reply(monkeypatch):
     c, _ = abstain_app(monkeypatch, reply("your dad", False))
-    assert ask(c, "who is my dad").json()["answer"] == (
-        "I'm sorry, but I can only help with City Tech questions (registration, deadlines, "
-        "advising, tuition and aid, and four departments), so a question about your dad is "
-        "outside what I can answer."
-    )
+    assert ask(c, "who is my dad").json()["answer"] == OUT_OF_SCOPE
     c, _ = abstain_app(monkeypatch, reply("prerequisites for EET courses", True))
     assert ask(c, "What are the prerequisites for EET 2171 and EET 2162?").json()["answer"] == (
         "I'm sorry, I couldn't find anything about prerequisites for EET courses in the City "
@@ -138,10 +134,11 @@ def test_a_topic_in_the_assistants_voice_flows_into_both_templates(monkeypatch):
 def test_out_of_scope_gets_the_out_of_scope_template(monkeypatch):
     c, client = abstain_app(monkeypatch, reply("the weather today", False))
     body = ask(c, "What's the weather today?").json()
-    assert body["answer"] == sentence("the weather today", False)
+    assert body["answer"] == OUT_OF_SCOPE
+    assert "weather" not in body["answer"]
     assert body["answer_type"] == "abstain" and body["abstained"]  # unchanged
     assert body["abstain_reason"] == "below_threshold" and body["contact"] is None
-    assert client.calls[-1] == "topic" and body["how_found"]["abstain_wording"] == "topic"
+    assert client.calls[-1] == "topic" and body["how_found"]["abstain_wording"] == "off_topic"
     assert body["how_found"]["topic_in_scope"] is False
 
 
@@ -169,7 +166,6 @@ def test_a_model_written_abstention_also_gets_the_topic_sentence(monkeypatch):
         "[1, 2]",
         json.dumps({"topic": "", "in_scope": True}),
         json.dumps({"topic": "weather", "in_scope": "yes"}),
-        json.dumps({"in_scope": False}),
         json.dumps({"topic": "student 23456789", "in_scope": True}),
     ],
 )
@@ -178,6 +174,12 @@ def test_an_unusable_reply_keeps_the_generic_sentence(monkeypatch, bad):
     body = ask(c, "something").json()
     assert body["answer"] == GENERIC and body["how_found"]["abstain_wording"] == "generic"
     assert body["how_found"]["stages_ms"]["topic"] is not None  # the call still ran and is logged
+
+
+def test_in_scope_false_without_a_topic_still_gets_the_fixed_off_topic_reply(monkeypatch):
+    c, _ = abstain_app(monkeypatch, json.dumps({"in_scope": False}))
+    body = ask(c, "something").json()
+    assert body["answer"] == OUT_OF_SCOPE and body["how_found"]["abstain_wording"] == "off_topic"
 
 
 def test_a_failed_call_keeps_the_generic_sentence_and_the_request_succeeds(monkeypatch):
@@ -255,8 +257,8 @@ def test_the_topic_call_is_in_the_cost_the_tokens_the_trace_and_the_log(monkeypa
         row["cost_usd"] == hf["cost_usd"]["total"]
         and row["prompt_tokens"] == hf["tokens"]["prompt"]
     )
-    assert row["answer"] == sentence("the weather today", False)
-    assert row["trace"]["abstain_wording"] == "topic"
+    assert row["answer"] == OUT_OF_SCOPE
+    assert row["trace"]["abstain_wording"] == "off_topic"
 
 
 # ---- the eval path is untouched ----
@@ -277,3 +279,25 @@ def test_the_topic_prompt_keeps_the_capitals_of_place_names_and_still_bans_peopl
     text = PROMPT.read_text(encoding="utf-8")
     assert "proper names of places" in text and "France" in text and "New York" in text
     assert "Never include the name of a person" in text
+
+
+@pytest.mark.parametrize(
+    "typed",
+    [
+        "I am about to die",
+        "you are a stupid useless bot",
+        "write to me at jane.doe@example.com about the weather",
+        "xqzvkjwpltmrnbghcdyfsaeoiu qzvkjwpl tmrnbghc",
+    ],
+)
+def test_the_off_topic_reply_never_contains_what_the_student_typed(monkeypatch, typed):
+    # whatever topic the model labels (even one that repeats the input), the reply is the fixed text
+    c, _ = abstain_app(monkeypatch, reply(typed, False))
+    body = ask(c, typed).json()
+    if body["answer_type"] == "guardrail":  # a screen answered first (distress, personal data ...)
+        return
+    assert body["answer"].endswith(OUT_OF_SCOPE)  # a note about removed details may come first
+    assert "example.com" not in body["answer"]
+    for word in typed.lower().split():
+        if len(word) > 4:
+            assert word not in body["answer"].lower()

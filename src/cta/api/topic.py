@@ -8,15 +8,17 @@ import re
 import unicodedata
 from pathlib import Path
 
+from cta.api.screen import names_self_harm
 from cta.graph.llm import json_call
 from cta.redact import redact
 
 PROMPT = Path(__file__).resolve().parent / "prompts" / "topic.txt"
 GENERIC_CODES = ("below_threshold", "model")  # the abstain codes whose text is a generic sentence
+# The off-topic reply is fixed text: it never restates what the student typed (post-freeze fix).
 OUT_OF_SCOPE = (
     "I'm sorry, but I can only help with City Tech questions (registration, deadlines, advising, "
-    "tuition and aid, and four departments), so a question about {topic} is outside what I can "
-    "answer."
+    "tuition and aid, and four departments). For anything else, please contact the relevant "
+    "office."
 )
 NOT_FOUND = (
     "I'm sorry, I couldn't find anything about {topic} in the City Tech pages and documents I use."
@@ -90,7 +92,19 @@ def rewrite(question: str, response, cfg: dict, client_factory) -> None:
     hf.cost_usd["total"] = hf.cost_usd["total"] + call.cost
     data = call.data or {}
     topic, in_scope = sanitize_topic(data.get("topic")), data.get("in_scope")
-    if topic and isinstance(in_scope, bool):
+    raw = data.get("topic")
+    if isinstance(raw, str) and names_self_harm(raw):
+        # The safety net in app.py reads the sentence: a topic that names suicide, self-harm or the
+        # student's own death must reach it, so this sentence (never shown) carries the topic and
+        # app.py replaces it with the crisis reply. Without this, the fixed off-topic text would
+        # hide the topic from the net.
+        response.answer = NOT_FOUND.format(topic=raw)
+        hf.abstain_wording = "topic"
+        hf.topic_in_scope = in_scope if isinstance(in_scope, bool) else None
+    elif in_scope is False:  # off topic: fixed text, whatever the model wrote as the topic
+        response.answer = OUT_OF_SCOPE
+        hf.abstain_wording, hf.topic_in_scope = "off_topic", False
+    elif topic and isinstance(in_scope, bool):
         response.answer = sentence(topic, in_scope)
         hf.abstain_wording, hf.topic_in_scope = "topic", in_scope
     else:

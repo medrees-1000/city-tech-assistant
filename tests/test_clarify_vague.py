@@ -42,4 +42,4 @@ def test_through_the_api_it_is_the_template_not_outside_what_i_can_answer(monkey
     c = make_client_app(client, monkeypatch)
     body = ask(c, "when is it due").json()
     assert body["answer_type"] == "clarify" and body["answer"] == clarify.reply_text()
-    assert "outside what I can answer" not in body["answer"]
+    assert "I can only help with City Tech questions" not in body["answer"]
