@@ -32,7 +32,7 @@ def test_the_four_advice_questions_are_dev_and_the_dev_split_is_90():
 
 def test_fires_on_q30_q47_q91_q92_and_on_no_other_dev_question():
     fired = {q["id"] for q in DEV if advice.needs_advice_rules(q["question"])}
-    assert fired == ADVICE_IDS
+    assert fired == ADVICE_IDS | {"q112"}  # q112 (cq14, casual round) is the new advice question
 
 
 def test_dev_has_no_question_about_a_payment_plan_or_signing_up():

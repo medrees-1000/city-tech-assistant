@@ -25,6 +25,8 @@ CUES = (
     "would you recommend", "do you recommend", "what do you recommend", "would you advise",
     "would you suggest", "is it better to", "would it be better", "is it worth", "is it wise",
     "is it smart",
+    # casual round (cq14): narrow additions; an action word is still required
+    "what would you do", "what do you suggest", "which is better", "your advice",
 )  # fmt: skip
 
 ARTICLE = r"(?:a |an |the |this |that |my |another )?"
