@@ -39,6 +39,15 @@ Reading notes:
 - Final dev run `final-config-dev`: cost of one request to the assistant $0.00053, median latency 2.9 s, p95 5.5 s
 - Retrieval on its 59 scored questions: recall@5 0.854, precision@5 0.251, hit@5 0.949, MRR 0.873
 
+### (b2) Development set, compact (for the README)
+
+| Dev run | fact questions | correct | hit@5 | MRR |
+|---|---|---|---|---|
+| Phase 2 baseline (40 questions, vector search only) | 26 | 17 (65%) | 77% | 0.68 |
+| Final configuration, the same questions | 26 | 20 (77%) | 97% | 0.93 |
+| Final configuration, all 91 questions | 52 | 34 (65%) | 95% | 0.87 |
+| Final configuration, without the casual-wording group | 37 | 30 (81%) | 93% | 0.89 |
+
 ### (c) Test against dev (final configuration)
 
 | Set | n normal | correct | faithful | recall@5 | hit@5 | MRR | wrongly abstained |
