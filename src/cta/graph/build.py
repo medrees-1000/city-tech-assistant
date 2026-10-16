@@ -264,9 +264,10 @@ def make_nodes(d: Deps):
         return "retrieve" if state.get("chain_fallthrough") else END
 
     def retrieve_node(state: RouterState) -> dict:
-        # experiment E1: the fallback rewrite is only for the plain retrieve route (not after a
-        # calendar or chain fall-through, and not for a question about the student's own account)
-        plain = not (state.get("fallthrough") or state.get("chain_fallthrough"))
+        # experiment E1 (amendment A1): the fallback rewrite runs on the plain retrieve route and
+        # after a calendar fall-through (the calendar found no row), not after a chain
+        # fall-through, and not for a question about the student's own account
+        plain = not state.get("chain_fallthrough")
         plain = plain and not contacts.personal_account_cue(
             state["question"], contacts.load_contacts()
         )
