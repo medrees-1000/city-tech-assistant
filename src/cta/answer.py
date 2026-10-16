@@ -219,15 +219,20 @@ def fallback_search(
     extra, p_tok, c_tok = rw.cost, rw.prompt_tokens, rw.completion_tokens
     if not rw.query:
         return first, note, extra, p_tok, c_tok
-    second = search(conn, rw.query, k, cfg=cfg, client_factory=client_factory, **kwargs)
-    note["second_similarity"] = second.top_vector_similarity
-    if second.top_vector_similarity >= threshold:
+    # probe without the reranker (one cached or tiny embedding): the reranker's model call is only
+    # worth paying for when the new query reaches the cutoff
+    probe = search(
+        conn, rw.query, k, cfg=cfg, client_factory=client_factory, rerank="off", **kwargs
+    )
+    note["second_similarity"] = probe.top_vector_similarity
+    if probe.top_vector_similarity >= threshold:
         note["used"] = True
-        return second, note, extra + first.total_cost, p_tok, c_tok
-    if second.top_vector_similarity > first.top_vector_similarity:
+        second = search(conn, rw.query, k, cfg=cfg, client_factory=client_factory, **kwargs)
+        return second, note, extra + first.total_cost + probe.total_cost, p_tok, c_tok
+    if probe.top_vector_similarity > first.top_vector_similarity:
         note["better_of_two"] = True
-        return second, note, extra + first.total_cost, p_tok, c_tok
-    return first, note, extra + second.total_cost, p_tok, c_tok
+        return probe, note, extra + first.total_cost, p_tok, c_tok
+    return first, note, extra + probe.total_cost, p_tok, c_tok
 
 
 def answer(

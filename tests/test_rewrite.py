@@ -109,7 +109,8 @@ def test_on_but_the_first_retrieval_passes_means_no_rewrite_call_and_one_search(
 def test_on_and_low_first_but_a_second_that_passes_is_answered_from_the_second(monkeypatch):
     model = Model()
     ans, seen = run(monkeypatch, LOW, PASS, model)
-    assert seen == [FIRST, REWRITTEN] and model.kinds == ["rewrite", "answer"]
+    assert seen == [FIRST, REWRITTEN, REWRITTEN]  # the probe, then the reranked search
+    assert model.kinds == ["rewrite", "answer"]
     assert not ans.abstained and [c["id"] for c in ans.sources] == ["page/b#1", "page/b#2"]
     answer_prompt = model.calls[1][1]["messages"]
     assert FIRST in answer_prompt[-1]["content"]  # the answer step gets the student's own words
@@ -131,7 +132,9 @@ def test_the_rewrite_and_the_discarded_first_search_are_counted_in_the_cost(monk
     plain_model = Model()
     plain, _ = run(monkeypatch, PASS, None, plain_model)
     extra = ans.cost - plain.cost
-    assert extra == pytest.approx(ans.rewrite["cost"] + 0.00001, rel=0.01) and extra > 0
+    assert (
+        extra == pytest.approx(ans.rewrite["cost"] + 0.00002, rel=0.01) and extra > 0
+    )  # + 2 searches
     assert ans.prompt_tokens == plain.prompt_tokens + 200  # the rewrite call's tokens
 
 
