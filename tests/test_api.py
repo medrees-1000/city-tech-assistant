@@ -64,6 +64,7 @@ def make_app(**kw):
 # ---- /health ----
 
 
+@pytest.mark.needs_data
 def test_health_is_ok_with_the_database_up():
     body = TestClient(make_app()).get("/health").json()
     assert body["status"] == "ok" and body["db"] == "ok" and body["router"] == "on"
@@ -101,6 +102,7 @@ def test_the_app_refuses_to_start_with_any_tracing_variable_on(name):
         make_app(env=ENV | {name: "true"})
 
 
+@pytest.mark.needs_data
 def test_tracing_values_that_are_off_do_not_block_the_start():
     make_app(env=ENV | {"LANGSMITH_TRACING": "false", "LANGCHAIN_TRACING_V2": ""})
 
@@ -125,6 +127,7 @@ def test_missing_data_files_are_listed(tmp_path):
     assert any("data/processed/courses" in p for p in problems)
 
 
+@pytest.mark.needs_data
 def test_database_down_gives_a_fixed_message_without_driver_text():
     problems = startup_problems(CFG, env=ENV, connect=down_connect)
     assert problems == [
@@ -132,6 +135,7 @@ def test_database_down_gives_a_fixed_message_without_driver_text():
     ]
 
 
+@pytest.mark.needs_data
 def test_unapplied_migrations_are_named():
     problems = startup_problems(CFG, env=ENV, connect=lambda: FakeConn(all_applied()[:-1]))
     assert len(problems) == 1 and migration_files()[-1].name in problems[0]
@@ -146,6 +150,7 @@ def test_all_problems_are_reported_together():
         assert text in str(e.value)
 
 
+@pytest.mark.needs_data
 def test_a_good_setup_has_no_problems():
     assert startup_problems(CFG, env=ENV, connect=ok_connect) == []
 
@@ -444,6 +449,7 @@ def test_a_row_with_no_date_is_not_announced_and_keeps_the_registrar_line(monkey
     assert body["contact"] is None
 
 
+@pytest.mark.needs_data
 def test_a_calendar_abstention_has_one_registrar_card_and_no_sentence(monkeypatch):
     client = Client("calendar", "Summer 2027", [])
     body = ask(make_client_app(client, monkeypatch), "When does Summer 2027 start?").json()

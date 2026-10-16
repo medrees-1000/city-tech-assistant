@@ -68,17 +68,20 @@ def test_the_fixture_is_the_197_single_chains_and_42_multi_renders():
 
 
 @pytest.mark.parametrize("code", sorted(BEFORE["single"]))
+@pytest.mark.needs_data
 def test_single_chain_differs_from_before_only_by_the_three_rewrites(code):
     old = BEFORE["single"][code]
     assert new_render(code) == with_outside_marking(apply_the_three_rewrites(old))
 
 
 @pytest.mark.parametrize("key", sorted(BEFORE["multi"]))
+@pytest.mark.needs_data
 def test_multi_course_render_differs_from_before_only_by_the_three_rewrites(key):
     item = BEFORE["multi"][key]
     assert new_render(item["codes"]) == with_outside_marking(apply_the_three_rewrites(item["text"]))
 
 
+@pytest.mark.needs_data
 def test_every_verbatim_text_every_date_and_every_citation_number_is_still_there():
     for code, old in BEFORE["single"].items():
         new = new_render(code)
@@ -134,6 +137,7 @@ def test_3a_a_block_with_unreadable_text_or_no_text_marks_nothing():
     assert cr.marked_codes(blocks, {"ZZZ 3": "Has a title"}) == {"WWW 4"}
 
 
+@pytest.mark.needs_data
 def test_3b_none_listed_replaces_none_everywhere_and_nowhere_else():
     news = [new_render(c) for c in BEFORE["single"]]
     assert all(not re.search(r"^\*\*Courses named:\*\* none$", t, re.M) for t in news)

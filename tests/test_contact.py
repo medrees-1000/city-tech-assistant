@@ -34,6 +34,7 @@ def office(question, **kw):
 # ---- the wording ----
 
 
+@pytest.mark.needs_data
 def test_the_registrar_line_is_byte_identical_to_the_calendar_abstain_line():
     assert contact.contact_line("registrar", C) == REGISTRAR
     assert render.abstain_text("x.", render.registrar_contact()).endswith(REGISTRAR)
@@ -234,6 +235,7 @@ def test_contacts_on_does_not_touch_a_non_abstaining_answer(monkeypatch, events)
     assert got.text == "Fine. [1]" and got.router["contact_office"] is None
 
 
+@pytest.mark.needs_data
 def test_a_calendar_abstain_is_byte_identical_with_the_switch_on(monkeypatch, events):
     registrar = render.registrar_contact()
     texts = {}

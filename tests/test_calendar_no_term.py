@@ -45,6 +45,7 @@ def test_the_listed_terms_are_read_from_the_calendar_data():
     assert build.no_term_text("Spring 2029", EVENTS) == wording("Spring 2029")  # any term outside
 
 
+@pytest.mark.needs_data
 def test_the_contact_is_the_existing_registrar_one_not_a_new_one(monkeypatch):
     script = Script("calendar", "Summer 2027", [])
     router = build.Router(None, CFG, lambda: script, events=EVENTS)  # the real registrar contact
@@ -77,6 +78,7 @@ def test_a_row_of_another_calendar_that_answers_is_still_used(monkeypatch):
     assert ans.route == "calendar" and "No calendar has been published" not in ans.text
 
 
+@pytest.mark.needs_data
 def test_through_the_api_it_is_a_calendar_abstention_with_the_registrar_card(monkeypatch):
     c = make_client_app(Client("calendar", "summer 2027", []), monkeypatch)
     body = ask(c, "when does summer 2027 semester start").json()

@@ -32,7 +32,10 @@ select = ["E", "F", "I", "B", "UP"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["integration: needs the Docker Postgres (skipped when it is not running)"]
+markers = [
+    "integration: needs the Docker Postgres (skipped when it is not running)",
+    "needs_data: needs the collected data in data/processed (skipped when it is absent)",
+]
 
 [dependency-groups]
 dev = [

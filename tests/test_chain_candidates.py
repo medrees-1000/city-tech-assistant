@@ -203,6 +203,7 @@ def test_control_gold_is_the_description_and_credits():
 # ---- the file ----
 
 
+@pytest.mark.needs_data
 def test_output_is_deterministic_and_lists_the_owner_checklist(tmp_path):
     existing = {"q39": {"MAT 1275"}}
     records = mcc.load_records()
@@ -217,6 +218,7 @@ def test_output_is_deterministic_and_lists_the_owner_checklist(tmp_path):
     )
 
 
+@pytest.mark.needs_data
 def test_the_real_candidates_cover_the_categories_and_ids_continue_after_the_highest():
     assert (
         mcc.FIRST_NUMBER == 76 and mcc.highest_question_number() >= 75
@@ -238,6 +240,7 @@ def test_the_real_candidates_cover_the_categories_and_ids_continue_after_the_hig
             assert source.removeprefix("catalog:") in records
 
 
+@pytest.mark.needs_data
 def test_the_unknown_code_is_really_absent_and_the_abstain_golds_are_plain_abstain():
     records = mcc.load_records()
     items = {c["spec"]["root"]: c for c in mcc.build(records, 76)}
@@ -251,12 +254,14 @@ def test_the_script_never_writes_the_questions_file():
     assert "QUESTIONS.write" not in source and "open(QUESTIONS" not in source
 
 
+@pytest.mark.needs_data
 def test_the_control_uses_one_record_only_as_gold_source():
     items = mcc.build(mcc.load_records(), 76)
     control = next(c for c in items if c["spec"]["kind"] == "control")
     assert control["sources"] == ["catalog:MAT 2440"] and len(control["nodes"]) == 1
 
 
+@pytest.mark.needs_data
 def test_q82_is_unanswerable_with_no_gold_sources_and_q86_gold_is_the_text_then_one_sentence():
     items = {c["id"]: c for c in mcc.build(mcc.load_records(), 76)}
     q82, q86 = items["q82"], items["q86"]
@@ -286,6 +291,7 @@ def test_coreq_gold_requires_the_course_to_be_named_in_the_text():
         mcc.coreq_gold(node, "CC 1001")
 
 
+@pytest.mark.needs_data
 def test_q87_keeps_the_catalog_description_verbatim_including_its_own_missing_space():
     items = {c["id"]: c for c in mcc.build(mcc.load_records(), 76)}
     assert "flow charting.SATISFIES FLEXIBLE CORE- SCIENTIFIC WORLD" in items["q87"]["gold"]
@@ -303,6 +309,7 @@ def file_rows():
     return {r["id"]: r for r in rows if 76 <= int(r["id"][1:]) <= 87}
 
 
+@pytest.mark.needs_data
 def test_the_merged_rows_equal_the_generated_rows_and_use_the_existing_fields():
     built = {r["id"]: r for r in mcc.question_rows(mcc.load_records())}
     merged = file_rows()

@@ -48,16 +48,19 @@ def test_the_fixture_is_the_197_single_and_42_multi_renders():
 
 
 @pytest.mark.parametrize("code", sorted(BEFORE["single"]))
+@pytest.mark.needs_data
 def test_single_chain_differs_only_by_the_outside_marking(code):
     assert new_render(code) == outside_rewrite(BEFORE["single"][code])
 
 
 @pytest.mark.parametrize("key", sorted(BEFORE["multi"]))
+@pytest.mark.needs_data
 def test_multi_course_render_differs_only_by_the_outside_marking(key):
     item = BEFORE["multi"][key]
     assert new_render(item["codes"]) == outside_rewrite(item["text"])
 
 
+@pytest.mark.needs_data
 def test_catalog_quotes_dates_numbers_and_the_closing_sentence_are_unchanged():
     for code, old in BEFORE["single"].items():
         new = new_render(code)
@@ -69,6 +72,7 @@ def test_catalog_quotes_dates_numbers_and_the_closing_sentence_are_unchanged():
             assert re.findall(pattern, new) == re.findall(pattern, old), (code, pattern)
 
 
+@pytest.mark.needs_data
 def test_the_counts_the_pre_registration_expects():
     marked = [
         c
@@ -86,6 +90,7 @@ def test_the_counts_the_pre_registration_expects():
     assert len(multi) == 18
 
 
+@pytest.mark.needs_data
 def test_an_inside_prefix_code_keeps_no_catalog_record_and_an_outside_one_does_not():
     titles = {c: r["title"].strip() for c, r in RECORDS.items()}
     assert cr.named("MAT 1476", titles) == "MAT 1476 (no catalog record)"  # MAT is in the data
@@ -104,6 +109,7 @@ def test_the_prefix_set_is_derived_from_the_records_not_typed():
     assert not re.search(r'"(?:CST|MAT|EET|DEN|ENG)"', body)
 
 
+@pytest.mark.needs_data
 def test_a_multi_course_asked_code_outside_the_data_uses_the_single_course_sentence():
     text = new_render(["CST 1204", "ENG 1101"])
     assert "## Prerequisites for ENG 1101\n\n" + ch.outside_sentence("ENG 1101") in text
@@ -112,6 +118,7 @@ def test_a_multi_course_asked_code_outside_the_data_uses_the_single_course_sente
     assert "There is no catalog record for CST 9999 in the four departments" in text
 
 
+@pytest.mark.needs_data
 def test_the_regenerated_hash_fixture_matches_the_new_single_renders():
     golden = json.loads((ROOT / "tests/fixtures/chain_single_render_sha256.json").read_text())
     for code in BEFORE["single"]:

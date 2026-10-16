@@ -1,5 +1,6 @@
 """Tester round 1, item D: a course outside the four departments. No network, no model."""
 
+import pytest
 import yaml
 
 from cta.api import convert
@@ -19,6 +20,7 @@ NEW = (
 )
 
 
+@pytest.mark.needs_data
 def test_the_prefix_set_is_read_from_the_records_and_has_no_eng():
     prefixes = ch.known_prefixes(RECORDS)
     assert prefixes == {code.split()[0] for code in RECORDS}
@@ -43,6 +45,7 @@ def test_eng_1101_gets_the_new_text_and_no_contact(monkeypatch):
     assert ans.router.get("contact_office") is None and "Contact" not in ans.text
 
 
+@pytest.mark.needs_data
 def test_cst_9999_keeps_todays_no_record_text(monkeypatch):
     router, _ = make_router(Script("prerequisite"), monkeypatch, build.load_events(), CFG)
     ans = router.answer("prereq for CST 9999", TODAY, log=False)
@@ -53,6 +56,7 @@ def test_cst_9999_keeps_todays_no_record_text(monkeypatch):
     assert ans.router["contact_office"] == "CST-NYT"  # the department's card, as before
 
 
+@pytest.mark.needs_data
 def test_a_code_with_a_known_prefix_but_no_record_is_not_outside():
     assert not ch.outside_departments("MAT 9999", RECORDS)
     assert ch.outside_departments("ENG 1101", RECORDS) and ch.outside_departments(
@@ -68,6 +72,7 @@ def test_through_the_api_it_is_a_chain_abstention_with_its_own_code_and_no_card(
     assert body["answer"] == NEW.format(code="ENG 1101", url=URL).removeprefix("ABSTAIN: ")
 
 
+@pytest.mark.needs_data
 def test_named_courses_and_the_chain_renderer_are_untouched():
     # a course named inside prerequisite text keeps "(no catalog record)", and the asked-course
     # sentence of a multi-course answer is the same one as before

@@ -84,3 +84,27 @@ def no_real_model_client_in_the_api(monkeypatch):
         raise AssertionError("a test tried to create the real OpenAI client")
 
     monkeypatch.setattr(api_app, "make_client", refuse)
+
+
+# Tests marked `needs_data` read the collected data (course records, contact records, the rules
+# cache) that is git-ignored and not in a fresh clone. They skip with a reason when it is absent;
+# no assertion is changed. How to build the data: docs/running.md.
+ROOT = Path(__file__).resolve().parent.parent
+DATA_FILES = (
+    ROOT / "data" / "processed" / "courses",
+    ROOT / "data" / "processed" / "contacts" / "registrar.json",
+    ROOT / "data" / "processed" / "rules_cache.json",
+)
+
+
+def collected_data_present() -> bool:
+    return all(path.exists() for path in DATA_FILES)
+
+
+def pytest_collection_modifyitems(config, items):
+    if collected_data_present():
+        return
+    skip = pytest.mark.skip(reason="needs data/processed; see docs/running.md")
+    for item in items:
+        if "needs_data" in item.keywords:
+            item.add_marker(skip)
