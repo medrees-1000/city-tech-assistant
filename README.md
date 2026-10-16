@@ -30,6 +30,8 @@ Independent student portfolio project. Not affiliated with or endorsed by City T
 |---|---|---|
 | ![A calendar answer with its source](docs/images/calendar-answer.png) | ![A prerequisite chain answer](docs/images/prerequisite-chain.png) | ![An abstention with the department contact](docs/images/abstain-with-contact.png) |
 
+On a phone (390 px wide): ![A calendar answer on a phone](docs/images/phone-answer.png)
+
 Real output of the final system (16 Oct 2026); `[1]` points to the calendar row it came from:
 
 > **Thursday, January 28, 2027**: Start of Spring 2027 term. [1]
@@ -103,7 +105,7 @@ Key decisions and why:
 2. **Prerequisite chains rendered by code.** The catalog's rule text is quoted word for word, never paraphrased by a model.
 3. **Cutoff 0.59, chosen on dev only.** A sweep from 0.55 to 0.62 showed no cutoff separates a valid short question from an out-of-scope one, so I added the near-miss reply instead of moving it.
 4. **Contacts written by code.** The model never writes an email or phone number, and a contact is added only when an office clearly applies.
-5. **A different model judges.** The judge is stronger than the answer model on purpose, and each final answer was judged twice (13 of 14 agreed; the one difference was redacted contact details in the stored answer).
+5. **A different model judges.** The judge is a different model from the answer model. The 14 model-graded test answers were judged a second time (13 of 14 agreed; the one difference was redacted contact details in the stored answer).
 
 ## Safety and cost controls
 
@@ -157,6 +159,8 @@ uv run python -m cta.api                    # API on 127.0.0.1:8000 (see /health
 npm install --prefix web && npm run dev --prefix web   # page on http://127.0.0.1:3000
 ```
 
+Add `?details=1` to the page address to see the retrieval details panel ("How this was found"); it is hidden by default.
+
 The collected data is not in the repo, so this is not a one-command reproduce: to get answers you first have to rebuild it (PDF downloads, crawl, parse, validate, index). The full steps, and exactly what I verified and did not, are in [docs/running.md](docs/running.md). In a fresh clone, `uv sync`, the tests, `npm ci`, the web tests, typecheck and build, and `migrate` against an empty database all work.
 
 ## How I built and evaluated it
@@ -169,7 +173,7 @@ The collected data is not in the repo, so this is not a one-command reproduce: t
 ## Repo layout, tests, license
 
 - `src/cta/`: `crawl`, `parse`, `index` (chunks, embeddings, search), `graph` (router, calendar, chain), `api` (FastAPI and guards), `eval`, `validate`. `web/` is the Next.js page; `config/` settings and sources; `db/migrations/`; `eval/` questions and results; `scripts/`; `docs/` decisions, plans and results.
-- Tests: 2,772 Python tests (`uv run pytest`) and 110 web tests (`npm test --prefix web`). On my machine all 2,772 Python tests pass; in a fresh clone without the collected data, 2,137 pass and 635 skip with a reason (they need the data or Postgres) and none fail. `ruff check` is clean.
+- Tests: 2,772 Python tests (`uv run pytest`) and 116 web tests (`npm test --prefix web`). On my machine all 2,772 Python tests pass; in a fresh clone without the collected data, 2,137 pass and 635 skip with a reason (they need the data or Postgres) and none fail. `ruff check` is clean.
 - License: MIT for the code (see [LICENSE](LICENSE)). No crawled City Tech content is included. `eval/questions.jsonl` quotes short passages from public City Tech pages in its gold answers; the project is not affiliated with City Tech or CUNY.
 
 ## Contact
