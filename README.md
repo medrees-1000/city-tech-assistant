@@ -1,35 +1,43 @@
 # City Tech Assistant
 
-A question-answering assistant for City Tech (CUNY) students. It answers questions about registration, deadlines, advising, tuition and payment, financial aid, and four departments, and it shows the source for every answer. When the sources do not cover a question, it says so and points to the office to contact.
+[![ci](https://github.com/medrees-1000/city-tech-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/medrees-1000/city-tech-assistant/actions/workflows/ci.yml)
+
+A retrieval-augmented question-answering assistant for City Tech (CUNY) students that cites its sources and says it does not know when the sources do not cover a question.
+
+Built with: Python 3.12, FastAPI, LangGraph, Postgres with pgvector, OpenAI models, Next.js.
 
 Status: runs locally; not deployed; no public demo.
 
-**This is an independent student portfolio project. It is not affiliated with or endorsed by City Tech or CUNY, and it is not an official source.** It never uses student data: no login, no CUNYfirst, no Brightspace, nothing about any person's account. Check anything important with the office itself.
+Independent student portfolio project. Not affiliated with or endorsed by City Tech or CUNY, and not an official source. No login and no student data. Check anything important with the office.
+
+<!-- TODO(owner): add the demo video link here once recorded -->
+
+## Highlights
+
+- Calendar dates come from a table I verified by hand and are written by code, not by the model.
+- On the held-out test run (31 questions, code frozen first): 0 incorrect and 0 unfaithful among the judged answers, every must-abstain question abstained, 0 of 14 wrongly refused; about $0.0004 per request, median 2.3 s.
+- It is weak on casual wording (4 of the 15 fact questions in my 20-question casual set were answered correctly; the misses are refusals). That is the first fix in version 2.
+- Each experiment had a rule written before the run; the failed ones are listed below.
 
 ## What it does
 
-- Answers from public City Tech pages, catalog data and PDFs that I collected (619 indexed pieces: 197 courses, 413 page and PDF sections, 9 contact records) and from a calendar table of 136 events that I checked by hand against the term calendar PDFs.
-- Calendar questions are answered from that table by code, not by searching text. Prerequisite chains are walked and written by code.
+- Answers questions about registration, deadlines, advising, tuition and payment, financial aid, and four departments (Computer Systems Technology, Mathematics, Electrical and Telecommunications Engineering Technology, Dental Hygiene), for the Fall 2026, Winter 2027 and Spring 2027 calendars.
+- Answers from public City Tech pages, catalog data and PDFs that I collected (619 indexed chunks: 197 courses, 413 page and PDF sections, 9 contact records) and from a calendar table of 136 events that I checked by hand against the calendar PDFs.
 - Every answer carries numbered sources. If the sources do not cover the question, it abstains and names the office when one clearly applies.
-- It states rules and dates. It does not give advice ("should I drop this class?").
-- Covers Fall 2026, Winter 2027 and Spring 2027 calendars and four departments (Computer Systems Technology, Mathematics, Electrical and Telecommunications Engineering Technology, Dental Hygiene). Anything else it declines.
+- It states rules and dates. It does not give advice ("should I drop this class?"), has no conversation memory, and never sees an account.
 
 | Calendar answer | Prerequisite chain | Abstain, with the office |
 |---|---|---|
 | ![A calendar answer with its source](docs/images/calendar-answer.png) | ![A prerequisite chain answer](docs/images/prerequisite-chain.png) | ![An abstention with the department contact](docs/images/abstain-with-contact.png) |
 
-Example (real output of the final system, 16 Oct 2026):
+Real output of the final system (16 Oct 2026); `[1]` points to the calendar row it came from:
 
 > **Thursday, January 28, 2027**: Start of Spring 2027 term. [1]
 > From the Spring 2027 calendar (spring_2027.pdf, last updated 2026-07-27). The calendar can change.
 
-`[1]` points to the calendar row it came from, shown under "Sources" on the page.
+## Results
 
-## Results at a glance
-
-[owner: add demo video link, optional]
-
-The final run was done once, on the 31 held-out test questions, with the code frozen at the git tag `final-run-frozen`. The test split is not untouched, though: it had also been run three times before, with earlier configurations (`baseline-final` on 10 questions, `ms1-old` and `ms1-new` on all 31, in milestone 1), and I read those results. Details are under "What these numbers do and do not say". The numbers below are printed by `scripts/readme_numbers.py` from the committed files in `eval/results/`; all tables are in [docs/results.md](docs/results.md). Two of the test questions ("clarify or answer every branch" gold answers) cannot be graded by my harness. I graded them myself after seeing the results, so I show the headline both ways.
+Final test run: 31 held-out questions, code frozen at the git tag `final-run-frozen`. Numbers are printed by `scripts/readme_numbers.py` from the committed files in `eval/results/`; all tables are in [docs/results.md](docs/results.md).
 
 | Answer correctness (normal-gold questions) | n | correct | partial | incorrect |
 |---|---|---|---|---|
@@ -46,30 +54,22 @@ The final run was done once, on the 31 held-out test questions, with the code fr
 - Judge pass 2 (same judge, same rubric, answers re-judged): 13 of 14 questions agree on both verdicts; differs: q02 (the log stores the answer with public contact details redacted, so pass 2 saw redacted text)
 - Judge cost pass 2: $0.0692
 
-How the system improved on the development set (the set I tuned on). The baseline is Phase 2, vector search only:
+Retrieval metrics cover only the 14 test questions that have a section-level gold source. On the development set (the set I tuned on), baseline against final:
 
-| Run | n normal | correct | partial | incorrect | faithful | abstained when it must | wrongly abstained | hit@5 | MRR |
-|---|---|---|---|---|---|---|---|---|---|
-| Phase 2 baseline (40 dev questions, vector search only, rubric v3) | 26 | 17 (65%) | 7 | 2 | 23 of 26 | 5 of 5 | 3 of 28 | 77% | 0.68 |
-| Final configuration, the same questions | 26 | 20 (77%) | 6 | 0 | 24 of 26 | 5 of 5 | 1 of 28 | 97% | 0.93 |
-| Final configuration, all 91 dev questions | 52 | 34 (65%) | 7 | 11 | 48 of 52 | 12 of 12 | 12 of 57 | 95% | 0.87 |
-| Final configuration, dev questions without the casual-wording group | 37 | 30 (81%) | 6 | 1 | 35 of 37 | 10 of 10 | 2 of 41 | 93% | 0.89 |
+| Dev run | fact questions | correct | hit@5 | MRR |
+|---|---|---|---|---|
+| Phase 2 baseline (40 questions, vector search only) | 26 | 17 (65%) | 77% | 0.68 |
+| Final configuration, the same questions | 26 | 20 (77%) | 97% | 0.93 |
+| Final configuration, all 91 questions | 52 | 34 (65%) | 95% | 0.87 |
+| Final configuration, without the casual-wording group | 37 | 30 (81%) | 93% | 0.89 |
 
-Test against dev:
+## Evaluation honesty
 
-| Set | n normal | correct | faithful | recall@5 | hit@5 | MRR | wrongly abstained |
-|---|---|---|---|---|---|---|---|
-| dev (the set I tuned on) | 52 | 34 (65%) | 48 of 52 | 0.85 | 0.95 | 0.87 | 12 of 57 |
-| test (final run, code frozen) | 13 | 10 (77%) | 13 of 13 | 0.74 | 0.86 | 0.81 | 0 of 14 |
-| dev without the casual-wording group | 37 | 30 (81%) | 35 of 37 | n/a | 0.93 | 0.89 | 2 of 41 |
-
-What these numbers do and do not say:
-- It is strong on well-formed questions. On the test set nothing unfaithful, nothing wrongly refused, and every must-abstain question abstained.
-- It is weak on casual wording. Of the 20 casual-wording dev questions (q104 to q123, for example "payment plan?" or "fafsa deadline"), 15 ask for a fact from the sources: 4 were answered correctly, 1 partly, and 10 were refused (all 10 wrong answers are refusals). The other 5 (a clarify, a no-advice, a calendar-only and two must-abstain questions) are scored by rule and all pass, so 9 of 20 pass overall. The older "4 of 14, 29%" figure is the baseline of the casual round, run before the twentieth question was added. The test set has no casual wording, so the test headline describes well-formed questions only. That is why the dev table shows an 81% row without the casual group next to the 65% row with it.
-- The test set is small. 13 normal-gold questions means one question moves the rate by about 8 points.
-- The test split is not fully independent. Milestone 1 (13 Oct) was planned as report-only, with no keep rule and no tuning, and nothing in the settings was changed to fit those results. But I read the results, and two later plans name two test failures as their examples: q43 (two course codes, which led to two-course prerequisite answers) and q48 (the contact line read as advice, which fed the no-advice work). Both went from incorrect in `ms1-new` to correct in the final run, so the test result for those two questions is not independent and may be optimistic. Details: `docs/decisions.md`, "Corrections after review".
-- Dev is lower than test mainly because of the casual questions. I see no sign of overfitting to dev, but 13 questions cannot prove that.
-- The final run measures the pipeline. The API guardrails (rate limits, injection screening, personal-data handling, distress replies) are covered by unit tests and two rounds of outside testers, not by this run.
+- **The test split is not untouched.** The final run was done once, with the code frozen. The split had also been run three times before, with earlier configurations (`baseline-final` on 10 questions, `ms1-old` and `ms1-new` on all 31, in milestone 1). Milestone 1 was planned as report-only, and I changed no setting to fit it. But I read those results, and two later plans name two test failures as their examples: q43 (two course codes, which led to two-course prerequisite answers) and q48 (the contact line read as advice, which fed the no-advice work). Both went from incorrect to correct, so the test result for those two is not independent and may be optimistic (`docs/decisions.md`, "Corrections after review").
+- **Two test questions were graded by me, after seeing the results.** q50 (correct) and q74 (partial) have "clarify or answer every branch" gold answers that my harness cannot grade, so the table shows both views.
+- **The test set is small.** 13 fact questions means one question moves the rate by about 8 points. I see no sign of overfitting to dev, but 13 questions cannot prove that. Dev is lower than test mainly because of the casual-wording questions.
+- **Casual wording.** The casual set is 20 dev questions (q104 to q123). Of the 15 fact questions, 4 were answered correctly, 1 partly and 10 were refused (every wrong answer is a refusal); the other 5 are scored by rule and all pass, so 9 of 20 pass. The older "4 of 14, 29%" is the baseline of the casual round, run before the twentieth question was added. The test set has no casual wording.
+- **The final run measures the pipeline.** The API guardrails (rate limits, injection screening, personal-data handling, distress replies) are covered by unit tests and two rounds of outside testers, not by this run.
 
 ## How it works
 
@@ -91,30 +91,32 @@ flowchart TD
     RT --> A
 ```
 
-- Classification, calendar row choice, reranking and answers use `gpt-6-luna`; embeddings use `text-embedding-3-small`; the evaluation judge is a different model, `gpt-5.6-terra`.
-- Answer settings: temperature 0.1, top_p 0.3, reasoning off; router calls use temperature 0; the judge uses temperature 0.
-- Calendar answers come from a table of 136 events I verified row by row. A model only chooses which rows apply; plain code writes every date, weekday and source line.
+- Classification, calendar row choice, reranking and answers use `gpt-6-luna`; embeddings use `text-embedding-3-small`; the evaluation judge is a different model, `gpt-5.6-terra`. Answer settings: temperature 0.1, top_p 0.3, reasoning off; router calls and the judge use temperature 0.
+- A model only chooses which calendar rows apply; plain code writes every date, weekday and source line.
 - Prerequisite chains are walked from the catalog text by code (depth at most 4, at most 15 courses) and rendered by code with the catalog's own words quoted.
 - Retrieval: vector search for 20 candidates, a model reranks them, the top 5 go to the answer model. Chunks follow headings and keep tables with their intro text.
-- The answer is refused when the best vector similarity is under 0.59. I chose that cutoff on dev only and did not change it after the test split; a sweep showed no cutoff separates a valid short question from an out-of-scope one.
-- Near-miss helper: a refusal within 0.04 below the cutoff lists up to two closest pages. It still counts as an abstention and claims nothing about what the pages say.
-- Abstentions add an office contact only when one clearly applies (a named department, an account word, a calendar abstention). Contacts come from `config/contacts.yaml`, never from the model.
-- Not built on purpose: no conversation memory (each question stands alone), no seats, sections or instructors, nothing behind a login.
+- The answer is refused when the best vector similarity is under 0.59. A near-miss reply within 0.04 below the cutoff lists up to two closest pages; it still counts as an abstention.
+- Abstentions add an office contact only when one clearly applies. Contacts come from `config/contacts.yaml`, never from the model.
+
+Key decisions and why:
+1. **Calendar from a table, not search.** Dates must be exact, so I verified 136 rows by hand and let code write them.
+2. **Prerequisite chains rendered by code.** The catalog's rule text is quoted word for word, never paraphrased by a model.
+3. **Cutoff 0.59, chosen on dev only.** A sweep from 0.55 to 0.62 showed no cutoff separates a valid short question from an out-of-scope one, so I added the near-miss reply instead of moving it.
+4. **Contacts written by code.** The model never writes an email or phone number, and a contact is added only when an office clearly applies.
+5. **A different model judges.** The judge is stronger than the answer model on purpose, and each final answer was judged twice (13 of 14 agreed; the one difference was redacted contact details in the stored answer).
 
 ## Safety and cost controls
 
-- Daily spend cap of $1.00 and a kill switch (config or a file), per visitor rate limits of 10 a minute and 100 a day (kept in memory, addresses hashed with a random salt, never stored), 15 s per model call, 45 s per request.
-- Input handling: control and hidden characters removed; prompt-injection phrases blocked with a fixed reply; emails, phone and ID numbers redacted; Social Security number shaped input refused; a name after "my name is" removed.
-- Distress and stress phrases get a fixed, kind reply that names 988 for the narrow cases. It is phrase matching and can miss other wording (known limit).
-- Questions in other languages get a short English notice that the assistant answers in English only; the safety screens run on a translation first.
-- Logs hold the redacted question and answer, sources, cost and latency, no IP address and no account identifier; a purge command deletes rows older than 30 days. The page says not to type personal information.
-- Optional LangSmith tracing exists for development, off by default, and scrubs every payload. Turning it on for a public deployment would be a separate decision.
-- No login, no cookies, no analytics, no student data. The API listens on 127.0.0.1 only.
+- Daily spend cap of $1.00 and a kill switch (config or a file); per-visitor rate limits of 10 a minute and 100 a day, kept in memory with addresses hashed and never stored; 15 s per model call and 45 s per request.
+- Input handling: hidden characters removed; prompt-injection phrases blocked with a fixed reply; emails, phone and ID numbers redacted; a Social Security number shaped input refused; a name after "my name is" removed.
+- Distress and stress phrases get a fixed reply that names 988 for the narrow cases. It is phrase matching and can miss other wording. Questions in other languages get a short English notice; the safety screens run on a translation first.
+- Logs hold the redacted question and answer, sources, cost and latency; no IP address and no account identifier; a purge command deletes rows older than 30 days. No login, no cookies, no analytics. The API listens on 127.0.0.1 only.
+- Optional LangSmith tracing exists for development, off by default, with every payload scrubbed.
 - Crawling: robots.txt respected, at most 1 request per second, an identifying User-Agent, only the allowed hosts in `config/sources.yaml`, never login links, raw responses saved with a content hash.
 
 ## What I tried that did not work
 
-Every experiment had its keep rule written down before the run. Details and links are in [docs/results.md](docs/results.md).
+Each experiment had a keep rule written before the run; two rules needed amendments, both recorded in `docs/decisions.md`. Details and links are in [docs/results.md](docs/results.md).
 
 | Experiment | Result |
 |---|---|
@@ -131,69 +133,45 @@ From the test run (details in [docs/results.md](docs/results.md)):
 - q07, EET degrees: a retrieval miss; the Accelerator Science and Technology minor was left out.
 - q41, steps before EET 4202: the chain walk stops at depth 4, so the judge marked it partial.
 - q60, TAP waiver: right sources, but the answer left out how to request it.
-- q74, last day to drop (my grade, given after seeing results: partial): it lists the three grade-related dates and leaves out the tuition-refund dates unless the question mentions a refund. That is a trade-off I chose and have not fixed.
-- q50, refund when dropping (my grade, given after seeing results: correct): complete Fall 2026 schedule; it does not say other terms differ.
+- q74, last day to drop (my grade, after seeing results: partial): it lists the three grade-related dates and leaves out the tuition-refund dates unless the question mentions a refund. That is a trade-off I chose and have not fixed.
+- q50, refund when dropping (my grade, after seeing results: correct): complete Fall 2026 schedule; it does not say other terms differ.
 
-Known limits, condensed (full list in [docs/known-limits.md](docs/known-limits.md)):
-- A question with two parts answers one part without saying so.
-- Casual or very short wording can score under the 0.59 cutoff and get "I could not find this" or the closest pages. No data covers "how to register" or "where to pay" questions.
-- Courses outside the four departments, other terms, seats and instructors are not covered.
-- Distress detection and name removal are pattern matching and can miss.
-- The rate limit counts per network address in memory, so it resets on restart.
-- Tuition due dates come out as one long sentence.
+Known limits, condensed (full list in [docs/known-limits.md](docs/known-limits.md)): a two-part question answers one part without saying so; casual or very short wording can score under the 0.59 cutoff and get "I could not find this" or the closest pages; no data covers "how to register" or "where to pay"; courses outside the four departments, other terms, seats and instructors are not covered; distress detection and name removal are pattern matching; the rate limit resets on restart; tuition due dates come out as one long sentence.
 
 ## What I would do next
 
 A "version 2", measured on fresh questions I write myself, never on the test split:
-- Include the refund rows for an unqualified "last day to drop" question.
-- Say that refund schedules differ by term and mention that fees are not refundable.
-- Fix casual wording failures (q107, q108, q111, q123 and the casual dev group).
+- Fix casual wording failures first (q107, q108, q111, q123 and the casual dev group).
+- Include the refund rows for an unqualified "last day to drop" question; say that refund schedules differ by term and that fees are not refundable.
 - Retrieve the EET degrees page chunks together (q07); follow prerequisite chains past depth 4 or say what was cut (q41).
 - Answer both parts of a two-part question; remove names not written after "my name is".
 
-## How to run it
-
-This is not a one-command reproduce. The collected data is not in the repo, and I did not re-run every step while writing this.
-
-Prerequisites: Python 3.12, [uv](https://docs.astral.sh/uv/), Docker, Node 22, an OpenAI API key.
+## Quickstart
 
 ```bash
 uv sync
 cp .env.example .env                        # set OPENAI_API_KEY, POSTGRES_PASSWORD, CTA_CONTACT_EMAIL
 docker compose up -d                        # Postgres 17 with pgvector, on 127.0.0.1:5432
 uv run python -m cta.index.db migrate       # create the tables
-```
-
-Data. `data/raw`, `data/processed` and `data/pdfs` are not committed. Only `data/calendar/calendar_events.json` is. To rebuild the data:
-1. Download the 11 PDFs listed in `config/sources.yaml` by hand into `data/pdfs/` (department PDFs, term calendars and four office PDFs; the calendar PDFs are linked from the Registrar's academic calendar page).
-2. Crawl: `uv run python -m cta.crawl.catalog` and `uv run python -m cta.crawl.pages`. My fetch log has 409 requests; at one per second that is at least about 7 minutes. I did not time a fresh crawl.
-3. Parse: `uv run python -m cta.parse.pages`, `cta.parse.pdf_docs`, `cta.parse.departments`, `cta.parse.calendar_build` (each `uv run python -m ...`).
-4. Check: `uv run python -m cta.validate` (nothing is indexed until it passes).
-5. Index: `uv run python -m cta.index.load --dry-run`, then `--yes` (about 136,000 tokens, roughly $0.003 of embeddings), then `uv run python -m cta.index.load_calendar --yes`.
-
-Run:
-
-```bash
 uv run python -m cta.api                    # API on 127.0.0.1:8000 (see /health and /docs)
-npm install --prefix web
-npm run dev --prefix web                    # page on http://127.0.0.1:3000
+npm install --prefix web && npm run dev --prefix web   # page on http://127.0.0.1:3000
 ```
 
-I checked these against the repo while writing: `uv sync`, `cta.validate`, `cta.index.load --dry-run`, `cta.index.load_calendar --dry-run`, `cta.index.db status`, `cta.index.chunks --stats`, starting the API and the built web app, `pytest`, `npm test`, `tsc` and `next build`. I did not re-run the crawl, parse, `migrate`, `load --yes` or `load_calendar --yes` commands for this README; they are taken from the module docstrings.
+The collected data is not in the repo, so this is not a one-command reproduce: to get answers you first have to rebuild it (PDF downloads, crawl, parse, validate, index). The full steps, and exactly what I verified and did not, are in [docs/running.md](docs/running.md). In a fresh clone, `uv sync`, the tests, `npm ci`, the web tests, typecheck and build, and `migrate` against an empty database all work.
 
 ## How I built and evaluated it
 
 - 122 eval questions: 91 development, 31 test. I wrote or reviewed every question and gold answer. Gold labels point to a source page and section, not to chunk ids.
-- Every change had a keep rule written in `docs/decisions.md` before the run. Dev is for tuning; the final test run was done once at the end, with the code frozen at a tag (the test split had also been run in milestone 1; see the note under "Results at a glance").
-- Metrics: recall, precision, hit rate and MRR at k; judged correctness and faithfulness; abstention accuracy; cost; latency. The judge model differs from the answer model. Judge noise is about 0.03 to 0.05 on dev, so I judged the final answers twice: 13 of 14 agreed, and the one difference came from redacted contact details in the stored answer, not from the judge.
+- Every change had a keep rule written in `docs/decisions.md` before the run. Dev is for tuning; the final test run was done once at the end, with the code frozen at a tag.
+- Metrics: recall, precision, hit rate and MRR at k; judged correctness and faithfulness; abstention accuracy; cost; latency. Judge noise is about 0.03 to 0.05 on dev.
 - I built this with Claude Code as a coding assistant. I made the decisions, wrote or reviewed every eval question and gold answer, and set the pre-registered rules.
 
 ## Repo layout, tests, license
 
-- `src/cta/`: `crawl`, `parse`, `index` (chunks, embeddings, search), `graph` (router, calendar, chain), `api` (FastAPI and guards), `eval`, `validate`.
-- `web/` the Next.js page; `config/` settings and sources; `db/migrations/`; `eval/` questions and result files; `scripts/`; `docs/` decisions, plans and results.
-- Tests: 2,771 Python tests pass on my machine (`uv run pytest`) and 110 web tests (`npm test --prefix web`); `ruff check` is clean. Many Python tests read the collected data, which is not in the repo: in a fresh clone without `data/processed` about 500 of them fail (a missing-data failure, not a code failure) and some database tests are skipped.
+- `src/cta/`: `crawl`, `parse`, `index` (chunks, embeddings, search), `graph` (router, calendar, chain), `api` (FastAPI and guards), `eval`, `validate`. `web/` is the Next.js page; `config/` settings and sources; `db/migrations/`; `eval/` questions and results; `scripts/`; `docs/` decisions, plans and results.
+- Tests: 2,771 Python tests (`uv run pytest`) and 110 web tests (`npm test --prefix web`). On my machine all 2,771 Python tests pass; in a fresh clone without the collected data, 2,136 pass and 635 skip with a reason (they need the data or Postgres) and none fail. `ruff check` is clean.
 - License: MIT for the code (see [LICENSE](LICENSE)). No crawled City Tech content is included. `eval/questions.jsonl` quotes short passages from public City Tech pages in its gold answers; the project is not affiliated with City Tech or CUNY.
 
 ## Contact
-owner: https://github.com/medrees-1000
+
+GitHub: https://github.com/medrees-1000
