@@ -53,6 +53,16 @@ def share(records, field, value):
     return (sum(x == value for x in xs), len(xs))
 
 
+def correctness_counts(records, owner_grades=None):
+    """(n, correct, partial, incorrect) of the normal-gold questions; with owner grades (a dict
+    id -> 'correct'|'partial'|'incorrect') the questions the harness left ungraded are added."""
+    grades = [r["correctness"] for r in records if r["gold_kind"] == "normal"]
+    for r in records:
+        if owner_grades and r["id"] in owner_grades and r["correctness"] is None:
+            grades.append(owner_grades[r["id"]])
+    return (len(grades), *(grades.count(g) for g in ("correct", "partial", "incorrect")))
+
+
 def main(label, merged_path=None):
     merged = json.loads(Path(merged_path).read_text()) if merged_path else {}
     results = json.loads((ROOT / "eval" / "results" / f"{label}.json").read_text())
@@ -101,6 +111,16 @@ def main(label, merged_path=None):
     for name in ("yes", "partly", "no"):
         c, n = share(normal, "faithfulness", name)
         print(f"  faithfulness {name:6s} {c}/{n} = {c / n:.3f}")
+    owner_path = ROOT / "eval" / "results" / f"{label}-owner-grades.json"
+    owner = {}
+    if owner_path.exists():
+        owner = {k: v["correctness"] for k, v in json.loads(owner_path.read_text())["grades"].items()}
+    n, c, p, i = correctness_counts(recs)
+    print(f"== headline, harness-only:       n={n}  correct {c}  partial {p}  incorrect {i}")
+    if owner:
+        n, c, p, i = correctness_counts(recs, owner)
+        print(f"== headline, with owner grades:  n={n}  correct {c}  partial {p}  incorrect {i}"
+              f"  (owner grades for {sorted(owner)}, given after seeing results)")
     print(f"  runner (as printed in the stored summary): {json.dumps({k: ans[k] for k in ans if 'correct' in k or 'faith' in k})[:400]}")
     abst = sum(r["abstained"] for r in abstain_gold)
     print(f"== abstention accuracy {abst}/{len(abstain_gold)}; "

@@ -1,0 +1,17 @@
+{
+  "run": "final-run",
+  "grader": "owner",
+  "date": "2026-10-16",
+  "graded_after_seeing_results": true,
+  "note": "Given after the harness results and the answers were seen. The harness cannot grade golds of the form 'CLARIFY OR ...'. Pass-1 judge results stay the headline.",
+  "grades": {
+    "q50": {
+      "correctness": "correct",
+      "reason": "Names Fall 2026, gives the full schedule (100% by Aug 27, 75% by Sep 3, 50% by Sep 10, 25% by Sep 17, none from Sep 18), says it depends on the date, cites the Bursar page. It does not say other terms differ and omits the fees-not-refundable line; both minor."
+    },
+    "q74": {
+      "correctness": "partial",
+      "reason": "Gives three labelled dates (drop without WD Sep 3; drop with WD Sep 17; withdraw with W Nov 6) and never presents one date as covering every kind of drop, but omits all four tuition-refund rows the gold names first (fall-2026-004, -008, -016, -019). This is the drop-family rule working as designed (refund rows only when the question mentions a refund)."
+    }
+  }
+}
