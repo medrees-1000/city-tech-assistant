@@ -49,3 +49,21 @@ def test_the_committed_final_run_gives_the_reported_numbers():
     assert numbers.faithfulness_counts(run["per_question"]) == (13, 13)
     assert numbers.abstention(run["per_question"]) == (7, 7, 14, 0)
     assert numbers.rank_metrics(run["per_question"], run["excluded_from_retrieval"])[0] == 14
+
+
+def test_assistant_cost_does_not_count_the_reranker_twice():
+    run = numbers.load("final-run")["per_question"]
+    cost = numbers.product_cost(run)
+    assert abs(cost - 0.00040) < 0.000005
+    # answer_cost already holds the rerank call: adding rerank_cost would give about 0.00058
+    assert sum(r["answer_cost"] + r["rerank_cost"] for r in run) / len(run) > 0.00055
+    assert cost == sum(r["answer_cost"] for r in run) / len(run)
+
+
+def test_casual_group_counts():
+    dev = numbers.load("final-config-dev")["per_question"]
+    casual = numbers.by_filter(dev, tag="casual")
+    assert len(casual) == 20
+    assert numbers.correctness_counts(casual) == (15, 4, 1, 10)
+    normal = [r for r in casual if r["gold_kind"] == "normal"]
+    assert sum(r["abstained"] for r in normal) == 10

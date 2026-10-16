@@ -53,8 +53,10 @@ def rank_metrics(records: list[dict], excluded: list[str]) -> tuple[int, float, 
 
 
 def product_cost(records: list[dict]) -> float:
-    """Mean cost of one request to the assistant: answer, classifier/selector and rerank calls, no judge."""
-    return sum((r["answer_cost"] or 0) + (r["rerank_cost"] or 0) for r in records) / len(records)
+    """Mean cost of one request to the assistant, no judge. The runner's answer_cost already holds
+    the classifier, the calendar selector, the reranker, the answer call and the query embedding,
+    so nothing is added to it (adding rerank_cost would count the reranker twice)."""
+    return sum(r["answer_cost"] or 0 for r in records) / len(records)
 
 
 def without_tag(records: list[dict], tag: str) -> list[dict]:
@@ -86,9 +88,9 @@ def table_final() -> None:
     print(f"- Retrieval on the {r['n']} retrieval-scored questions: recall@5 {r['recall@5']:.3f}, "
           f"precision@5 {r['precision@5']:.3f}, hit@5 {r['hit@5']:.3f}, MRR {r['mrr']:.3f}")  # fmt: skip
     lat, cost = a["latency_ms"], a["cost"]
-    print(f"- Cost of one request to the assistant (answer, router and rerank calls, no judge): ${product_cost(recs):.5f}")
+    print(f"- Cost of one request to the assistant (classifier, selector, reranker, answer call and query embedding; no judge): ${product_cost(recs):.5f}")
     print(f"- Cost of the whole eval run including the judge: ${cost['answer_usd'] + cost['judge_usd']:.3f} "
-          f"(${cost['per_request_usd']:.4f} per request; answers ${cost['answer_usd']:.4f}, judge ${cost['judge_usd']:.4f}; rerank calls not counted here)")  # fmt: skip
+          f"(${cost['per_request_usd']:.4f} per request; answers ${cost['answer_usd']:.4f}, judge ${cost['judge_usd']:.4f})")  # fmt: skip
     print(f"- Latency: median {lat['total_median'] / 1000:.1f} s, p95 {lat['total_p95'] / 1000:.1f} s")
     rows = pass2["per_question"]
     same = sum(x["pass1"] == x["pass2"] for x in rows)
@@ -136,7 +138,7 @@ def table_compare(dev_label: str) -> None:
     print("\n### (c) Test against dev (final configuration)\n")
     print("| Set | n normal | correct | faithful | recall@5 | hit@5 | MRR | wrongly abstained |")
     print("|---|---|---|---|---|---|---|---|")
-    for name, run in (("dev (the set I tuned on)", dev), ("test (run once)", final)):
+    for name, run in (("dev (the set I tuned on)", dev), ("test (final run, code frozen)", final)):
         n, c, p, i = correctness_counts(run["per_question"])
         fn, fy = faithfulness_counts(run["per_question"])
         _, _, wn, ww = abstention(run["per_question"])
@@ -154,23 +156,32 @@ def table_casual(dev_label: str) -> None:
     dev, b0 = load(dev_label), load("casual-b0")
     print("\n### (d) Casual wording\n")
     casual = by_filter(dev["per_question"], tag="casual")
+    normal = [r for r in casual if r["gold_kind"] == "normal"]
+    rest = [r for r in casual if r["gold_kind"] != "normal"]
     n, c, p, i = correctness_counts(casual)
-    _, _, wn, ww = abstention(casual)
-    print(f"- `casual-b0` (baseline of the casual round, 19 questions): {correctness_counts(b0['per_question'])[1]} of "
-          f"{correctness_counts(b0['per_question'])[0]} normal-gold answers correct "
-          f"({pct(b0['answers']['correctness']['correct'])}); wrongly abstained {pct(b0['answers']['wrongly_abstained']['share'])}")  # fmt: skip
-    print(f"- Casual-tagged questions in `{dev_label}` ({len(casual)} questions): correct {c} of {n} normal-gold "
-          f"({pct(c / n)}), partial {p}, incorrect {i}; wrongly abstained {ww} of {wn}")  # fmt: skip
+    refused = sum(r["abstained"] for r in normal)
+    rest_ok = sum(r["correctness"] == "correct" for r in rest)
+    print(f"- The casual group is the {len(casual)} dev questions tagged `casual` (q104 to q123), in `{dev_label}`.")
+    print(f"- Fact questions (normal gold, n={n}): correct {c}, partial {p}, incorrect {i}; "
+          f"refused {refused} of {n}")  # fmt: skip
+    print(f"- The other {len(rest)} casual questions are scored by rule (clarify, no advice, calendar-only, must-abstain): "
+          f"{rest_ok} of {len(rest)} correct")  # fmt: skip
+    print(f"- All {len(casual)} together: {c + rest_ok} of {len(casual)} pass")
+    bn, bc, _, _ = correctness_counts(b0["per_question"])
+    print(f"- Baseline of the casual round (`casual-b0`, run before q123 was added, {len(b0['per_question'])} questions): "
+          f"{bc} of {bn} fact questions correct ({pct(bc / bn)})")  # fmt: skip
+    print("- \"Wrongly abstained\" in the dev tables is the runner's term: abstained questions among the answerable set "
+          "(fact questions plus the no-advice question), so its denominator is one larger than the fact-question count.")  # fmt: skip
 
 
 def table_routes(dev_label: str) -> None:
-    print("\n### (f) Cost and latency by route (answer + rerank cost, no judge)\n")
+    print("\n### (f) Cost and latency by route (whole request to the assistant, no judge)\n")
     print("| Route | requests (dev + test) | median cost | median latency (ms) |")
     print("|---|---|---|---|")
     recs = load(dev_label)["per_question"] + load("final-run")["per_question"]
     for route in sorted({r["route"] or "none" for r in recs}):
         sub = [r for r in recs if (r["route"] or "none") == route]
-        costs = [(r["answer_cost"] or 0) + (r["rerank_cost"] or 0) for r in sub]
+        costs = [r["answer_cost"] or 0 for r in sub]
         print(f"| {route} | {len(sub)} | ${median(costs):.5f} | {median(r['latency_ms'] for r in sub):.0f} |")
 
 
