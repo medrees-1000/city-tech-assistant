@@ -7,6 +7,17 @@ export const NOTICE_SHORT =
 /** The one footer line (landing page and chat page). The saved-questions line under it asks for no personal information. */
 export const FOOTER_LINE = "Independent student project, not affiliated with City Tech or CUNY";
 
+/** Under the chat bar: the full notice on the landing screen, one short line once a question has been
+ * sent. "New chat" empties the list, so it returns to the full notice. */
+export type FooterNotice = "full" | "short";
+
+export function footerNotice(messageCount: number): FooterNotice {
+  return messageCount > 0 ? "short" : "full";
+}
+
+/** The sentence of the short notice; the "What is saved?" link follows it on the same line. */
+export const NOTICE_AFTER_FIRST = `City Tech Assistant is AI and can make mistakes. ${FOOTER_LINE}.`;
+
 export const NOTICE_TITLE = "What is saved?";
 
 export const NOTICE_POINTS: string[] = [

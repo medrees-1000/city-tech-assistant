@@ -863,6 +863,44 @@ button:disabled {
   color: var(--muted);
 }
 
+.privacy-short p {
+  margin: 0.5rem 0.25rem 0;
+}
+
+/* At desktop width the short notice stays on one line, centered under the bar even where it is
+   a little wider than the column; on phones it wraps. */
+@media (min-width: 900px) {
+  .privacy-short {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .privacy-short p {
+    white-space: nowrap;
+  }
+
+  .privacy-short ul {
+    flex-basis: 100%;
+  }
+}
+
+.notice-link {
+  display: inline-block;
+  min-height: 2.75rem;
+  padding: 0 0.25rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--link);
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.notice-link:hover {
+  text-decoration: underline;
+}
+
 .fine .unofficial {
   margin-top: 0.4rem;
 }

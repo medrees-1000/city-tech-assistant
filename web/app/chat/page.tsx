@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { ask, MAX_QUESTION_CHARS } from "../../lib/api";
 import { showDetails } from "../../lib/details";
-import { FOOTER_LINE } from "../../lib/notice";
+import { FOOTER_LINE, footerNotice } from "../../lib/notice";
 import { canSend, finishTurn, isEmpty, isLoading, startTurn } from "../../lib/messages";
 import type { Message } from "../../lib/messages";
 import { AssistantMessage } from "../components/AssistantMessage";
@@ -32,6 +32,7 @@ export default function ChatPage() {
   const dock = useRef<HTMLDivElement | null>(null);
   const empty = isEmpty(messages);
   const loading = isLoading(messages);
+  const notice = footerNotice(messages.length);
 
   // The input bar is sticky and its height changes (small screens, the notice, a longer input):
   // keep its real height in a CSS variable so scrolling to the newest answer always clears it.
@@ -128,12 +129,14 @@ export default function ChatPage() {
               ))}
             </ul>
           ) : null}
-          <p id="fine-print" className="fine">
-            Each question is answered on its own; earlier messages are not remembered.
-            <br />
-            <span className="unofficial">{FOOTER_LINE}</span>
-          </p>
-          <PrivacyNotice />
+          {notice === "full" ? (
+            <p id="fine-print" className="fine">
+              Each question is answered on its own; earlier messages are not remembered.
+              <br />
+              <span className="unofficial">{FOOTER_LINE}</span>
+            </p>
+          ) : null}
+          <PrivacyNotice mode={notice} />
         </div>
       </main>
     </div>
