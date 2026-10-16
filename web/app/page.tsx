@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { FOOTER_LINE } from "../lib/notice";
+
 const TOPICS = [
   {
     title: "Registration and deadlines",
@@ -48,7 +50,7 @@ export default function Welcome() {
       </ul>
 
       <footer>
-        <p className="unofficial">Unofficial student project, not affiliated with City Tech</p>
+        <p className="unofficial">{FOOTER_LINE}</p>
       </footer>
     </main>
   );

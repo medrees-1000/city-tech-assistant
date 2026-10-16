@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { ask, MAX_QUESTION_CHARS } from "../../lib/api";
+import { showDetails } from "../../lib/details";
+import { FOOTER_LINE } from "../../lib/notice";
 import { canSend, finishTurn, isEmpty, isLoading, startTurn } from "../../lib/messages";
 import type { Message } from "../../lib/messages";
 import { AssistantMessage } from "../components/AssistantMessage";
@@ -22,6 +24,7 @@ const EXAMPLES = [
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]); // in memory only: no storage, no cookies
   const [text, setText] = useState("");
+  const [details, setDetails] = useState(false); // ?details=1 shows the technical panel; read after mount
   const nextId = useRef(1);
   const epoch = useRef(0); // bumped by "New chat" so a late answer is dropped
   const input = useRef<HTMLTextAreaElement | null>(null);
@@ -45,6 +48,10 @@ export default function ChatPage() {
       root.style.removeProperty("--dock-h");
     };
   }, [empty]);
+
+  useEffect(() => {
+    setDetails(showDetails(window.location.search));
+  }, []);
 
   useEffect(() => {
     if (!empty) end.current?.scrollIntoView({ block: "end" });
@@ -93,7 +100,7 @@ export default function ChatPage() {
                   <p className="bubble">{m.text}</p>
                 </div>
               ) : (
-                <AssistantMessage key={m.id} id={m.id} turn={m.turn} />
+                <AssistantMessage key={m.id} id={m.id} turn={m.turn} details={details} />
               ),
             )}
             <div ref={end} />
@@ -124,7 +131,7 @@ export default function ChatPage() {
           <p id="fine-print" className="fine">
             Each question is answered on its own; earlier messages are not remembered.
             <br />
-            <span className="unofficial">Unofficial student project, not affiliated with City Tech</span>
+            <span className="unofficial">{FOOTER_LINE}</span>
           </p>
           <PrivacyNotice />
         </div>

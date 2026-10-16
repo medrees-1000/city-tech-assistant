@@ -492,6 +492,29 @@ button:disabled {
   text-decoration: underline;
 }
 
+/* The marker is a small superscript inside a line of text. Its touch area is widened to about
+   44 px with a transparent pseudo-element, and the focus ring is drawn around that area (the
+   marker itself has no height to draw a ring around). */
+.cite {
+  position: relative;
+}
+
+.cite::after {
+  content: "";
+  position: absolute;
+  inset: -1.45rem -0.65rem;
+}
+
+.cite:focus-visible {
+  outline: none;
+}
+
+.cite:focus-visible::after {
+  outline: 3px solid var(--focus);
+  outline-offset: -0.3rem;
+  border-radius: 8px;
+}
+
 .card {
   margin: 0.75rem 0;
   padding: 0.85rem 1rem;
@@ -511,7 +534,14 @@ button:disabled {
 }
 
 .contact-list li {
-  padding: 0.1rem 0;
+  padding: 0;
+}
+
+.contact-list a {
+  display: inline-block;
+  min-height: 2.75rem;
+  line-height: 2.75rem;
+  overflow-wrap: anywhere;
 }
 
 .contact p {
@@ -700,6 +730,13 @@ button:disabled {
 
 .privacy li {
   margin: 0.2rem 0;
+}
+
+.working {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--muted);
 }
 
 /* loading placeholder: three dots that breathe */

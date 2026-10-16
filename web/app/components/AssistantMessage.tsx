@@ -11,7 +11,7 @@ import { Feedback } from "./Feedback";
 import { HowFound } from "./HowFound";
 import { SourceList } from "./SourceList";
 
-export function AssistantMessage({ id, turn }: { id: number; turn: Turn }) {
+export function AssistantMessage({ id, turn, details }: { id: number; turn: Turn; details: boolean }) {
   const [open, setOpen] = useState(false);
 
   function showSource(n: number) {
@@ -27,8 +27,8 @@ export function AssistantMessage({ id, turn }: { id: number; turn: Turn }) {
     <div className="msg msg-assistant">
       <p className="who">Assistant</p>
       {turn.status === "loading" ? (
-        <div role="status">
-          <span className="sr-only">Looking this up in the City Tech sources…</span>
+        <div className="working" role="status" aria-live="polite">
+          <span>Working on it…</span>
           <span className="dots" aria-hidden="true">
             <span />
             <span />
@@ -36,8 +36,8 @@ export function AssistantMessage({ id, turn }: { id: number; turn: Turn }) {
           </span>
         </div>
       ) : null}
-      {turn.status === "error" ? <ErrorView error={turn.error} /> : null}
-      {turn.status === "done" ? <Done data={turn.data} id={id} open={open} setOpen={setOpen} onCite={showSource} /> : null}
+      {turn.status === "error" ? <ErrorView error={turn.error} details={details} /> : null}
+      {turn.status === "done" ? <Done data={turn.data} id={id} open={open} setOpen={setOpen} onCite={showSource} details={details} /> : null}
     </div>
   );
 }
@@ -48,12 +48,14 @@ function Done({
   open,
   setOpen,
   onCite,
+  details,
 }: {
   data: Extract<Turn, { status: "done" }>["data"];
   id: number;
   open: boolean;
   setOpen: (open: boolean) => void;
   onCite: (n: number) => void;
+  details: boolean;
 }) {
   const view = answerView(data);
   return (
@@ -62,7 +64,7 @@ function Done({
       {data.contact && showContact(data) ? <ContactCard contact={data.contact} /> : null}
       <Feedback requestId={data.request_id} />
       <SourceList assistantId={id} citations={data.citations} open={open} onToggle={setOpen} />
-      <HowFound data={data} />
+      {details ? <HowFound data={data} /> : null}
     </>
   );
 }

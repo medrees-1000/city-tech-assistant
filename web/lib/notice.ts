@@ -4,6 +4,9 @@
 export const NOTICE_SHORT =
   "Your questions are saved without emails, phone numbers or ID numbers, to improve this assistant. Please don't type personal information.";
 
+/** The one footer line (landing page and chat page). The saved-questions line under it asks for no personal information. */
+export const FOOTER_LINE = "Independent student project, not affiliated with City Tech or CUNY";
+
 export const NOTICE_TITLE = "What is saved?";
 
 export const NOTICE_POINTS: string[] = [
@@ -14,5 +17,5 @@ export const NOTICE_POINTS: string[] = [
   "No IP address and no cookies are stored.",
   "To prevent abuse, requests are counted in memory per visitor using a scrambled form of the network address that is never saved; the count is cleared when the service restarts.",
   "Optional developer tracing is off by default. If it is switched on for debugging, only the question text after personal details are removed, and the assistant's reply, are sent to LangSmith (a third party); no IP address and no cookies are sent.",
-  "This is an unofficial student project, not affiliated with City Tech.",
+  "This is an independent student project, not affiliated with City Tech or CUNY.",
 ];

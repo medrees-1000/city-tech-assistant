@@ -1,3 +1,5 @@
+import { isTimeout } from "./errors.ts";
+
 // The API contract (docs/phase4-plan.md, section 1) and the one fetch call. No logic besides the call.
 
 export type Citation = {
@@ -93,22 +95,30 @@ export const MAX_QUESTION_CHARS = 500; // the API limit (config api.max_question
 
 const UNREACHABLE: ApiError = {
   code: "unreachable",
-  message: "Something went wrong. Please try again in a moment.",
+  message: "I can't reach the assistant right now. Please try again in a moment.",
   request_id: null,
 };
+const TIMEOUT: ApiError = {
+  code: "timeout",
+  message: "This is taking longer than expected. Please try again in a moment.",
+  request_id: null,
+};
+
+export const CLIENT_TIMEOUT_MS = 60_000; // the API's own request timeout is 45 s
 
 /** Ask one question. Only the API's own message and request id are ever passed on as an error. */
 export async function ask(question: string, signal?: AbortSignal): Promise<AskResult> {
   let response: Response;
+  const limit = AbortSignal.timeout(CLIENT_TIMEOUT_MS);
   try {
     response = await fetch("/api/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question }),
-      signal,
+      signal: signal ? AbortSignal.any([signal, limit]) : limit,
     });
-  } catch {
-    return { ok: false, error: UNREACHABLE };
+  } catch (e) {
+    return { ok: false, error: isTimeout(e) ? TIMEOUT : UNREACHABLE };
   }
   let body: unknown;
   try {
