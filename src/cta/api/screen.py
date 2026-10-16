@@ -87,6 +87,18 @@ HOPELESS = tuple(
         r"\bno reason to (?:keep going|keep living|go on)(?!\s+(?:to|the|a|with|in|for|my)\b)",
         r"\bend(?:ing)? it all\b",
         r"\btake my (?:own )?life\b",
+        # post-freeze sweep (Oct 16, 2026): plans, means, self-harm, goodbyes, text-speak
+        rf"{_I}\s+(?:am\s+)?(?:about to|going to|gonna)\s+end it"
+        r"(?:\s+(?:tonight|today|now|soon|tomorrow|right now))?\s*[.!?,]*\s*$",
+        r"\b(?:don'?t|do not)\s+want to wake up\s*[.!?,]*\s*$",
+        r"\b(?:pills|a gun|a rope|a knife|a razor)\b[^.?!]{0,50}"
+        r"\b(?:going to|gonna|about to|will|want to|wanna)\s+"
+        r"(?:take|swallow|use|hang|shoot|end|do it)\b",
+        r"\b(?:cutting|harming|hurting|burning)\s+myself\b(?!\s+(?:some|a|off|loose|short|out|up)\b)",
+        r"\b(?:this is|it'?s) my last (?:message|text|post|goodbye)\s*[.!?,]*\s*$",
+        r"\bgoodbye\b[^.?!]{0,25}\b(?:i'?m|i am) done\s*[.!?,]*\s*$",
+        r"^\s*kms\s*[.!?]*\s*$|\b(?:gonna|going to|wanna|want to|just|ima|i'll)\s+kms\b",
+        r"\bunaliv(?:e|ing)\s+(?:myself|me)\b",
         # post-freeze safety fix: "i am about to die", "im going to die tonight" (a bare statement
         # or a time word at the end; "going to die if i fail" is the ambiguous case below)
         rf"{_I}\s+(?:am\s+)?(?:about to|going to|gonna|ready to|planning to|will|'ll)\s+die"
@@ -194,10 +206,22 @@ def without_idioms(text: str) -> str:
     return text
 
 
+LEET = (  # "k1ll myself", "k!ll", "d1e", "su1c1de": digits and ! standing for i inside a few words
+    (re.compile(r"\bk[1!]ll"), "kill"),
+    (re.compile(r"\bd[1!]e\b"), "die"),
+    (re.compile(r"\bsu[1!]c[1!]d"), "suicid"),
+    (re.compile(r"\bd[1!]ed\b"), "died"),
+)
+
+
 def plain_text(question: str) -> str:
     """Lower case, with emoji and other symbols turned into spaces so that "i cant go on 😳"
-    still ends at "go on". Letters, digits, apostrophes and ordinary punctuation stay."""
-    return re.sub(r"[^\w\s'.,!?;:\"()\[\]-]", " ", lowered(question))
+    still ends at "go on", and with the lightest leetspeak undone. Letters, digits, apostrophes
+    and ordinary punctuation stay."""
+    text = re.sub(r"[^\w\s'.,!?;:\"()\[\]-]", " ", lowered(question))
+    for pattern, plain in LEET:
+        text = pattern.sub(plain, text)
+    return text
 
 
 def is_distress(question: str) -> bool:
