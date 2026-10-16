@@ -39,3 +39,14 @@ Not verified end to end:
 - the crawl and parse commands (they need network access and the downloaded PDFs; I only checked that the modules import);
 - `cta.index.load --yes` and `cta.index.load_calendar --yes` on an empty database (they cost a few cents of embeddings);
 - starting the API from a fresh clone (it needs the data, the database and a key).
+
+## Running the built page (for demos)
+
+The development server shows a small "N" badge in the bottom-left corner. The production build does not. For a demo or a recording, build the page and run the production server (bound to 127.0.0.1:3000; the API must be running on 127.0.0.1:8000):
+
+```bash
+npm run build --prefix web
+npm run start --prefix web
+```
+
+Add `?details=1` to the page address to show the "How this was found" panel; it is hidden by default.

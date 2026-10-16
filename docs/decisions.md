@@ -1313,6 +1313,7 @@ Written after the freeze tag (`final-run-frozen`, `159b295`) and after the resul
 - q41: the chain depth limit.
 - A router-aware re-judge, if not delivered in part 2.
 - Smaller items already in `docs/known-limits.md`: a two-part question answers one part (item 20); a name not written after "my name is" is not removed (item 21).
+- `cta.index.chunks --stats` crashes with `min()` of an empty list when there is no data (found in the fresh-clone check; not fixed, not a README command).
 
 ### Final run, second judge pass: the judge-only tool (Oct 16, 2026; after `final-run-frozen`)
 

@@ -4,6 +4,8 @@
 
 **Remaining:** the final milestone run on the test split and its failure analysis; the README (results, failure analysis, run instructions); the three-question smoke test; the `phase4-prototype` tag; and the owner's decisions for any public deployment (hosting, proxy headers, shipping `data/processed`, a connection pool, tracing, retention).
 
+Update (2026-10-16): the "How this was found" panel is now hidden by default and shown with `?details=1`; error messages are plain sentences (`web/lib/errors.ts`).
+
 The text below is the original plan, written before the build, and is kept as it was. Where it differs from the code, `docs/decisions.md` and `docs/architecture.md` are right.
 
 ---
