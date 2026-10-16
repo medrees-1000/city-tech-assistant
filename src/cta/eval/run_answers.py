@@ -959,6 +959,9 @@ def main(argv: list[str]) -> int:
         "--mode", choices=("vector", "hybrid", "hybrid_bm25"), help="override retrieval.mode"
     )
     p.add_argument("--dept-filter", choices=("off", "on"), help="override retrieval.dept_filter")
+    p.add_argument(
+        "--fallback-rewrite", choices=("off", "on"), help="override retrieval.fallback_rewrite"
+    )
     p.add_argument("--ids", help="comma-separated question ids (within the split)")
     p.add_argument("--tag", help="only questions with this tag, for example calendar")
     p.add_argument("--router", choices=("off", "on"), help="override router.mode")
@@ -1003,6 +1006,8 @@ def main(argv: list[str]) -> int:
         cfg["retrieval"]["mode"] = args.mode
     if args.dept_filter:
         cfg["retrieval"]["dept_filter"] = args.dept_filter
+    if args.fallback_rewrite:
+        cfg["retrieval"]["fallback_rewrite"] = args.fallback_rewrite
     if args.rerank:
         cfg["retrieval"]["rerank"] = args.rerank
     if args.router:

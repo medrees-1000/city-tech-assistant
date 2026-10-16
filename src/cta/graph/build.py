@@ -264,9 +264,15 @@ def make_nodes(d: Deps):
         return "retrieve" if state.get("chain_fallthrough") else END
 
     def retrieve_node(state: RouterState) -> dict:
+        # experiment E1: the fallback rewrite is only for the plain retrieve route (not after a
+        # calendar or chain fall-through, and not for a question about the student's own account)
+        plain = not (state.get("fallthrough") or state.get("chain_fallthrough"))
+        plain = plain and not contacts.personal_account_cue(
+            state["question"], contacts.load_contacts()
+        )
         found = answer(
             d.conn, state["question"], state["today"], cfg=d.cfg,
-            client_factory=d.client_factory, log=False, run_id=state.get("run_id"),
+            client_factory=d.client_factory, log=False, run_id=state.get("run_id"), rewrite=plain,
         )  # fmt: skip
         if state.get("chain_fallthrough"):
             route = "chain_fallthrough"
@@ -330,6 +336,7 @@ def routed(found: Answer, state: RouterState, started: float, today: date) -> Ro
     )  # fmt: skip
     ans.route, ans.today = state["route"], today
     ans.near_miss = found.near_miss
+    ans.rewrite = found.rewrite
     ans.row_ids = found.row_ids if isinstance(found, RoutedAnswer) else []
     ans.router = {
         "route": state["route"], "intent": state["intent"], "term_mention": state["term_mention"],
@@ -339,6 +346,7 @@ def routed(found: Answer, state: RouterState, started: float, today: date) -> Ro
         **({"chain": state["chain"]} if state.get("chain") else {}),
         **({"advice": state["advice"]} if state.get("advice") else {}),
         **({"near_miss": True} if found.near_miss else {}),
+        **({"rewrite": found.rewrite} if found.rewrite else {}),
     }  # fmt: skip
     ans.latency_ms = round((time.perf_counter() - started) * 1000)
     return ans

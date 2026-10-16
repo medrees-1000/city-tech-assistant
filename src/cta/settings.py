@@ -97,6 +97,14 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
         cfg["retrieval"]["dept_filter"] = env["CTA_DEPT_FILTER"].strip()
     if env.get("CTA_RERANK", "").strip():
         cfg["retrieval"]["rerank"] = env["CTA_RERANK"].strip()
+    if env.get("CTA_FALLBACK_REWRITE", "").strip():
+        cfg["retrieval"]["fallback_rewrite"] = env["CTA_FALLBACK_REWRITE"].strip()
+    cfg["retrieval"].setdefault("fallback_rewrite", "off")
+    if cfg["retrieval"]["fallback_rewrite"] not in ("off", "on"):
+        raise ValueError(
+            "retrieval.fallback_rewrite must be off or on, "
+            f"not {cfg['retrieval']['fallback_rewrite']!r}"
+        )
     if cfg["retrieval"]["rerank"] not in RERANK_MODES:
         raise ValueError(
             f"retrieval.rerank must be one of {RERANK_MODES}, not {cfg['retrieval']['rerank']!r}"

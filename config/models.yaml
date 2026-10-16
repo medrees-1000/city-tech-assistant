@@ -62,6 +62,10 @@ retrieval:
   # CTA_RERANK overrides it. Quoted for the same YAML reason. pool_a since experiment 3 (kept by its
   # pre-registered rule); CTA_RERANK=off reproduces the earlier vector-only retrieval.
   rerank: "pool_a"
+  # Fallback query rewrite (experiment E1, casual round): off | on. When on, a plain question whose
+  # first retrieval scores under the answer cutoff gets one small model call that rewrites it into a
+  # search query, and retrieval runs once more. CTA_FALLBACK_REWRITE overrides it. Quoted (YAML).
+  fallback_rewrite: "off"
 
 # Reranker call (the model is chat_model). Fixed in advance; see docs/experiments.md, step 3.
 rerank:

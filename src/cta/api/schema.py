@@ -73,6 +73,8 @@ class HowFound(BaseModel):
     language: dict[str, str | None] | None = None
     # a below-threshold abstention that lists the two closest pages (the near-miss helper)
     near_miss: bool = False
+    # the fallback query rewrite (experiment E1), when it ran: the redacted query, both similarities
+    rewrite: dict[str, Any] | None = None
 
 
 class Meta(BaseModel):

@@ -155,6 +155,7 @@ def how_found(ans, cfg: dict, near_miss: bool | None = None) -> schema.HowFound:
     answer_cost = ans.chat_cost - classify["cost"] - select.get("cost", 0.0)
     return schema.HowFound(
         near_miss=bool(ans.near_miss) if near_miss is None else near_miss,
+        rewrite=router.get("rewrite"),
         route_detail=router["route"], intent=router.get("intent"),
         top_vector_similarity=search.top_vector_similarity if search else None,
         abstain_threshold=cfg["answer"]["abstain_threshold"],
