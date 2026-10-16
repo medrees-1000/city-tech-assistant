@@ -106,7 +106,7 @@ def flush(tracer, session=None):
     for _ in range(60):
         n = len(session.calls)
         quiet = quiet + 1 if n == last else 0
-        if quiet >= 3:
+        if quiet >= 8:
             return
         last = n
         time.sleep(0.05)

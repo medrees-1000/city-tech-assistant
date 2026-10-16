@@ -67,7 +67,8 @@ def test_calendar_answers_are_identical_with_the_rule_on(monkeypatch):
         cfg = load_models(env=env)
         script = Script("calendar", "Fall 2026", ["fall-2026-040"])
         router, _ = make_router(script, monkeypatch, events, cfg)
-        texts.append(router.answer("Last day to withdraw in Fall 2026?", TODAY, log=False).text)
+        question = "Last day to withdraw with a W in Fall 2026?"
+        texts.append(router.answer(question, TODAY, log=False).text)
     assert texts[0] == texts[1] and texts[0].startswith("**Friday, November 6, 2026**")
 
 

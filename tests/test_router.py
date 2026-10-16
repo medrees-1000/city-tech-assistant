@@ -355,7 +355,7 @@ def make_router(script, monkeypatch, events, cfg=CFG):
 def test_calendar_route_answers_from_the_rows_and_never_calls_retrieve(monkeypatch, events):
     script = Script("calendar", "Fall 2026", ["fall-2026-040"])
     router, seen = make_router(script, monkeypatch, events)
-    ans = router.answer("Last day to withdraw in Fall 2026?", TODAY, log=False)
+    ans = router.answer("Last day to withdraw with a W in Fall 2026?", TODAY, log=False)
     assert script.calls == ["classify", "select"] and seen == []
     assert ans.route == "calendar" and ans.row_ids == ["fall-2026-040"] and not ans.abstained
     assert ans.text.startswith("**Friday, November 6, 2026**: Last day to withdraw from a course")
@@ -400,14 +400,14 @@ def test_a_failed_or_malformed_selector_abstains_and_does_not_fall_through(
 def test_invalid_ids_are_dropped_and_counted_but_valid_ones_are_used(monkeypatch, events):
     script = Script("calendar", None, ["fall-2026-040", "winter-2027-004", "zzz"])
     router, _ = make_router(script, monkeypatch, events)
-    ans = router.answer("Last day to withdraw?", TODAY, log=False)
+    ans = router.answer("Last day to withdraw with a W?", TODAY, log=False)
     # winter-2027-004 exists but is not in the Fall pool: it is invalid here
     assert ans.row_ids == ["fall-2026-040"] and ans.router["invalid_ids"] == 2
 
 
 def test_no_term_mention_states_the_assumed_term(monkeypatch, events):
     router, _ = make_router(Script("calendar", None, ["fall-2026-040"]), monkeypatch, events)
-    ans = router.answer("What is the last day to withdraw?", TODAY, log=False)
+    ans = router.answer("What is the last day to withdraw with a W?", TODAY, log=False)
     assert ans.text.startswith("Assuming the current term, Fall 2026.")
     assert ans.router["term_status"] == "assumed"
 
@@ -621,7 +621,7 @@ def test_selector_v2_sees_all_calendars_and_a_row_of_another_term_can_be_chosen(
 def test_selector_v1_is_unchanged_when_the_switch_is_1(monkeypatch, events):
     script = Script("calendar", "Fall 2026", ["fall-2026-040"])
     router, _ = make_router(script, monkeypatch, events, CFG)
-    ans = router.answer("Last day to withdraw in Fall 2026?", TODAY, log=False)
+    ans = router.answer("Last day to withdraw with a W in Fall 2026?", TODAY, log=False)
     assert script.calls == ["classify", "select"]
     assert ans.router["selector_version"] == 1 and ans.router["pool_size"] == 53
 

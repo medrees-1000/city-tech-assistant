@@ -215,7 +215,7 @@ def test_when_retrieval_abstains_the_answer_is_the_usual_abstention(monkeypatch,
 def test_a_clear_non_advice_question_keeps_its_route(monkeypatch, events):
     script = Script("calendar", "Fall 2026", ["fall-2026-040"])
     router, seen = make_router(script, monkeypatch, events, CFG)
-    ans = router.answer("What is the last day to withdraw in Fall 2026?", TODAY, log=False)
+    ans = router.answer("What is the last day to withdraw with a W in Fall 2026?", TODAY, log=False)
     assert ans.route == "calendar" and script.calls == ["classify", "select"]
 
 

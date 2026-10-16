@@ -415,7 +415,7 @@ def test_a_calendar_answer_cites_its_rows_with_a_public_pdf_url_only_when_a_page
     (pages / "academic-calendar.json").write_text(json.dumps({"pdf_links": links}))
     client = Client("calendar", "Fall 2026", ["fall-2026-040"])
     body = ask(
-        make_client_app(client, monkeypatch, tmp_root=tmp_path), "Last day to withdraw?"
+        make_client_app(client, monkeypatch, tmp_root=tmp_path), "Last day to withdraw with a W?"
     ).json()
     assert body["route"] == "calendar" and body["answer_type"] == "answer"
     cite = body["citations"][0]
