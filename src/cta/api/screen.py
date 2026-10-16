@@ -87,6 +87,11 @@ HOPELESS = tuple(
         r"\bno reason to (?:keep going|keep living|go on)(?!\s+(?:to|the|a|with|in|for|my)\b)",
         r"\bend(?:ing)? it all\b",
         r"\btake my (?:own )?life\b",
+        # post-freeze safety fix: "i am about to die", "im going to die tonight" (a bare statement
+        # or a time word at the end; "going to die if i fail" is the ambiguous case below)
+        rf"{_I}\s+(?:am\s+)?(?:about to|going to|gonna|ready to|planning to|will|'ll)\s+die"
+        r"(?:\s+(?:tonight|today|now|soon|tomorrow|right now|this (?:week|weekend)|here))?"
+        r"\s*[.!?,]*\s*$",
         r"\b(?:isn'?t|is not|not) worth living\b",
         rf"\b(?:don'?t|do not) think (?:i|that i) can (?:do|take|handle)\s+(?:it|this)\s+{_ANYMORE}"
         r"\s*[.!?,]*\s*$",
@@ -163,7 +168,7 @@ def lowered(text: str) -> str:
 NARROWED = {
     "don't want to live": r"don'?t want to live(?!\s+(?:on|in|with|at|near|off|by|where|there)\b)",
     "do not want to live": r"do not want to live(?!\s+(?:on|in|with|at|near|off|by|where|there)\b)",
-    "can't go on": r"can't go on(?:\s+(?:anymore|any longer|like this|living)\b|\s*[.!?,]*\s*$)",
+    "can't go on": r"can'?t go on(?:\s+(?:anymore|any longer|like this|living)\b|\s*[.!?,]*\s*$)",
 }
 
 
@@ -189,8 +194,14 @@ def without_idioms(text: str) -> str:
     return text
 
 
+def plain_text(question: str) -> str:
+    """Lower case, with emoji and other symbols turned into spaces so that "i cant go on 😳"
+    still ends at "go on". Letters, digits, apostrophes and ordinary punctuation stay."""
+    return re.sub(r"[^\w\s'.,!?;:\"()\[\]-]", " ", lowered(question))
+
+
 def is_distress(question: str) -> bool:
-    text = without_idioms(lowered(question))
+    text = without_idioms(plain_text(question))
     if any(p.search(text) for p in HOPELESS):
         return True
     return any(re.search(NARROWED.get(p, rf"\b{re.escape(p)}"), text) for p in DISTRESS)
@@ -234,6 +245,18 @@ def names_stress_topic(words: list[str]) -> bool:
     return False
 
 
+# Ambiguous first-person "die" statements ("i'll die if i fail this class"): usually an
+# exaggeration, but not always. They get the gentle Tier 2 reply (no number, no claim), never a
+# silent pass (post-freeze safety fix; the owner can move them to Tier 1).
+DIE_AMBIGUOUS = re.compile(
+    rf"{_I}[^.?!]{{0,20}}?\b(?:will|'ll|would|gonna|going to|might|could|about to)\s+die\b"
+)
+
+
+def is_ambiguous_die(question: str) -> bool:
+    return bool(DIE_AMBIGUOUS.search(without_idioms(plain_text(question))))
+
+
 def is_stress(question: str) -> bool:
     """A first-person stress word, no topic noun, course code or department, at most 20 words."""
     text = lowered(question)
@@ -252,7 +275,9 @@ def is_stress(question: str) -> bool:
 SELF_HARM_TOPIC = re.compile(
     r"suicid|desire to die|want(?:s|ed|ing)? to die|self[- ]harm"
     r"|end(?:ing)? (?:my|his|her|their) life"
-    r"|kill(?:ing)? (?:my|him|her|them)self|ending it all|thoughts? of dying",
+    r"|kill(?:ing)? (?:my|him|her|them)self|ending it all|thoughts? of dying"
+    # post-freeze safety fix: a topic that restates the student's own dying or death
+    r"|\b(?:your|my|own|imminent) death\b|\bdying\b|\b(?:about|going) to die\b",
     re.IGNORECASE,
 )
 
@@ -297,7 +322,7 @@ def screen(question: str, g: dict) -> Screened:
         return Screened("personal_data", question)
     if g["injection_screen"] and is_injection(question):
         return Screened("injection", question)
-    if is_stress(question):
+    if is_stress(question) or is_ambiguous_die(question):
         return Screened("stress", question)
     clean = scrub(question) if g["personal_data"] != "off" else question
     return Screened(None, clean, clean != question, removed_personal_details(question, clean))
