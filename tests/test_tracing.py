@@ -97,19 +97,42 @@ def app_with(monkeypatch, tracer, client=None, cfg=None, stub=None):
     return make_client_app(client, monkeypatch, stub, cfg=cfg)
 
 
-def flush(tracer, session=None):
-    """Flush the client, then wait until the captured traffic is quiet (the SDK posts from
-    background threads, so reading the captured calls at once would race)."""
+def trace_complete(calls, root="ask") -> bool:
+    """True when the run named `root` was POSTed (the SDK posts runs from background threads in no
+    fixed order, so the expected root must be waited for by name) and every POSTed run was also
+    PATCHed (its end was sent)."""
+    posted, roots = set(), set()
+    for method, _url, body in calls:
+        if method != "POST":
+            continue
+        try:
+            run = json.loads(body)
+        except ValueError:
+            continue
+        if isinstance(run, dict) and run.get("id"):
+            posted.add(run["id"])
+            if run.get("name") == root:
+                roots.add(run["id"])
+    patched = {url.rsplit("/", 1)[-1] for method, url, _ in calls if method == "PATCH"}
+    return bool(posted) and bool(roots) and posted <= patched
+
+
+def flush(tracer, session=None, expect=True, root="ask"):
+    """Make the captured traffic complete. `client.flush()` drains the SDK's own queue; the runs
+    themselves are posted from background threads, so then wait for an explicit condition: with
+    `expect` (a trace is supposed to exist) every run that was POSTed has also been PATCHed (its end
+    was sent), and at least one was. Bounded by a hard timeout so a missing trace fails the
+    assertion that follows instead of hanging. `expect=False`: nothing was traced by design, so
+    nothing can be in flight and no wait is needed."""
     tracer.client.flush()
     session = session or tracer.client.session
-    last, quiet = -1, 0
-    for _ in range(60):
-        n = len(session.calls)
-        quiet = quiet + 1 if n == last else 0
-        if quiet >= 8:
+    if not expect:
+        return
+    deadline = time.monotonic() + 15
+    while time.monotonic() < deadline:
+        if trace_complete(list(session.calls), root):
             return
-        last = n
-        time.sleep(0.05)
+        time.sleep(0.01)
 
 
 # ---- the scrubber ----
@@ -173,7 +196,7 @@ def test_a_raw_string_put_into_a_trace_directly_never_leaves_the_client():
         with ls.trace(name="x", inputs={"q": QUESTION}, metadata={"who": RAW["email"]},
                       client=tracer.client) as run:  # fmt: skip
             run.end(outputs={"a": QUESTION})
-    flush(tracer)
+    flush(tracer, root="x")
     assert session.calls, "a run was sent"
     for raw in RAW.values():
         assert raw not in session.everything
@@ -340,7 +363,7 @@ def test_a_request_blocked_by_a_content_guard_creates_no_trace(monkeypatch, ques
     tracer, session = fake_tracing()
     c = app_with(monkeypatch, tracer)
     assert ask(c, question).json()["answer_type"] == "guardrail"
-    flush(tracer)
+    flush(tracer, expect=False)
     assert session.calls == []
 
 
@@ -365,11 +388,11 @@ def test_a_request_blocked_by_the_kill_switch_the_rate_limit_or_the_cap_creates_
         )
         first = ask(c, "When is the last day to withdraw in Fall 2026?").json()
         second = ask(c, "When is the last day to withdraw in Fall 2026?").json()
-        flush(tracer)
         blocked = [b for b in (first, second) if b["answer_type"] == "guardrail"]
         assert blocked, tweak
         # a trace exists only for a request that was actually served
         served = [b for b in (first, second) if b["answer_type"] != "guardrail"]
+        flush(tracer, expect=bool(served))
         assert (not served) == (session.calls == []), tweak
 
 
@@ -378,7 +401,7 @@ def test_a_blocked_request_makes_no_model_call_and_no_trace_even_with_tracing_on
     model = FakeModel()
     c = app_with(monkeypatch, tracer, client=model)
     ask(c, "I want to kill myself")
-    flush(tracer)
+    flush(tracer, expect=False)
     assert session.calls == [] and model.calls == []
 
 
@@ -448,3 +471,13 @@ def test_env_example_has_the_names_and_no_values():
     for name in ("LANGSMITH_API_KEY", "LANGSMITH_PROJECT", "CTA_TRACING"):
         assert f"\n{name}=\n" in text, name  # present, with nothing after the equals sign
     assert "LANGSMITH_TRACING=true" not in text
+
+
+def test_a_request_id_is_never_mangled_by_the_8_digit_id_rule():
+    # the real cause of the flaky test: a random 32-hex id holding 8 digits in a row became [ID]
+    rid = "1a37f2e549fb44849599f2ce9ba0b8bf"
+    assert tracing.scrub_value({"request_id": rid}) == {"request_id": rid}
+    assert tracing.scrub_value({"note": rid}) != {"note": rid}  # any other field is still scrubbed
+    assert tracing.scrub_value({"request_id": "call 718-260-5038"}) == {
+        "request_id": "call [PHONE]"
+    }

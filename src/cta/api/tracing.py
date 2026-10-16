@@ -47,6 +47,18 @@ def scrub_string(text: str) -> str:
     return text if len(text) <= MAX_STRING else text[:MAX_STRING] + " [truncated]"
 
 
+REQUEST_ID = re.compile(r"^[0-9a-f]{32}$")
+
+
+def keep_request_id(key, value, depth: int):
+    """The request id is a random 32-hex string made by the API, never personal data; the 8-digit
+    ID rule must not cut it when it happens to hold eight digits in a row (found as the cause of a
+    flaky test). Any other value of any other key is scrubbed as before."""
+    if key == "request_id" and isinstance(value, str) and REQUEST_ID.match(value):
+        return value
+    return scrub_value(value, depth + 1)
+
+
 def scrub_value(value, depth: int = 0):
     """A JSON-friendly copy of `value` with every string scrubbed. Long lists of numbers (embedding
     vectors) are summarised; other long lists are cut; other objects become scrubbed text."""
@@ -59,7 +71,7 @@ def scrub_value(value, depth: int = 0):
     if isinstance(value, bytes):
         return "[bytes]"
     if isinstance(value, dict):
-        return {scrub_string(str(k)): scrub_value(v, depth + 1) for k, v in value.items()}
+        return {scrub_string(str(k)): keep_request_id(k, v, depth) for k, v in value.items()}
     if isinstance(value, list | tuple | set | frozenset):
         items = list(value)
         if len(items) > 20 and all(isinstance(x, int | float) for x in items):
