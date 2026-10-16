@@ -192,7 +192,7 @@ I checked these against the repo while writing: `uv sync`, `cta.validate`, `cta.
 
 - `src/cta/`: `crawl`, `parse`, `index` (chunks, embeddings, search), `graph` (router, calendar, chain), `api` (FastAPI and guards), `eval`, `validate`.
 - `web/` the Next.js page; `config/` settings and sources; `db/migrations/`; `eval/` questions and result files; `scripts/`; `docs/` decisions, plans and results.
-- Tests: 2,769 Python tests (`uv run pytest`) and 110 web tests (`npm test --prefix web`); `ruff check` is clean.
+- Tests: 2,771 Python tests pass on my machine (`uv run pytest`) and 110 web tests (`npm test --prefix web`); `ruff check` is clean. Many Python tests read the collected data, which is not in the repo: in a fresh clone without `data/processed` about 500 of them fail (a missing-data failure, not a code failure) and some database tests are skipped.
 - License: MIT for the code (see [LICENSE](LICENSE)). No crawled City Tech content is included. `eval/questions.jsonl` quotes short passages from public City Tech pages in its gold answers; the project is not affiliated with City Tech or CUNY.
 
 ## Contact
