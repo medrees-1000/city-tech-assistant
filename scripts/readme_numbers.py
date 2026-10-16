@@ -72,7 +72,7 @@ def table_final() -> None:
     owner_file = json.loads((RESULTS / "final-run-owner-grades.json").read_text(encoding="utf-8"))
     owner = {k: v["correctness"] for k, v in owner_file["grades"].items()}
     recs, a, r = run["per_question"], run["answers"], run["retrieval"]
-    print("### (a) Final test run, 31 questions, run once (final-run)\n")
+    print("### (a) Final test run, 31 questions, code frozen at the tag final-run-frozen (final-run)\n")
     print("| Answer correctness (normal-gold questions) | n | correct | partial | incorrect |")
     print("|---|---|---|---|---|")
     n, c, p, i = correctness_counts(recs)

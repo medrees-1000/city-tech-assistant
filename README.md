@@ -2,6 +2,8 @@
 
 A question-answering assistant for City Tech (CUNY) students. It answers questions about registration, deadlines, advising, tuition and payment, financial aid, and four departments, and it shows the source for every answer. When the sources do not cover a question, it says so and points to the office to contact.
 
+Status: runs locally; not deployed; no public demo.
+
 **This is an independent student portfolio project. It is not affiliated with or endorsed by City Tech or CUNY, and it is not an official source.** It never uses student data: no login, no CUNYfirst, no Brightspace, nothing about any person's account. Check anything important with the office itself.
 
 ## What it does
@@ -25,7 +27,9 @@ Example (real output of the final system, 16 Oct 2026):
 
 ## Results at a glance
 
-I ran the 31 held-out test questions once, after freezing the code (`git tag final-run-frozen`). The numbers below are printed by `scripts/readme_numbers.py` from the committed files in `eval/results/`; all tables are in [docs/results.md](docs/results.md). Two of the test questions ("clarify or answer every branch" gold answers) cannot be graded by my harness. I graded them myself after seeing the results, so I show the headline both ways.
+[owner: add demo video link, optional]
+
+The final run was done once, on the 31 held-out test questions, with the code frozen at the git tag `final-run-frozen`. The test split is not untouched, though: it had also been run three times before, with earlier configurations (`baseline-final` on 10 questions, `ms1-old` and `ms1-new` on all 31, in milestone 1), and I read those results. Details are under "What these numbers do and do not say". The numbers below are printed by `scripts/readme_numbers.py` from the committed files in `eval/results/`; all tables are in [docs/results.md](docs/results.md). Two of the test questions ("clarify or answer every branch" gold answers) cannot be graded by my harness. I graded them myself after seeing the results, so I show the headline both ways.
 
 | Answer correctness (normal-gold questions) | n | correct | partial | incorrect |
 |---|---|---|---|---|
@@ -36,8 +40,8 @@ I ran the 31 held-out test questions once, after freezing the code (`git tag fin
 - Abstention on questions that must abstain: 7 of 7; wrongly abstained: 0 of 14
 - Citation rate: 1.00 (n=23), invalid citations 0
 - Retrieval on the 14 retrieval-scored questions: recall@5 0.738, precision@5 0.314, hit@5 0.857, MRR 0.811
-- Cost of one request to the assistant (answer, router and rerank calls, no judge): $0.00058
-- Cost of the whole eval run including the judge: $0.081 ($0.0026 per request; answers $0.0123, judge $0.0684; rerank calls not counted here)
+- Cost of one request to the assistant (classifier, selector, reranker, answer call and query embedding; no judge): $0.00040
+- Cost of the whole eval run including the judge: $0.081 ($0.0026 per request; answers $0.0123, judge $0.0684)
 - Latency: median 2.3 s, p95 7.9 s
 - Judge pass 2 (same judge, same rubric, answers re-judged): 13 of 14 questions agree on both verdicts; differs: q02 (the log stores the answer with public contact details redacted, so pass 2 saw redacted text)
 - Judge cost pass 2: $0.0692
@@ -56,13 +60,15 @@ Test against dev:
 | Set | n normal | correct | faithful | recall@5 | hit@5 | MRR | wrongly abstained |
 |---|---|---|---|---|---|---|---|
 | dev (the set I tuned on) | 52 | 34 (65%) | 48 of 52 | 0.85 | 0.95 | 0.87 | 12 of 57 |
-| test (run once) | 13 | 10 (77%) | 13 of 13 | 0.74 | 0.86 | 0.81 | 0 of 14 |
+| test (final run, code frozen) | 13 | 10 (77%) | 13 of 13 | 0.74 | 0.86 | 0.81 | 0 of 14 |
 | dev without the casual-wording group | 37 | 30 (81%) | 35 of 37 | n/a | 0.93 | 0.89 | 2 of 41 |
 
 What these numbers do and do not say:
 - It is strong on well-formed questions. On the test set nothing unfaithful, nothing wrongly refused, and every must-abstain question abstained.
-- It is weak on casual wording. The 20 casual-wording dev questions (for example "payment plan?" or "fafsa deadline") scored 4 of 15 correct, and most of the misses are refusals. The test set has no casual wording, so the test headline describes well-formed questions only. That is why the dev table shows an 81% row without the casual group next to the 65% row with it.
-- The test set is small. 13 normal-gold questions means one question moves the rate by about 8 points. The test split had already been run once in milestone 1 (13 Oct) with an earlier configuration; I did not tune on it. Dev is lower than test mainly because of the casual questions, and I see no sign of overfitting to dev, but 13 questions cannot prove that.
+- It is weak on casual wording. Of the 20 casual-wording dev questions (q104 to q123, for example "payment plan?" or "fafsa deadline"), 15 ask for a fact from the sources: 4 were answered correctly, 1 partly, and 10 were refused (all 10 wrong answers are refusals). The other 5 (a clarify, a no-advice, a calendar-only and two must-abstain questions) are scored by rule and all pass, so 9 of 20 pass overall. The older "4 of 14, 29%" figure is the baseline of the casual round, run before the twentieth question was added. The test set has no casual wording, so the test headline describes well-formed questions only. That is why the dev table shows an 81% row without the casual group next to the 65% row with it.
+- The test set is small. 13 normal-gold questions means one question moves the rate by about 8 points.
+- The test split is not fully independent. Milestone 1 (13 Oct) was planned as report-only, with no keep rule and no tuning, and nothing in the settings was changed to fit those results. But I read the results, and two later plans name two test failures as their examples: q43 (two course codes, which led to two-course prerequisite answers) and q48 (the contact line read as advice, which fed the no-advice work). Both went from incorrect in `ms1-new` to correct in the final run, so the test result for those two questions is not independent and may be optimistic. Details: `docs/decisions.md`, "Corrections after review".
+- Dev is lower than test mainly because of the casual questions. I see no sign of overfitting to dev, but 13 questions cannot prove that.
 - The final run measures the pipeline. The API guardrails (rate limits, injection screening, personal-data handling, distress replies) are covered by unit tests and two rounds of outside testers, not by this run.
 
 ## How it works
@@ -178,7 +184,7 @@ I checked these against the repo while writing: `uv sync`, `cta.validate`, `cta.
 ## How I built and evaluated it
 
 - 122 eval questions: 91 development, 31 test. I wrote or reviewed every question and gold answer. Gold labels point to a source page and section, not to chunk ids.
-- Every change had a keep rule written in `docs/decisions.md` before the run. Dev is for tuning; the test split was run once at the end, with the code frozen at a tag.
+- Every change had a keep rule written in `docs/decisions.md` before the run. Dev is for tuning; the final test run was done once at the end, with the code frozen at a tag (the test split had also been run in milestone 1; see the note under "Results at a glance").
 - Metrics: recall, precision, hit rate and MRR at k; judged correctness and faithfulness; abstention accuracy; cost; latency. The judge model differs from the answer model. Judge noise is about 0.03 to 0.05 on dev, so I judged the final answers twice: 13 of 14 agreed, and the one difference came from redacted contact details in the stored answer, not from the judge.
 - I built this with Claude Code as a coding assistant. I made the decisions, wrote or reviewed every eval question and gold answer, and set the pre-registered rules.
 
@@ -187,8 +193,7 @@ I checked these against the repo while writing: `uv sync`, `cta.validate`, `cta.
 - `src/cta/`: `crawl`, `parse`, `index` (chunks, embeddings, search), `graph` (router, calendar, chain), `api` (FastAPI and guards), `eval`, `validate`.
 - `web/` the Next.js page; `config/` settings and sources; `db/migrations/`; `eval/` questions and result files; `scripts/`; `docs/` decisions, plans and results.
 - Tests: 2,769 Python tests (`uv run pytest`) and 110 web tests (`npm test --prefix web`); `ruff check` is clean.
-- License: MIT for the code (see [LICENSE](LICENSE)). No crawled City Tech content is included.
+- License: MIT for the code (see [LICENSE](LICENSE)). No crawled City Tech content is included. `eval/questions.jsonl` quotes short passages from public City Tech pages in its gold answers; the project is not affiliated with City Tech or CUNY.
 
 ## Contact
-
-[owner: add contact]
+owner: https://github.com/medrees-1000
