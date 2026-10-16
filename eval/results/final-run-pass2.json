@@ -1,0 +1,254 @@
+{
+ "label": "final-run-pass2",
+ "pass2_of": "final-run",
+ "judge_model": "gpt-5.6-terra",
+ "judge_settings": {
+  "temperature": 0,
+  "reasoning_effort": "none",
+  "max_output_tokens": 400
+ },
+ "run_date": "2026-10-16",
+ "judged": 14,
+ "skipped": [],
+ "judge_cost_usd": 0.06916,
+ "per_question": [
+  {
+   "id": "q02",
+   "gold_kind": "normal",
+   "route": "other",
+   "pass1": {
+    "correctness": "correct",
+    "faithfulness": "yes"
+   },
+   "pass2": {
+    "correctness": "partial",
+    "faithfulness": "no"
+   },
+   "pass2_correctness_reason": "It correctly identifies Jonathan Natov and his office, but it fails to provide the requested phone number and email address, replacing them with placeholders.",
+   "pass2_faithfulness_reason": "The placeholders \"[PHONE]\" and \"[EMAIL]\" are not the contact details stated in the source, which provides a specific phone number and email address.",
+   "pass2_status": "ok",
+   "judge_cost": 0.004578
+  },
+  {
+   "id": "q07",
+   "gold_kind": "normal",
+   "route": "other",
+   "pass1": {
+    "correctness": "partial",
+    "faithfulness": "yes"
+   },
+   "pass2": {
+    "correctness": "partial",
+    "faithfulness": "yes"
+   },
+   "pass2_correctness_reason": "It correctly identifies the AAS and BTech programs but omits the Accelerator Science and Technology Minor listed in the gold answer.",
+   "pass2_faithfulness_reason": "Both stated degree programs and their descriptions are supported by sources 1 and 3.",
+   "pass2_status": "ok",
+   "judge_cost": 0.008748
+  },
+  {
+   "id": "q10",
+   "gold_kind": "normal",
+   "route": "calendar",
+   "pass1": {
+    "correctness": "correct",
+    "faithfulness": "yes"
+   },
+   "pass2": {
+    "correctness": "correct",
+    "faithfulness": "yes"
+   },
+   "pass2_correctness_reason": "It gives the Spring 2027 SAP appeal deadline as Wednesday, March 31, 2027, matching the calendar-based gold answer.",
+   "pass2_faithfulness_reason": "All stated details, including the date, SAP appeal description, calendar filename, update date, and change caveat, are supported by source [1].",
+   "pass2_status": "ok",
+   "judge_cost": 0.00234
+  },
+  {
+   "id": "q17",
+   "gold_kind": "normal",
+   "route": "other",
+   "pass1": {
+    "correctness": "correct",
+    "faithfulness": "yes"
+   },
+   "pass2": {
+    "correctness": "correct",
+    "faithfulness": "yes"
+   },
+   "pass2_correctness_reason": "The answer accurately states the prerequisite courses, proficiency and credit/GPA requirements, ranking and capacity limitation, and preceding-Spring City Tech enrollment requirement relevant to consideration for the clinical program.",
+   "pass2_faithfulness_reason": "All claims, including the course list, repeated-grade averaging, ranking process, and City Tech enrollment requirement, are explicitly supported by sources [1], [2], and [5].",
+   "pass2_status": "ok",
+   "judge_cost": 0.006438
+  },
+  {
+   "id": "q20",
+   "gold_kind": "normal",
+   "route": "chain",
+   "pass1": {
+    "correctness": "correct",
+    "faithfulness": "yes"
+   },
+   "pass2": {
+    "correctness": "correct",
+    "faithfulness": "yes"
+   },
+   "pass2_correctness_reason": "The answer accurately identifies DEN 2400's prerequisites and corequisite and traces the listed prerequisite chains through DEN 1100, DEN 1112, and DEN 1114, including grade and eligibility requirements.",
+   "pass2_faithfulness_reason": "All course requirements, corequisites, grade conditions, and descriptions of eligibility stated in the answer are directly supported by the numbered catalog sources.",
+   "pass2_status": "ok",
+   "judge_cost": 0.008372
+  },
+  {
+   "id": "q41",
+   "gold_kind": "normal",
+   "route": "chain",
+   "pass1": {
+    "correctness": "partial",
+    "faithfulness": "yes"
+   },
+   "pass2": {
+    "correctness": "partial",
+    "faithfulness": "yes"
+   },
+   "pass2_correctness_reason": "It correctly traces the listed chain through MAT 1475 and notes the EET 3102 co-requisite/approval condition, but it fails to continue step by step through MAT 1375 and MAT 1275/MAT 1275CO as requested.",
+   "pass2_faithfulness_reason": "All factual claims made are supported by the provided catalog sources, including the explicit statement that prerequisites beyond MAT 1475 were not shown.",
+   "pass2_status": "ok",
+   "judge_cost": 0.005974
+  },
+  {
+   "id": "q43",
+   "gold_kind": "normal",
+   "route": "chain",
+   "pass1": {
+    "correctness": "correct",
+    "faithfulness": "yes"
+   },
+   "pass2": {
+    "correctness": "correct",
+    "faithfulness": "yes"
+   },
+   "pass2_correctness_reason": "It correctly identifies EET 2171's prerequisites as EET 1202 and EET 1241, and EET 2162's as EET 1240 and EET 1241, showing they differ.",
+   "pass2_faithfulness_reason": "All stated course prerequisites, titles, credits, and quoted catalog language are supported by the provided numbered sources.",
+   "pass2_status": "ok",
+   "judge_cost": 0.007662
+  },
+  {
+   "id": "q48",
+   "gold_kind": "no_advice",
+   "route": "advice",
+   "pass1": {
+    "correctness": "correct",
+    "faithfulness": null
+   },
+   "pass2": {
+    "correctness": "correct",
+    "faithfulness": null
+   },
+   "pass2_correctness_reason": "The answer explicitly declines to recommend whether to enroll and only provides rules, dates, and consequences.",
+   "pass2_faithfulness_reason": null,
+   "pass2_status": "ok",
+   "judge_cost": 0.001984
+  },
+  {
+   "id": "q55",
+   "gold_kind": "normal",
+   "route": "other",
+   "pass1": {
+    "correctness": "correct",
+    "faithfulness": "yes"
+   },
+   "pass2": {
+    "correctness": "correct",
+    "faithfulness": "yes"
+   },
+   "pass2_correctness_reason": "The answer lists all six community colleges named in the gold answer, which fully answers the question.",
+   "pass2_faithfulness_reason": "The listed colleges and the statement that the CST department has agreements with them are explicitly stated in source [1].",
+   "pass2_status": "ok",
+   "judge_cost": 0.003642
+  },
+  {
+   "id": "q60",
+   "gold_kind": "normal",
+   "route": "other",
+   "pass1": {
+    "correctness": "partial",
+    "faithfulness": "yes"
+   },
+   "pass2": {
+    "correctness": "partial",
+    "faithfulness": "yes"
+   },
+   "pass2_correctness_reason": "It accurately defines the waiver and eligibility circumstances, but omits the requested process for obtaining one (speaking to a TAP Counselor and submitting the waiver/appeal form).",
+   "pass2_faithfulness_reason": "All statements in the answer are supported by source [1], including the one-time waiver, qualifying circumstances, NYS record consequence, and lack of a separate eligibility list.",
+   "pass2_status": "ok",
+   "judge_cost": 0.006024
+  },
+  {
+   "id": "q78",
+   "gold_kind": "normal",
+   "route": "chain",
+   "pass1": {
+    "correctness": "correct",
+    "faithfulness": "yes"
+   },
+   "pass2": {
+    "correctness": "correct",
+    "faithfulness": "yes"
+   },
+   "pass2_correctness_reason": "It accurately states that MAT 1375 requires MAT 1275 or MAT 1275CO, or meeting the MAT 1375 math placement requirement, and correctly supplies the catalog prerequisite details for both listed courses.",
+   "pass2_faithfulness_reason": "All course names, prerequisite quotations, and the statement that MAT 1275 has no courses named are supported by the provided catalog sources.",
+   "pass2_status": "ok",
+   "judge_cost": 0.00423
+  },
+  {
+   "id": "q80",
+   "gold_kind": "normal",
+   "route": "chain",
+   "pass1": {
+    "correctness": "correct",
+    "faithfulness": "yes"
+   },
+   "pass2": {
+    "correctness": "correct",
+    "faithfulness": "yes"
+   },
+   "pass2_correctness_reason": "It accurately states that MAT 1372 requires MAT 1275CO or MAT 1275 (or higher) and excludes students who have taken MAT 2572, while correctly presenting the upstream catalog conditions.",
+   "pass2_faithfulness_reason": "All course titles, prerequisite/exclusion statements, and quoted catalog text are supported by the provided numbered sources.",
+   "pass2_status": "ok",
+   "judge_cost": 0.004122
+  },
+  {
+   "id": "q82",
+   "gold_kind": "normal",
+   "route": "chain",
+   "pass1": {
+    "correctness": "correct",
+    "faithfulness": "yes"
+   },
+   "pass2": {
+    "correctness": "correct",
+    "faithfulness": "yes"
+   },
+   "pass2_correctness_reason": "It accurately reports the catalog prerequisite text and appropriately notes that the individual courses cannot be read from that shorthand.",
+   "pass2_faithfulness_reason": "All claims are directly supported by the provided catalog source, including the course title and unexpanded prerequisite string.",
+   "pass2_status": "ok",
+   "judge_cost": 0.002312
+  },
+  {
+   "id": "q86",
+   "gold_kind": "normal",
+   "route": "chain",
+   "pass1": {
+    "correctness": "correct",
+    "faithfulness": "yes"
+   },
+   "pass2": {
+    "correctness": "correct",
+    "faithfulness": "yes"
+   },
+   "pass2_correctness_reason": "It accurately states the required CUNY proficiencies and department approval, and correctly identifies DEN 1112 as a corequisite rather than a prior prerequisite.",
+   "pass2_faithfulness_reason": "All catalog quotations and course relationships stated are directly supported by sources [1] and [2].",
+   "pass2_status": "ok",
+   "judge_cost": 0.002734
+  }
+ ]
+}
