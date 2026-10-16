@@ -75,7 +75,7 @@ def test_the_old_baseline_questions_are_all_still_dev_and_unchanged_in_number():
     ids = {r["id"] for r in baseline["per_question"]}
     dev = {q["id"] for q in load_questions() if q["split"] == "dev"}
     assert (
-        len(ids) == 40 and ids <= dev and len(dev - ids) == 50
+        len(ids) == 40 and ids <= dev and len(dev - ids) == 51
     )  # 8 calendar + 7 chain + 8 (q88-q95) + 8 tester round (q96-q103) + 19 casual (q104-q122)
 
 

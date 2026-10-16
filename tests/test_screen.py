@@ -123,8 +123,8 @@ def test_no_dev_question_is_blocked_or_changed(question):
     assert got.reason is None and got.question == question  # meaning unchanged: text identical
 
 
-def test_the_dev_split_is_the_90_questions():
-    assert len(DEV) == 90  # 63 + the tester round's q96 to q103 + the casual round's 19
+def test_the_dev_split_is_the_91_questions():
+    assert len(DEV) == 91  # 63 + the tester round's q96 to q103 + the casual round's 19
 
 
 # ---- 3. personal data ----

@@ -25,9 +25,9 @@ def events():
 # ---- the detector ----
 
 
-def test_the_four_advice_questions_are_dev_and_the_dev_split_is_90():
-    # 63 + the 8 questions of the tester round (q96 to q103) + 19 casual rows (q104 to q122)
-    assert len(DEV) == 90 and ADVICE_IDS <= {q["id"] for q in DEV}
+def test_the_four_advice_questions_are_dev_and_the_dev_split_is_91():
+    # 63 + 8 tester round (q96-q103) + 19 casual (q104-q122) + cq05 (q123)
+    assert len(DEV) == 91 and ADVICE_IDS <= {q["id"] for q in DEV}
 
 
 def test_fires_on_q30_q47_q91_q92_and_on_no_other_dev_question():
