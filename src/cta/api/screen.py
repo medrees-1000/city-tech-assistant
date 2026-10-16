@@ -37,6 +37,18 @@ TEXTS = {
         "you ask about one of those?"
     ),
 }
+# Danger from someone else (post-freeze, owner decision of Oct 16, 2026): fixed text supplied by the
+# owner. Sources and the date they were checked: docs/decisions.md. The Public Safety line is kept
+# here and not in config/contacts.yaml, because that file is checked against collected data
+# (`cta.validate`) and this contact is not in it. Re-check every number before a public launch.
+TEXTS["danger"] = (
+    "I'm really sorry this is happening to you. If you are in immediate danger, call 911. If it "
+    "is happening on campus, City Tech Public Safety is available 24 hours a day at "
+    "(718) 260-5550 (from a campus phone, dial 5550, or 5555 in an emergency). For support with "
+    "abuse or domestic violence, you can call the National Domestic Violence Hotline any time at "
+    "1-800-799-7233 (SAFE) or text START to 88788. In New York City, the 24-hour NYC hotline is "
+    "1-800-621-4673 (HOPE)."
+)
 TEXTS["output"] = TEXTS["injection"]
 # Tier 2 (tester round 1, item A): ordinary academic stress. No number, no contact, no claim.
 TEXTS["stress"] = (
@@ -51,7 +63,7 @@ DISTRESS_NO_NUMBER = (
     "face it alone. Talking with someone you trust, or reaching local emergency services if you "
     "are in danger, can help."
 )
-REASONS = ("distress", "bereavement", "personal_data", "injection", "output", "stress")
+REASONS = ("distress", "danger", "bereavement", "personal_data", "injection", "output", "stress")
 
 DISTRESS = (
     "kill myself", "killing myself", "suicide", "suicidal", "end my life", "ending my life",
@@ -99,6 +111,9 @@ HOPELESS = tuple(
         r"\bgoodbye\b[^.?!]{0,25}\b(?:i'?m|i am) done\s*[.!?,]*\s*$",
         r"^\s*kms\s*[.!?]*\s*$|\b(?:gonna|going to|wanna|want to|just|ima|i'll)\s+kms\b",
         r"\bunaliv(?:e|ing)\s+(?:myself|me)\b",
+        # owner decisions on the ambiguous list (Oct 16, 2026)
+        rf"{_I}[^.?!]{{0,12}}?\bwant (?:it|this|everything) (?:all )?to (?:just )?(?:stop|end)\b",
+        r"\bgoodbye forever\b|\bthank you for everything[,.!]?\s*goodbye\b",
         # post-freeze safety fix: "i am about to die", "im going to die tonight" (a bare statement
         # or a time word at the end; "going to die if i fail" is the ambiguous case below)
         rf"{_I}\s+(?:am\s+)?(?:about to|going to|gonna|ready to|planning to|will|'ll)\s+die"
@@ -248,6 +263,7 @@ STRESS_PHRASES = re.compile(
     r"|\btoo much for me\b|\b(?:all|everything|school|life|work|it|this) (?:is|its|it's) "
     r"(?:just |all )?too much\b|\b(?:its|it's) all too much\b"
     r"|\b(?:gonna|going to|will) fail everything\b"
+    r"|\bwhat'?s the point of (?:anything|it all|all this|any of this)\b"
     rf"|\b(?:don'?t|do not) think (?:i|that i) can (?:do|take|handle)\s+(?:it|this)\s+{_ANYMORE}"
 )
 STRESS_MAX_WORDS = 20
@@ -310,6 +326,39 @@ def names_self_harm(answer: str) -> bool:
     return bool(SELF_HARM_TOPIC.search(answer.replace("’", "'")))
 
 
+# Danger from someone else (first person, about being harmed or unsafe). A place alone ("the bus is
+# not safe at night"), an injury or object ("my back is hurting me") and a joke ("my little brother
+# hit me with a pillow") do not match: the pattern needs a named person or "at home".
+_PEOPLE = (
+    "partner|boyfriend|girlfriend|husband|wife|dad|mom|mother|father|stepdad|stepmom|ex|"
+    "fiance|fiancee|parent|parents|uncle|aunt|brother|sister|roommate|landlord|boss"
+)
+_HARM = (
+    r"(?:hits|hit|hitting|beats|beating|hurts|hurting|abuses|abusing|chokes|choking|punches|"
+    r"slaps|kicks|threatens|threatening|attacks|stalks)"
+)
+_SELF = r"\b(?:i|im|i'm|i am)\s+(?:am\s+)?"
+_AFRAID = r"(?:afraid|scared|terrified|frightened)"
+DANGER = tuple(
+    re.compile(p)
+    for p in (
+        rf"\b(?:someone|somebody)\s+(?:is|keeps|has been|was)?\s*{_HARM}\s+me\b",
+        rf"\bmy\s+(?:{_PEOPLE})\s+(?:is |has been |keeps )?{_HARM}\s+me\b",
+        rf"{_SELF}not safe\s+(?:at (?:my )?home|in my (?:home|house|apartment)|"
+        r"with (?:him|her|them))\b",
+        rf"{_SELF}being\s+(?:abused|beaten|hit|hurt|threatened|stalked|assaulted)\b",
+        rf"{_SELF}{_AFRAID}\s+(?:to go (?:back )?home|of going (?:back )?home)\b",
+        rf"{_SELF}{_AFRAID}\s+of\s+my\s+(?:{_PEOPLE})\b"
+        r"(?!\s+(?:finding|seeing|knowing|when|if|learning|reading|hearing|getting)\b)",
+    )
+)  # fmt: skip
+
+
+def is_danger(question: str) -> bool:
+    text = plain_text(question)
+    return any(p.search(text) for p in DANGER)
+
+
 def is_bereavement(question: str) -> bool:
     text = lowered(question)
     return any(p.search(text) for p in BEREAVEMENT)
@@ -340,6 +389,8 @@ def screen(question: str, g: dict) -> Screened:
     personal data, injection; else the scrubbed question."""
     if is_distress(question):
         return Screened("distress", question)
+    if is_danger(question):  # after Tier 1: a message that matches both gets the 988 reply
+        return Screened("danger", question)
     if is_bereavement(question):
         return Screened("bereavement", question)
     if g["personal_data"] == "redact_and_refuse" and is_personal_refusal(question):

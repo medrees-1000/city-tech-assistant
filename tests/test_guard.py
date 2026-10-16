@@ -343,7 +343,7 @@ def test_health_has_exactly_the_new_keys_and_no_text(monkeypatch):
     body = c.get("/health").json()
     assert body["blocked"] == {
         "kill_switch": 1, "rate_limited": 0, "daily_cap": 0, "timeout": 0, "distress": 0,
-        "bereavement": 0, "personal_data": 0, "injection": 0, "output": 0, "stress": 0,
+        "danger": 0, "bereavement": 0, "personal_data": 0, "injection": 0, "output": 0, "stress": 0,
         "non_english": 0,
     }  # fmt: skip
     assert {"disabled", "spend_today_usd", "spend_cap_usd", "spend_cap_reached",

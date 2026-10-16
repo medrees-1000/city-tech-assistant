@@ -7,7 +7,7 @@ from cta.settings import load_models
 from tests.crisis_sweep import SWEEP
 
 G = load_models(env={})["guardrails"]
-TIER = {"D": "distress", "S": "stress", "N": None}
+TIER = {"D": "distress", "S": "stress", "X": "danger", "N": None, "L": None}
 
 
 def phrases(code):
@@ -29,12 +29,28 @@ def test_student_life_phrases_fire_nothing(question):
     assert screen.screen(question, G).reason is None
 
 
-@pytest.mark.parametrize("question", phrases("A"))
-def test_ambiguous_phrases_are_unchanged_until_the_owner_decides(question):
-    # no tier decides these silently; moving one is a deliberate edit of this test and the list
+@pytest.mark.parametrize("question", phrases("X"))
+def test_danger_from_someone_else_gets_its_own_reply(question):
+    result = screen.screen(question, G)
+    assert result.reason == "danger"
+    assert screen.reply("danger", G) == screen.TEXTS["danger"]
+
+
+@pytest.mark.parametrize("question", phrases("L"))
+def test_phrases_the_owner_decided_to_leave_have_no_tier(question):
     assert screen.screen(question, G).reason is None
+
+
+def test_the_danger_reply_is_the_owner_text_exactly():
+    text = screen.TEXTS["danger"]
+    assert text.startswith(
+        "I'm really sorry this is happening to you. If you are in immediate danger, call 911."
+    )
+    for number in ("(718) 260-5550", "5550", "5555", "1-800-799-7233", "88788", "1-800-621-4673"):
+        assert number in text
+    assert "988" not in text  # the 988 line belongs to Tier 1
 
 
 def test_the_sweep_has_the_expected_shape():
     assert len(SWEEP) >= 40
-    assert {e for _, e in SWEEP} == {"D", "S", "N", "A"}
+    assert {e for _, e in SWEEP} == {"D", "S", "N", "X", "L"}

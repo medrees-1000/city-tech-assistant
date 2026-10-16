@@ -30,8 +30,9 @@ TEXTS = {
 }
 # Statuses of failed requests: their cost is unknown, so each counts a flat estimate.
 FAILED_STATUSES = ("provider_error", "internal_error", "timeout")
-BLOCK_REASONS = ("kill_switch", "rate_limited", "daily_cap", "timeout", "distress", "bereavement",
-                 "personal_data", "injection", "output", "stress", "non_english")  # fmt: skip
+BLOCK_REASONS = ("kill_switch", "rate_limited", "daily_cap", "timeout", "distress", "danger",
+                 "bereavement", "personal_data", "injection", "output", "stress",
+                 "non_english")  # fmt: skip
 DISABLED_FILE = Path("data") / "api_disabled"
 
 
