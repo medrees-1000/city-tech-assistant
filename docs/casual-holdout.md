@@ -1,0 +1,24 @@
+# Casual held-out set (E1 generalization check)
+
+Written Oct 15, 2026, BEFORE any run of experiment E1 (docs/decisions.md, "Casual round"). 10 new casual-style questions invented for this file (none reuses a tester or draft question), plus 3 that must keep abstaining. **One-shot check: never used to design or tune anything.** Gold sources were found by plain-text search of `data/processed/chunks.jsonl` (no model call); the excerpt is verbatim from the section. Not in `eval/questions.jsonl`; the owner has not reviewed these golds (they are proposals for this experiment only).
+
+| id | question | proposed gold source (section id; URL or file; heading) | verbatim excerpt |
+|---|---|---|---|
+| h01 | how do i get an incomplete instead of failing a class | `page/registrar/incomplete#1`; https://www.citytech.cuny.edu/registrar/incomplete.aspx; Incomplete Grade Information | "An incomplete is typically assigned when a student has satisfactorily completed a majority of the coursework, but for reasons beyond their control cannot complete the entire course." |
+| h02 | can i take a class at another cuny college this semester | `page/registrar/epermit#1`; https://www.citytech.cuny.edu/registrar/epermit.aspx; ePermit > Taking Courses at CUNY Colleges | "City Tech students who wish to take a course at a CUNY College other than their HOME College will need to file for an ePermit using CUNYfirst." |
+| h03 | i stopped going a while ago how do i come back | `page/registrar/readmission#1`; https://www.citytech.cuny.edu/registrar/readmission.aspx; Readmission to City Tech | "Whether you took off one semester or several years, we would be delighted to assist you in your return, to finish your degree or begin a new one." |
+| h04 | does it cost extra if i register late | `page/admissions/tuition-penalty#1`; https://www.citytech.cuny.edu/admissions/tuition-penalty.aspx; Penalty Fees | "Late Registration Fee: Charge for registration after the close of the official registration period. Under exceptional circumstances, the College may extend the official registration period. $25" |
+| h05 | what happens to my aid if i dont meet sap | `page/financial-aid/sap#5`; https://www.citytech.cuny.edu/financial-aid/sap.aspx; Federal Satisfactory Academic Progress (SAP) Standard > What is Financial Aid Suspension? | "Students who do not meet one or more of the Satisfactory Academic Progress (SAP) standards will be placed on Financial Aid Suspension. This means they will lose eligibility for federal financial aid programs, including: ..." |
+| h06 | tap waiver how does that work | `page/financial-aid/tap-appeal#2`; https://www.citytech.cuny.edu/financial-aid/tap-appeal.aspx; TAP Appeals Process > The TAP Wavier and Appeals Process | "Students can receive a one-time waiver of the good academic standing requirement specified in TAP regulations as of 1981 and amended in 1996. However, the waiver is not automatic." |
+| h07 | whats the difference between graduating and the commencement thing | `page/registrar/applying-graduation#3`; https://www.citytech.cuny.edu/registrar/applying-graduation.aspx; Applying for Graduation > Frequently Asked Questions (FAQ) > Official Graduation vs. Commencement Ceremony: What's the difference? | "Our Commencement Ceremony is an event that is held once a year in June to celebrate those students who are candidates for official graduation." |
+| h08 | how long till i hear back about my graduation status | `page/registrar/applying-graduation#5`; same page; Applying for Graduation > Frequently Asked Questions (FAQ) > When will I get notified on my graduation status? | "Our graduation auditing process begins once we receive the semester's final grades and the process takes approximately one month to complete." |
+| h09 | which classes can the cst tutors help with | `page/CST-NYT/tutoring#2`; https://www.citytech.cuny.edu/computer-systems/tutoring.aspx; Meet Your Tutors > Supported Courses | "CST 1100 CST 1101 CST 1201 CST 1204 CST 1215 CST 2301 CST 2309 CST 2405 CST 2406 CST 2409 CST 2415 CST 3504 CST 3513 CST 3613 CST 3624" |
+| h10 | do i need to finish prereqs before applying to dental hygiene | `page/DENT-NYT/apply#1`; https://www.citytech.cuny.edu/dental/apply.aspx; How to Apply > Criteria for Admission into The Dental Hygiene Program | "All new and transfer students must first complete the required six prerequisite courses to be considered for acceptance into the dental hygiene program." |
+
+## Must keep abstaining (3)
+
+| id | question | why |
+|---|---|---|
+| a01 | whats for lunch in the cafeteria today | not a City Tech registration, aid, advising or department topic; no such data is collected |
+| a02 | how many seats are open in cst 2403 section 3 | seat availability and sections are out of scope |
+| a03 | is the calc 1 professor a hard grader | professor opinions are out of scope and not in the data |
