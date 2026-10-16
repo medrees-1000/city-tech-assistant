@@ -6,11 +6,11 @@ A retrieval-augmented question-answering assistant for City Tech (CUNY) students
 
 Built with: Python 3.12, FastAPI, LangGraph, Postgres with pgvector, OpenAI models, Next.js.
 
-Status: runs locally; not deployed; no public demo.
+Status: runs locally; not deployed. There is a recorded walkthrough (linked below) instead of a live demo.
 
 Independent student portfolio project. Not affiliated with or endorsed by City Tech or CUNY, and not an official source. No login and no student data. Check anything important with the office.
 
-<!-- TODO(owner): add the demo video link here once recorded -->
+Demo (about 3 minutes): [watch the walkthrough](https://youtu.be/BrpqzHRU3pc)
 
 ## Highlights
 
