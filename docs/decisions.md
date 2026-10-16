@@ -682,7 +682,7 @@ The rule F1 to F6 above stands **unchanged**. This addendum fixes the prompt sen
 
 **The model experiment is closed: luna stays.** gpt-6-sol scored 0.86 correct against luna's 0.92 (B1 failed, -0.064, 0 of 3 passes) at 5.5 times the cost. gpt-6.1-sol rejects luna's settings and gpt-6-astra was excluded; neither is used. The `answer.model` key exists with default null (= `chat_model`).
 
-**Current default settings** (`config/models.yaml`): chat_model gpt-6-luna; judge gpt-5.6-terra; embedding text-embedding-3-small; answer: model null, format_rule off, temperature 0.1, top_p 0.3, reasoning none, k 5, 600 output tokens, abstain_threshold 0.59; router mode on, selector 2, chain on, chain_render code, contacts on; rerank pool_a on eval runs; API on 127.0.0.1 only, 500 characters per question. Eval file: 94 questions (63 dev, 31 test); the test split stays locked until the final `--final` run. Total spend so far about $6.5.
+**Current default settings** (`config/models.yaml`): chat_model gpt-6-luna; judge gpt-5.6-terra; embedding text-embedding-3-small; answer: model null, format_rule off, temperature 0.1, top_p 0.3, reasoning none, k 5, 600 output tokens, abstain_threshold 0.59; router mode on, selector 2, chain on, chain_render code, contacts on; rerank pool_a on eval runs; API on 127.0.0.1 only, 500 characters per question. Eval file: 94 questions (63 dev, 31 test) [historical snapshot of the Oct 15, 2026 handoff; on 2026-10-16 the file holds 122 questions, 91 dev and 31 test, counted by split without printing rows]; the test split stays locked until the final `--final` run. Total spend so far about $6.5.
 
 ## Step 4: CLARIFY, keep rule pre-registered (Oct 15, 2026; before any code)
 

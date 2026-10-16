@@ -1,3 +1,13 @@
+# Phase 4: status (2026-10-16), then the original plan
+
+**Built (see `docs/decisions.md` and `docs/architecture.md`):** FastAPI service (`/health`, `/ask`, `/feedback`), the Next.js landing and chat pages with sources, contact card and the "How this was found" panel, request logging with a 30-day purge command, guardrails (kill switch, rate limit, daily cap, timeouts, input screens, language step), optional LangSmith tracing (off), and the tester-round and casual-round fixes. The API is bound to 127.0.0.1.
+
+**Remaining:** the final milestone run on the test split and its failure analysis; the README (results, failure analysis, run instructions); the three-question smoke test; the `phase4-prototype` tag; and the owner's decisions for any public deployment (hosting, proxy headers, shipping `data/processed`, a connection pool, tracing, retention).
+
+The text below is the original plan, written before the build, and is kept as it was. Where it differs from the code, `docs/decisions.md` and `docs/architecture.md` are right.
+
+---
+
 # Phase 4 plan: a demo prototype (FastAPI service and one Next.js page)
 
 Written 2026-10-13. Plan only: no code, nothing installed, no paid call, test split not opened. Facts below were read from the repository; version numbers were read from the package registries (`uv pip install --dry-run`, `npm view`, nothing installed). The prototype wraps the pipeline that milestone 1 measured and **changes none of it** (retrieval, router, prompts, thresholds, contact rules stay as they are), so no new evaluation is needed for it.
