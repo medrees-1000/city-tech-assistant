@@ -67,3 +67,10 @@ def test_casual_group_counts():
     assert numbers.correctness_counts(casual) == (15, 4, 1, 10)
     normal = [r for r in casual if r["gold_kind"] == "normal"]
     assert sum(r["abstained"] for r in normal) == 10
+
+
+def test_the_compact_dev_table_has_the_four_rows(capsys):
+    numbers.table_dev_compact("final-config-dev")
+    rows = [line for line in capsys.readouterr().out.splitlines() if line.startswith("| ")]
+    assert len(rows) == 5  # header and four runs
+    assert "| Final configuration, all 91 questions | 52 | 34 (65%) | 95% | 0.87 |" in rows

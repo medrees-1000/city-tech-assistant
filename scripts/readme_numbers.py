@@ -133,6 +133,25 @@ def table_dev(dev_label: str) -> None:
           f"precision@5 {final['retrieval']['precision@5']:.3f}, hit@5 {final['retrieval']['hit@5']:.3f}, MRR {final['retrieval']['mrr']:.3f}")  # fmt: skip
 
 
+def table_dev_compact(dev_label: str) -> None:
+    base, final = load("baseline-dev-60-v3"), load(dev_label)
+    base_ids = {r["id"] for r in base["per_question"]}
+    ex = final["excluded_from_retrieval"]
+    print("\n### (b2) Development set, compact (for the README)\n")
+    print("| Dev run | fact questions | correct | hit@5 | MRR |")
+    print("|---|---|---|---|---|")
+    rows = (
+        (f"Phase 2 baseline ({len(base_ids)} questions, vector search only)", base["per_question"], base.get("excluded_from_retrieval", [])),
+        ("Final configuration, the same questions", by_filter(final["per_question"], base_ids), ex),
+        (f"Final configuration, all {len(final['per_question'])} questions", final["per_question"], ex),
+        ("Final configuration, without the casual-wording group", without_tag(final["per_question"], "casual"), ex),
+    )  # fmt: skip
+    for name, recs, excluded in rows:
+        n, c, _, _ = correctness_counts(recs)
+        _, hit5, mrr = rank_metrics(recs, excluded)
+        print(f"| {name} | {n} | {c} ({pct(c / n)}) | {pct(hit5)} | {mrr:.2f} |")
+
+
 def table_compare(dev_label: str) -> None:
     final, dev = load("final-run"), load(dev_label)
     print("\n### (c) Test against dev (final configuration)\n")
@@ -191,6 +210,7 @@ def main() -> None:
     args = p.parse_args()
     table_final()
     table_dev(args.dev_label)
+    table_dev_compact(args.dev_label)
     table_compare(args.dev_label)
     table_casual(args.dev_label)
     table_routes(args.dev_label)
