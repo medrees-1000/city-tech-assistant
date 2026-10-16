@@ -1288,3 +1288,28 @@ No question was unfaithful, wrongly abstained, or an unanswerable one that was a
 **Test against dev (same settings; dev is 63 questions in `tester1-dev`, the last full dev run, before the casual additions).** Retrieval: recall@5 0.738 (test) vs 0.801 (dev), hit@5 0.857 vs 0.925, MRR 0.811 vs 0.877, precision@5 0.314 vs 0.260. Judged correctness 0.77 correct (10 of 13) vs 0.82 (28 of 34); faithfulness 1.00 vs 0.94; abstention accuracy 1.0 in both; wrongly abstained 0 of 14 vs 1 of 38. Cost per request $0.0026 vs $0.0035; median latency 2.3 s vs 2.7 s. **Reading:** the gaps are within what 13 versus 34 questions and a single judge pass can move (one question is 7.7 points on test), the test numbers are slightly lower on retrieval and slightly higher on faithfulness, and I see no sign of overfitting to dev. Two limits on that claim: the test set has no casual-wording questions, while the 19 casual dev questions (`casual-b0`) scored 0.29 correct with 9 wrongly abstained, so the test result is for well-formed questions and is not a measure of casual use; and several test questions were part of earlier test runs (milestone 1), although nothing was tuned on them. Against `ms1-new` (same 31 questions, Oct 13): correctness moved on five questions (q17 partial to correct, q23 not graded to correct, q43 incorrect to correct, q48 incorrect to correct, q60 correct to partial), with the changes since then (clarify, no advice, chain codes, contact policy) accounting for the gains and judge or generation variance for q60.
 
 **Future work (ideas only; nothing was done).** (1) Make `--rejudge` work for router runs (store the shown sources instead of searching again) so a second judge pass is possible. (2) Grade the "CLARIFY OR ..." golds (q50, q74) with a rule or a judge prompt. (3) Chain walk: continue below depth 4 or say what was cut. (4) Retrieval for "what degrees does X offer": rank the degrees page chunks together. (5) Answer prompt: ask the model to cover every part of a "what is X and who can get one" question. (6) Add casual-wording questions to a future test set. (7) The data gaps in `docs/known-limits.md` item 32. (8) Keep the rewrite switch off unless a narrower rule is pre-registered.
+
+## Final run, addendum (Oct 16, 2026; after `final-run-frozen`)
+
+Written after the freeze tag (`final-run-frozen`, `159b295`) and after the results were seen. The bot, config, data and eval questions are unchanged.
+
+**(a) Two owner grades, given AFTER seeing the results and the answers (Oct 16, 2026).**
+- **q50** "How much of my tuition do I get back if I drop a class?" = **CORRECT** (owner grade). It names Fall 2026, gives the full schedule (100% by Aug 27, 75% by Sep 3, 50% by Sep 10, 25% by Sep 17, none from Sep 18), says it depends on the date, and cites the Bursar page. It does not say that other terms differ and it omits the fees-not-refundable line; both are minor.
+- **q74** "What is the last day to drop a class in Fall 2026?" = **PARTIAL** (owner grade). It gives three labelled dates (drop without WD Sep 3; drop with WD Sep 17; withdraw with W Nov 6) and never presents one date as covering every kind of drop, but it omits the four tuition-refund rows the gold names first (fall-2026-004, -008, -016, -019). This is the drop-family rule working as designed (refund rows only when the question mentions a refund).
+
+**(b) The headline is reported two ways.** Harness-only (q50 and q74 not graded): n=13, correct 10, partial 3, incorrect 0. With owner grades: n=15, correct 11, partial 4, incorrect 0. Pass 1 of the judge is the headline in both.
+
+**(c) Pass 1 is the headline.** A second judge pass is a noise check only; it will not replace pass 1 whatever it shows.
+
+**(d) No change** to the bot, config, data or questions in response to anything seen in the results.
+
+**(e) Deliberately NOT fixed now.** The q74 refund-row issue, the q50 wording gaps and the other polish-list items are deferred to a post-README "version 2" and will be measured on fresh owner-written questions, never on the test split.
+
+### Polish list (deferred)
+- q74: refund rows on unqualified drop questions.
+- q50: a "other terms differ" sentence and the fees-not-refundable line.
+- Casual wording failures: q107, q108, q111, q123 and the casual dev group.
+- q07: the Accelerator minor retrieval miss.
+- q41: the chain depth limit.
+- A router-aware re-judge, if not delivered in part 2.
+- Smaller items already in `docs/known-limits.md`: a two-part question answers one part (item 20); a name not written after "my name is" is not removed (item 21).
