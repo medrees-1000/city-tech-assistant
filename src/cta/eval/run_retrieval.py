@@ -12,12 +12,18 @@ import json
 import subprocess
 import sys
 from collections import defaultdict
+from pathlib import Path
 from statistics import median
 
 from psycopg.types.json import Jsonb
 
 from cta.eval.metrics import KS, average, matched_gold, question_metrics, scorable_gold
-from cta.eval.questions import load_questions, question_ids_record, select_questions
+from cta.eval.questions import (
+    load_questions,
+    question_ids_record,
+    questions_path,
+    select_questions,
+)
 from cta.index.db import connect
 from cta.index.embed import ApiError
 from cta.index.rerank import SpendLimit
@@ -274,7 +280,8 @@ def save(conn, summary: dict, cfg: dict) -> None:
 
 def main(argv: list[str]) -> int:
     p = argparse.ArgumentParser(prog="python -m cta.eval.run_retrieval")
-    p.add_argument("--split", choices=("dev", "test"), required=True)
+    p.add_argument("--split", choices=("dev", "test", "heldout"), required=True)
+    p.add_argument("--questions", type=Path, help="questions file (default: the file of the split)")
     p.add_argument("--label", required=True)
     p.add_argument("--final", action="store_true", help="allow --split test (step 9 only)")
     p.add_argument(
@@ -311,7 +318,9 @@ def main(argv: list[str]) -> int:
         cfg["retrieval"]["rerank"] = args.rerank
     try:
         ids = args.ids.split(",") if args.ids else None
-        questions = select_questions(load_questions(), args.split, ids, args.tag)
+        questions = select_questions(
+            load_questions(args.questions or questions_path(args.split)), args.split, ids, args.tag
+        )
     except ValueError as e:
         print(f"refused: {e}")
         return 2

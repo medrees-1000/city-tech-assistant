@@ -1,7 +1,9 @@
 """Load and check eval/questions.jsonl (CLAUDE.md, "Evaluation").
 
 Run: uv run python -m cta.eval.questions
-Row checks: required fields, type, split, unique ids, department. Gold-source checks: a section id
+Row checks: required fields, type, split, unique ids, department. The separate locked casual set
+(eval/questions_casual_v2.jsonl, split "heldout") is checked with `--heldout`: same rules, but
+a gold answer still `TODO` is allowed. Gold-source checks: a section id
 must exist in the section index data (embed true) with the same source and heading path, a
 "catalog:<CODE>" must be a course record, a calendar entry must be a verified event. Question text,
 splits and gold answers are never changed by this module. Not part of CI yet.
@@ -19,6 +21,7 @@ from cta.settings import ROOT
 from cta.validate.findings import Finding
 
 QUESTIONS = ROOT / "eval" / "questions.jsonl"
+HELDOUT_QUESTIONS = ROOT / "eval" / "questions_casual_v2.jsonl"  # version 2, one locked set
 CALENDAR = "data/calendar/calendar_events.json"
 FIELDS = ("id", "question", "gold_answer", "gold_sources", "type", "department", "split", "note")
 # tags: a list of non-empty strings, e.g. "chain". calendar_acceptable_extra: calendar row ids that
@@ -27,6 +30,7 @@ FIELDS = ("id", "question", "gold_answer", "gold_sources", "type", "department",
 OPTIONAL_FIELDS = ("tags", "calendar_acceptable_extra")
 TYPES = ("lookup", "multi_chunk", "time_sensitive", "ambiguous", "unanswerable")
 SPLITS = ("dev", "test")
+HELDOUT = "heldout"  # only in HELDOUT_QUESTIONS; never mixed into the dev/test file
 DEPARTMENTS = ("CST-NYT", "MATH-NYT", "EET-NYT", "DENT-NYT")
 PLACEHOLDERS = ("TODO", "FILL_FROM_CALENDAR")  # a gold answer still to be written
 ABSTAIN_IDS = ("q25", "q26", "q27", "q28", "q29")  # the owner exempted these from the answer check
@@ -69,7 +73,12 @@ def question_ids_record(questions: list[dict]) -> dict:
     return {"question_ids": ids, "question_ids_hash": digest}
 
 
-def row_problems(row: dict) -> list[str]:
+def questions_path(split: str) -> Path:
+    """The file that holds a split: the held-out split has its own file."""
+    return HELDOUT_QUESTIONS if split == HELDOUT else QUESTIONS
+
+
+def row_problems(row: dict, splits: tuple[str, ...] = SPLITS) -> list[str]:
     """Problems with the row itself (not its gold sources)."""
     problems = [f"missing field {f}" for f in FIELDS if f not in row]
     problems += [f"unknown field {f}" for f in row if f not in FIELDS + OPTIONAL_FIELDS]
@@ -89,8 +98,8 @@ def row_problems(row: dict) -> list[str]:
                 problems.append(f"calendar_acceptable_extra also gold: {', '.join(both)}")
     if row.get("type") not in TYPES:
         problems.append(f"type {row.get('type')!r} is not one of {'|'.join(TYPES)}")
-    if row.get("split") not in SPLITS:
-        problems.append(f"split {row.get('split')!r} is not dev or test")
+    if row.get("split") not in splits:
+        problems.append(f"split {row.get('split')!r} is not {' or '.join(splits)}")
     if (
         "department" in row
         and row["department"] is not None
@@ -172,8 +181,8 @@ def gold_problem(src: dict, data: GoldData) -> str | None:
     return f"{sid!r} is not a section id, catalog code or calendar event id"
 
 
-def question_problems(row: dict, data: GoldData) -> list[str]:
-    problems = row_problems(row)
+def question_problems(row: dict, data: GoldData, splits: tuple[str, ...] = SPLITS) -> list[str]:
+    problems = row_problems(row, splits)
     sources = row.get("gold_sources")
     if isinstance(sources, list):
         if not sources and row.get("type") in NEEDS_SOURCES:
@@ -204,13 +213,18 @@ def answer_problems(row: dict) -> list[str]:
     return []
 
 
-def check_all(rows: list[dict], data: GoldData) -> dict[str, list[str]]:
-    """Problems per question id (an empty list means ok)."""
+def check_all(
+    rows: list[dict], data: GoldData, splits: tuple[str, ...] = SPLITS, require_answers: bool = True
+) -> dict[str, list[str]]:
+    """Problems per question id (an empty list means ok). `require_answers` False lets a gold
+    answer stay TODO (the held-out set, until the owner writes them)."""
     dupes = duplicate_ids(rows)
     out: dict[str, list[str]] = {}
     for i, row in enumerate(rows, 1):
         key = str(row.get("id", f"row {i}"))
-        problems = [*question_problems(row, data), *answer_problems(row)]
+        problems = [*question_problems(row, data, splits)]
+        if require_answers:
+            problems += answer_problems(row)
         if row.get("id") in dupes:
             problems.append("id is not unique")
         out.setdefault(key, []).extend(problems)
@@ -348,10 +362,15 @@ def eval_findings(rows: list[dict], data: GoldData) -> list[Finding]:
     ]
 
 
-def main() -> int:
-    rows = load_questions()
+def main(argv: list[str] | None = None) -> int:
+    heldout = "--heldout" in (sys.argv[1:] if argv is None else argv)
+    rows = load_questions(HELDOUT_QUESTIONS if heldout else QUESTIONS)
     data = load_gold_data()
-    results = check_all(rows, data)
+    results = (
+        check_all(rows, data, (HELDOUT,), require_answers=False)
+        if heldout
+        else check_all(rows, data)
+    )
     for qid, problems in results.items():
         print(f"{qid}: " + ("ok" if not problems else "; ".join(problems)))
     bad = sum(bool(p) for p in results.values())
