@@ -42,8 +42,8 @@ answer:
   # Version 2 rescue rule (docs/decisions.md, "Version 2, casual wording: pre-registration"): off | on. When on, a
   # question whose best vector similarity is under the cutoff but at least rescue_similarity_floor goes on to the
   # answer model (which can still abstain) if the reranker's top score is at least rescue_reranker_min (0 to 10).
-  # The floor and the minimum were set from the dev diagnosis only. Quoted (YAML booleans).
-  rescue: "off"
+  # The floor and the minimum were set from the dev diagnosis only. On since Oct 17, 2026 (owner decision, docs/decisions.md, "Version 2 result and decision"). Quoted (YAML booleans).
+  rescue: "on"
   rescue_similarity_floor: 0.45
   rescue_reranker_min: 8
 

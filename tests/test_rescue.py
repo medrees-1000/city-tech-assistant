@@ -57,16 +57,16 @@ def run(monkeypatch, top, rerank_scores, rescue="on", failed=False):
     return ans, model
 
 
-def test_the_rescue_is_off_by_default_and_checked():
+def test_the_rescue_is_on_by_default_with_the_registered_numbers():
     a = load_models(env={})["answer"]
-    assert a["rescue"] == "off" and a["rescue_similarity_floor"] == 0.45
+    assert a["rescue"] == "on" and a["rescue_similarity_floor"] == 0.45
     assert a["rescue_reranker_min"] == 8
 
 
 def test_load_models_rejects_bad_rescue_values(tmp_path):
     base = (load_models.__globals__["ROOT"] / "config" / "models.yaml").read_text()
     for old, new, key in (
-        ('rescue: "off"', 'rescue: "maybe"', "answer.rescue must be"),
+        ('rescue: "on"', 'rescue: "maybe"', "answer.rescue must be"),
         (
             "rescue_similarity_floor: 0.45",
             "rescue_similarity_floor: 0.7",
@@ -265,3 +265,19 @@ def test_the_router_keeps_the_rescued_flag_on_the_final_answer():
     for flag in (True, False):
         found = Answer("text", False, None, [], rescued=flag)
         assert routed(found, state, 0.0, TODAY).rescued is flag
+
+
+def test_the_live_api_and_the_eval_runner_read_the_same_setting_from_the_same_loader():
+    from cta import settings
+    from cta.api import app as api_app
+    from cta.eval import run_answers
+
+    assert api_app.load_models is settings.load_models
+    assert run_answers.load_models is settings.load_models
+    assert settings.load_models(env={})["answer"]["rescue"] == "on"
+
+
+def test_the_flag_off_reproduces_the_old_refusals_for_every_rescue_candidate(monkeypatch):
+    for score in (8, 9, 10):
+        ans, model = run(monkeypatch, 0.5, [score], rescue="off")
+        assert ans.abstained and ans.abstain_reason == "below_threshold" and model.calls == 0
