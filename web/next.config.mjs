@@ -4,6 +4,8 @@ const API_URL = process.env.API_URL ?? "http://127.0.0.1:8000";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Hide the dev-only "N" route indicator (supported option in Next 16: devIndicators: false).
+  devIndicators: false,
   async rewrites() {
     return [{ source: "/api/:path*", destination: `${API_URL}/:path*` }];
   },

@@ -159,3 +159,11 @@ test("a guardrail reply is a normal assistant message: its own text, no card, no
   assert.deepEqual(answerView(d), { kind: "guardrail", text: "You're asking quickly." });
   assert.equal(showContact(d), false);
 });
+
+test("the input bar has a solid background (no text shows through its top edge) and the dev indicator is hidden", () => {
+  const css = readFileSync(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(css, /\.chat:not\(\.is-empty\) \.dock\s*\{[^}]*background:\s*var\(--bg\);/);
+  assert.doesNotMatch(css, /\.dock\s*\{[^}]*linear-gradient\(to bottom, transparent, var\(--bg\) 22%\)/);
+  const config = readFileSync(new URL("../next.config.mjs", import.meta.url), "utf8");
+  assert.match(config, /devIndicators:\s*false/);
+});
