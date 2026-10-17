@@ -337,6 +337,7 @@ def routed(found: Answer, state: RouterState, started: float, today: date) -> Ro
     )  # fmt: skip
     ans.route, ans.today = state["route"], today
     ans.near_miss = found.near_miss
+    ans.rescued = found.rescued
     ans.rewrite = found.rewrite
     ans.row_ids = found.row_ids if isinstance(found, RoutedAnswer) else []
     ans.router = {

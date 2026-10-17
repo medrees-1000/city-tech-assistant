@@ -254,3 +254,14 @@ def test_every_heldout_gold_source_resolves():
         rows, q_module.load_gold_data(), (q_module.HELDOUT,), require_answers=False
     )
     assert {q: p for q, p in results.items() if p} == {}
+
+
+def test_the_router_keeps_the_rescued_flag_on_the_final_answer():
+    from cta.answer import Answer
+    from cta.graph.build import routed
+
+    call = {"prompt_tokens": 0, "completion_tokens": 0, "cost": 0.0, "ms": 0.0}
+    state = {"route": "other", "intent": None, "term_mention": None, "classify": call}
+    for flag in (True, False):
+        found = Answer("text", False, None, [], rescued=flag)
+        assert routed(found, state, 0.0, TODAY).rescued is flag
