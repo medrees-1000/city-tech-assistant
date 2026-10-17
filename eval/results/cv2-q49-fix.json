@@ -1,0 +1,180 @@
+{
+ "label": "cv2-q49-fix",
+ "split": "dev",
+ "retrieval": {
+  "n": 1,
+  "recall@1": 0.5,
+  "precision@1": 1.0,
+  "hit@1": 1.0,
+  "recall@3": 1.0,
+  "precision@3": 0.6666666666666666,
+  "hit@3": 1.0,
+  "recall@5": 1.0,
+  "precision@5": 0.4,
+  "hit@5": 1.0,
+  "recall@10": 1.0,
+  "precision@10": 0.2,
+  "hit@10": 1.0,
+  "mrr": 1.0
+ },
+ "retrieval_chain": null,
+ "excluded_from_retrieval": [],
+ "answers": {
+  "correctness": {
+   "n": 0,
+   "correct": null,
+   "partial": null,
+   "incorrect": null
+  },
+  "faithfulness": {
+   "n": 0,
+   "yes": null,
+   "partly": null,
+   "no": null
+  },
+  "no_advice_correct": {
+   "n": 0,
+   "correct": null,
+   "partial": null,
+   "incorrect": null
+  },
+  "abstention_accuracy": {
+   "n": 0,
+   "share": null
+  },
+  "wrongly_abstained": {
+   "n": 0,
+   "share": null
+  },
+  "citation_rate": {
+   "n": 1,
+   "share": 1.0,
+   "invalid_citations": 0
+  },
+  "judge_failed": 0,
+  "cost": {
+   "n": 1,
+   "per_request_usd": 0.0008885,
+   "answer_usd": 0.0008885,
+   "judge_usd": 0.0
+  },
+  "latency_ms": {
+   "n": 1,
+   "total_median": 5725,
+   "total_p95": 5725,
+   "chat_n": 1,
+   "chat_median": 3904,
+   "chat_p95": 3904,
+   "retrieval_n": 1,
+   "retrieval_median": 1811.4,
+   "retrieval_p95": 1811.4,
+   "query_cache_hits": 1
+  },
+  "chain": null
+ },
+ "failure_labels": {
+  "not supported yet": 1
+ },
+ "per_question": [
+  {
+   "id": "q49",
+   "type": "ambiguous",
+   "department": null,
+   "gold_kind": "clarify",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "page/registrar/epermit#2",
+     "similarity": 0.4618
+    },
+    {
+     "id": "page/registrar/epermit#1",
+     "similarity": 0.4502
+    },
+    {
+     "id": "page/registrar/epermit#3",
+     "similarity": 0.4008
+    },
+    {
+     "id": "page/advisement/gen-ed#8",
+     "similarity": 0.4363
+    },
+    {
+     "id": "page/registrar/applying-graduation#4",
+     "similarity": 0.4879
+    },
+    {
+     "id": "page/registrar/grade-policies#2",
+     "similarity": 0.4432
+    },
+    {
+     "id": "page/registrar/faqs#8",
+     "similarity": 0.4283
+    },
+    {
+     "id": "page/advisement/gen-ed#7",
+     "similarity": 0.4198
+    },
+    {
+     "id": "page/registrar/faqs#7",
+     "similarity": 0.4172
+    },
+    {
+     "id": "page/MATH-NYT/student-resources#3",
+     "similarity": 0.4151
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "rescued": true,
+   "citations": [
+    1,
+    2
+   ],
+   "invalid_citations": [],
+   "correctness": null,
+   "faithfulness": null,
+   "correctness_reason": null,
+   "faithfulness_reason": null,
+   "judge_status": "not judged",
+   "label": "not supported yet",
+   "label_reason": "CLARIFY question",
+   "answer_cost": 0.0008885,
+   "judge_cost": 0.0,
+   "latency_ms": 5725,
+   "chat_ms": 3904,
+   "retrieval_ms": 1811.4,
+   "cache_hit": true,
+   "rerank_cost": 0.0005942,
+   "rerank_ms": 1740.4,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 319,
+     "completion_tokens": 17,
+     "cost": 4.0400000000000006e-05,
+     "ms": 1976.3,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  }
+ ],
+ "question_ids": [
+  "q49"
+ ],
+ "question_ids_hash": "76ed7d2b0fed",
+ "git": {
+  "commit": "543e58f",
+  "dirty": true
+ }
+}

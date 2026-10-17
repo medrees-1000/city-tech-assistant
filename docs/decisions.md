@@ -1455,3 +1455,61 @@ Runs as pre-registered (c6716e2, clarifications 036f348): `cv2-baseline` (rescue
 Recording bug found after the first two runs: the router's final answer did not copy the `rescued` flag, so `cv2-baseline.json` and `cv2-fix.json` show `rescued: false` for every question although the rule ran (the rule itself is in `cta.answer`, which the router calls). Fixed for later runs in the commit after 036f348 (one line, test added; no behaviour change). `cv2-dev-fix` has the flag. For `cv2-fix` the rescued count is derived: questions refused as below_threshold in the baseline and not in the fix run. The two runs were not repeated (pre-registered: each once). No rule (a) to (f) has been evaluated; that waits for the owner's blind grades.
 
 Owner grading note (Oct 17, 2026): cv2-35 and cv2-01 were graded partial under the owner rules (cv2-35: the Mar 18, 2027 date from the Spring 2027 row but not the caveat that the Summer 2027 calendar is not published; cv2-01: the next date given, the later Mar 18, 2027 date not mentioned). The grades are in `eval/results/blind/cv2-owner-grades.json` (graded_blind false, see its blindness_note) and the unblinded tables in `eval/results/cv2-owner-outcomes.json`.
+
+## Version 2 result and decision (Oct 17, 2026)
+
+**This is an adoption decided by the owner after seeing the results.** The pre-registered rules (c6716e2) were read literally and they did not all pass; the owner adopts the rescue rule anyway, with the deviations below recorded here. Grading was not fully blind (`graded_blind` is false, with the note in `eval/results/blind/cv2-owner-grades.json`: the counts-only report from the runs let the configuration be inferred for about six questions; grades were assigned from content and the rubric). The held-out set is small (7 clearly answerable questions), so the result is directional, not a measured rate. The headline test-split numbers (`final-run-frozen`) were measured before the rescue rule existed and are unchanged.
+
+### Owner outcomes on the 41 held-out questions (graded by the owner's rules, Oct 17, 2026)
+Baseline (rescue off):
+
+| category | correct | partial | acceptable_abstain | incorrect | wrongly_abstained |
+|---|---|---|---|---|---|
+| answer (7) | 1 | 1 | 0 | 0 | 5 |
+| uncertain (12) | 0 | 0 | 12 | 0 | 0 |
+| must-refuse (22) | 21 | 1 | 0 | 0 | 0 |
+| total | 22 | 2 | 12 | 0 | 5 |
+
+Fix (rescue on):
+
+| category | correct | partial | acceptable_abstain | incorrect | wrongly_abstained |
+|---|---|---|---|---|---|
+| answer (7) | 4 | 2 | 0 | 0 | 1 |
+| uncertain (12) | 1 | 2 | 9 | 0 | 0 |
+| must-refuse (22) | 21 | 1 | 0 | 0 | 0 |
+| total | 26 | 5 | 9 | 0 | 1 |
+
+Seven questions moved (baseline -> fix): cv2-11 wrongly_abstained -> correct; cv2-15 acceptable_abstain -> correct; cv2-19 acceptable_abstain -> partial; cv2-22 acceptable_abstain -> partial; cv2-29 wrongly_abstained -> correct; cv2-32 wrongly_abstained -> correct; cv2-39 wrongly_abstained -> partial. Eleven answers carried the rescue in the fix run (derived count, see the measurement log). Files: `eval/results/cv2-baseline.json`, `cv2-fix.json`, `cv2-dev-fix.json`, `cv2-owner-outcomes.json`. Cost of the whole measurement: $0.29.
+
+Dev checks (23 questions, `cv2-dev-fix`): of the 11 previously refused casual dev questions, 8 correct, 2 partial, 1 still refused (q108). Of the 12 dev questions whose gold is ABSTAIN, 1 was answered under the fix (q122), 0 before.
+
+### The rules read literally
+
+| rule | status | numbers |
+|---|---|---|
+| (a) no new incorrect answer, 41 held-out and dev flipped | PENDING at grading; accepted by the owner, see below | held-out: 0 incorrect in both configurations; dev: q122 is a new judge-"incorrect" (mechanical rule: did not abstain) |
+| (b) at most +1 answered must-refuse | PASS | 2 answered in the baseline, 2 with the fix |
+| (c) at least +2 move to correct or partial | PASS | 7 moved |
+| (d) dev flipped: at least 9 of 11 correct or partial, none incorrect | FAIL on its wording | 10 of 11 correct or partial; 1 incorrect (q108, a refusal) |
+| (e) faithfulness holds | FAIL on its wording | all newly answered held-out answers faithfulness "yes"; one dev "no" (q110) |
+| (f) cost per request up at most 10% | FAIL | $0.00256 -> $0.00290 per request including the judge (+13.3%); answer-only $0.0226 -> $0.0254 in total (+12.6%); under a hundredth of a cent per question |
+
+### Owner decisions made after seeing the results
+- **(a) q122 accepted.** The answer says it cannot see the account and points to the CUNYfirst how-to (Tasks and Holds, Financial Account), the same standard under which cv2-06 A was graded correct. The judge's mechanical verdict ("rule: did not abstain") is recorded here next to it. Under the rule's own wording it stays a recorded exception.
+- **(d) q108** is a refusal identical to the baseline, so it is not a new incorrect answer. The rule wording "none incorrect" should have said "no new incorrect".
+- **(e)** the only faithfulness "no" is q110: the answer states the system date (October 11, 2026), which is not in a source. Judged a harmless false positive.
+- **(f)** the cost increase is accepted as a documented deviation.
+
+### Why two questions stayed refused (read-only, stored scores)
+- **cv2-27** ("what is the difference between WD and W and what is the third option", fix run): best vector similarity **0.321**, reranker top score **10**. The reranker found the right pages; the similarity is under the 0.45 floor, so the rule did not apply. It is refused as before.
+- **q108** ("i give up my seat in class, how do i drop", `cv2-dev-fix`): best similarity **0.514** (above the floor), reranker top score **5**, under the minimum of 8, so it was not rescued. In the diagnosis cache the top score was 8; reranker scores differ between cache fills.
+Nothing was changed for either.
+
+### q49 under the fix (one paid dev run, $0.0009; owner grades it)
+Run `cv2-q49-fix`: rescued true, best similarity 0.488, reranker top 9, cited epermit#1 and epermit#2. The answer covers both cases: another CUNY college through ePermit (eligibility list), and for a college outside CUNY the Non-CUNY Permit needing approval from the Registrar's Office and the academic department. It was not graded by me. The owner grades it under option 2 (an answer covering both cases counts as correct) and it is reported both ways: as originally labeled (gold CLARIFY) and as regraded. Owner grade: TODO.
+
+### Later list additions
+- cv2-24: answer with what the sources say (some STEM programs need a C or better in math).
+- cv2-28, 30, 31, 33 and 07: uncertain questions worth revisiting.
+- cv2-39: the retrieved set lacked the Dental Hygiene chair page.
+- Tell the model not to state the system date (the faithfulness judge flags it).
