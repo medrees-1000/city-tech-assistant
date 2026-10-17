@@ -125,7 +125,7 @@ Key decisions and why:
 ## Safety and cost controls
 
 - Daily spend cap of $1.00 and a kill switch (config or a file); per-visitor rate limits of 10 a minute and 100 a day, kept in memory with addresses hashed and never stored; 15 s per model call and 45 s per request.
-- Input handling: hidden characters removed; prompt-injection phrases blocked with a fixed reply; emails, phone and ID numbers redacted; a Social Security number shaped input refused; a name after "my name is" removed.
+- Input handling: hidden characters removed; prompt-injection phrases blocked with a fixed reply; emails, phone and ID numbers redacted; a Social Security number shaped input refused; a name typed after "my name is", "I'm", "I am", "this is", "name is", "name:" or "call me" removed (plain patterns with a stoplist, no name list).
 - Distress and stress phrases get a fixed reply that names 988 for the narrow cases. It is phrase matching and can miss other wording. Questions in other languages get a short English notice; the safety screens run on a translation first.
 - Logs hold the redacted question and answer, sources, cost and latency; no IP address and no account identifier; a purge command deletes rows older than 30 days. No login, no cookies, no analytics. The API listens on 127.0.0.1 only.
 - Optional LangSmith tracing exists for development, off by default, with every payload scrubbed.
@@ -167,7 +167,7 @@ A "version 2", measured on fresh questions I write myself, never on the test spl
 - Casual wording: the rescue rule fixed most of the casual dev group (8 of 11 correct, 2 partial); q108 and the held-out cv2-27 are still refused. Next: make refusals carry the right office contact, answer cv2-24 with what the sources say, and stop the answer from stating the system date.
 - Include the refund rows for an unqualified "last day to drop" question; say that refund schedules differ by term and that fees are not refundable.
 - Retrieve the EET degrees page chunks together (q07); follow prerequisite chains past depth 4 or say what was cut (q41).
-- Answer both parts of a two-part question; remove names not written after "my name is".
+- Answer both parts of a two-part question; remove names typed in other ways ("hi it's Pat Lee").
 
 ## Quickstart
 
