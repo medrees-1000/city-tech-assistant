@@ -4,7 +4,9 @@ model-based selector picks that run.
 
 Plain code, no model call. The rows are found by their event text in the calendar data (never by
 hand-typed ids): "Last day to drop ... grade of WD" and "Last day to withdraw ... grade of W".
-Refund-percent rows and add rows are not included.
+Add rows are not included. Since version 2.1 prep (Oct 17, 2026, owner decision) the tuition-refund
+rows ("Last day to drop for 100% tuition refund" and so on) are included too: a drop answer shows
+the drop and withdraw deadlines and the refund deadlines, all verified calendar rows, in date order.
 """
 
 import re
@@ -17,6 +19,8 @@ QUALIFIER = re.compile(
     re.IGNORECASE,
 )
 ROW_EVENT = re.compile(r"^last day to (?:drop|withdraw)\b.*\bgrade of WD?\b", re.IGNORECASE)
+REFUND_EVENT = re.compile(r"^last day to drop\b.*\btuition refund\b", re.IGNORECASE)
+SELECTOR_VERSION = "drop_family_v2"  # v1 (grade rows only) is what older stored records say
 
 
 def applies(question: str) -> bool:
@@ -27,6 +31,11 @@ def applies(question: str) -> bool:
 
 
 def rows_of(pool: list[dict]) -> list[dict]:
-    """The grade-related drop/withdraw rows of one term's rows, in date order."""
-    found = [r for r in pool if ROW_EVENT.match(r["event"].strip())]
+    """The drop/withdraw deadline rows and the tuition-refund rows of one term's rows, in date order
+    (the rows are found by their event text in the verified table; a term with none gets none)."""
+    found = [
+        r
+        for r in pool
+        if ROW_EVENT.match(r["event"].strip()) or REFUND_EVENT.match(r["event"].strip())
+    ]
     return sorted(found, key=lambda r: (r["date_start"] or "", r["id"]))

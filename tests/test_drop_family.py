@@ -30,21 +30,29 @@ def test_qualified_or_other_questions_do_not(question):
     assert not drop_family.applies(question)
 
 
+# Oct 17, 2026 (owner decision): the drop and withdraw deadline rows AND the tuition-refund rows,
+# in date order (the same date keeps the row-id order). Winter has no 75% refund row.
 EXPECTED = {
-    "Fall 2026": ["fall-2026-011", "fall-2026-021", "fall-2026-040"],
-    "Winter 2027": ["winter-2027-008", "winter-2027-012", "winter-2027-019"],
-    "Spring 2027": ["spring-2027-012", "spring-2027-022", "spring-2027-044"],
+    "Fall 2026": "004 008 011 016 019 021 040",
+    "Winter 2027": "003 007 008 011 012 019",
+    "Spring 2027": "005 009 012 017 020 022 044",
+}
+EXPECTED = {
+    t: [f"{t.lower().replace(' ', '-')}-{n}" for n in ids.split()] for t, ids in EXPECTED.items()
 }
 
 
 @pytest.mark.parametrize(("term", "ids"), EXPECTED.items())
-def test_each_term_matches_exactly_its_three_rows_in_date_order(term, ids):
+def test_each_term_matches_exactly_its_drop_and_refund_rows_in_date_order(term, ids):
     pool = [r for r in calendar_rows() if r["term"] == term]
     rows = drop_family.rows_of(pool)
     assert [r["id"] for r in rows] == ids
     assert [r["date_start"] for r in rows] == sorted(r["date_start"] for r in rows)
-    assert not any(re.search(r"refund|\badd\b|assigned|period begins", r["event"], re.I)
-                   for r in rows)  # fmt: skip
+    # never an add row, a "grade ... is assigned" explanation row or a period start
+    assert not any(re.search(r"\badd\b|assigned|period begins", r["event"], re.I) for r in rows)
+    refunds = [r for r in rows if "tuition refund" in r["event"]]
+    assert refunds and all(r["event"].lower().startswith("last day to drop") for r in refunds)
+    assert {r["id"] for r in rows} <= {e["id"] for e in calendar_rows()}  # only verified rows
 
 
 def test_a_term_without_such_rows_gets_nothing():
@@ -58,7 +66,7 @@ def test_dev_questions_that_apply_are_only_the_new_cq17():
 
 
 TODAY = date(2026, 10, 11)
-THREE = "fall-2026-011 fall-2026-021 fall-2026-040".split()
+THREE = EXPECTED["Fall 2026"]  # the name is kept; the list is the seven rows since Oct 17, 2026
 
 
 @pytest.mark.parametrize(
@@ -68,18 +76,21 @@ THREE = "fall-2026-011 fall-2026-021 fall-2026-040".split()
         "call me at [PHONE] whats the last day to drop a class fall 2026",
     ],
 )
-def test_the_router_lists_the_three_rows_without_a_selector_call(monkeypatch, question):
+def test_the_router_lists_the_drop_and_refund_rows_without_a_selector_call(monkeypatch, question):
     script = Script("calendar", "Fall 2026", ["fall-2026-040"])  # the selector would pick one row
     router, seen = make_router(script, monkeypatch, calendar_rows())
     ans = router.answer(question, TODAY, log=False)
     assert script.calls == ["classify"] and seen == []
     assert ans.route == "calendar" and ans.row_ids == THREE and not ans.abstained
-    assert ans.router["selector_version"] == "drop_family"
+    assert ans.router["selector_version"] == "drop_family_v2" == drop_family.SELECTOR_VERSION
     assert (
-        ans.text.index("September 3")
+        ans.text.index("August 27")
+        < ans.text.index("September 3")
+        < ans.text.index("September 10")
         < ans.text.index("September 17")
         < ans.text.index("November 6")
     )
+    assert "100% tuition refund" in ans.text and "25% tuition refund" in ans.text
 
 
 def test_a_qualified_question_still_goes_to_the_selector(monkeypatch):
@@ -94,3 +105,38 @@ def test_an_assumed_term_is_stated_like_any_calendar_answer(monkeypatch):
     router, _ = make_router(script, monkeypatch, calendar_rows())
     ans = router.answer("last day to drop a class", TODAY, log=False)
     assert ans.row_ids == THREE and "Assuming the current term, Fall 2026" in ans.text
+
+
+def test_refund_rows_are_included_and_every_listed_row_is_in_the_verified_table():
+    pool = [r for r in calendar_rows() if r["term"] == "Fall 2026"]
+    rows = drop_family.rows_of(pool)
+    percents = [r["event"] for r in rows if "tuition refund" in r["event"]]
+    assert [p.split(" for ")[1][:4] for p in percents] == ["100%", "75% ", "50% ", "25% "]
+    assert all(r in pool for r in rows)  # never a row that is not in the table
+
+
+def test_a_term_with_no_refund_rows_gets_only_the_grade_rows():
+    pool = [
+        {"id": "t-1", "event": "Last Day to drop without a grade of WD",
+         "date_start": "2027-03-02"},
+        {"id": "t-2", "event": "Last day to withdraw from a course with a grade of W.",
+         "date_start": "2027-04-05"},
+        {"id": "t-3", "event": "Classes begin", "date_start": "2027-01-27"},
+    ]  # fmt: skip
+    assert [r["id"] for r in drop_family.rows_of(pool)] == ["t-1", "t-2"]
+
+
+def test_unrelated_events_and_questions_are_unchanged():
+    pool = [
+        {"id": "u-1", "event": "Last day to add a course", "date_start": "2026-09-03"},
+        {"id": "u-2", "event": "Last day to apply for a refund of the activity fee",
+         "date_start": "2026-09-04"},
+        {"id": "u-3", "event": "Online registration begins", "date_start": "2026-10-29"},
+    ]  # fmt: skip
+    assert drop_family.rows_of(pool) == []
+    assert not drop_family.applies("when is the last day to add a course")
+    assert not drop_family.applies("when do I get my tuition refund")  # a qualifier: the selector
+
+
+def test_the_selector_version_is_bumped_so_stored_records_stay_distinguishable():
+    assert drop_family.SELECTOR_VERSION == "drop_family_v2"

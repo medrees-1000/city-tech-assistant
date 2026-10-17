@@ -157,7 +157,11 @@ def make_nodes(d: Deps):
             if rows:  # T04: every grade-related drop/withdraw row of the term, no selector call
                 assumed = resolution.term if resolution.status == "assumed" else None
                 rendered = render.render_rows(rows, d.contact, assumed)
-                info.update(selector_version="drop_family", pool_size=len(pool), invalid_ids=0)
+                info.update(
+                    selector_version=drop_family.SELECTOR_VERSION,
+                    pool_size=len(pool),
+                    invalid_ids=0,
+                )
                 info.update(weekday_mismatches=rendered.weekday_mismatches,
                             selected=rendered.row_ids, tba_rows=rendered.tba_rows)  # fmt: skip
                 return {"calendar": info, "answer": calendar_answer(rendered),
