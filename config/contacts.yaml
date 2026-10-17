@@ -131,7 +131,8 @@ topic_priority: [DENT-NYT, financial-aid, bursar, advisement, registrar]
 topic_cues:
   DENT-NYT: [dental, hygiene, hygine, hygein, hygeine, hugein]
   financial-aid: [fafsa, tap, pell, aid, scholarship, scholarships, sap, "financial aid"]
-  bursar: [tuition, tution, tuiton, payment, payments, pay, bill, fee, fees, "refund balance"]
+  bursar: [tuition, tution, tuiton, payment, payments, pay, bill, fee, fees, "refund balance", refund,
+           refunds, refunded, "money back"]
   advisement: [advisor, advisors, advsor, advisr, advising, "degree audit", "graduate early", "graudate early",
                "graduating early", "credits left", "credits still left", "credits remaining", "why am i taking"]
   registrar: [graduate, graduation, graduating, graudate, graudation, grudation, transcript, grades, grade,

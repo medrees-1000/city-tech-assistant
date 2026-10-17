@@ -121,3 +121,22 @@ def test_the_eval_harness_still_reads_the_same_abstain_marker():
     a = ans(text=f"{MARKER} nothing found.")
     contact.add_contact(a, "how much fafsa pays")
     assert parse_reply(a.text, 3)["abstained"] is True  # the same detection as before
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "when do I get a refund",
+        "how are refunds paid",
+        "was it refunded",
+        "can I get my money back",
+    ],
+)
+def test_refund_words_name_the_bursar(question):
+    assert offices(question) == ["bursar"]
+
+
+def test_drop_and_refund_list_the_bursar_first_and_the_registrar_second():
+    # the fixed priority order puts the Bursar before the Registrar; two offices at most
+    assert offices("if I drop with W do I get money refunded") == ["bursar", "registrar"]
+    assert offices("drop a class, withdraw, refund, tuition, fafsa") == ["financial-aid", "bursar"]
