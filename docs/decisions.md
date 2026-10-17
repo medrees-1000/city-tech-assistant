@@ -1440,6 +1440,11 @@ If (a) fails: reject. If (a) holds and others partly fail: report, do not ship, 
 ### q49 (decided after seeing the diagnosis, like q50 and q74)
 "Can I take a class at another college?" An answer that covers both cases (another CUNY college: the ePermit page; other colleges: the sources do not cover it, contact the registrar) counts as correct, graded by hand by the owner. Reported both ways: as originally labeled and as regraded.
 
+### Clarifications (Oct 17, 2026, before the runs)
+The automatic correctness verdicts on the 41 held-out questions are ignored, because most golds are TODO or ABSTAIN. Faithfulness verdicts are used for rule (e). The owner's blind grades are the result.
+
+After the pre-registration commit c6716e2, gold sources were added to cv2-26 (the two degree maps) so the held-out validator accepts the row, and four calendar source strings were rewritten to the existing format (commit 97618d5). No type, expected behavior, trap tag, outcome rule or threshold changed. Gold sources are not used by any pre-registered rule on this set.
+
 ### Cost
 About $0.0026 per request in the final run (judge included). Planned: 41 x 2 plus about 25 dev requests, about 110 requests, estimate **$0.25 to $0.30** (a refused question costs less because no answer model runs). Ceiling for the whole version 2 measurement: **$0.50**. Stop and ask before exceeding it or before any model call earlier than planned.
 
