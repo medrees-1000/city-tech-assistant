@@ -46,6 +46,13 @@ answer:
   rescue: "on"
   rescue_similarity_floor: 0.45
   rescue_reranker_min: 8
+  # Quoted-sentence addenda (docs/decisions.md, "q50 fee line"): when a retrieval answer cites the chunk below and
+  # does not already say it, code appends the sentence that starts with `starts_with`, copied from the chunk text at
+  # run time (never written here). Nothing is appended if the chunk was not cited or the sentence is not in it.
+  # An empty list switches this off.
+  quote_addenda:
+    - {chunk: "page/bursar/refund-policy#1", starts_with: "No portion of the student activity fee"}
+    - {chunk: "page/admissions/tuition-refund#1", starts_with: "No portion of the student activity fee"}
 
 # Judge settings. Probed 2026-10-12 on gpt-5.6-terra: temperature 0 is REJECTED with the default reasoning
 # ("Only the default (1) value is supported"), but ACCEPTED with reasoning_effort "none"; JSON response

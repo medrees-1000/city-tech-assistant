@@ -102,6 +102,32 @@ def rescue_applies(cfg: dict, top: float | None, rerank) -> bool:
     )
 
 
+def quote_sentence(chunk_text: str, starts_with: str) -> str | None:
+    """The sentence of the chunk that starts with `starts_with` (case-insensitive), copied as it is
+    written there, or None when the chunk does not hold it."""
+    m = re.search(re.escape(starts_with) + r"[^\n]*?\.(?=\s|$)", chunk_text, re.IGNORECASE)
+    return " ".join(m.group(0).split()) if m else None
+
+
+def add_quoted_sentences(
+    text: str, sources: list[dict], citations: list[int], rules: list[dict]
+) -> str:
+    """Append, as a quoted sentence with its citation marker, a sentence the configured chunk
+    holds and the answer left out. Only for a chunk the answer cites; never twice; nothing when
+    the sentence cannot be found in the chunk (it is never written in code or config)."""
+    for rule in rules:
+        for n in citations:
+            chunk = sources[n - 1] if 1 <= n <= len(sources) else None
+            if not chunk or chunk["id"] != rule["chunk"]:
+                continue
+            if rule["starts_with"].lower() in text.lower():
+                return text  # already said: no duplicate
+            sentence = quote_sentence(chunk["text"], rule["starts_with"])
+            if sentence:
+                return f"{text}\n\nThe source also says: \u201c{sentence}\u201d [{n}]"
+    return text
+
+
 def is_near_miss(top: float, threshold: float, margin: float) -> bool:
     """cutoff - margin <= best < cutoff. The lower bound is rounded so that exactly cutoff - margin
     (0.59 - 0.04) is inside; margin 0 switches the helper off."""
@@ -315,6 +341,10 @@ def answer(
             parsed["abstained"], parsed["citations"], parsed["invalid"],
         )  # fmt: skip
         ans.abstain_reason = parsed["reason"]
+        if not ans.abstained:
+            ans.text = add_quoted_sentences(
+                ans.text, found.results, ans.citations, cfg["answer"].get("quote_addenda", [])
+            )
     ans.latency_ms = round((time.perf_counter() - started) * 1000)
     if log and not dry_run:
         log_request(conn, question, today, ans, cfg, run_id)

@@ -84,6 +84,12 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
         raise ValueError("answer.near_miss_margin must be a number") from None
     if not 0 <= cfg["answer"]["near_miss_margin"] < cfg["answer"]["abstain_threshold"]:
         raise ValueError("answer.near_miss_margin must be at least 0 and below the cutoff")
+    cfg["answer"].setdefault("quote_addenda", [])
+    for rule in cfg["answer"]["quote_addenda"]:
+        if not isinstance(rule, dict) or not all(
+            isinstance(rule.get(k), str) and rule[k].strip() for k in ("chunk", "starts_with")
+        ):
+            raise ValueError("answer.quote_addenda entries need a chunk id and a starts_with text")
     cfg["answer"].setdefault("rescue", "on")
     cfg["answer"].setdefault("rescue_similarity_floor", 0.45)
     cfg["answer"].setdefault("rescue_reranker_min", 8)
