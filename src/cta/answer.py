@@ -16,6 +16,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import date
 
+from cta.graph.chain import explain_shorthand
 from cta.graph.clean import clean_for_search
 from cta.index.chunks import token_counter
 from cta.index.db import connect
@@ -303,7 +304,7 @@ def answer(
         chat_started = time.perf_counter()
         response = call_chat(client_factory(), cfg, ans.prompt, answer_model(cfg))
         ans.chat_ms = round((time.perf_counter() - chat_started) * 1000)
-        ans.text = (response.choices[0].message.content or "").strip()
+        ans.text = explain_shorthand((response.choices[0].message.content or "").strip())
         ans.prompt_tokens += response.usage.prompt_tokens
         ans.completion_tokens += response.usage.completion_tokens
         ans.chat_cost += cost_usd(

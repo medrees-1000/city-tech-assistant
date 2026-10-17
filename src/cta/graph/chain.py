@@ -40,6 +40,22 @@ CONDITION = re.compile(
 COREQ = re.compile(r"co-?requisite|\bCO:|\bP/C\b|pre/co|pre- ?or ?co|\bCOREQ", re.I)
 OR_BRANCH = re.compile(r"\bor\b\s+(?:\(|[A-Za-z]{2,5} ?\d|\d{4}|meet)", re.I)
 SHORTHAND = re.compile(r"\bPRE_\w*|\bP_\w*_|[A-Z]{2,5}\d{3,4}_[A-Z]")
+# The whole token around a SHORTHAND match ("PRE_CST3500_CST3600"), for explain_shorthand below.
+SHORTHAND_TOKEN = re.compile(rf"\b\w*?(?:{SHORTHAND.pattern})\w*")
+SHORTHAND_REPLACEMENT = "a prerequisite code the catalog does not spell out"
+
+
+def explain_shorthand(text: str) -> str:
+    """Model-written answer text: replace a catalog shorthand token (PRE_CST3500_CST3600) with a
+    plain phrase. Never an expansion: the catalog's own rule lookup returns the shorthand and
+    nothing else, so any reading of it would be a guess. Applied only to text a model wrote
+    (cta.answer.answer and the model-written chain answer). The chain renderer (`chain_render`)
+    keeps its verbatim "Catalog says" text on purpose: it quotes the catalog and says the courses
+    "cannot be read from this text", which is the flag the data rules ask for, and it never
+    passes through this function."""
+    return SHORTHAND_TOKEN.sub(SHORTHAND_REPLACEMENT, text)
+
+
 TRUNCATED = re.compile(r"[A-Za-z]{2,5}\d{1,2}\s*$")
 # words that sit in front of a number without being a department ("(2405 or 2415)", "Fall 2026")
 NOT_PREFIXES = {

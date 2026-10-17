@@ -245,7 +245,7 @@ def make_nodes(d: Deps):
         chat_started = time.perf_counter()
         response = call_chat(d.client_factory(), d.cfg, messages)
         chat_ms = round((time.perf_counter() - chat_started) * 1000)
-        text = (response.choices[0].message.content or "").strip()
+        text = chains.explain_shorthand((response.choices[0].message.content or "").strip())
         usage = response.usage
         parsed = parse_reply(text, len(sources))
         info |= {
