@@ -22,8 +22,13 @@ def chunk(cid="page/x#1", text=CHUNK_TEXT):
             "last_updated": None, "similarity": 0.8}  # fmt: skip
 
 
-def add(text, sources, citations, rules=(RULE,)):
-    return answer_module.add_quoted_sentences(text, sources, citations, list(rules))
+WORDS = ["refund", "refunds", "refunded", "refundable", "money back", "get back", "reimburse"]
+
+
+def add(text, sources, citations, rules=(RULE,), question="How much refund do I get?", words=WORDS):
+    return answer_module.add_quoted_sentences(
+        text, sources, citations, list(rules), question, words
+    )
 
 
 def test_the_sentence_is_appended_as_a_quote_with_the_cited_number():
@@ -75,6 +80,60 @@ def test_the_sentence_is_never_written_in_code_or_in_a_test_fixture_of_the_funct
     assert "student activity fee" not in code and "refundable" not in code
 
 
+@pytest.mark.parametrize(
+    "question",
+    [
+        "How much is my REFUND?",
+        "are refunds possible",
+        "was I refunded",
+        "is the fee refundable",
+        "how much do I get back if I drop",
+        "can I get my money back",
+        "will the college reimburse me",
+    ],
+)
+def test_a_refund_word_in_the_question_lets_the_sentence_through(question):
+    out = add("Refund is 75%. [1]", [chunk()], [1], question=question)
+    assert out.endswith(f"\u201c{SENTENCE}\u201d [1]")
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "how do I drop a class",
+        "Should I drop my class before September 3?",
+        "what if I don't pay my tuition",
+        "Should I sign up for the Nelnet payment plan?",
+        "",
+    ],
+)
+def test_no_refund_word_means_nothing_is_appended(question):
+    text = "Refund is 75%. [1]"
+    assert add(text, [chunk()], [1], question=question) == text
+
+
+@pytest.mark.parametrize(
+    "question", ["is it nonrefundable", "an unrefunded balance", "a prefund plan", "getback"]
+)
+def test_a_refund_word_inside_another_word_does_not_count(question):
+    text = "Refund is 75%. [1]"
+    assert add(text, [chunk()], [1], question=question) == text
+
+
+def test_an_empty_word_list_switches_the_addendum_off():
+    text = "Refund is 75%. [1]"
+    assert add(text, [chunk()], [1], question="refund", words=[]) == text
+
+
+def test_the_safeguards_still_hold_with_a_refund_question():
+    text = "Refund is 75%. [1]"
+    assert add(text, [chunk("page/other#1"), chunk()], [1]) == text  # chunk not cited
+    assert add("No portion of the fee is refundable. [1]", [chunk()], [1]) == (
+        "No portion of the fee is refundable. [1]"
+    )  # no duplicate
+    assert add(text, [chunk(text="Only a date.")], [1]) == text  # sentence not in the chunk
+
+
 def test_the_config_names_the_two_chunks_and_validates_its_entries(tmp_path):
     rules = load_models(env={})["answer"]["quote_addenda"]
     assert {r["chunk"] for r in rules} == {
@@ -82,6 +141,7 @@ def test_the_config_names_the_two_chunks_and_validates_its_entries(tmp_path):
         "page/admissions/tuition-refund#1",
     }
     assert all(r["starts_with"] == "No portion of the student activity fee" for r in rules)
+    assert load_models(env={})["answer"]["quote_addenda_question_words"] == WORDS
     c = load_models(env={})
     c["answer"]["quote_addenda"] = [{"chunk": "x"}]
     from cta import settings
@@ -114,13 +174,18 @@ class Model:
         )
 
 
-def ask(monkeypatch, content, sources):
+def ask(monkeypatch, content, sources, question="How much refund do I get?"):
     found = Search(sources, False, 1, 10, 0.0, top_vector_similarity=0.8)
     monkeypatch.setattr(answer_module, "search", lambda *a, **k: found)
     cfg = load_models(env={"CTA_RERANK": "off"})
     cfg["answer"]["quote_addenda"] = [RULE]
     return answer_module.answer(
-        None, "q", date(2026, 10, 17), cfg=cfg, client_factory=lambda: Model(content), log=False
+        None,
+        question,
+        date(2026, 10, 17),
+        cfg=cfg,
+        client_factory=lambda: Model(content),
+        log=False,
     )
 
 
@@ -133,3 +198,11 @@ def test_the_answer_step_appends_for_an_answer_and_never_for_an_abstention(monke
     assert ab.text == "ABSTAIN: I could not find this." and ab.abstained is True
     plain = ask(monkeypatch, "Refund is 75%. [1]", sources)  # cites the other chunk
     assert plain.text == "Refund is 75%. [1]"
+
+
+def test_the_answer_step_uses_the_question_text(monkeypatch):
+    sources = [chunk("page/other#1"), chunk()]
+    plain = ask(monkeypatch, "Fees apply. [2]", sources, question="How do I drop a class?")
+    assert plain.text == "Fees apply. [2]"
+    refund = ask(monkeypatch, "Fees apply. [2]", sources, question="Do I get my money back?")
+    assert refund.text.endswith(f"\u201c{SENTENCE}\u201d [2]")

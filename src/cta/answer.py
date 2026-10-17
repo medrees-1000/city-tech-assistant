@@ -109,12 +109,25 @@ def quote_sentence(chunk_text: str, starts_with: str) -> str | None:
     return " ".join(m.group(0).split()) if m else None
 
 
+def has_refund_word(question: str, words: list[str]) -> bool:
+    """Does the question contain one of the words or phrases (whole words, case-insensitive)?"""
+    return any(re.search(rf"\b{re.escape(w)}\b", question, re.IGNORECASE) for w in words)
+
+
 def add_quoted_sentences(
-    text: str, sources: list[dict], citations: list[int], rules: list[dict]
+    text: str,
+    sources: list[dict],
+    citations: list[int],
+    rules: list[dict],
+    question: str = "",
+    question_words: list[str] | None = None,
 ) -> str:
     """Append, as a quoted sentence with its citation marker, a sentence the configured chunk
-    holds and the answer left out. Only for a chunk the answer cites; never twice; nothing when
-    the sentence cannot be found in the chunk (it is never written in code or config)."""
+    holds and the answer left out. Only when the question has one of `question_words` (a refund
+    word); only for a chunk the answer cites; never twice; nothing when the sentence cannot be
+    found in the chunk (it is never written in code or config)."""
+    if not has_refund_word(question, question_words or []):
+        return text
     for rule in rules:
         for n in citations:
             chunk = sources[n - 1] if 1 <= n <= len(sources) else None
@@ -343,8 +356,9 @@ def answer(
         ans.abstain_reason = parsed["reason"]
         if not ans.abstained:
             ans.text = add_quoted_sentences(
-                ans.text, found.results, ans.citations, cfg["answer"].get("quote_addenda", [])
-            )
+                ans.text, found.results, ans.citations, cfg["answer"].get("quote_addenda", []),
+                question, cfg["answer"].get("quote_addenda_question_words", []),
+            )  # fmt: skip
     ans.latency_ms = round((time.perf_counter() - started) * 1000)
     if log and not dry_run:
         log_request(conn, question, today, ans, cfg, run_id)

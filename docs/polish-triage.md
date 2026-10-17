@@ -94,3 +94,5 @@ How-to-register and how-to-pay questions are not well covered: no collected sect
 - **Considered, not used:** two YouTube videos (no usable text).
 - **How to add them** (from `docs/batch2-diagnosis.md`, section 4): URLs in `office_pages`, a `page_doc_types` rule above `/registrar/*` if the registration page should be `howto`, a CLAUDE.md scope update first, then the page checks and `cta.validate`; the new chunks change the search pool, so measure on fresh questions written by the owner.
 
+Version 2.1 possible item (Oct 17, 2026): the chain renderer's verbatim "Catalog says" line still shows a raw `PRE_...` shorthand token in six stored chain outputs; left as is on purpose (see "q50 fee line: trigger narrowed" in decisions). Option: show the token with a short flag. Deterministic, needs the chain fixtures regenerated.
+

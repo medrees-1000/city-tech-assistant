@@ -4,7 +4,8 @@
 
 For each stored answer that is not an abstention: the cited numbers come from its [n] markers, the
 numbered chunks from the logged `retrieved` ids (text read from data/processed/chunks.jsonl), then
-cta.answer.add_quoted_sentences runs with the rules of config/models.yaml. Prints every answer that
+cta.answer.add_quoted_sentences runs with the rules and the refund words of config/models.yaml
+(and, for comparison, without the question condition). Prints every answer that
 would change (log id, run, route, the added text) and checks that the added sentence is a
 substring of the cited chunk.
 """
@@ -21,7 +22,8 @@ MARK = re.compile(r"\[(\d+)\]")
 
 
 def main() -> int:
-    rules = load_models()["answer"]["quote_addenda"]
+    answer_cfg = load_models()["answer"]
+    rules, words = answer_cfg["quote_addenda"], answer_cfg["quote_addenda_question_words"]
     chunks = {}
     for line in (
         (ROOT / "data" / "processed" / "chunks.jsonl").read_text(encoding="utf-8").splitlines()
@@ -33,7 +35,7 @@ def main() -> int:
             "SELECT l.id, e.label, l.route, l.question, l.answer, l.retrieved FROM request_logs l "
             "JOIN eval_runs e ON e.id = l.run_id ORDER BY l.id"
         ).fetchall()
-    changed, citing = [], 0
+    changed, citing, widened = [], 0, 0
     for log_id, label, route, question, answer, retrieved in rows:
         if not answer or answer.startswith("ABSTAIN") or not retrieved:
             continue
@@ -43,7 +45,10 @@ def main() -> int:
             1 <= n <= len(sources) and sources[n - 1]["id"] in {r["chunk"] for r in rules}
             for n in cites
         )
-        after = add_quoted_sentences(answer, sources, cites, rules)
+        # the first version (no question condition) against the narrowed one
+        wide = add_quoted_sentences(answer, sources, cites, rules, "refund", ["refund"])
+        after = add_quoted_sentences(answer, sources, cites, rules, question, words)
+        widened += wide != answer
         if after != answer:
             added = after[len(answer) :]
             quote = re.search(r"“(.*)”", added).group(1)
@@ -51,7 +56,8 @@ def main() -> int:
             assert quote in " ".join(sources[n - 1]["text"].split()), "not a substring of the chunk"
             changed.append((log_id, label, route, question, answer, added))
     print(
-        f"{len(rows)} stored answers; {citing} cite a configured chunk; {len(changed)} would change"
+        f"{len(rows)} stored answers; {citing} cite a configured chunk; {widened} would change "
+        f"without the question condition; {len(changed)} change with it"
     )
     for log_id, label, route, question, answer, added in changed:
         print(f"- log id {log_id} | run {label} | route {route} | question: {question[:80]}")

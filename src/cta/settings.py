@@ -90,6 +90,10 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
             isinstance(rule.get(k), str) and rule[k].strip() for k in ("chunk", "starts_with")
         ):
             raise ValueError("answer.quote_addenda entries need a chunk id and a starts_with text")
+    cfg["answer"].setdefault("quote_addenda_question_words", [])
+    words = cfg["answer"]["quote_addenda_question_words"]
+    if not isinstance(words, list) or not all(isinstance(w, str) and w.strip() for w in words):
+        raise ValueError("answer.quote_addenda_question_words must be a list of non-empty words")
     cfg["answer"].setdefault("rescue", "on")
     cfg["answer"].setdefault("rescue_similarity_floor", 0.45)
     cfg["answer"].setdefault("rescue_reranker_min", 8)
