@@ -133,6 +133,8 @@ topic_cues:
   financial-aid: [fafsa, tap, pell, aid, scholarship, scholarships, sap, "financial aid"]
   bursar: [tuition, tution, tuiton, payment, payments, pay, bill, fee, fees, "refund balance", refund,
            refunds, refunded, "money back"]
+  # "credits still left" and "why am i taking" were added AFTER seeing the held-out questions cv2-05 and cv2-10,
+  # so the replay on those two questions is not an independent test of the cues.
   advisement: [advisor, advisors, advsor, advisr, advising, "degree audit", "graduate early", "graudate early",
                "graduating early", "credits left", "credits still left", "credits remaining", "why am i taking"]
   registrar: [graduate, graduation, graduating, graudate, graudation, grudation, transcript, grades, grade,
