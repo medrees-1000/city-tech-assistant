@@ -372,10 +372,68 @@ def is_injection(question: str) -> bool:
     return any(p.search(question) for p in INJECTION)
 
 
+# Batch 1, item 2 (docs/polish-triage.md G1-3): more ways a student may type their own name.
+# Plain patterns, no name list and no library; they run on the QUESTION only. For the cues
+# "i'm", "i am", "this is", "name is", "name:" and "call me" the next word must start with a
+# capital letter, be more than an acronym (a capital followed by lowercase letters) and not be a
+# common word (NOT_NAMES). After "my name is" a lowercase name is also removed, up to three
+# words, stopping at the first word that is not a name.
+CAPITAL = r"[A-Z][a-z'’-]+"
+NAME_CUES = re.compile(
+    rf"(?i:\bi'?m|\bi am|\bthis is|\bname is|\bname:|\bcall me)"
+    rf"\s+({CAPITAL}(?:\s+{CAPITAL}){{0,2}})"
+)
+LOWER_WORD = r"[a-z][a-z'’-]*"
+LOWER_NAME = re.compile(rf"(?i:my name is|my name's)\s+({LOWER_WORD}(?:\s+{LOWER_WORD}){{0,2}})\b")
+NOT_NAMES = frozenset(
+    """a an the and or but so if as at by of on in to for with from about not no yes sure
+    ok okay fine confused lost sorry stressed worried happy new transfer freshman
+    sophomore junior senior student currently also just still really very too trying
+    looking wondering asking having getting taking interested eligible registered
+    enrolled late early here there what when where why how who which can could do does
+    did is are was were will would should may might please thanks thank hi hello hey
+    january february march april may june july august september october november
+    december monday tuesday wednesday thursday friday saturday sunday fall spring summer
+    winter city tech cuny cunyfirst brightspace pathways computer systems technology
+    mathematics math electrical telecommunications engineering dental hygiene registrar
+    bursar financial advisement admissions advisor office department college school
+    semester term class course degree major wrong missing misspelled spelled listed showing
+    shown incorrect different changed written printed appearing appears off""".split()
+)  # fmt: skip
+
+
+def _is_name_word(word: str) -> bool:
+    return word.lower().strip("'’-") not in NOT_NAMES and not any(
+        word.lower().startswith(t) for t in TOPIC_WORDS if len(t) >= 4
+    )
+
+
+def _name_span(match: re.Match) -> str:
+    """The words of the match that are a name: stop at the first word that is not one."""
+    words = match.group(1).split()
+    keep: list[str] = []
+    for w in words:
+        if not _is_name_word(w):
+            break
+        keep.append(w)
+    return " ".join(keep)
+
+
+def scrub_names(text: str) -> str:
+    """[NAME] for a name typed after "my name is" (any case) or after one of NAME_CUES."""
+    text = NAME.sub(lambda m: m.group(0).replace(m.group(1), "[NAME]"), text)
+
+    def mask(match: re.Match) -> str:
+        span = _name_span(match)
+        return match.group(0).replace(span, "[NAME]", 1) if span else match.group(0)
+
+    return NAME_CUES.sub(mask, LOWER_NAME.sub(mask, text))
+
+
 def scrub(question: str) -> str:
-    """Emails, phones, SSN-shaped and 8-digit numbers (cta.redact), and a name after "my name is"
-    or "my name's"."""
-    return NAME.sub(lambda m: m.group(0).replace(m.group(1), "[NAME]"), redact(question))
+    """Emails, phones, SSN-shaped and 8-digit numbers (cta.redact), and a name typed after "my name
+    is", "my name's", "i'm", "i am", "this is", "name is", "name:" or "call me"."""
+    return scrub_names(redact(question))
 
 
 def removed_personal_details(original: str, clean: str) -> bool:

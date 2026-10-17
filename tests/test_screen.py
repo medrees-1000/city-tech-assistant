@@ -160,8 +160,9 @@ def test_emails_phones_ids_and_names_are_scrubbed_and_the_question_goes_on(quest
         assert value not in got.question
 
 
-def test_names_are_only_removed_after_my_name_is():
-    assert screen.screen("I am Maria and I need help", G).question == "I am Maria and I need help"
+def test_a_name_after_my_name_is_is_removed_and_other_text_is_kept():
+    # batch 1, item 2: "I am Maria" is now removed too (tests/test_screen_names.py has the cases)
+    assert screen.screen("I am Maria and I need help", G).question == "I am [NAME] and I need help"
     assert screen.scrub("my name is Jane and I need help") == "my name is [NAME] and I need help"
 
 
@@ -514,7 +515,7 @@ def test_nothing_else_in_the_answer_changes_when_the_note_is_added(monkeypatch):
     [
         "when is the deadline",  # nothing to remove
         "[PHONE] was already scrubbed upstream, when is the deadline",  # nothing newly removed
-        "I am Maria and I need the deadline",  # a name that is not after "my name is": not scrubbed
+        "I am a CST student and I need the deadline",  # an acronym and a lowercase word: not a name
         "My name is on the waitlist but I don't see the class",  # "my name is" but no name follows
     ],
 )
