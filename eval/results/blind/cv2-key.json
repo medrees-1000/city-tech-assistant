@@ -1,0 +1,166 @@
+{
+ "cv2-01": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-02": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-03": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-04": {
+  "A": "baseline",
+  "B": "fix"
+ },
+ "cv2-05": {
+  "A": "baseline",
+  "B": "fix"
+ },
+ "cv2-06": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-07": {
+  "A": "baseline",
+  "B": "fix"
+ },
+ "cv2-08": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-09": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-10": {
+  "A": "baseline",
+  "B": "fix"
+ },
+ "cv2-11": {
+  "A": "baseline",
+  "B": "fix"
+ },
+ "cv2-12": {
+  "A": "baseline",
+  "B": "fix"
+ },
+ "cv2-13": {
+  "A": "baseline",
+  "B": "fix"
+ },
+ "cv2-14": {
+  "A": "baseline",
+  "B": "fix"
+ },
+ "cv2-15": {
+  "A": "baseline",
+  "B": "fix"
+ },
+ "cv2-16": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-17": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-18": {
+  "A": "baseline",
+  "B": "fix"
+ },
+ "cv2-19": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-20": {
+  "A": "baseline",
+  "B": "fix"
+ },
+ "cv2-21": {
+  "A": "baseline",
+  "B": "fix"
+ },
+ "cv2-22": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-23": {
+  "A": "baseline",
+  "B": "fix"
+ },
+ "cv2-24": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-25": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-26": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-27": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-28": {
+  "A": "baseline",
+  "B": "fix"
+ },
+ "cv2-29": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-30": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-31": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-32": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-33": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-34": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-35": {
+  "A": "baseline",
+  "B": "fix"
+ },
+ "cv2-36": {
+  "A": "baseline",
+  "B": "fix"
+ },
+ "cv2-37": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-38": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-39": {
+  "A": "fix",
+  "B": "baseline"
+ },
+ "cv2-40": {
+  "A": "baseline",
+  "B": "fix"
+ },
+ "cv2-41": {
+  "A": "baseline",
+  "B": "fix"
+ }
+}

@@ -1,0 +1,170 @@
+{
+ "tables": {
+  "baseline": {
+   "answer": {
+    "correct": 1,
+    "partial": 1,
+    "acceptable_abstain": 0,
+    "incorrect": 0,
+    "wrongly_abstained": 5
+   },
+   "uncertain": {
+    "correct": 0,
+    "partial": 0,
+    "acceptable_abstain": 12,
+    "incorrect": 0,
+    "wrongly_abstained": 0
+   },
+   "refuse": {
+    "correct": 21,
+    "partial": 1,
+    "acceptable_abstain": 0,
+    "incorrect": 0,
+    "wrongly_abstained": 0
+   }
+  },
+  "fix": {
+   "answer": {
+    "correct": 4,
+    "partial": 2,
+    "acceptable_abstain": 0,
+    "incorrect": 0,
+    "wrongly_abstained": 1
+   },
+   "uncertain": {
+    "correct": 1,
+    "partial": 2,
+    "acceptable_abstain": 9,
+    "incorrect": 0,
+    "wrongly_abstained": 0
+   },
+   "refuse": {
+    "correct": 21,
+    "partial": 1,
+    "acceptable_abstain": 0,
+    "incorrect": 0,
+    "wrongly_abstained": 0
+   }
+  }
+ },
+ "per_question": {
+  "baseline": {
+   "cv2-01": "partial",
+   "cv2-02": "correct",
+   "cv2-03": "correct",
+   "cv2-04": "correct",
+   "cv2-05": "correct",
+   "cv2-06": "correct",
+   "cv2-07": "acceptable_abstain",
+   "cv2-08": "acceptable_abstain",
+   "cv2-09": "correct",
+   "cv2-10": "correct",
+   "cv2-11": "wrongly_abstained",
+   "cv2-12": "correct",
+   "cv2-13": "correct",
+   "cv2-14": "correct",
+   "cv2-15": "acceptable_abstain",
+   "cv2-16": "correct",
+   "cv2-17": "correct",
+   "cv2-18": "correct",
+   "cv2-19": "acceptable_abstain",
+   "cv2-20": "acceptable_abstain",
+   "cv2-21": "correct",
+   "cv2-22": "acceptable_abstain",
+   "cv2-23": "correct",
+   "cv2-24": "acceptable_abstain",
+   "cv2-25": "correct",
+   "cv2-26": "acceptable_abstain",
+   "cv2-27": "wrongly_abstained",
+   "cv2-28": "acceptable_abstain",
+   "cv2-29": "wrongly_abstained",
+   "cv2-30": "acceptable_abstain",
+   "cv2-31": "acceptable_abstain",
+   "cv2-32": "wrongly_abstained",
+   "cv2-33": "acceptable_abstain",
+   "cv2-34": "correct",
+   "cv2-35": "partial",
+   "cv2-36": "correct",
+   "cv2-37": "correct",
+   "cv2-38": "correct",
+   "cv2-39": "wrongly_abstained",
+   "cv2-40": "correct",
+   "cv2-41": "correct"
+  },
+  "fix": {
+   "cv2-01": "partial",
+   "cv2-02": "correct",
+   "cv2-03": "correct",
+   "cv2-04": "correct",
+   "cv2-05": "correct",
+   "cv2-06": "correct",
+   "cv2-07": "acceptable_abstain",
+   "cv2-08": "acceptable_abstain",
+   "cv2-09": "correct",
+   "cv2-10": "correct",
+   "cv2-11": "correct",
+   "cv2-12": "correct",
+   "cv2-13": "correct",
+   "cv2-14": "correct",
+   "cv2-15": "correct",
+   "cv2-16": "correct",
+   "cv2-17": "correct",
+   "cv2-18": "correct",
+   "cv2-19": "partial",
+   "cv2-20": "acceptable_abstain",
+   "cv2-21": "correct",
+   "cv2-22": "partial",
+   "cv2-23": "correct",
+   "cv2-24": "acceptable_abstain",
+   "cv2-25": "correct",
+   "cv2-26": "acceptable_abstain",
+   "cv2-27": "wrongly_abstained",
+   "cv2-28": "acceptable_abstain",
+   "cv2-29": "correct",
+   "cv2-30": "acceptable_abstain",
+   "cv2-31": "acceptable_abstain",
+   "cv2-32": "correct",
+   "cv2-33": "acceptable_abstain",
+   "cv2-34": "correct",
+   "cv2-35": "partial",
+   "cv2-36": "correct",
+   "cv2-37": "correct",
+   "cv2-38": "correct",
+   "cv2-39": "partial",
+   "cv2-40": "correct",
+   "cv2-41": "correct"
+  }
+ },
+ "differing": {
+  "cv2-11": [
+   "wrongly_abstained",
+   "correct"
+  ],
+  "cv2-15": [
+   "acceptable_abstain",
+   "correct"
+  ],
+  "cv2-19": [
+   "acceptable_abstain",
+   "partial"
+  ],
+  "cv2-22": [
+   "acceptable_abstain",
+   "partial"
+  ],
+  "cv2-29": [
+   "wrongly_abstained",
+   "correct"
+  ],
+  "cv2-32": [
+   "wrongly_abstained",
+   "correct"
+  ],
+  "cv2-39": [
+   "wrongly_abstained",
+   "partial"
+  ]
+ },
+ "graded_blind": false,
+ "source": "eval/results/blind/cv2-owner-grades.json + key (unblinded Oct 17, 2026)"
+}

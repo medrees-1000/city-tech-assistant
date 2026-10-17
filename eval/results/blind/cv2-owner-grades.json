@@ -1,0 +1,253 @@
+{
+ "graded_blind": false,
+ "grades": {
+  "cv2-02": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": "no Financial Aid contact given"
+  },
+  "cv2-15": {
+   "identical": false,
+   "A": "acceptable_abstain",
+   "B": "correct",
+   "notes": "B gives the Navigate / CUNYfirst how-to with a citation"
+  },
+  "cv2-12": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": ""
+  },
+  "cv2-24": {
+   "identical": true,
+   "A": "acceptable_abstain",
+   "B": "acceptable_abstain",
+   "notes": ""
+  },
+  "cv2-36": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": ""
+  },
+  "cv2-35": {
+   "identical": true,
+   "A": "partial",
+   "B": "partial",
+   "notes": "gives the Mar 18 2027 date from the Spring 2027 row but not the caveat that the Summer 2027 calendar is not published"
+  },
+  "cv2-08": {
+   "identical": true,
+   "A": "acceptable_abstain",
+   "B": "acceptable_abstain",
+   "notes": ""
+  },
+  "cv2-25": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": ""
+  },
+  "cv2-40": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": "no echo of the insult; no Registrar contact given"
+  },
+  "cv2-20": {
+   "identical": false,
+   "A": "acceptable_abstain",
+   "B": "acceptable_abstain",
+   "notes": ""
+  },
+  "cv2-33": {
+   "identical": true,
+   "A": "acceptable_abstain",
+   "B": "acceptable_abstain",
+   "notes": ""
+  },
+  "cv2-23": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": ""
+  },
+  "cv2-06": {
+   "identical": false,
+   "A": "correct",
+   "B": "correct",
+   "notes": ""
+  },
+  "cv2-39": {
+   "identical": false,
+   "A": "partial",
+   "B": "wrongly_abstained",
+   "notes": "A: three correct chairs, wrongly says no DH chair is identified; see verification V4"
+  },
+  "cv2-11": {
+   "identical": false,
+   "A": "wrongly_abstained",
+   "B": "correct",
+   "notes": ""
+  },
+  "cv2-37": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": "no dental hygiene contact given"
+  },
+  "cv2-17": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": ""
+  },
+  "cv2-30": {
+   "identical": false,
+   "A": "acceptable_abstain",
+   "B": "acceptable_abstain",
+   "notes": "A says the sources do not state payout dates, which understates the Pell and loan dates in the refund calendar"
+  },
+  "cv2-27": {
+   "identical": true,
+   "A": "wrongly_abstained",
+   "B": "wrongly_abstained",
+   "notes": ""
+  },
+  "cv2-34": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": ""
+  },
+  "cv2-38": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": ""
+  },
+  "cv2-19": {
+   "identical": false,
+   "A": "partial",
+   "B": "acceptable_abstain",
+   "notes": "A: see verification V1"
+  },
+  "cv2-01": {
+   "identical": true,
+   "A": "partial",
+   "B": "partial",
+   "notes": "next date given, later Mar 18 2027 date not mentioned (owner rule)"
+  },
+  "cv2-03": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": "no advisement contact given"
+  },
+  "cv2-32": {
+   "identical": false,
+   "A": "correct",
+   "B": "wrongly_abstained",
+   "notes": ""
+  },
+  "cv2-29": {
+   "identical": false,
+   "A": "correct",
+   "B": "wrongly_abstained",
+   "notes": "A: see verification V3"
+  },
+  "cv2-21": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": ""
+  },
+  "cv2-28": {
+   "identical": true,
+   "A": "acceptable_abstain",
+   "B": "acceptable_abstain",
+   "notes": ""
+  },
+  "cv2-07": {
+   "identical": false,
+   "A": "acceptable_abstain",
+   "B": "acceptable_abstain",
+   "notes": ""
+  },
+  "cv2-26": {
+   "identical": true,
+   "A": "acceptable_abstain",
+   "B": "acceptable_abstain",
+   "notes": ""
+  },
+  "cv2-13": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": "no advisement contact given"
+  },
+  "cv2-31": {
+   "identical": false,
+   "A": "acceptable_abstain",
+   "B": "acceptable_abstain",
+   "notes": "A has no citation"
+  },
+  "cv2-22": {
+   "identical": false,
+   "A": "partial",
+   "B": "acceptable_abstain",
+   "notes": "A lists the Data Science side only; overlap with the math programs not shown; see verification V2"
+  },
+  "cv2-05": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": "no advisement contact given"
+  },
+  "cv2-18": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": ""
+  },
+  "cv2-41": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": ""
+  },
+  "cv2-10": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": "no advisement contact given"
+  },
+  "cv2-04": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": ""
+  },
+  "cv2-14": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": "penalty-fees page only listed as a near miss, no bursar contact"
+  },
+  "cv2-16": {
+   "identical": true,
+   "A": "correct",
+   "B": "correct",
+   "notes": ""
+  },
+  "cv2-09": {
+   "identical": false,
+   "A": "correct",
+   "B": "correct",
+   "notes": "rules and dates, no advice; no contact given"
+  }
+ },
+ "graded_by": "assistant on the owner's instruction, accepted by the owner",
+ "blindness_note": "The sheet showed no configuration labels, but the counts-only report from the runs let the configuration be inferred for the roughly six questions where only one configuration answered (cv2-11, 19, 22, 29, 32, 39). Grades were assigned from content and the rubric, not from the inferred configuration."
+}
