@@ -1315,6 +1315,7 @@ Written after the freeze tag (`final-run-frozen`, `159b295`) and after the resul
 - Smaller items already in `docs/known-limits.md`: a two-part question answers one part (item 20); a name not written after "my name is" is not removed (item 21).
 - `cta.index.chunks --stats` crashes with `min()` of an empty list when there is no data (found in the fresh-clone check; not fixed, not a README command).
 - The internship answer shows the catalog shorthand PRE_CST3500_CST3600 in the text (known shorthand hazard); not fixed.
+- Abstains on questions with an expected office contact sometimes carry no contact (cv2-02, 03, 05, 10, 13, 37, 40). The answer rules say to abstain with the relevant office's contact. Fix before launch.
 
 ### Final run, second judge pass: the judge-only tool (Oct 16, 2026; after `final-run-frozen`)
 
@@ -1452,3 +1453,5 @@ About $0.0026 per request in the final run (judge included). Planned: 41 x 2 plu
 ### Version 2 measurement log (Oct 17, 2026; runs done, grading pending)
 Runs as pre-registered (c6716e2, clarifications 036f348): `cv2-baseline` (rescue off) and `cv2-fix` (rescue on) on the 41 held-out questions, once each; `cv2-dev-fix` (rescue on) on the 11 flipped dev questions plus the 12 dev questions whose gold is ABSTAIN (the dev must-abstain set), compared with the stored `final-config-dev` results. Actual cost: $0.105, $0.119 and $0.066, $0.290 in all (ceiling $0.50).
 Recording bug found after the first two runs: the router's final answer did not copy the `rescued` flag, so `cv2-baseline.json` and `cv2-fix.json` show `rescued: false` for every question although the rule ran (the rule itself is in `cta.answer`, which the router calls). Fixed for later runs in the commit after 036f348 (one line, test added; no behaviour change). `cv2-dev-fix` has the flag. For `cv2-fix` the rescued count is derived: questions refused as below_threshold in the baseline and not in the fix run. The two runs were not repeated (pre-registered: each once). No rule (a) to (f) has been evaluated; that waits for the owner's blind grades.
+
+Owner grading note (Oct 17, 2026): cv2-35 and cv2-01 were graded partial under the owner rules (cv2-35: the Mar 18, 2027 date from the Spring 2027 row but not the caveat that the Summer 2027 calendar is not published; cv2-01: the next date given, the later Mar 18, 2027 date not mentioned). The grades are in `eval/results/blind/cv2-owner-grades.json` (graded_blind false, see its blindness_note) and the unblinded tables in `eval/results/cv2-owner-outcomes.json`.
