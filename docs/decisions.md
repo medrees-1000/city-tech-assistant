@@ -1398,3 +1398,48 @@ In `tests/crisis_sweep.py` the three decided phrases moved to their tiers, items
 
 ## Pre-launch checklist
 - Re-check all hotline and Public Safety numbers (the `danger` reply, the Tier 1 reply's 988 and 911 lines) before any public launch.
+
+## Version 2, casual wording: pre-registration (Oct 17, 2026; written and committed before any code for the fix and before any paid run)
+
+The commit that contains this section is the pre-registration timestamp. No model call has been made on the 41 questions. This replaces the earlier draft of this section.
+
+### What is being tested
+The diagnosis (`docs/version2-diagnosis.md`) found that all 10 refused casual dev questions had the gold chunk in the first-stage top 20 and the reranker top 5, and that the 0.59 similarity cutoff alone refused them. The change under test (**the fix**): when the best similarity is below 0.59 but at least **0.45**, and the reranker's top score is at least **8** (scale 0 to 10), continue to the answer model, which can still abstain. Below 0.45, or with a reranker top score under 8, nothing changes. Both numbers were set from the dev diagnosis only (best similarities of the ten were 0.497 to 0.589; q122, which stays refused, has reranker top 7). They live in config, and the fix sits behind a flag that is off by default.
+
+### The held-out set
+- 41 casual questions written by the owner, typos kept, in `eval/questions_casual_v2.jsonl` (ids `cv2-01` to `cv2-41`, split `heldout`). One locked set: never used to tune, never split, never merged into `questions.jsonl`. No tuning happens on these 41. If the fix fails, any redesign needs fresh questions written by the owner.
+- Labels were proposed from the stored data with no model call and confirmed by the owner on Oct 17, 2026 (`CONFIRMED Oct 17, 2026 by owner` in each note; the owner's rules for #1, #5, #13, #16, #17, #19, #22, #26, #35, #37 and #40 are in the notes). Gold answers that are unknown stay `TODO`.
+- Label categories (tags): **answer 7** (cv2-01, 11, 12, 27, 29, 32, 39), **uncertain 12** (cv2-07, 08, 15, 19, 20, 22, 24, 26, 28, 30, 31, 33), **must-refuse 22** (the other questions; for #5, #13 and #35 asking which program, or refusing with the right office, is the expected behavior). 11 carry the tag `trap`. The set is small (7 clearly answerable), so the result is directional, not a measured rate.
+
+### Outcomes (per question, graded against the confirmed label)
+- **correct**: matches the confirmed expected behavior, cited, nothing unsupported.
+- **partial**: substantive and supported but incomplete (for example one half of a two-part question).
+- **acceptable_abstain**: only for questions labeled uncertain/thin-data: a refusal that names the right office. Counts as neither a win nor an error.
+- **incorrect**: a confident unsupported claim, a wrong date, or falling for a trap (including echoing the insult in #40, confirming "three years" in #19, confirming the $20 fee in #37, presenting penalty fees as "the fees" in #14).
+- **wrongly_abstained**: a refusal on a question labeled "answer" (counted separately).
+
+### Runs (each once, no reruns, no tuning after seeing results)
+1. Baseline: current code, flag off, all 41.
+2. The fix: flag on, all 41.
+3. The fix: the existing must-abstain dev questions and the 11 dev questions it flips (q104 to q108, q110, q111, q113, q120, q123, q98). The frozen test split is not touched.
+
+### Keep / reject rules (written before the run)
+Keep the fix only if all hold:
+- (a) Zero new `incorrect` answers across all 41 and across the dev flipped set, unless the owner reviews and accepts each one.
+- (b) At most +1 answered question among the 22 must-refuse questions.
+- (c) At least +2 of the answerable and uncertain questions move from a refusal or acceptable_abstain to correct or partial.
+- (d) Dev flipped: at least 9 of the 11 are correct or partial, none incorrect.
+- (e) Faithfulness holds: every newly answered question is fully supported by its cited sources.
+- (f) Cost per request rises by no more than 10 percent over the baseline run.
+If (a) fails: reject. If (a) holds and others partly fail: report, do not ship, decide with the owner. Results are reported with n, never as a bare rate.
+
+### Grading
+- **Blind hand grading.** After the runs, a script exports both configurations' answers for the 41 questions into one shuffled file with the configuration hidden (A/B assignment random per question). The key is written to a separate file the owner does not open until finished grading the uncertain questions. The owner's grades are recorded as owner grades with `graded_blind: true`.
+- **Noise.** Retrieval is deterministic but answer sampling is not, so a difference of one question is within noise, and the README will say so.
+
+### q49 (decided after seeing the diagnosis, like q50 and q74)
+"Can I take a class at another college?" An answer that covers both cases (another CUNY college: the ePermit page; other colleges: the sources do not cover it, contact the registrar) counts as correct, graded by hand by the owner. Reported both ways: as originally labeled and as regraded.
+
+### Cost
+About $0.0026 per request in the final run (judge included). Planned: 41 x 2 plus about 25 dev requests, about 110 requests, estimate **$0.25 to $0.30** (a refused question costs less because no answer model runs). Ceiling for the whole version 2 measurement: **$0.50**. Stop and ask before exceeding it or before any model call earlier than planned.
+
