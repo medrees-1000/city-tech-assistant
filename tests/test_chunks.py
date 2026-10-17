@@ -112,3 +112,19 @@ def test_real_data_every_gold_source_has_a_chunk():
     chunks = ch.build_chunks(cfg=CFG, count=words)
     assert ch.gold_problems(chunks) == []
     assert len(chunks) == len({c["id"] for c in chunks})
+
+
+def test_stats_and_main_say_so_when_there_is_no_data(monkeypatch, capsys, tmp_path):
+    """Batch 1, item 4: an empty data folder used to crash --stats with min() of an empty list."""
+    from cta.index import chunks as chunks_module
+
+    assert chunks_module.stats([], lambda t: 0, {}) == chunks_module.NO_DATA
+    # a real empty folder: build_chunks finds nothing (the fresh-clone case that crashed)
+    real = chunks_module.build_chunks
+    monkeypatch.setattr(chunks_module, "build_chunks", lambda **kw: real(processed=tmp_path, **kw))
+    monkeypatch.setattr(chunks_module, "PROCESSED", tmp_path)
+    for flags in (["x", "--stats"], ["x", "--write"], ["x", "--stats", "--write"]):
+        assert chunks_module.main(flags) == 1
+        out = capsys.readouterr().out
+        assert "no chunks" in out and "Traceback" not in out
+    assert not (tmp_path / "chunks.jsonl").exists()  # nothing written

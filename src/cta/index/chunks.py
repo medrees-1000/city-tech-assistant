@@ -219,7 +219,15 @@ def gold_problems(chunks: list[dict], questions_path: Path = ROOT / "eval" / "qu
     return problems
 
 
+NO_DATA = (
+    "no chunks: data/processed has no records (it is not committed). Collect and parse the sources "
+    "first (docs/running.md); nothing was written."
+)
+
+
 def stats(chunks: list[dict], count, cfg: dict) -> str:
+    if not chunks:
+        return NO_DATA
     tokens = [count(c["text"]) for c in chunks]
     total = sum(tokens)
     out = [f"chunks: {len(chunks)}"]
@@ -258,6 +266,11 @@ def main(argv: list[str]) -> int:
         chunks = build_chunks(cfg=cfg, count=count)
     except ValueError as e:
         print(f"chunk build failed: {e}")
+        return 1
+    if (
+        not chunks
+    ):  # an empty data folder: say so, write nothing (an empty chunks.jsonl would be wrong)
+        print(NO_DATA)
         return 1
     if "--stats" in flags:
         print(stats(chunks, count, cfg))

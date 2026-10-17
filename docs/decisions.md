@@ -1311,9 +1311,9 @@ Written after the freeze tag (`final-run-frozen`, `159b295`) and after the resul
 - Casual wording failures: q107, q108, q111, q123 and the casual dev group.
 - q07: the Accelerator minor retrieval miss.
 - q41: the chain depth limit.
-- A router-aware re-judge, if not delivered in part 2.
+- A router-aware re-judge, if not delivered in part 2. CLOSED Oct 17, 2026: delivered by the judge-only second pass (`src/cta/eval/rejudge_stored.py`, `eval/results/final-run-pass2.json`; "Final run, second judge pass" above), which re-judges the stored router answers from stored data only.
 - Smaller items already in `docs/known-limits.md`: a two-part question answers one part (item 20); a name not written after "my name is" is not removed (item 21).
-- `cta.index.chunks --stats` crashes with `min()` of an empty list when there is no data (found in the fresh-clone check; not fixed, not a README command).
+- `cta.index.chunks --stats` crashes with `min()` of an empty list when there is no data (found in the fresh-clone check; not a README command). DONE Oct 17, 2026 (batch 1): it now prints a clear message and exits 1, and `--write` writes nothing.
 - The internship answer shows the catalog shorthand PRE_CST3500_CST3600 in the text (known shorthand hazard); not fixed.
 - Abstains on questions with an expected office contact sometimes carry no contact (cv2-02, 03, 05, 10, 13, 37, 40). The answer rules say to abstain with the relevant office's contact. Fix before launch. DONE Oct 17, 2026 (`ffff09d`, batch 1): topic cues per office in `config/contacts.yaml`.
 
