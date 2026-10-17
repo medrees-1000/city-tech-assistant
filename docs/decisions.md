@@ -1315,7 +1315,7 @@ Written after the freeze tag (`final-run-frozen`, `159b295`) and after the resul
 - Smaller items already in `docs/known-limits.md`: a two-part question answers one part (item 20); a name not written after "my name is" is not removed (item 21).
 - `cta.index.chunks --stats` crashes with `min()` of an empty list when there is no data (found in the fresh-clone check; not fixed, not a README command).
 - The internship answer shows the catalog shorthand PRE_CST3500_CST3600 in the text (known shorthand hazard); not fixed.
-- Abstains on questions with an expected office contact sometimes carry no contact (cv2-02, 03, 05, 10, 13, 37, 40). The answer rules say to abstain with the relevant office's contact. Fix before launch.
+- Abstains on questions with an expected office contact sometimes carry no contact (cv2-02, 03, 05, 10, 13, 37, 40). The answer rules say to abstain with the relevant office's contact. Fix before launch. DONE Oct 17, 2026 (`ffff09d`, batch 1): topic cues per office in `config/contacts.yaml`.
 
 ### Final run, second judge pass: the judge-only tool (Oct 16, 2026; after `final-run-frozen`)
 

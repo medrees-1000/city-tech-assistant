@@ -156,7 +156,7 @@ From the test run (details in [docs/results.md](docs/results.md)):
 Version 2 (rescue rule on):
 - The reranker is a model and its scores differ between runs, and the minimum of 8 sits on a noisy boundary (one dev question went from 7 to 8 between two cache fills), so which borderline questions are rescued is partly luck.
 - q108 ("i give up my seat in class, how do i drop") and cv2-27 ("what is the difference between WD and W and what is the third option") are still refused: q108 has a reranker top score of 5, and cv2-27 has a best similarity of 0.32, under the 0.45 floor.
-- Refusals on questions with an expected office contact sometimes carry no contact (cv2-02, 03, 05, 10, 13, 37, 40).
+- Refusals on questions with an expected office contact used to carry no contact (cv2-02, 03, 05, 10, 13, 37, 40). Fixed (`ffff09d`): topic words per office (in `config/contacts.yaml`) now add the contact line; text only, no change to which questions are refused.
 - An answer may state the system date (October 11, 2026 in the eval runs), which the faithfulness judge flags because no source contains it.
 
 Known limits, condensed (full list in [docs/known-limits.md](docs/known-limits.md)): a two-part question answers one part without saying so; casual or very short wording can score under the 0.59 cutoff and get "I could not find this" or the closest pages; no data covers "how to register" or "where to pay"; courses outside the four departments, other terms, seats and instructors are not covered; distress detection and name removal are pattern matching; the rate limit resets on restart; tuition due dates come out as one long sentence.
