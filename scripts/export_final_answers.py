@@ -1,6 +1,6 @@
 """Export the stored answers of an eval run to eval/results/<label>-answers.jsonl (read-only SQL).
 
-    uv run python scripts/export_final_answers.py final-run
+    uv run python scripts/export_final_answers.py final-run [eval/questions_casual_v2.jsonl]
 
 request_logs is purged after 30 days and eval/results/<label>.json holds no answer text, so this
 keeps the answers. Fields: id, question, route, abstained, abstain_reason, citations (from the
@@ -24,10 +24,10 @@ PERSONAL = re.compile(
 )
 
 
-def main(label: str) -> int:
+def main(label: str, questions_file: str = "eval/questions.jsonl") -> int:
     results = json.loads((ROOT / "eval" / "results" / f"{label}.json").read_text())
     questions = {}
-    for line in (ROOT / "eval" / "questions.jsonl").read_text().splitlines():
+    for line in (ROOT / questions_file).read_text().splitlines():
         q = json.loads(line)
         questions[q["id"]] = q
     rows = []
@@ -63,4 +63,4 @@ def main(label: str) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1]))
+    sys.exit(main(*sys.argv[1:3]))

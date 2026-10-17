@@ -1,0 +1,2153 @@
+{
+ "label": "cv2-dev-fix",
+ "split": "dev",
+ "retrieval": {
+  "n": 11,
+  "recall@1": 0.9090909090909091,
+  "precision@1": 0.9090909090909091,
+  "hit@1": 0.9090909090909091,
+  "recall@3": 0.9545454545454546,
+  "precision@3": 0.3333333333333333,
+  "hit@3": 1.0,
+  "recall@5": 0.9545454545454546,
+  "precision@5": 0.2,
+  "hit@5": 1.0,
+  "recall@10": 1.0,
+  "precision@10": 0.1090909090909091,
+  "hit@10": 1.0,
+  "mrr": 0.9393939393939394
+ },
+ "retrieval_chain": null,
+ "excluded_from_retrieval": [
+  "q27",
+  "q28",
+  "q34",
+  "q44",
+  "q45",
+  "q83",
+  "q100",
+  "q101",
+  "q102",
+  "q103",
+  "q121",
+  "q122"
+ ],
+ "answers": {
+  "correctness": {
+   "n": 11,
+   "correct": 0.7272727272727273,
+   "partial": 0.18181818181818182,
+   "incorrect": 0.09090909090909091
+  },
+  "faithfulness": {
+   "n": 11,
+   "yes": 0.9090909090909091,
+   "partly": 0.0,
+   "no": 0.09090909090909091
+  },
+  "no_advice_correct": {
+   "n": 0,
+   "correct": null,
+   "partial": null,
+   "incorrect": null
+  },
+  "abstention_accuracy": {
+   "n": 12,
+   "share": 0.9166666666666666
+  },
+  "wrongly_abstained": {
+   "n": 11,
+   "share": 0.09090909090909091
+  },
+  "citation_rate": {
+   "n": 11,
+   "share": 1.0,
+   "invalid_citations": 0
+  },
+  "judge_failed": 0,
+  "cost": {
+   "n": 23,
+   "per_request_usd": 0.0028702565217391305,
+   "answer_usd": 0.0140119,
+   "judge_usd": 0.052004
+  },
+  "latency_ms": {
+   "n": 23,
+   "total_median": 3228,
+   "total_p95": 5148,
+   "chat_n": 23,
+   "chat_median": 1869,
+   "chat_p95": 3511,
+   "retrieval_n": 23,
+   "retrieval_median": 1419.5,
+   "retrieval_p95": 2003.7,
+   "query_cache_hits": 17
+  },
+  "chain": {
+   "correctness": {
+    "n": 0,
+    "correct": null,
+    "partial": null,
+    "incorrect": null
+   },
+   "faithfulness": {
+    "n": 0,
+    "yes": null,
+    "partly": null,
+    "no": null
+   },
+   "no_advice_correct": {
+    "n": 0,
+    "correct": null,
+    "partial": null,
+    "incorrect": null
+   },
+   "abstention_accuracy": {
+    "n": 1,
+    "share": 1.0
+   },
+   "wrongly_abstained": {
+    "n": 0,
+    "share": null
+   },
+   "citation_rate": {
+    "n": 0,
+    "share": null,
+    "invalid_citations": 0
+   },
+   "judge_failed": 0,
+   "cost": {
+    "n": 1,
+    "per_request_usd": 4.15e-05,
+    "answer_usd": 4.15e-05,
+    "judge_usd": 0.0
+   },
+   "latency_ms": {
+    "n": 1,
+    "total_median": 798,
+    "total_p95": 798,
+    "chat_n": 1,
+    "chat_median": 788,
+    "chat_p95": 788,
+    "retrieval_n": 1,
+    "retrieval_median": 0.0,
+    "retrieval_p95": 0.0,
+    "query_cache_hits": 0
+   }
+  }
+ },
+ "failure_labels": {
+  "abstention error": 1,
+  "generation error": 2,
+  "ranking miss": 1
+ },
+ "per_question": [
+  {
+   "id": "q27",
+   "type": "unanswerable",
+   "department": "CST-NYT",
+   "gold_kind": "abstain",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "page/CST-NYT/tutoring#2",
+     "similarity": 0.5403
+    },
+    {
+     "id": "page/CST-NYT/tutoring#1",
+     "similarity": 0.492
+    },
+    {
+     "id": "catalog:CST 2403",
+     "similarity": 0.4774
+    },
+    {
+     "id": "dept/CST-NYT/program-cybersecurity-bs#20",
+     "similarity": 0.474
+    },
+    {
+     "id": "catalog:CST 4801",
+     "similarity": 0.4612
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-information-systems-aas#19",
+     "similarity": 0.4597
+    },
+    {
+     "id": "catalog:CST 1100",
+     "similarity": 0.4577
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-information-systems-aas#14",
+     "similarity": 0.4574
+    },
+    {
+     "id": "catalog:CST 1215",
+     "similarity": 0.4559
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-information-systems-aas#9",
+     "similarity": 0.4556
+    }
+   ],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "below_threshold",
+   "rescued": false,
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0006908,
+   "judge_cost": 0.0,
+   "latency_ms": 2328,
+   "chat_ms": 982,
+   "retrieval_ms": 1336.4,
+   "cache_hit": true,
+   "rerank_cost": 0.0006495,
+   "rerank_ms": 1265.2,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": "this fall",
+    "classify": {
+     "prompt_tokens": 323,
+     "completion_tokens": 18,
+     "cost": 4.13e-05,
+     "ms": 981.9,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": "CST-NYT"
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q28",
+   "type": "unanswerable",
+   "department": "MATH-NYT",
+   "gold_kind": "abstain",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "catalog:MAT 1475",
+     "similarity": 0.5951
+    },
+    {
+     "id": "catalog:MAT 1372",
+     "similarity": 0.5779
+    },
+    {
+     "id": "catalog:MAT 1575",
+     "similarity": 0.5663
+    },
+    {
+     "id": "catalog:MAT 1272",
+     "similarity": 0.545
+    },
+    {
+     "id": "catalog:MAT 2675",
+     "similarity": 0.5355
+    },
+    {
+     "id": "catalog:MAT 2571",
+     "similarity": 0.5269
+    },
+    {
+     "id": "catalog:MEDU 1021",
+     "similarity": 0.5209
+    },
+    {
+     "id": "catalog:MAT 2580",
+     "similarity": 0.5203
+    },
+    {
+     "id": "catalog:MAT 3075",
+     "similarity": 0.5195
+    },
+    {
+     "id": "catalog:MAT 1275CO",
+     "similarity": 0.5194
+    }
+   ],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "The sources do not identify who is teaching MAT 1475 this semester.",
+   "rescued": false,
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0006395999999999999,
+   "judge_cost": 0.0,
+   "latency_ms": 3228,
+   "chat_ms": 1908,
+   "retrieval_ms": 1316.3,
+   "cache_hit": true,
+   "rerank_cost": 0.000457,
+   "rerank_ms": 1242.2,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": "this semester",
+    "classify": {
+     "prompt_tokens": 320,
+     "completion_tokens": 18,
+     "cost": 4.1e-05,
+     "ms": 1091.0,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": "MATH-NYT"
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q34",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "abstain",
+   "tags": [],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "calendar_unsupported_term",
+   "rescued": false,
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 7.860000000000001e-05,
+   "judge_cost": 0.0,
+   "latency_ms": 2239,
+   "chat_ms": 2234,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "abstain",
+   "router": {
+    "route": "abstain",
+    "intent": "calendar",
+    "term_mention": "Summer 2027",
+    "classify": {
+     "prompt_tokens": 330,
+     "completion_tokens": 20,
+     "cost": 4.3e-05,
+     "ms": 1009.4,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "term_status": "unsupported",
+    "term": "Summer 2027",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [],
+    "select": {
+     "prompt_tokens": 301,
+     "completion_tokens": 11,
+     "cost": 3.5600000000000005e-05,
+     "ms": 1225.0,
+     "error": null,
+     "status": "empty"
+    },
+    "selector_version": 1,
+    "pool_size": 2,
+    "contact_office": "registrar"
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q44",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "abstain",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "page/MATH-NYT/faqs#12",
+     "similarity": 0.4406
+    },
+    {
+     "id": "page/registrar/faqs#13",
+     "similarity": 0.4317
+    },
+    {
+     "id": "page/financial-aid/sap#1",
+     "similarity": 0.4114
+    },
+    {
+     "id": "page/registrar/incomplete#1",
+     "similarity": 0.4011
+    },
+    {
+     "id": "page/registrar/faqs#3",
+     "similarity": 0.3939
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#7",
+     "similarity": 0.3906
+    },
+    {
+     "id": "page/financial-aid/sap#4",
+     "similarity": 0.3872
+    },
+    {
+     "id": "page/registrar/applying-graduation#1",
+     "similarity": 0.3851
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#8",
+     "similarity": 0.3814
+    },
+    {
+     "id": "dept/MATH-NYT/program-applied-mathematics-bs#10",
+     "similarity": 0.3811
+    }
+   ],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "below_threshold",
+   "rescued": false,
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0006349,
+   "judge_cost": 0.0,
+   "latency_ms": 2325,
+   "chat_ms": 959,
+   "retrieval_ms": 1362.7,
+   "cache_hit": true,
+   "rerank_cost": 0.0005942,
+   "rerank_ms": 1285.9,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": "this semester",
+    "classify": {
+     "prompt_tokens": 317,
+     "completion_tokens": 18,
+     "cost": 4.07e-05,
+     "ms": 959.3,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": "registrar"
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q45",
+   "type": "unanswerable",
+   "department": "MATH-NYT",
+   "gold_kind": "abstain",
+   "tags": [],
+   "retrieved": [
+    {
+     "id": "page/registrar/academic-calendar#2",
+     "similarity": 0.4756
+    },
+    {
+     "id": "catalog:MAT 1475",
+     "similarity": 0.5675
+    },
+    {
+     "id": "catalog:MAT 1575",
+     "similarity": 0.5278
+    },
+    {
+     "id": "page/advisement/virtual-advisors#20",
+     "similarity": 0.5179
+    },
+    {
+     "id": "page/EET-NYT/student-hours#1",
+     "similarity": 0.512
+    },
+    {
+     "id": "catalog:MAT 1372",
+     "similarity": 0.51
+    },
+    {
+     "id": "page/advisement/virtual-advisors#10",
+     "similarity": 0.5097
+    },
+    {
+     "id": "catalog:MAT 1272",
+     "similarity": 0.5052
+    },
+    {
+     "id": "page/CST-NYT/advisement#1",
+     "similarity": 0.5002
+    },
+    {
+     "id": "catalog:MAT 1275CO",
+     "similarity": 0.4997
+    }
+   ],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "below_threshold",
+   "rescued": false,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0006776,
+   "judge_cost": 0.0,
+   "latency_ms": 2450,
+   "chat_ms": 906,
+   "retrieval_ms": 1541.5,
+   "cache_hit": true,
+   "rerank_cost": 0.0006363,
+   "rerank_ms": 1471.8,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": "this fall",
+    "classify": {
+     "prompt_tokens": 323,
+     "completion_tokens": 18,
+     "cost": 4.13e-05,
+     "ms": 905.8,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "near_miss": true,
+    "contact_office": "MATH-NYT"
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q83",
+   "type": "unanswerable",
+   "department": "CST-NYT",
+   "gold_kind": "abstain",
+   "tags": [
+    "chain"
+   ],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "chain_no_record",
+   "rescued": false,
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4.15e-05,
+   "judge_cost": 0.0,
+   "latency_ms": 798,
+   "chat_ms": 788,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "abstain",
+   "router": {
+    "route": "abstain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 320,
+     "completion_tokens": 19,
+     "cost": 4.15e-05,
+     "ms": 788.2,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "CST 4999",
+     "detail": [],
+     "walk_ms": 0.456,
+     "course_count": 0,
+     "truncated": false,
+     "no_record": true
+    },
+    "contact_office": "CST-NYT"
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q98",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "normal",
+   "tags": [
+    "noise"
+   ],
+   "retrieved": [
+    {
+     "id": "page/bursar/payment-deadlines#1",
+     "similarity": 0.5918
+    },
+    {
+     "id": "page/bursar/payment-plan#1",
+     "similarity": 0.4718
+    },
+    {
+     "id": "page/admissions/tuition-penalty#3",
+     "similarity": 0.4923
+    },
+    {
+     "id": "page/bursar/refund-policy#4",
+     "similarity": 0.4481
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#4",
+     "similarity": 0.4436
+    },
+    {
+     "id": "page/financial-aid/faqs#2",
+     "similarity": 0.4416
+    },
+    {
+     "id": "page/admissions/tuition-penalty#1",
+     "similarity": 0.44
+    },
+    {
+     "id": "contact:bursar",
+     "similarity": 0.4361
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#3",
+     "similarity": 0.4355
+    },
+    {
+     "id": "page/financial-aid/financial-payment-calendar#1",
+     "similarity": 0.4309
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "rescued": true,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It accurately gives all Fall 2026 tuition due-date brackets based on initial registration date.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "Every stated registration range and corresponding due date is explicitly supported by source [1].",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0012861,
+   "judge_cost": 0.004862,
+   "latency_ms": 5189,
+   "chat_ms": 3511,
+   "retrieval_ms": 1671.5,
+   "cache_hit": true,
+   "rerank_cost": 0.0005877,
+   "rerank_ms": 1600.7,
+   "rerank_failed": false,
+   "route": "calendar_fallthrough",
+   "router": {
+    "route": "calendar_fallthrough",
+    "intent": "calendar",
+    "term_mention": "this fall",
+    "classify": {
+     "prompt_tokens": 323,
+     "completion_tokens": 18,
+     "cost": 4.13e-05,
+     "ms": 1409.7,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": true,
+    "chain_fallthrough": false,
+    "term_status": "season",
+    "term": "Fall 2026",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [],
+    "select": {
+     "prompt_tokens": 4417,
+     "completion_tokens": 11,
+     "cost": 0.00044720000000000003,
+     "ms": 869.6,
+     "error": null,
+     "status": "empty"
+    },
+    "selector_version": 2,
+    "pool_size": 131,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q100",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "abstain",
+   "tags": [],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "calendar_unsupported_term",
+   "rescued": false,
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 7.68e-05,
+   "judge_cost": 0.0,
+   "latency_ms": 1684,
+   "chat_ms": 1680,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "abstain",
+   "router": {
+    "route": "abstain",
+    "intent": "calendar",
+    "term_mention": "summer 2027",
+    "classify": {
+     "prompt_tokens": 318,
+     "completion_tokens": 20,
+     "cost": 4.18e-05,
+     "ms": 799.6,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "term_status": "unsupported",
+    "term": "Summer 2027",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [],
+    "select": {
+     "prompt_tokens": 290,
+     "completion_tokens": 12,
+     "cost": 3.5e-05,
+     "ms": 880.8,
+     "error": null,
+     "status": "empty"
+    },
+    "selector_version": 1,
+    "pool_size": 2,
+    "contact_office": "registrar"
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q101",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "abstain",
+   "tags": [],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "calendar_unsupported_term",
+   "rescued": false,
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0001058,
+   "judge_cost": 0.0,
+   "latency_ms": 1824,
+   "chat_ms": 1819,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "abstain",
+   "router": {
+    "route": "abstain",
+    "intent": "calendar",
+    "term_mention": "fall 2027",
+    "classify": {
+     "prompt_tokens": 318,
+     "completion_tokens": 20,
+     "cost": 4.18e-05,
+     "ms": 749.4,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "term_status": "unsupported",
+    "term": "Fall 2027",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [],
+    "select": {
+     "prompt_tokens": 580,
+     "completion_tokens": 12,
+     "cost": 6.4e-05,
+     "ms": 1069.6,
+     "error": null,
+     "status": "empty"
+    },
+    "selector_version": 1,
+    "pool_size": 8,
+    "contact_office": "registrar"
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q102",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "abstain",
+   "tags": [],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "chain_outside_departments",
+   "rescued": false,
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4.1200000000000005e-05,
+   "judge_cost": 0.0,
+   "latency_ms": 875,
+   "chat_ms": 860,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "abstain",
+   "router": {
+    "route": "abstain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 317,
+     "completion_tokens": 19,
+     "cost": 4.1200000000000005e-05,
+     "ms": 860.4,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "ENG 1101",
+     "detail": [],
+     "walk_ms": 0.535,
+     "course_count": 0,
+     "truncated": false,
+     "no_record": true,
+     "outside_departments": true
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q103",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "abstain",
+   "tags": [],
+   "retrieved": [],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "chain_outside_departments",
+   "rescued": false,
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 4.15e-05,
+   "judge_cost": 0.0,
+   "latency_ms": 929,
+   "chat_ms": 918,
+   "retrieval_ms": 0.0,
+   "cache_hit": false,
+   "rerank_cost": 0.0,
+   "rerank_ms": 0.0,
+   "rerank_failed": false,
+   "route": "abstain",
+   "router": {
+    "route": "abstain",
+    "intent": "prerequisite",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 320,
+     "completion_tokens": 19,
+     "cost": 4.15e-05,
+     "ms": 918.5,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "chain": {
+     "extraction": "code",
+     "code": "BIO 1101",
+     "detail": [],
+     "walk_ms": 0.318,
+     "course_count": 0,
+     "truncated": false,
+     "no_record": true,
+     "outside_departments": true
+    },
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q104",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "normal",
+   "tags": [
+    "casual"
+   ],
+   "retrieved": [
+    {
+     "id": "page/bursar/payment-deadlines#1",
+     "similarity": 0.5762
+    },
+    {
+     "id": "page/bursar/refund-policy#1",
+     "similarity": 0.4864
+    },
+    {
+     "id": "page/admissions/dates-deadlines#1",
+     "similarity": 0.4752
+    },
+    {
+     "id": "page/bursar/refund-policy#4",
+     "similarity": 0.472
+    },
+    {
+     "id": "page/admissions/tuition-penalty#3",
+     "similarity": 0.47
+    },
+    {
+     "id": "page/bursar/refund-policy#2",
+     "similarity": 0.4697
+    },
+    {
+     "id": "page/financial-aid/sap#12",
+     "similarity": 0.4695
+    },
+    {
+     "id": "page/bursar/refund-policy#3",
+     "similarity": 0.4624
+    },
+    {
+     "id": "page/admissions/tuition-penalty#1",
+     "similarity": 0.4479
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#4",
+     "similarity": 0.4429
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "rescued": true,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It accurately gives all Fall 2026 tuition payment deadlines by initial registration period, which fully answers the question.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "Every deadline and registration-date range stated is explicitly listed in source [1].",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0011603000000000002,
+   "judge_cost": 0.004462,
+   "latency_ms": 4382,
+   "chat_ms": 3054,
+   "retrieval_ms": 1322.3,
+   "cache_hit": true,
+   "rerank_cost": 0.0004865,
+   "rerank_ms": 1250.6,
+   "rerank_failed": false,
+   "route": "calendar_fallthrough",
+   "router": {
+    "route": "calendar_fallthrough",
+    "intent": "calendar",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 314,
+     "completion_tokens": 17,
+     "cost": 3.990000000000001e-05,
+     "ms": 945.6,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": true,
+    "chain_fallthrough": false,
+    "term_status": "assumed",
+    "term": "Fall 2026",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [],
+    "select": {
+     "prompt_tokens": 4407,
+     "completion_tokens": 12,
+     "cost": 0.00044670000000000007,
+     "ms": 781.1,
+     "error": null,
+     "status": "empty"
+    },
+    "selector_version": 2,
+    "pool_size": 131,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q105",
+   "type": "lookup",
+   "department": "CST-NYT",
+   "gold_kind": "normal",
+   "tags": [
+    "casual"
+   ],
+   "retrieved": [
+    {
+     "id": "page/CST-NYT/chairperson#1",
+     "similarity": 0.5673
+    },
+    {
+     "id": "page/advisement/virtual-advisors#11",
+     "similarity": 0.5369
+    },
+    {
+     "id": "page/CST-NYT/tutoring#1",
+     "similarity": 0.5132
+    },
+    {
+     "id": "page/CST-NYT/student-resources#9",
+     "similarity": 0.5054
+    },
+    {
+     "id": "page/MATH-NYT/chairperson#1",
+     "similarity": 0.5025
+    },
+    {
+     "id": "page/CST-NYT/advisement#1",
+     "similarity": 0.4825
+    },
+    {
+     "id": "page/EET-NYT/chairperson#1",
+     "similarity": 0.4818
+    },
+    {
+     "id": "page/advisement/virtual-advisors#6",
+     "similarity": 0.4799
+    },
+    {
+     "id": "catalog:CST 3510",
+     "similarity": 0.4768
+    },
+    {
+     "id": "page/CST-NYT/tutoring#2",
+     "similarity": 0.4741
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "rescued": true,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It correctly identifies Prof. Elizabeth Milonas as the CST department chair.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "Source [1] explicitly names Prof. Elizabeth Milonas as Chair of the Department of Computer Systems Technology.",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0008734000000000001,
+   "judge_cost": 0.006204,
+   "latency_ms": 3251,
+   "chat_ms": 1822,
+   "retrieval_ms": 1425.0,
+   "cache_hit": true,
+   "rerank_cost": 0.0005718,
+   "rerank_ms": 1353.6,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 316,
+     "completion_tokens": 17,
+     "cost": 4.01e-05,
+     "ms": 822.0,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q106",
+   "type": "lookup",
+   "department": "CST-NYT",
+   "gold_kind": "normal",
+   "tags": [
+    "casual"
+   ],
+   "retrieved": [
+    {
+     "id": "page/CST-NYT/chairperson#1",
+     "similarity": 0.5072
+    },
+    {
+     "id": "dept/CST-NYT/overview#3",
+     "similarity": 0.5578
+    },
+    {
+     "id": "dept/CST-NYT/overview#2",
+     "similarity": 0.5449
+    },
+    {
+     "id": "contact:CST-NYT",
+     "similarity": 0.5255
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-systems-btech#5",
+     "similarity": 0.5189
+    },
+    {
+     "id": "page/CST-NYT/index#1",
+     "similarity": 0.5146
+    },
+    {
+     "id": "dept/CST-NYT/program-computer-information-systems-aas#4",
+     "similarity": 0.5098
+    },
+    {
+     "id": "dept/CST-NYT/overview#4",
+     "similarity": 0.4896
+    },
+    {
+     "id": "page/advisement/virtual-advisors#11",
+     "similarity": 0.4868
+    },
+    {
+     "id": "catalog:CST 2415",
+     "similarity": 0.4652
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "rescued": true,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "The answer correctly identifies Prof. Elizabeth Milonas as the head/chair of the Computer Systems Technology Department.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "Source [1] explicitly names Prof. Elizabeth Milonas as Chair of the Department of Computer Systems Technology.",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0007575,
+   "judge_cost": 0.004252,
+   "latency_ms": 3868,
+   "chat_ms": 2092,
+   "retrieval_ms": 1770.6,
+   "cache_hit": true,
+   "rerank_cost": 0.0005542,
+   "rerank_ms": 1700.8,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 320,
+     "completion_tokens": 17,
+     "cost": 4.05e-05,
+     "ms": 816.4,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q107",
+   "type": "lookup",
+   "department": null,
+   "gold_kind": "normal",
+   "tags": [
+    "casual"
+   ],
+   "retrieved": [
+    {
+     "id": "page/bursar/payment-plan#1",
+     "similarity": 0.5111
+    },
+    {
+     "id": "page/financial-aid/faqs#2",
+     "similarity": 0.3567
+    },
+    {
+     "id": "page/bursar/payment-deadlines#1",
+     "similarity": 0.3721
+    },
+    {
+     "id": "page/admissions/tuition-penalty#3",
+     "similarity": 0.3934
+    },
+    {
+     "id": "page/financial-aid/sap#10",
+     "similarity": 0.4198
+    },
+    {
+     "id": "page/MATH-NYT/faqs#11",
+     "similarity": 0.3617
+    },
+    {
+     "id": "page/financial-aid/financial-payment-calendar#1",
+     "similarity": 0.3589
+    },
+    {
+     "id": "page/admissions/tuition-penalty#1",
+     "similarity": 0.3583
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#6",
+     "similarity": 0.3308
+    },
+    {
+     "id": "page/advisement/degree-checklist#2",
+     "similarity": 0.3298
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "rescued": true,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "partial",
+   "correctness_reason": "It provides accurate Fall 2026 payment-plan timing and past-due restriction but omits the requested general availability and enrollment steps in CUNYfirst.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All stated enrollment dates, payment counts/months, and the restriction on past-due balances are explicitly supported by source [1].",
+   "judge_status": "ok",
+   "label": "generation error",
+   "label_reason": "It provides accurate Fall 2026 payment-plan timing and past-due restriction but omits the requested general availability and enrollment steps in CUNYfirst.",
+   "answer_cost": 0.0008653,
+   "judge_cost": 0.00535,
+   "latency_ms": 4937,
+   "chat_ms": 2203,
+   "retrieval_ms": 2731.6,
+   "cache_hit": true,
+   "rerank_cost": 0.0006007,
+   "rerank_ms": 2661.2,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 313,
+     "completion_tokens": 17,
+     "cost": 3.98e-05,
+     "ms": 738.7,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q108",
+   "type": "lookup",
+   "department": null,
+   "gold_kind": "normal",
+   "tags": [
+    "casual"
+   ],
+   "retrieved": [
+    {
+     "id": "page/registrar/grade-policies#1",
+     "similarity": 0.3995
+    },
+    {
+     "id": "page/bursar/refund-policy#1",
+     "similarity": 0.4537
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#2",
+     "similarity": 0.514
+    },
+    {
+     "id": "page/admissions/tuition-refund#1",
+     "similarity": 0.3344
+    },
+    {
+     "id": "page/registrar/grade-policies#2",
+     "similarity": 0.4295
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#3",
+     "similarity": 0.4974
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#5",
+     "similarity": 0.4513
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#4",
+     "similarity": 0.4369
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#7",
+     "similarity": 0.4075
+    },
+    {
+     "id": "page/bursar/refund-policy#4",
+     "similarity": 0.3647
+    }
+   ],
+   "first_gold_rank": 3,
+   "abstained": true,
+   "abstain_reason": "below_threshold",
+   "rescued": false,
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "incorrect",
+   "correctness_reason": "The answer abstains even though the provided sources state what a drop is and how classes are dropped via CUNYfirst.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "The abstention itself makes no factual claim beyond the assistant's inability to find the information.",
+   "judge_status": "ok",
+   "label": "ranking miss",
+   "label_reason": "in the top 10 but not the top 5: pdf/dropping-withdrawing-fall-2026#4",
+   "answer_cost": 0.0004928,
+   "judge_cost": 0.004098,
+   "latency_ms": 2878,
+   "chat_ms": 871,
+   "retrieval_ms": 2003.7,
+   "cache_hit": true,
+   "rerank_cost": 0.00045210000000000004,
+   "rerank_ms": 1933.1,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 322,
+     "completion_tokens": 17,
+     "cost": 4.07e-05,
+     "ms": 871.0,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q110",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "normal",
+   "tags": [
+    "casual"
+   ],
+   "retrieved": [
+    {
+     "id": "page/bursar/payment-deadlines#1",
+     "similarity": 0.5259
+    },
+    {
+     "id": "page/admissions/tuition-penalty#3",
+     "similarity": 0.4617
+    },
+    {
+     "id": "page/bursar/payment-plan#1",
+     "similarity": 0.3515
+    },
+    {
+     "id": "page/admissions/tuition-penalty#1",
+     "similarity": 0.4368
+    },
+    {
+     "id": "page/bursar/refund-policy#1",
+     "similarity": 0.3451
+    },
+    {
+     "id": "page/financial-aid/faqs#2",
+     "similarity": 0.3437
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#4",
+     "similarity": 0.3626
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#1",
+     "similarity": 0.3624
+    },
+    {
+     "id": "page/registrar/academic-calendar#1",
+     "similarity": 0.3591
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#6",
+     "similarity": 0.3539
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "rescued": true,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It accurately gives all Fall 2026 payment deadlines based on initial registration date, which directly answers the question.",
+   "faithfulness": "no",
+   "faithfulness_reason": "Although the deadline details are supported by source [1], the claim that the date is October 11, 2026 is not stated in any provided source.",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0012093,
+   "judge_cost": 0.005598,
+   "latency_ms": 5148,
+   "chat_ms": 3685,
+   "retrieval_ms": 1456.0,
+   "cache_hit": true,
+   "rerank_cost": 0.0004685,
+   "rerank_ms": 1382.3,
+   "rerank_failed": false,
+   "route": "calendar_fallthrough",
+   "router": {
+    "route": "calendar_fallthrough",
+    "intent": "calendar",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 324,
+     "completion_tokens": 17,
+     "cost": 4.09e-05,
+     "ms": 987.7,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": true,
+    "chain_fallthrough": false,
+    "term_status": "assumed",
+    "term": "Fall 2026",
+    "invalid_ids": 0,
+    "weekday_mismatches": 0,
+    "selected": [],
+    "select": {
+     "prompt_tokens": 4417,
+     "completion_tokens": 12,
+     "cost": 0.00044770000000000004,
+     "ms": 930.4,
+     "error": null,
+     "status": "empty"
+    },
+    "selector_version": 2,
+    "pool_size": 131,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q111",
+   "type": "lookup",
+   "department": null,
+   "gold_kind": "normal",
+   "tags": [
+    "casual"
+   ],
+   "retrieved": [
+    {
+     "id": "page/financial-aid/faqs#2",
+     "similarity": 0.4824
+    },
+    {
+     "id": "page/registrar/readmission#5",
+     "similarity": 0.4549
+    },
+    {
+     "id": "pdf/special-circumstances-flyer#4",
+     "similarity": 0.4974
+    },
+    {
+     "id": "page/financial-aid/faqs#5",
+     "similarity": 0.4645
+    },
+    {
+     "id": "page/financial-aid/faqs#8",
+     "similarity": 0.4508
+    },
+    {
+     "id": "pdf/special-circumstances-flyer#1",
+     "similarity": 0.4894
+    },
+    {
+     "id": "pdf/special-circumstances-flyer#3",
+     "similarity": 0.4865
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#2",
+     "similarity": 0.4557
+    },
+    {
+     "id": "page/financial-aid/faqs#3",
+     "similarity": 0.4539
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#10",
+     "similarity": 0.4247
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "rescued": true,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It answers how to apply by directing the student to City Tech's application instructions; the added timing information is accurate.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "The source explicitly directs applicants to instructions for FAFSA and TAP and states the October 1 availability and March 31 priority deadline.",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0007472,
+   "judge_cost": 0.004456,
+   "latency_ms": 3699,
+   "chat_ms": 1869,
+   "retrieval_ms": 1826.9,
+   "cache_hit": true,
+   "rerank_cost": 0.0005298,
+   "rerank_ms": 1758.3,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 322,
+     "completion_tokens": 17,
+     "cost": 4.07e-05,
+     "ms": 785.1,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q113",
+   "type": "time_sensitive",
+   "department": null,
+   "gold_kind": "normal",
+   "tags": [
+    "casual"
+   ],
+   "retrieved": [
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#7",
+     "similarity": 0.5081
+    },
+    {
+     "id": "page/registrar/grade-policies#1",
+     "similarity": 0.4649
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#2",
+     "similarity": 0.479
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#8",
+     "similarity": 0.5069
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#6",
+     "similarity": 0.475
+    },
+    {
+     "id": "page/bursar/refund-policy#4",
+     "similarity": 0.3879
+    },
+    {
+     "id": "page/financial-aid/faqs#9",
+     "similarity": 0.4891
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#5",
+     "similarity": 0.4608
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#1",
+     "similarity": 0.4862
+    },
+    {
+     "id": "page/bursar/refund-policy#1",
+     "similarity": 0.4534
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "rescued": true,
+   "citations": [
+    1,
+    2,
+    4,
+    5
+   ],
+   "invalid_citations": [],
+   "correctness": "partial",
+   "correctness_reason": "It correctly states when a W is assigned, but omits the requested Fall 2026 last withdrawal date of Friday, November 6, 2026.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All claims in the response are supported by the provided sources.",
+   "judge_status": "ok",
+   "label": "generation error",
+   "label_reason": "It correctly states when a W is assigned, but omits the requested Fall 2026 last withdrawal date of Friday, November 6, 2026.",
+   "answer_cost": 0.0006813,
+   "judge_cost": 0.004254,
+   "latency_ms": 4725,
+   "chat_ms": 3299,
+   "retrieval_ms": 1419.5,
+   "cache_hit": true,
+   "rerank_cost": 0.0004328,
+   "rerank_ms": 1351.6,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 324,
+     "completion_tokens": 17,
+     "cost": 4.09e-05,
+     "ms": 1546.5,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q120",
+   "type": "lookup",
+   "department": null,
+   "gold_kind": "normal",
+   "tags": [
+    "casual"
+   ],
+   "retrieved": [
+    {
+     "id": "page/financial-aid/faqs#2",
+     "similarity": 0.5891
+    },
+    {
+     "id": "page/registrar/readmission#5",
+     "similarity": 0.5536
+    },
+    {
+     "id": "page/financial-aid/faqs#1",
+     "similarity": 0.5078
+    },
+    {
+     "id": "page/financial-aid/faqs#3",
+     "similarity": 0.5279
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#2",
+     "similarity": 0.4973
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#10",
+     "similarity": 0.5298
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#5",
+     "similarity": 0.503
+    },
+    {
+     "id": "contact:financial-aid",
+     "similarity": 0.4776
+    },
+    {
+     "id": "page/financial-aid/faqs#8",
+     "similarity": 0.4575
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#1",
+     "similarity": 0.5284
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "rescued": true,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It correctly directs the user to follow the FAFSA and TAP application instructions, and the added deadline information is accurate.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All claims, including the October 1 availability, March 31 priority deadline, and lack of a specified year, are supported by source [1].",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0008202000000000001,
+   "judge_cost": 0.004772,
+   "latency_ms": 3747,
+   "chat_ms": 2094,
+   "retrieval_ms": 1648.1,
+   "cache_hit": true,
+   "rerank_cost": 0.0005847000000000001,
+   "rerank_ms": 1577.7,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 317,
+     "completion_tokens": 17,
+     "cost": 4.02e-05,
+     "ms": 731.4,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q121",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "abstain",
+   "tags": [
+    "casual"
+   ],
+   "retrieved": [
+    {
+     "id": "contact:MATH-NYT",
+     "similarity": 0.5337
+    },
+    {
+     "id": "page/MATH-NYT/chairperson#1",
+     "similarity": 0.4769
+    },
+    {
+     "id": "dept/MATH-NYT/program-applied-mathematics-bs#5",
+     "similarity": 0.4293
+    },
+    {
+     "id": "page/MATH-NYT/advisement#1",
+     "similarity": 0.4505
+    },
+    {
+     "id": "page/MATH-NYT/student-resources#1",
+     "similarity": 0.4788
+    },
+    {
+     "id": "page/MATH-NYT/student-resources#9",
+     "similarity": 0.4545
+    },
+    {
+     "id": "page/CST-NYT/advisement#1",
+     "similarity": 0.4424
+    },
+    {
+     "id": "page/advisement/virtual-advisors#10",
+     "similarity": 0.4361
+    },
+    {
+     "id": "page/MATH-NYT/student-resources#7",
+     "similarity": 0.4091
+    },
+    {
+     "id": "page/EET-NYT/advisement#1",
+     "similarity": 0.4089
+    }
+   ],
+   "first_gold_rank": null,
+   "abstained": true,
+   "abstain_reason": "below_threshold",
+   "rescued": false,
+   "citations": [],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "faithfulness": null,
+   "correctness_reason": "rule: starts with ABSTAIN:",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0006366999999999999,
+   "judge_cost": 0.0,
+   "latency_ms": 2453,
+   "chat_ms": 1034,
+   "retrieval_ms": 1415.3,
+   "cache_hit": true,
+   "rerank_cost": 0.0005964,
+   "rerank_ms": 1347.9,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 318,
+     "completion_tokens": 17,
+     "cost": 4.03e-05,
+     "ms": 1033.7,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": "MATH-NYT"
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q122",
+   "type": "unanswerable",
+   "department": null,
+   "gold_kind": "abstain",
+   "tags": [
+    "casual"
+   ],
+   "retrieved": [
+    {
+     "id": "pdf/cunyfirst-student-reference#2",
+     "similarity": 0.4588
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#7",
+     "similarity": 0.4149
+    },
+    {
+     "id": "page/bursar/payment-deadlines#1",
+     "similarity": 0.2792
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#1",
+     "similarity": 0.3352
+    },
+    {
+     "id": "page/admissions/tuition-penalty#3",
+     "similarity": 0.4189
+    },
+    {
+     "id": "page/financial-aid/faqs#3",
+     "similarity": 0.3468
+    },
+    {
+     "id": "pdf/cunyfirst-student-reference#4",
+     "similarity": 0.2789
+    },
+    {
+     "id": "page/admissions/tuition-penalty#1",
+     "similarity": 0.2783
+    },
+    {
+     "id": "page/financial-aid/faqs#4",
+     "similarity": 0.3063
+    },
+    {
+     "id": "page/admissions/tuition-penalty#2",
+     "similarity": 0.289
+    }
+   ],
+   "first_gold_rank": null,
+   "abstained": false,
+   "abstain_reason": null,
+   "rescued": true,
+   "citations": [
+    1,
+    2
+   ],
+   "invalid_citations": [],
+   "correctness": "incorrect",
+   "faithfulness": null,
+   "correctness_reason": "rule: did not abstain",
+   "faithfulness_reason": null,
+   "judge_status": "rule",
+   "label": "abstention error",
+   "label_reason": "answered a question that should be refused",
+   "answer_cost": 0.0008129,
+   "judge_cost": 0.0,
+   "latency_ms": 4384,
+   "chat_ms": 2510,
+   "retrieval_ms": 1871.7,
+   "cache_hit": true,
+   "rerank_cost": 0.0005482999999999999,
+   "rerank_ms": 1796.5,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 323,
+     "completion_tokens": 17,
+     "cost": 4.08e-05,
+     "ms": 819.0,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  },
+  {
+   "id": "q123",
+   "type": "lookup",
+   "department": null,
+   "gold_kind": "normal",
+   "tags": [
+    "casual"
+   ],
+   "retrieved": [
+    {
+     "id": "page/financial-aid/faqs#2",
+     "similarity": 0.4036
+    },
+    {
+     "id": "page/financial-aid/sap#12",
+     "similarity": 0.4982
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#6",
+     "similarity": 0.4806
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#7",
+     "similarity": 0.4654
+    },
+    {
+     "id": "pdf/special-circumstances-flyer#1",
+     "similarity": 0.4636
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#4",
+     "similarity": 0.4604
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#5",
+     "similarity": 0.4591
+    },
+    {
+     "id": "pdf/dropping-withdrawing-fall-2026#6",
+     "similarity": 0.434
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#3",
+     "similarity": 0.4317
+    },
+    {
+     "id": "pdf/financial-aid-refund-calendar-2026-2027#2",
+     "similarity": 0.4074
+    }
+   ],
+   "first_gold_rank": 1,
+   "abstained": false,
+   "abstain_reason": null,
+   "rescued": true,
+   "citations": [
+    1
+   ],
+   "invalid_citations": [],
+   "correctness": "correct",
+   "correctness_reason": "It correctly identifies the FAFSA availability date and City Tech's March 31 early priority deadline, while appropriately noting no year is specified.",
+   "faithfulness": "yes",
+   "faithfulness_reason": "All statements are directly supported by source [1], including the absence of a specified year.",
+   "judge_status": "ok",
+   "label": null,
+   "label_reason": null,
+   "answer_cost": 0.0006406000000000001,
+   "judge_cost": 0.003696,
+   "latency_ms": 3646,
+   "chat_ms": 2125,
+   "retrieval_ms": 1517.3,
+   "cache_hit": true,
+   "rerank_cost": 0.00045520000000000006,
+   "rerank_ms": 1447.6,
+   "rerank_failed": false,
+   "route": "other",
+   "router": {
+    "route": "other",
+    "intent": "other",
+    "term_mention": null,
+    "classify": {
+     "prompt_tokens": 313,
+     "completion_tokens": 17,
+     "cost": 3.98e-05,
+     "ms": 915.3,
+     "error": null,
+     "failed": false
+    },
+    "fallthrough": false,
+    "chain_fallthrough": false,
+    "contact_office": null
+   },
+   "returned_rows": []
+  }
+ ],
+ "question_ids": [
+  "q100",
+  "q101",
+  "q102",
+  "q103",
+  "q104",
+  "q105",
+  "q106",
+  "q107",
+  "q108",
+  "q110",
+  "q111",
+  "q113",
+  "q120",
+  "q121",
+  "q122",
+  "q123",
+  "q27",
+  "q28",
+  "q34",
+  "q44",
+  "q45",
+  "q83",
+  "q98"
+ ],
+ "question_ids_hash": "6d72135af6f0",
+ "git": {
+  "commit": "ed4e3f2",
+  "dirty": true
+ }
+}
