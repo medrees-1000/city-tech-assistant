@@ -140,3 +140,51 @@ def test_drop_and_refund_list_the_bursar_first_and_the_registrar_second():
     # the fixed priority order puts the Bursar before the Registrar; two offices at most
     assert offices("if I drop with W do I get money refunded") == ["bursar", "registrar"]
     assert offices("drop a class, withdraw, refund, tuition, fafsa") == ["financial-aid", "bursar"]
+
+
+# ---- register, enroll, sign up for classes (added Oct 17, 2026, found by review) ----
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "how do I register for classes",
+        "how to register",
+        "i am registering late, what do i do",
+        "I already registered but the class is gone",
+        "how do I sign up for classes",
+        "how do I sign up for a class",
+        "how do I enroll",
+        "can I still enroll in a course",
+        "I'm enrolling next semester",
+    ],
+)
+def test_register_and_enroll_words_name_the_registrar(question):
+    assert offices(question) == ["registrar"]
+
+
+def test_a_named_department_or_a_first_person_cue_behaves_as_before():
+    assert offices("how do I register for CST 1101") == ["CST-NYT"]  # the department rule first
+    assert offices("how do I register for dental hygiene") == ["DENT-NYT"]
+    assert offices("what is my gpa after I registered") == ["registrar"]  # a first-person cue
+
+
+def test_registrar_still_ranks_after_the_other_offices_and_two_is_the_most():
+    assert offices("how do I register and pay the tuition bill") == ["bursar", "registrar"]
+    assert offices("register, fafsa, tuition, advisor") == ["financial-aid", "bursar"]
+
+
+def test_registered_nurse_does_not_add_a_card_but_other_uses_do():
+    assert offices("is the registered nurse program here") == []
+    assert offices("do you offer registered nurses courses") == []
+    assert (
+        offices("registered dental hygienist exam dates") == []
+    )  # a profession, not a department word
+    assert offices("I registered nurse training but how do I register") == ["registrar"]
+    assert "registered nurse" in C["topic_ignore"]
+
+
+def test_the_ignore_phrases_live_in_config():
+    custom = {**C, "topic_ignore": ["zebra register"], "topic_priority": ["registrar"]}
+    assert contact.offices_for("zebra register", ans(), custom) == []
+    assert contact.offices_for("register", ans(), custom) == ["registrar"]

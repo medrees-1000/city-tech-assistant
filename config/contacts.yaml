@@ -139,7 +139,13 @@ topic_cues:
                "graduating early", "credits left", "credits still left", "credits remaining", "why am i taking"]
   registrar: [graduate, graduation, graduating, graudate, graudation, grudation, transcript, grades, grade,
               enrollment, drop, dropping, withdraw, withdrawing, withdrawal, registration, registring,
-              registeration, calendar, registrar]
+              registeration, calendar, registrar,
+              # added Oct 17, 2026, found by review (the owner noticed that "how to register" got no contact),
+              # not by an eval run: register, registering, registered, sign up for classes, enroll, enrolling
+              register, registering, registered, "sign up for classes", "sign up for a class", enroll, enrolling]
+# Phrases removed from the question before the topic words are matched, so an ordinary use of a cue word does not
+# add an office ("registered nurse" is a profession, not a registration question).
+topic_ignore: ["registered nurse", "registered nurses", "registered dental hygienist", "registered dental hygienists"]
 
 # Rule 7: nothing above applies.
 fallback: registrar

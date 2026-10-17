@@ -75,6 +75,8 @@ def cue_office(question: str, contacts: dict) -> str | None:
 def topic_offices(question: str, contacts: dict) -> list[str]:
     """Offices whose topic words appear in the question: at most two, in `topic_priority` order."""
     text = question.lower()
+    for phrase in contacts.get("topic_ignore", []):
+        text = text.replace(phrase.lower(), " ")
     hits = [
         office
         for office in contacts.get("topic_priority", [])
