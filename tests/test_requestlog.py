@@ -278,8 +278,8 @@ def test_the_notice_says_what_the_code_does():
         if f"[{tag}]" in redact("a@b.edu 718-260-5800 23456789 123-45-6789")
     }
     assert "emails, phone numbers and ID numbers removed" in text
-    # names are removed after a few cues (screen.scrub, batch 1); a name written any other way stays,
-    # and the notice says so
+    # names are removed after a few cues (screen.scrub, batch 1); a name written any other way
+    # stays, and the notice says so
     from cta.api.screen import scrub
 
     assert redact("Maria Lopez") == "Maria Lopez"
