@@ -235,7 +235,8 @@ def test_the_api_returns_the_two_pages_as_citations_with_the_flags_and_no_topic_
     )
     assert body["citations"][0]["url"] == PAGE_A and body["citations"][1]["url"] == PAGE_B
     assert "topic" not in client.calls  # the topic sentence would have replaced the text
-    assert body["contact"] is None  # contact policy v2: no office clearly applies here
+    # batch 1 (topic cues): the word "tuition" now names the Bursar, so the card is shown
+    assert body["contact"]["office"] == "bursar"
     row = c.logs[0]
     assert row["abstained"] is True and row["abstain_reason"] == "below_threshold"
     assert row["trace"]["near_miss"] is True  # countable in the log

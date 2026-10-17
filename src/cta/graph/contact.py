@@ -6,9 +6,13 @@ Contact policy v2: a contact is added only when the office clearly applies, else
   2. a chain "no record" abstain -> the department of the code prefix (one of four), else none;
   3. exactly one of the four departments named in the question (alias or course prefix);
   4. a first-person account cue ("my gpa") from config/contacts.yaml (`account_only` words such as
-     "login" are account questions too, but name no office).
+     "login" are account questions too, but name no office);
+  5. only when none of those applies: topic words (`topic_cues` in the same file), at most two
+     offices in the order of `topic_priority`.
 Nothing else adds a contact (no chunk-source map, no fallback office).
-`add_contact` appends "Contact <name>: <email>, <phone>." to an abstained answer, once.
+`add_contact` appends "Contact <name>: <email>, <phone>." to an abstained answer, once per office.
+It only adds text to the end of an abstention: it never changes the ABSTAIN prefix, whether the
+answer abstained, or which question is refused.
 """
 
 import re
@@ -68,17 +72,36 @@ def cue_office(question: str, contacts: dict) -> str | None:
     return None
 
 
-def office_for(question: str, ans, contacts: dict | None = None) -> str | None:
-    """The office that clearly applies, or None (then no contact is added)."""
+def topic_offices(question: str, contacts: dict) -> list[str]:
+    """Offices whose topic words appear in the question: at most two, in `topic_priority` order."""
+    text = question.lower()
+    hits = [
+        office
+        for office in contacts.get("topic_priority", [])
+        if has_word(text, [w.lower() for w in contacts.get("topic_cues", {}).get(office, [])])
+    ]
+    return hits[:2]
+
+
+def offices_for(question: str, ans, contacts: dict | None = None) -> list[str]:
+    """The offices that clearly apply (the main one first), or [] (then no contact is added)."""
     contacts = contacts or load_contacts()
     reason = ans.abstain_reason or ""
     if reason.startswith("calendar_"):
-        return "registrar"
+        return ["registrar"]
     if reason == "chain_no_record":
-        return named_department(question)
+        dept = named_department(question)
+        return [dept] if dept else []
     if reason == "chain_outside_departments":
-        return None  # the course is in none of the four departments: no office applies
-    return named_department(question) or cue_office(question, contacts)
+        return []  # the course is in none of the four departments: no office applies
+    first = named_department(question) or cue_office(question, contacts)
+    return [first] if first else topic_offices(question, contacts)
+
+
+def office_for(question: str, ans, contacts: dict | None = None) -> str | None:
+    """The main office that clearly applies, or None (then no contact is added)."""
+    found = offices_for(question, ans, contacts)
+    return found[0] if found else None
 
 
 def contact_line(key: str, contacts: dict | None = None) -> str:
@@ -98,10 +121,12 @@ def add_contact(ans, question: str, contacts: dict | None = None) -> str | None:
     if not ans.abstained:
         return None
     contacts = contacts or load_contacts()
-    key = office_for(question, ans, contacts)
-    if key is None:
+    keys = offices_for(question, ans, contacts)
+    if not keys:
         return None
-    line = contact_line(key, contacts)
-    if line not in ans.text:
-        ans.text = f"{ans.text} {line}"
-    return key
+    # the main office last: the page strips that last line into its card and keeps any other line
+    for key in reversed(keys):
+        line = contact_line(key, contacts)
+        if line not in ans.text:
+            ans.text = f"{ans.text} {line}"
+    return keys[0]

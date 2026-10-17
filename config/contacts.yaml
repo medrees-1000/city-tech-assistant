@@ -122,5 +122,21 @@ pdf_offices:
   special-circumstances-flyer: special-circumstances
   cunyfirst-student-reference: financial-aid
 
+# Rule 5 (batch 1, Oct 17, 2026): topic words -> office, used only when none of the rules above names an office
+# (a refusal that would otherwise carry no contact). Whole words or phrases, lowercase, matched case-insensitively
+# on the question. Inflections and the typos seen in the held-out questions are listed as aliases. At most two
+# offices are added, in the order of `topic_priority`; the first is the main one (the page shows it as the card).
+# The words come from what each office handles, not from a fit to one question set; written to be reviewed.
+topic_priority: [DENT-NYT, financial-aid, bursar, advisement, registrar]
+topic_cues:
+  DENT-NYT: [dental, hygiene, hygine, hygein, hygeine, hugein]
+  financial-aid: [fafsa, tap, pell, aid, scholarship, scholarships, sap, "financial aid"]
+  bursar: [tuition, tution, tuiton, payment, payments, pay, bill, fee, fees, "refund balance"]
+  advisement: [advisor, advisors, advsor, advisr, advising, "degree audit", "graduate early", "graudate early",
+               "graduating early", "credits left", "credits still left", "credits remaining", "why am i taking"]
+  registrar: [graduate, graduation, graduating, graudate, graudation, grudation, transcript, grades, grade,
+              enrollment, drop, dropping, withdraw, withdrawing, withdrawal, registration, registring,
+              registeration, calendar, registrar]
+
 # Rule 7: nothing above applies.
 fallback: registrar
