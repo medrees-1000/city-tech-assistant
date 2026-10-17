@@ -84,6 +84,16 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
         raise ValueError("answer.near_miss_margin must be a number") from None
     if not 0 <= cfg["answer"]["near_miss_margin"] < cfg["answer"]["abstain_threshold"]:
         raise ValueError("answer.near_miss_margin must be at least 0 and below the cutoff")
+    cfg["answer"].setdefault("rescue", "off")
+    cfg["answer"].setdefault("rescue_similarity_floor", 0.45)
+    cfg["answer"].setdefault("rescue_reranker_min", 8)
+    if cfg["answer"]["rescue"] not in ("off", "on"):
+        raise ValueError(f"answer.rescue must be off or on, not {cfg['answer']['rescue']!r}")
+    floor, minimum = cfg["answer"]["rescue_similarity_floor"], cfg["answer"]["rescue_reranker_min"]
+    if not 0 <= floor < cfg["answer"]["abstain_threshold"]:
+        raise ValueError("answer.rescue_similarity_floor must be at least 0 and below the cutoff")
+    if not 0 <= minimum <= 10:
+        raise ValueError("answer.rescue_reranker_min must be between 0 and 10")
     cfg["answer"].setdefault("format_rule", "off")
     if env.get("CTA_ANSWER_FORMAT_RULE", "").strip():
         cfg["answer"]["format_rule"] = env["CTA_ANSWER_FORMAT_RULE"].strip()

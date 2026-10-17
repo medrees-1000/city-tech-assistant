@@ -79,11 +79,26 @@ class Answer:
     latency_ms: int = 0
     chat_ms: int = 0
     near_miss: bool = False  # a below-threshold abstention that lists the closest pages
+    rescued: bool = False  # under the cutoff, but sent on to the answer model by the rescue rule
     rewrite: dict | None = None  # the fallback query rewrite, when it ran (experiment E1)
 
     @property
     def cost(self) -> float:
         return self.chat_cost + (self.search.total_cost if self.search else 0.0)
+
+
+def rescue_applies(cfg: dict, top: float | None, rerank) -> bool:
+    """Version 2 rescue rule. Flag on, best similarity under the cutoff but at least the floor, and
+    a reranker that ran and gave its best candidate at least the minimum: let the answer model
+    look at the question (it can still abstain). Anything else keeps today's behaviour."""
+    a = cfg["answer"]
+    if a.get("rescue", "off") != "on" or top is None or rerank is None:
+        return False
+    if rerank.failed or not rerank.scores:
+        return False
+    return a["rescue_similarity_floor"] <= top < a["abstain_threshold"] and (
+        max(rerank.scores) >= a["rescue_reranker_min"]
+    )
 
 
 def is_near_miss(top: float, threshold: float, margin: float) -> bool:
@@ -270,7 +285,8 @@ def answer(
     ans.prompt_tokens, ans.completion_tokens = extra_p, extra_c
     # The threshold is on the best VECTOR cosine similarity in both retrieval modes,
     # never on a fused score.
-    if found.top_vector_similarity < cfg["answer"]["abstain_threshold"]:
+    ans.rescued = rescue_applies(cfg, found.top_vector_similarity, found.rerank)
+    if found.top_vector_similarity < cfg["answer"]["abstain_threshold"] and not ans.rescued:
         ans.text, ans.abstained, ans.abstain_reason = THRESHOLD_ABSTAIN, True, "below_threshold"
         margin = cfg["answer"].get("near_miss_margin", 0.0)
         threshold = cfg["answer"]["abstain_threshold"]

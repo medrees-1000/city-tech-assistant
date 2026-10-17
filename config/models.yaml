@@ -39,6 +39,13 @@ answer:
   # similarity is within this margin under the cutoff lists the two closest pages instead of the bare refusal.
   # 0 switches it off. CTA_NEAR_MISS_MARGIN overrides it. The cutoff itself is not changed.
   near_miss_margin: 0.04
+  # Version 2 rescue rule (docs/decisions.md, "Version 2, casual wording: pre-registration"): off | on. When on, a
+  # question whose best vector similarity is under the cutoff but at least rescue_similarity_floor goes on to the
+  # answer model (which can still abstain) if the reranker's top score is at least rescue_reranker_min (0 to 10).
+  # The floor and the minimum were set from the dev diagnosis only. Quoted (YAML booleans).
+  rescue: "off"
+  rescue_similarity_floor: 0.45
+  rescue_reranker_min: 8
 
 # Judge settings. Probed 2026-10-12 on gpt-5.6-terra: temperature 0 is REJECTED with the default reasoning
 # ("Only the default (1) value is supported"), but ACCEPTED with reasoning_effort "none"; JSON response

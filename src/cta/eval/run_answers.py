@@ -18,6 +18,7 @@ import json
 import math
 import sys
 from datetime import date
+from pathlib import Path
 from statistics import median
 from types import SimpleNamespace
 
@@ -25,7 +26,12 @@ from psycopg.types.json import Jsonb
 
 from cta.answer import Answer, answer, estimate_cost, format_source
 from cta.eval.metrics import CALENDAR_ID, average, matched_gold, scorable_gold
-from cta.eval.questions import load_questions, question_ids_record, select_questions
+from cta.eval.questions import (
+    load_questions,
+    question_ids_record,
+    questions_path,
+    select_questions,
+)
 from cta.eval.rubric import ADVICE_INSTRUCTIONS, JUDGE_INSTRUCTIONS, RUBRIC_VERSION
 from cta.eval.run_retrieval import RESULTS, check_split, git_state, metrics_table, score
 from cta.graph.build import Router
@@ -294,6 +300,7 @@ def evaluate_question(
         "first_gold_rank": next((i for i, c in enumerate(top10, 1) if matched_gold(c, gold)), None),
         "abstained": ans.abstained,
         "abstain_reason": ans.abstain_reason,
+        "rescued": bool(getattr(ans, "rescued", False)),
         "citations": ans.citations,
         "invalid_citations": ans.invalid_citations,
         **verdict,
@@ -950,7 +957,8 @@ def relabel(conn, label: str, cfg: dict) -> dict:
 
 def main(argv: list[str]) -> int:
     p = argparse.ArgumentParser(prog="python -m cta.eval.run_answers")
-    p.add_argument("--split", choices=("dev", "test"))
+    p.add_argument("--split", choices=("dev", "test", "heldout"))
+    p.add_argument("--questions", type=Path, help="questions file (default: the file of the split)")
     p.add_argument("--label")
     p.add_argument("--final", action="store_true", help="allow --split test (part B only)")
     p.add_argument("--rejudge", metavar="OLD_LABEL", help="re-judge a stored run, no answer calls")
@@ -962,6 +970,7 @@ def main(argv: list[str]) -> int:
     p.add_argument(
         "--fallback-rewrite", choices=("off", "on"), help="override retrieval.fallback_rewrite"
     )
+    p.add_argument("--rescue", choices=("off", "on"), help="override answer.rescue")
     p.add_argument("--ids", help="comma-separated question ids (within the split)")
     p.add_argument("--tag", help="only questions with this tag, for example calendar")
     p.add_argument("--router", choices=("off", "on"), help="override router.mode")
@@ -1018,6 +1027,8 @@ def main(argv: list[str]) -> int:
         cfg["router"]["chain"] = args.chain
     if args.contacts:
         cfg["router"]["contacts"] = args.contacts
+    if args.rescue:
+        cfg["answer"]["rescue"] = args.rescue
     if args.chain_render:
         cfg["router"]["chain_render"] = args.chain_render
     if args.format_rule:
@@ -1038,7 +1049,9 @@ def main(argv: list[str]) -> int:
         return main_rejudge(args, cfg)
     try:
         ids = args.ids.split(",") if args.ids else None
-        questions = select_questions(load_questions(), args.split, ids, args.tag)
+        questions = select_questions(
+            load_questions(args.questions or questions_path(args.split)), args.split, ids, args.tag
+        )
     except ValueError as e:
         print(f"refused: {e}")
         return 2
