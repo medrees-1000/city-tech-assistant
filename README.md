@@ -16,7 +16,7 @@ Demo (about 3 minutes): [watch the walkthrough](https://youtu.be/BrpqzHRU3pc)
 
 - Calendar dates come from a table I verified by hand and are written by code, not by the model.
 - On the held-out test run (31 questions, code frozen first): 0 incorrect and 0 unfaithful among the judged answers, every must-abstain question abstained, 0 of 14 wrongly refused; about $0.0004 per request, median 2.3 s.
-- It is weak on casual wording (4 of the 15 fact questions in my 20-question casual set were answered correctly; the misses are refusals). That is the first fix in version 2.
+- Casual wording was the weak spot (4 of the 15 fact questions in my 20-question casual set were answered correctly; the misses were refusals). Version 2 adds a rescue rule, now on: of the 11 previously refused casual dev questions, 8 are now correct, 2 partial and 1 still refused (harness judge). On 41 new casual questions I wrote and graded by hand (not fully blind), the 7 clearly answerable ones went from 2 correct-or-partial to 6 (see below).
 - Each experiment had a rule written before the run; the failed ones are listed below.
 
 ## What it does
@@ -65,12 +65,27 @@ Retrieval metrics cover only the 14 test questions that have a section-level gol
 | Final configuration, all 91 questions | 52 | 34 (65%) | 95% | 0.87 |
 | Final configuration, without the casual-wording group | 37 | 30 (81%) | 93% | 0.89 |
 
+### Version 2: casual wording on a held-out set
+
+41 casual questions I wrote (typos kept), labeled before the run and never used to tune anything: 7 clearly answerable, 12 uncertain (thin data), 22 that must be refused. The same questions were run once with the rescue rule off and once with it on, and I graded every answer by hand with a written rule. The grading was not fully blind: the two answers were shown without labels, but the run's counts let me infer the configuration for about six questions (`docs/decisions.md`, "Version 2 result and decision").
+
+| Outcome (41 questions) | Rescue off | Rescue on |
+|---|---|---|
+| correct | 22 | 26 |
+| partial | 2 | 5 |
+| acceptable refusal (uncertain questions) | 12 | 9 |
+| incorrect | 0 | 0 |
+| wrongly refused (answerable question) | 5 | 1 |
+
+Seven questions changed, all toward an answer. The 22 must-refuse questions came out the same in both runs (21 correct, 1 partial). The rule: when the best similarity is between 0.45 and the 0.59 cutoff and the reranker's top score is at least 8, the answer model gets to look at the question (it can still refuse). Cost per request rose 13% (about $0.0026 to $0.0029 including the judge). Not every pre-registered rule passed as written (the cost cap and two rule wordings did not); I adopted the rule anyway and recorded each deviation. With only 7 clearly answerable questions this result is directional, not a measured rate.
+
 ## Evaluation honesty
 
 - **The test split is not untouched.** The final run was done once, with the code frozen. The split had also been run three times before, with earlier configurations (`baseline-final` on 10 questions, `ms1-old` and `ms1-new` on all 31, in milestone 1). Milestone 1 was planned as report-only, and I changed no setting to fit it. But I read those results, and two later plans name two test failures as their examples: q43 (two course codes, which led to two-course prerequisite answers) and q48 (the contact line read as advice, which fed the no-advice work). Both went from incorrect to correct, so the test result for those two is not independent and may be optimistic (`docs/decisions.md`, "Corrections after review").
 - **Two test questions were graded by me, after seeing the results.** q50 (correct) and q74 (partial) have "clarify or answer every branch" gold answers that my harness cannot grade, so the table shows both views.
 - **The test set is small.** 13 fact questions means one question moves the rate by about 8 points. I see no sign of overfitting to dev, but 13 questions cannot prove that. Dev is lower than test mainly because of the casual-wording questions.
-- **Casual wording.** The casual set is 20 dev questions (q104 to q123). Of the 15 fact questions, 4 were answered correctly, 1 partly and 10 were refused (every wrong answer is a refusal); the other 5 are scored by rule and all pass, so 9 of 20 pass. The older "4 of 14, 29%" is the baseline of the casual round, run before the twentieth question was added. The test set has no casual wording.
+- **Casual wording.** The casual set is 20 dev questions (q104 to q123). Of the 15 fact questions, 4 were answered correctly, 1 partly and 10 were refused (every wrong answer is a refusal); the other 5 are scored by rule and all pass, so 9 of 20 pass. The older "4 of 14, 29%" is the baseline of the casual round, run before the twentieth question was added. The test set has no casual wording. These dev numbers were measured before the rescue rule; with the rescue on, 8 of the 11 previously refused casual dev questions are correct, 2 partial and 1 (q108) is still refused (harness judge, `cv2-dev-fix`).
+- **The headline test-split numbers were measured before the rescue rule existed** (tag `final-run-frozen`). The live app now runs with the rescue on, measured separately on the held-out casual set above and on the casual dev questions, not on the test split.
 - **The final run measures the pipeline.** The API guardrails (rate limits, injection screening, personal-data handling, distress replies) are covered by unit tests and two rounds of outside testers, not by this run.
 
 ## How it works
@@ -138,12 +153,18 @@ From the test run (details in [docs/results.md](docs/results.md)):
 - q74, last day to drop (my grade, after seeing results: partial): it lists the three grade-related dates and leaves out the tuition-refund dates unless the question mentions a refund. That is a trade-off I chose and have not fixed.
 - q50, refund when dropping (my grade, after seeing results: correct): complete Fall 2026 schedule; it does not say other terms differ.
 
+Version 2 (rescue rule on):
+- The reranker is a model and its scores differ between runs, and the minimum of 8 sits on a noisy boundary (one dev question went from 7 to 8 between two cache fills), so which borderline questions are rescued is partly luck.
+- q108 ("i give up my seat in class, how do i drop") and cv2-27 ("what is the difference between WD and W and what is the third option") are still refused: q108 has a reranker top score of 5, and cv2-27 has a best similarity of 0.32, under the 0.45 floor.
+- Refusals on questions with an expected office contact sometimes carry no contact (cv2-02, 03, 05, 10, 13, 37, 40).
+- An answer may state the system date (October 11, 2026 in the eval runs), which the faithfulness judge flags because no source contains it.
+
 Known limits, condensed (full list in [docs/known-limits.md](docs/known-limits.md)): a two-part question answers one part without saying so; casual or very short wording can score under the 0.59 cutoff and get "I could not find this" or the closest pages; no data covers "how to register" or "where to pay"; courses outside the four departments, other terms, seats and instructors are not covered; distress detection and name removal are pattern matching; the rate limit resets on restart; tuition due dates come out as one long sentence.
 
 ## What I would do next
 
 A "version 2", measured on fresh questions I write myself, never on the test split:
-- Fix casual wording failures first (q107, q108, q111, q123 and the casual dev group).
+- Casual wording: the rescue rule fixed most of the casual dev group (8 of 11 correct, 2 partial); q108 and the held-out cv2-27 are still refused. Next: make refusals carry the right office contact, answer cv2-24 with what the sources say, and stop the answer from stating the system date.
 - Include the refund rows for an unqualified "last day to drop" question; say that refund schedules differ by term and that fees are not refundable.
 - Retrieve the EET degrees page chunks together (q07); follow prerequisite chains past depth 4 or say what was cut (q41).
 - Answer both parts of a two-part question; remove names not written after "my name is".
