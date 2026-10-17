@@ -15,3 +15,21 @@ test("the short notice says AI, mistakes and the independence line, and leaves t
   assert.ok(NOTICE_AFTER_FIRST.includes(FOOTER_LINE));
   assert.doesNotMatch(NOTICE_AFTER_FIRST, /What is saved/);
 });
+
+test("the notice says names are removed only where they can be detected, and still asks for no personal information", async () => {
+  const { NOTICE_SHORT, NOTICE_POINTS } = await import("./notice.ts");
+  assert.equal(
+    NOTICE_SHORT,
+    "Your questions are saved to improve this assistant, with emails, phone numbers, ID numbers and names removed where we can detect them. Please don't type personal information.",
+  );
+  assert.ok(NOTICE_POINTS.some((p) => p.includes("A name written another way may be saved")));
+  assert.ok(NOTICE_POINTS.every((p) => !p.includes("removed only when it follows")));
+  assert.ok(NOTICE_POINTS.some((p) => p.includes("saved for 30 days")));
+});
+
+test("the short line after the first question is unchanged", () => {
+  assert.equal(
+    NOTICE_AFTER_FIRST,
+    "City Tech Assistant is AI and can make mistakes. Independent student project, not affiliated with City Tech or CUNY.",
+  );
+});

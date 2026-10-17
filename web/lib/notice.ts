@@ -2,7 +2,7 @@
 // writer, the purge command) by tests/test_requestlog.py; change them together.
 
 export const NOTICE_SHORT =
-  "Your questions are saved without emails, phone numbers or ID numbers, to improve this assistant. Please don't type personal information.";
+  "Your questions are saved to improve this assistant, with emails, phone numbers, ID numbers and names removed where we can detect them. Please don't type personal information.";
 
 /** The one footer line (landing page and chat page). The saved-questions line under it asks for no personal information. */
 export const FOOTER_LINE = "Independent student project, not affiliated with City Tech or CUNY";
@@ -22,7 +22,7 @@ export const NOTICE_TITLE = "What is saved?";
 
 export const NOTICE_POINTS: string[] = [
   "Questions and answers are saved for 30 days with emails, phone numbers and ID numbers removed. Older ones are deleted by a clean-up command that is run by hand for now.",
-  "A name is removed only when it follows \"my name is\"; other names are not removed, so please don't type personal information.",
+  "Names are removed from your question where we can detect them (for example after \"my name is\", \"I'm\" or \"this is\"). A name written another way may be saved, so please don't type personal information.",
   "Also saved: which pages were used, how long each step took, and what the request cost (numbers only).",
   "If you press the thumbs up or down, that vote is saved with the answer. Nothing else is saved with it.",
   "No IP address and no cookies are stored.",

@@ -278,14 +278,18 @@ def test_the_notice_says_what_the_code_does():
         if f"[{tag}]" in redact("a@b.edu 718-260-5800 23456789 123-45-6789")
     }
     assert "emails, phone numbers and ID numbers removed" in text
-    # names go only after "my name is" (step 7); other names stay, and the notice says so
+    # names are removed after a few cues (screen.scrub, batch 1); a name written any other way stays,
+    # and the notice says so
     from cta.api.screen import scrub
 
     assert redact("Maria Lopez") == "Maria Lopez"
     assert scrub("Maria Lopez") == "Maria Lopez"
     assert scrub("my name is Maria Lopez") == "my name is [NAME]"
-    assert 'removed only when it follows \\"my name is\\"' in text
-    assert "other names are not removed" in text
+    assert scrub("I'm Maria Lopez") == "I'm [NAME]"
+    assert scrub("hi it's Maria Lopez") == "hi it's Maria Lopez"  # not detected, as the notice says
+    assert "names removed where we can detect them" in text
+    assert "A name written another way may be saved" in text
+    assert "removed only when it follows" not in text
 
 
 def test_the_notice_claim_of_no_ip_and_no_cookies_is_true_of_the_code():
