@@ -2,6 +2,7 @@
 Fake clients, fake clocks and fake counters only: no network, no database, no paid call."""
 
 import hashlib
+import hmac
 import json
 import logging
 import time
@@ -164,7 +165,7 @@ def test_the_address_and_its_hash_are_nowhere_in_the_rows_the_logs_or_health(mon
         ask(c)
         ask(c)  # the second is rate limited
     g = c.app.state.guard
-    digest = hashlib.sha256(g.salt + b"testclient").hexdigest()
+    digest = hmac.new(g.salt, b"testclient", hashlib.sha256).hexdigest()
     everything = json.dumps(c.logs, default=str) + caplog.text + json.dumps(c.get("/health").json())
     assert "testclient" not in everything
     assert digest not in everything and digest[:12] not in everything

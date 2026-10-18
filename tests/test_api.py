@@ -85,6 +85,8 @@ def test_health_is_ok_with_the_database_up():
         "spend_check_failures",
         "blocked",
         "redacted",
+        "proxy_required",
+        "proxy_rejected",
     }
     assert body["log_failures"] == 0 and body["feedback_failures"] == 0
 
@@ -262,7 +264,8 @@ def cfg_for(**api):
 
 
 def make_client_app(client, monkeypatch, stub=None, cfg=None, tmp_root=None, connect=ok_connect,
-                    clock=lambda: TODAY, log_writer=None, feedback_writer=None):  # fmt: skip
+                    clock=lambda: TODAY, log_writer=None, feedback_writer=None,
+                    env=None, headers=None):  # fmt: skip
     cfg = cfg or cfg_for()
     if stub is not None:
         monkeypatch.setattr(build, "answer", lambda *a, **k: stub)
@@ -286,8 +289,9 @@ def make_client_app(client, monkeypatch, stub=None, cfg=None, tmp_root=None, con
     app = api_app.create_app(cfg, connect=connect, check_startup=False, router_factory=factory,
                              root=tmp_root or ROOT, clock=clock, log_writer=writer,
                              feedback_writer=feedback_writer or vote_writer,
-                             client_factory=lambda: client)  # fmt: skip
-    test_client = TestClient(app, raise_server_exceptions=False)
+                             client_factory=lambda: client,
+                             env={} if env is None else env)  # fmt: skip
+    test_client = TestClient(app, raise_server_exceptions=False, headers=headers)
     test_client.logs, test_client.votes = logs, votes
     return test_client
 

@@ -58,6 +58,10 @@ def startup_problems(
             problems.append(f"router.{key} must be on (the API contract needs routes and contacts)")
     if not env.get("OPENAI_API_KEY", "").strip():
         problems.append("OPENAI_API_KEY is not set")
+    for name in ("CTA_PROXY_SECRET", "CTA_IP_SALT"):
+        value = env.get(name, "").strip()
+        if value and len(value) < 16:
+            problems.append(f"{name} is set but shorter than 16 characters")
     problems += file_problems(root)
     problems += database_problems(connect)
     return problems

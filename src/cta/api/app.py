@@ -5,6 +5,7 @@ and is only converted here (cta.api.convert); nothing of the pipeline is copied.
 """
 
 import asyncio
+import os
 import subprocess
 import threading
 import time
@@ -14,6 +15,7 @@ from contextlib import ExitStack, asynccontextmanager
 from datetime import date
 
 import psycopg
+from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -86,7 +88,13 @@ def create_app(
 
     api = cfg["api"]
     feedback_failures = [0]  # a failed vote write is counted here and shown in /health
-    guard = guard_mod.Guard(guards, root=root)
+    if env is None:  # the real process: the environment, with .env for local runs
+        load_dotenv(root / ".env")
+    secrets_env = dict(os.environ) if env is None else env
+    guard = guard_mod.Guard(
+        guards, root=root, proxy_secret=secrets_env.get("CTA_PROXY_SECRET", "").strip(),
+        ip_salt=secrets_env.get("CTA_IP_SALT", "").strip(),
+    )  # fmt: skip
     # counts failed writes; a failed write never fails a request, and its cost still counts for
     # the daily cap (tester round 2, T13)
     record = requestlog.Logger(log_writer, on_lost=guard.add_unlogged)
@@ -104,7 +112,11 @@ def create_app(
     async def request_id_and_size(request: Request, call_next):
         request.state.request_id = uuid.uuid4().hex
         size = request.headers.get("content-length", "0")
-        if size.isdigit() and int(size) > api["max_body_bytes"]:
+        health_check = request.url.path == "/health" and request.method == "GET"
+        if not health_check and not guard.proxy_ok(request):
+            guard.proxy_rejected += 1  # a count only: nothing about the sender is kept
+            response = error(403, "forbidden", "Not available.", request)
+        elif size.isdigit() and int(size) > api["max_body_bytes"]:
             response = error(413, "too_large", "The request is too large.", request)
         else:
             response = await call_next(request)

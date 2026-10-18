@@ -4,14 +4,20 @@ Plain code, API layer only. In the order they run inside POST /ask: the kill swi
 per-visitor rate limit and the daily spend cap. The timeouts are applied in app.py.
 
 Privacy: the visitor's network address is read in ONE place (`Guard.visitor_key`) and goes straight
-into a salted hash. The salt is random, made at start-up and never saved. The counters live in this
-object's memory only; they are never written to the database, a log or /health, and a restart
-clears them.
+into a keyed hash (HMAC-SHA256). The key is CTA_IP_SALT from the environment, or a random one made
+at start-up and never saved. The counters live in this object's memory only; they are never
+written to the database, a log or /health, and a restart clears them.
+
+Behind the Vercel proxy (CTA_PROXY_SECRET set): a request must carry the shared secret in the
+x-cta-proxy-secret header, and only then is the visitor read from the x-real-ip header that the
+proxy set. Without the variable (local development) nothing changes.
 """
 
 import hashlib
+import hmac
 import os
 import secrets
+import socket
 import threading
 import time
 from collections import Counter, OrderedDict, deque
@@ -35,6 +41,8 @@ BLOCK_REASONS = ("kill_switch", "rate_limited", "daily_cap", "monthly_cap", "tim
                  "bereavement", "personal_data", "injection", "output", "stress",
                  "non_english")  # fmt: skip
 DISABLED_FILE = Path("data") / "api_disabled"
+PROXY_HEADER = "x-cta-proxy-secret"
+FORWARDED_HEADER = "x-real-ip"
 
 
 def utc_now() -> datetime:
@@ -48,6 +56,17 @@ def day_start(now: datetime) -> datetime:
 def month_start(now: datetime) -> datetime:
     """00:00 UTC on the first day of the month of `now` (the monthly cap counts from here)."""
     return day_start(now).replace(day=1)
+
+
+def valid_ip(text: str) -> bool:
+    """True for a plain IPv4 or IPv6 text (anything else from a header is ignored)."""
+    for family in (socket.AF_INET, socket.AF_INET6):
+        try:
+            socket.inet_pton(family, text)
+        except (OSError, ValueError):
+            continue
+        return True
+    return False
 
 
 def paused_text(contacts: dict | None = None) -> str:
@@ -67,9 +86,13 @@ class Guard:
     """The state of the guardrails: counters, caches and the blocked counts shown in /health."""
 
     def __init__(self, settings: dict, root: Path = ROOT, now: Callable[[], datetime] = utc_now,
-                 monotonic: Callable[[], float] = time.monotonic):  # fmt: skip
+                 monotonic: Callable[[], float] = time.monotonic, proxy_secret: str = "",
+                 ip_salt: str = ""):  # fmt: skip
         self.s, self.root, self.now, self.monotonic = settings, root, now, monotonic
-        self.salt = secrets.token_bytes(16)  # never saved; a restart makes a new one
+        self.proxy_secret = proxy_secret
+        self.proxy_rejected = 0  # requests refused for a missing or wrong secret (a count only)
+        # the key of the hash: from the environment, or random and never saved
+        self.salt = ip_salt.encode() if ip_salt else secrets.token_bytes(16)
         self.lock = threading.Lock()
         self.visitors: OrderedDict[str, dict] = OrderedDict()
         self.blocked: Counter[str] = Counter()
@@ -88,10 +111,21 @@ class Guard:
 
     # ---- 2. the rate limit ----
 
+    def proxy_ok(self, request) -> bool:
+        """True when no proxy secret is configured (local use) or the request carries it."""
+        if not self.proxy_secret:
+            return True
+        sent = request.headers.get(PROXY_HEADER, "")
+        return hmac.compare_digest(sent.encode(), self.proxy_secret.encode())
+
     def visitor_key(self, request) -> str:
-        """A salted hash of the network address. The only read of the address in the API."""
-        address = request.client.host if request.client else ""
-        return hashlib.sha256(self.salt + address.encode()).hexdigest()
+        """A keyed hash (HMAC-SHA256) of the network address. The only read of the address in the
+        API. With a proxy secret set and sent, the address is the one the proxy forwarded."""
+        host = request.client.host if request.client else ""
+        if self.proxy_secret and self.proxy_ok(request):
+            forwarded = request.headers.get(FORWARDED_HEADER, "").strip()
+            host = forwarded if valid_ip(forwarded) else host
+        return hmac.new(self.salt, host.encode(), hashlib.sha256).hexdigest()
 
     def rate_limited(self, key: str) -> bool:
         """Count this request for `key`; True when it is over the per-minute or per-day limit."""
@@ -229,4 +263,6 @@ class Guard:
             "spend_check_failures": self.spend_check_failures,
             "blocked": {k: self.blocked.get(k, 0) for k in BLOCK_REASONS},
             "redacted": self.redacted,
+            "proxy_required": bool(self.proxy_secret),
+            "proxy_rejected": self.proxy_rejected,
         }  # fmt: skip
