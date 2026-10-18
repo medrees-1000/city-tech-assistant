@@ -33,3 +33,16 @@ test("the short line after the first question is unchanged", () => {
     "City Tech Assistant is AI and can make mistakes. Independent student project, not affiliated with City Tech or CUNY.",
   );
 });
+
+test("the details say what goes to LangSmith, what does not, who else keeps logs, and that our records hold no address", async () => {
+  const { NOTICE_POINTS } = await import("./notice.ts");
+  const all = NOTICE_POINTS.join("\n");
+  assert.match(all, /also sent to LangSmith, a third-party tracing service/);
+  assert.match(all, /LangSmith keeps them for 14 days/);
+  assert.match(all, /Messages that the safety checks handle .* are not sent/);
+  assert.match(all, /hosted on Vercel .* Amazon Web Services\. They keep ordinary server logs that may include IP addresses, under their own policies/);
+  assert.match(all, /scrambled \(hashed\) form of the network address/);
+  assert.match(all, /no accounts/);
+  assert.match(all, /No IP address and no cookies are stored/);
+  assert.doesNotMatch(all, /Optional developer tracing is off by default/);
+});

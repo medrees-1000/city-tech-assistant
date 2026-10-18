@@ -25,8 +25,9 @@ export const NOTICE_POINTS: string[] = [
   "Names are removed from your question where we can detect them (for example after \"my name is\", \"I'm\" or \"this is\"). A name written another way may be saved, so please don't type personal information.",
   "Also saved: which pages were used, how long each step took, and what the request cost (numbers only).",
   "If you press the thumbs up or down, that vote is saved with the answer. Nothing else is saved with it.",
-  "No IP address and no cookies are stored.",
-  "To prevent abuse, requests are counted in memory per visitor using a scrambled form of the network address that is never saved; the count is cleared when the service restarts.",
-  "Optional developer tracing is off by default. If it is switched on for debugging, only the question text after personal details are removed, and the assistant's reply, are sent to LangSmith (a third party); no IP address and no cookies are sent.",
+  "No IP address and no cookies are stored, and there are no accounts. Our own records hold no network address at all.",
+  "To prevent abuse, requests are counted in memory per visitor using a scrambled (hashed) form of the network address that is never saved with your questions; the count is cleared when the service restarts.",
+  "Your question (after the removals above) and the assistant's reply are also sent to LangSmith, a third-party tracing service, so mistakes can be found and fixed. LangSmith keeps them for 14 days. Messages that the safety checks handle (for example about self-harm, danger or a death), and the fixed reply to off-topic requests, are not sent. No IP address and no cookies are sent.",
+  "The page is hosted on Vercel and the assistant runs on Amazon Web Services. They keep ordinary server logs that may include IP addresses, under their own policies.",
   "This is an independent student project, not affiliated with City Tech or CUNY.",
 ];

@@ -29,7 +29,7 @@ from cta.graph import render
 from cta.graph.build import Router, load_events
 from cta.index.db import connect as default_connect
 from cta.index.embed import ApiError, make_client, retry_limit
-from cta.settings import ROOT, load_models
+from cta.settings import ROOT, config_version, load_models
 
 
 def git_version() -> str:
@@ -77,6 +77,9 @@ def create_app(
     # built after the startup checks, so a refused start never builds a client
     tracer = tracing.Tracing.from_settings(cfg, env)
     version = git_version()
+    cfg_version = config_version(cfg)
+    trace_meta = {"commit": version, "config_version": cfg_version,
+                  "rescue": cfg["answer"].get("rescue", "off")}  # fmt: skip
     events = load_events()
     by_id = {e["id"]: e for e in events}
     url_map = convert.build_url_map(root / "data" / "processed" / "pages")
@@ -107,6 +110,7 @@ def create_app(
 
     app = FastAPI(title="City Tech Assistant", version=version, lifespan=lifespan)
     app.state.guard = guard  # tests read the counters and the salt through this
+    app.state.cfg = cfg
 
     @app.middleware("http")
     async def request_id_and_size(request: Request, call_next):
@@ -231,7 +235,11 @@ def create_app(
         try:
             with connect() as conn, ExitStack() as stack:
                 # the trace starts here: after the scrub and every guardrail, with the scrubbed text
-                trace = stack.enter_context(tracer.request(router_text, rid)) if tracer else None
+                trace = (
+                    stack.enter_context(tracer.request(router_text, rid, trace_meta))
+                    if tracer
+                    else None
+                )
                 try:
                     ans = router_factory(conn, cfg).answer(router_text, today, log=False)
                 except ApiError:
@@ -258,14 +266,16 @@ def create_app(
                     lines.append(screen.PERSONAL_NOTE)
                 if lines:
                     response.answer = "\n\n".join([*lines, response.answer])
-                if trace:
-                    trace.finish(response)
-                if response.abstained and screen.names_self_harm(response.answer):
+                net_distress = response.abstained and screen.names_self_harm(response.answer)
+                net_leak = screen.leaks_key(response.answer)
+                if trace:  # a reply the output nets turn into a safety reply is not recorded
+                    (trace.withhold if net_distress or net_leak else trace.finish)(response)
+                if net_distress:
                     guard.blocked["distress"] += 1  # the topic sentence must never echo it
                     return block("distress", question, rid, today, started,
                                  screen.reply("distress", guards), None,
                                  response.how_found.cost_usd["total"], True)  # fmt: skip
-                if screen.leaks_key(response.answer):  # never return a key-shaped answer
+                if net_leak:  # never return a key-shaped answer
                     guard.blocked["output"] += 1
                     return block("output", question, rid, today, started,
                                  screen.reply("output", guards), None,

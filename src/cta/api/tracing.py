@@ -19,6 +19,7 @@ import dataclasses
 import logging
 import os
 import re
+import threading
 from contextlib import contextmanager
 
 from dotenv import load_dotenv
@@ -115,21 +116,44 @@ class NullRecorder:
     def finish(self, response) -> None:
         return None
 
+    def withhold(self, response) -> None:
+        return None
+
+
+WITHHELD = "[reply withheld: handled by the safety checks]"
+
 
 class Recorder:
     def __init__(self, run):
         self.run = run
 
+    def outcome(self, response) -> dict:
+        """Numbers and labels only: no question or reply text."""
+        how = response.how_found
+        return {
+            "route": response.route, "answer_type": response.answer_type,
+            "abstained": response.abstained, "abstain_reason": response.abstain_reason,
+            "near_miss": how.near_miss, "cost_usd": how.cost_usd.get("total"),
+            "latency_ms": how.stages_ms.get("total"),
+        }  # fmt: skip
+
     def finish(self, response) -> None:
-        """Add the outcome (route, abstained, ...) and the reply text to the root run. A failure
-        here is logged without any text and never reaches the student."""
+        """Add the outcome (route, cost, latency, ...) and the reply text to the root run. A
+        failure here is logged without any text and never reaches the student."""
         try:
-            self.run.add_metadata({
-                "route": response.route, "answer_type": response.answer_type,
-                "abstained": response.abstained, "abstain_reason": response.abstain_reason,
-                "near_miss": response.how_found.near_miss,
-            })  # fmt: skip
+            self.run.add_metadata(self.outcome(response))
+            self.run.add_tags([f"route:{response.route}", f"answer_type:{response.answer_type}"])
             self.run.end(outputs={"answer": response.answer})
+        except Exception:  # noqa: BLE001
+            log.warning("tracing could not record the outcome (details withheld)")
+
+    def withhold(self, response) -> None:
+        """The reply was turned into a safety reply after the answer existed (the output nets in
+        app.py): the reply text that triggered it is not recorded."""
+        try:
+            self.run.add_metadata({**self.outcome(response), "route": "guardrail"})
+            self.run.add_tags(["route:guardrail", "safety_net"])
+            self.run.end(outputs={"answer": WITHHELD})
         except Exception:  # noqa: BLE001
             log.warning("tracing could not record the outcome (details withheld)")
 
@@ -145,6 +169,10 @@ class Tracing:
 
         def on_error(error) -> None:
             log.warning(UPLOAD_WARNING)
+
+        # the SDK's own failure message names the endpoint, run ids and the last characters of the
+        # key; our fixed warning above is the only line a failed upload may write
+        logging.getLogger("langsmith").setLevel(logging.CRITICAL)
 
         return Client(
             api_key=env["LANGSMITH_API_KEY"], api_url=env.get("LANGSMITH_ENDPOINT") or None,
@@ -170,12 +198,21 @@ class Tracing:
         project = env.get("LANGSMITH_PROJECT", "").strip() or DEFAULT_PROJECT
         return cls(cls.build_client(env), project)
 
-    def flush(self) -> None:
-        """Send what is still queued (called when the API stops, so no trace is lost)."""
-        try:
-            self.client.flush()
-        except Exception:  # noqa: BLE001
-            log.warning(UPLOAD_WARNING)
+    def flush(self, timeout_s: float = 5.0) -> None:
+        """Send what is still queued (called when the API stops, so no trace is lost). Waits at
+        most `timeout_s`: an unreachable LangSmith must not hold the shutdown."""
+
+        def run() -> None:
+            try:
+                self.client.flush()
+            except Exception:  # noqa: BLE001
+                log.warning(UPLOAD_WARNING)
+
+        worker = threading.Thread(target=run, name="trace-flush", daemon=True)
+        worker.start()
+        worker.join(timeout_s)
+        if worker.is_alive():
+            log.warning("tracing flush timed out (details withheld)")
 
     def wrap(self, openai_client):
         """The OpenAI client with its chat calls traced, and its embedding call traced as a small
@@ -195,14 +232,15 @@ class Tracing:
         return wrapped
 
     @contextmanager
-    def request(self, text: str, request_id: str):
+    def request(self, text: str, request_id: str, meta: dict | None = None):
         """One trace for one request. `text` must already be scrubbed (the API passes the text the
-        router gets); the client scrubs every payload again."""
+        router gets); the client scrubs every payload again. `meta`: labels set by the server (the
+        commit, the config version, whether the rescue rule is on); never visitor data."""
         import langsmith as ls
 
         with ls.tracing_context(enabled=True, client=self.client, project_name=self.project,
                                 tags=[TAG]):  # fmt: skip
             with ls.trace(name="ask", run_type="chain", inputs={"question": text},
-                          metadata={"request_id": request_id}, client=self.client,
+                          metadata={"request_id": request_id, **(meta or {})}, client=self.client,
                           project_name=self.project) as run:  # fmt: skip
                 yield Recorder(run)

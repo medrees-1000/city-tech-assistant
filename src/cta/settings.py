@@ -1,5 +1,7 @@
 """Load config/sources.yaml and the contact email from .env."""
 
+import hashlib
+import json
 import os
 from datetime import date
 from pathlib import Path
@@ -172,7 +174,19 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
         )
     cfg["guardrails"] = guardrail_settings(cfg.get("guardrails") or {}, env)
     cfg["tracing"] = {"enabled": bool((cfg.get("tracing") or {}).get("enabled", False))}
+    # production switches tracing on through the environment only (the file default stays false)
+    flag = env.get("CTA_TRACING_ENABLED", "").strip().lower()
+    if flag:
+        cfg["tracing"]["enabled"] = flag in ("1", "true", "yes", "on")
     return cfg
+
+
+def config_version(cfg: dict) -> str:
+    """A short fingerprint of the settings in force (the file plus environment overrides), shown
+    in /health and on traces so a result can be tied to a configuration. Holds no secret: the
+    secrets are never part of `cfg`."""
+    text = json.dumps(cfg, sort_keys=True, default=str)
+    return hashlib.sha256(text.encode()).hexdigest()[:10]
 
 
 # (config key, environment variable, type, minimum allowed value)

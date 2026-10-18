@@ -459,12 +459,13 @@ def test_stopping_the_api_flushes_the_queued_traces(monkeypatch):
     tracing.Tracing(SimpleNamespace(flush=boom), "p").flush()  # a failing flush never raises
 
 
-def test_the_privacy_notice_says_plainly_that_tracing_is_optional_off_and_redacted():
+def test_the_privacy_notice_says_plainly_that_scrubbed_text_goes_to_langsmith():
     notice = (ROOT / "web" / "lib" / "notice.ts").read_text(encoding="utf-8")
-    assert "Optional developer tracing is off by default" in notice
-    assert "LangSmith (a third party)" in notice and "after personal details are removed" in notice
-    assert "no IP address and no cookies are sent" in notice
-    assert load_models(env={})["tracing"]["enabled"] is False  # and the code default is off
+    assert "are also sent to LangSmith, a third-party tracing service" in notice
+    assert "after the removals above" in notice and "LangSmith keeps them for 14 days" in notice
+    assert "Messages that the safety checks handle" in notice
+    assert "No IP address and no cookies are sent" in notice
+    assert load_models(env={})["tracing"]["enabled"] is False  # the file default stays off
 
 
 def test_env_example_has_the_names_and_no_values():
