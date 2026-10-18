@@ -311,8 +311,8 @@ def test_the_notice_claim_of_no_ip_and_no_cookies_is_true_of_the_code():
             continue
         assert "set_cookie" not in code and "document.cookie" not in code, path
         assert "localStorage" not in code and "sessionStorage" not in code, path
-        # the API never reads x-forwarded-for; the page's proxy (web/lib/forward.ts) reads the host's
-        # copy once, to pass it on in x-real-ip, and stores nothing (no cookie or storage above)
+        # the API never reads x-forwarded-for; the page's proxy (web/lib/forward.ts) reads the
+        # host's copy once, to pass it on in x-real-ip, and stores nothing (no cookie or storage)
         if path.name not in ("forward.ts", "forward.test.ts"):
             assert "x-forwarded-for" not in code.lower(), path
         if path.name != "guard.py":  # the one place that reads the address (step 7, rule 8)
