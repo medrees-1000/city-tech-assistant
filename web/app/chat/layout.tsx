@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
-export const metadata: Metadata = { title: "Chat · City Tech Assistant (unofficial)" };
+export const metadata: Metadata = { title: "Chat · City Tech Assistant" };
 
 export default function ChatLayout({ children }: { children: ReactNode }) {
   return children;

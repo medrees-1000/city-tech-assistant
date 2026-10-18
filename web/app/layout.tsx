@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "City Tech Assistant (unofficial)",
+  title: "City Tech Assistant",
   description:
     "Unofficial student project: answers questions about City Tech registration, deadlines, aid and four departments, with sources.",
 };
