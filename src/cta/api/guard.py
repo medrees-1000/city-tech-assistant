@@ -123,6 +123,20 @@ class Guard:
         sent = request.headers.get(PROXY_HEADER, "")
         return hmac.compare_digest(sent.encode(), self.proxy_secret.encode())
 
+    def proxy_trusted(self, request) -> bool:
+        """True only when a proxy secret is configured AND this request carries it: the one case
+        in which the forwarded visitor is used. (Local use, with no secret, is not "trusted".)"""
+        return bool(self.proxy_secret) and self.proxy_ok(request)
+
+    def forwarded_present(self, request) -> bool:
+        """Whether the request carries a usable forwarded visitor (a plain IP in x-real-ip)."""
+        return valid_ip(request.headers.get(FORWARDED_HEADER, "").strip())
+
+    def known_visitor(self, request) -> bool:
+        """Whether the limiter already holds a counter for this visitor (no identifier leaves)."""
+        with self.lock:
+            return self.visitor_key(request) in self.visitors
+
     def visitor_key(self, request) -> str:
         """A keyed hash (HMAC-SHA256) of the network address. The only read of the address in the
         API. With a proxy secret set and sent, the address is the one the proxy forwarded."""

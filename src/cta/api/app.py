@@ -5,6 +5,7 @@ and is only converted here (cta.api.convert); nothing of the pipeline is copied.
 """
 
 import asyncio
+import json
 import os
 import subprocess
 import threading
@@ -67,6 +68,18 @@ def error(status: int, code: str, message: str, request: Request) -> JSONRespons
     return JSONResponse(
         body | {"request_id": rid}, status_code=status, headers={"X-Request-ID": rid}
     )
+
+
+def ask_line(request: Request, guard: guard_mod.Guard) -> None:
+    """One structured line on stdout per /ask: did the shared secret match (so the forwarded visitor
+    is used), was a forwarded visitor present, had the limiter seen this visitor before. Booleans
+    only: never the secret, the salt, an address or a hash."""
+    print(json.dumps({
+        "event": "ask", "request_id": request.state.request_id,
+        "proxy_required": bool(guard.proxy_secret), "proxy_trusted": guard.proxy_trusted(request),
+        "forwarded_present": guard.forwarded_present(request),
+        "visitor_seen_before": guard.known_visitor(request),
+    }), flush=True)  # fmt: skip
 
 
 def create_app(
@@ -143,6 +156,8 @@ def create_app(
         request.state.request_id = uuid.uuid4().hex
         size = request.headers.get("content-length", "0")
         health_check = request.url.path == "/health" and request.method == "GET"
+        if request.url.path == "/ask" and request.method == "POST":
+            ask_line(request, guard)
         if not health_check and not guard.proxy_ok(request):
             guard.proxy_rejected += 1  # a count only: nothing about the sender is kept
             response = error(403, "forbidden", "Not available.", request)

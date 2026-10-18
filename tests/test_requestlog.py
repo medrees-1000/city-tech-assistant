@@ -238,6 +238,7 @@ def test_the_logs_command_prints_the_last_api_requests_redacted_and_a_total(
     insert(conn, "eval", 0)  # eval rows are not API requests
     conn.commit()
     monkeypatch.setattr(logs, "connect", lambda: nullcontext(conn))
+    capsys.readouterr()  # drop the per-request diagnostic line the API printed above
     assert logs.main(["x", "--last", "2"]) == 0
     out = capsys.readouterr().out.strip().splitlines()
     assert len(out) == 3  # two rows and the total line
