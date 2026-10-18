@@ -99,7 +99,9 @@ def test_without_a_secret_no_proxy_header_is_sent():
     server = FakeServer()
     client = httpx.Client(transport=httpx.MockTransport(server), base_url="http://api.test")
     smoke.run(smoke.Smoke(client, "", "", "203.0.113.9"), "open", "http://api.test/health")
-    assert all("x-cta-proxy-secret" not in h and "x-real-ip" not in h for h in server.seen_headers)
+    assert all("x-cta-proxy-secret" not in h for h in server.seen_headers)
+    visitors = [h["x-real-ip"] for h in server.seen_headers if "x-real-ip" in h]
+    assert visitors and set(visitors) == {"203.0.113.9"}  # every /ask carries the made-up visitor
 
 
 def test_a_server_that_never_rate_limits_fails_that_check():

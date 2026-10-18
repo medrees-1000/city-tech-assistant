@@ -5,14 +5,16 @@
 #
 #   scripts/export_index.sh backups/index-2026-10-18.dump
 #
-# Environment: COMPOSE_FILE (default docker-compose.yml), ENV_FILE (optional, for the production file),
-# CTA_DB (database name, default cta). Needs the db service of that compose file to be running.
+# Environment: COMPOSE_ARGS (default "-f docker-compose.yml"; on the server
+#   COMPOSE_ARGS="--env-file .env.production -f docker-compose.prod.yml"), CTA_DB (database name,
+# default cta). Needs the db service of that stack to be running.
 set -euo pipefail
 
 OUT="${1:?usage: scripts/export_index.sh OUT.dump}"
-COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yml}"
+COMPOSE_ARGS="${COMPOSE_ARGS:--f docker-compose.yml}"  # for the production stack: "--env-file .env.production -f docker-compose.prod.yml"
 DB="${CTA_DB:-cta}"
-compose() { docker compose ${ENV_FILE:+--env-file "$ENV_FILE"} -f "$COMPOSE_FILE" "$@"; }
+# shellcheck disable=SC2086  # the arguments are meant to be split
+compose() { docker compose $COMPOSE_ARGS "$@"; }
 count() { compose exec -T db psql -U cta -d "$DB" -tA -c "SELECT count(*) FROM $1"; }
 
 mkdir -p "$(dirname "$OUT")"

@@ -1,8 +1,22 @@
 # HTTPS front of the API. CTA_HOSTNAME is the DuckDNS name (for example myname.duckdns.org); Caddy gets and
 # renews its certificate by itself. The page's proxy (web/proxy.ts) is the only expected caller.
-# There is no `log` directive on purpose: Caddy writes no access log (https://caddyserver.com/docs/caddyfile/directives/log).
+# There is no `log` directive in the site block on purpose: Caddy writes no access log
+# (https://caddyserver.com/docs/caddyfile/directives/log). But Caddy's ERROR log (for example a 502 while the API
+# restarts) prints the whole request with its headers, which here include the shared secret and the visitor
+# address (found in the local rehearsal). The filter below removes the headers and addresses from every log line.
 {
 	admin off
+	log {
+		format filter {
+			wrap json
+			fields {
+				request>headers delete
+				request>remote_ip delete
+				request>remote_port delete
+				request>client_ip delete
+			}
+		}
+	}
 }
 
 {$CTA_HOSTNAME} {

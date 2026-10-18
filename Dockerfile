@@ -26,7 +26,13 @@ COPY pyproject.toml ./
 COPY config ./config
 COPY db ./db
 ARG CTA_COMMIT=unknown
-ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1 CTA_API_HOST=0.0.0.0 CTA_COMMIT=$CTA_COMMIT
+ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1 CTA_API_HOST=0.0.0.0 CTA_COMMIT=$CTA_COMMIT \
+    TIKTOKEN_CACHE_DIR=/opt/tiktoken
+# tiktoken downloads its token table on first use and caches it; the non-root user cannot write to a
+# default cache folder (found in the rehearsal: every retrieval answer failed). Fetch it once at build time.
+RUN mkdir -p /opt/tiktoken \
+    && python -c "import tiktoken; tiktoken.encoding_for_model('text-embedding-3-small')" \
+    && chmod -R a+rX /opt/tiktoken
 USER cta
 EXPOSE 8000
 CMD ["python", "-m", "cta.api"]

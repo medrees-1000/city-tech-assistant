@@ -9,8 +9,9 @@ any failure. Works against the local API, the Caddy address of the server, or th
 
 Cost: four requests reach the model (about $0.002 in all); the rest are fixed replies that cost
 nothing. The shared secret is read from --secret or the environment variable CTA_PROXY_SECRET and is
-never printed. The rate-limit check uses one visitor for all requests; with a secret it sets a made-up
-documentation address (203.0.113.x) as the visitor, so the run does not use up a real visitor's limit.
+never printed. The rate-limit check uses one visitor for all requests: a made-up documentation address
+(203.0.113.x) sent in x-real-ip, so the run does not use up a real visitor's limit (the API only
+trusts that header when the secret matches).
 """
 
 import argparse
@@ -29,7 +30,9 @@ LIMIT_PER_MINUTE = 10
 class Smoke:
     def __init__(self, client: httpx.Client, prefix: str, secret: str, visitor: str):
         self.client, self.prefix = client, prefix.rstrip("/")
-        self.headers = {"x-cta-proxy-secret": secret, "x-real-ip": visitor} if secret else {}
+        # the made-up visitor goes with every request: the local page forwards it, the API trusts it
+        # only with the secret, and Vercel replaces it with the real visitor
+        self.headers = {"x-real-ip": visitor, **({"x-cta-proxy-secret": secret} if secret else {})}
         self.sent = 0
         self.rows: list[tuple[str, bool, str]] = []
 

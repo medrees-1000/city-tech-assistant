@@ -26,6 +26,13 @@ def env_names(text: str) -> list[str]:
 # ---- the stack ----
 
 
+def test_the_production_stack_has_its_own_project_name():
+    # found in the rehearsal: with no name, `up` took over the development database container
+    assert COMPOSE["name"] == "cta"
+    dev = yaml.safe_load((ROOT / "docker-compose.yml").read_text(encoding="utf-8"))
+    assert COMPOSE["name"] != dev.get("name", ROOT.name)
+
+
 def test_only_caddy_publishes_ports_and_only_80_and_443():
     published = {name: s.get("ports") for name, s in SERVICES.items() if s.get("ports")}
     assert set(published) == {"caddy"}
@@ -133,14 +140,26 @@ def test_caddy_forwards_only_the_two_page_paths_and_writes_no_access_log():
     text = (ROOT / "Caddyfile").read_text(encoding="utf-8")
     assert "path /ask /feedback" in text and "method POST" in text
     assert "reverse_proxy api:8000" in text and 'respond "Not found" 404' in text
-    assert not re.search(r"^\s*log\b", text, re.M)  # no access log directive
+    site = text.split("{$CTA_HOSTNAME} {")[1]
+    assert not re.search(r"^\s*log\b", site, re.M)  # no access log directive in the site block
     assert "{$CTA_HOSTNAME}" in text and "admin off" in text
+
+
+def test_caddys_error_log_drops_the_request_headers_and_addresses():
+    # found in the rehearsal: a 502 logged the shared secret and the visitor's X-Real-Ip header
+    text = (ROOT / "Caddyfile").read_text(encoding="utf-8")
+    fields = ("request>headers", "request>remote_ip", "request>client_ip", "request>remote_port")
+    for field in fields:
+        assert f"{field} delete" in text, field
+    assert "format filter" in text and "wrap json" in text
 
 
 def test_the_image_runs_as_a_non_root_user_with_code_only():
     text = (ROOT / "Dockerfile").read_text(encoding="utf-8")
     assert "USER cta" in text and "tzdata" in text and "uv sync --frozen --no-dev" in text
     assert "COPY config" in text and "COPY db" in text
+    # found in the rehearsal: tiktoken could not write its cache as the non-root user
+    assert "TIKTOKEN_CACHE_DIR=/opt/tiktoken" in text and "encoding_for_model" in text
     assert "COPY data" not in text and "ENV OPENAI" not in text
     ignored = (ROOT / ".dockerignore").read_text(encoding="utf-8").split()
     for must in (".env", ".git", "data"):
@@ -200,7 +219,7 @@ def test_the_index_round_trip_exports_and_restores_only_the_index_tables(tmp_pat
         with psycopg.connect(_with_db(base, dst)) as c:
             db.migrate(c)
         dump = tmp_path / "index.dump"
-        env = {"COMPOSE_FILE": "docker-compose.yml", "PATH": _path()}
+        env = {"COMPOSE_ARGS": "-f docker-compose.yml", "PATH": _path()}
         out = subprocess.run(["scripts/export_index.sh", str(dump)], cwd=ROOT, capture_output=True,
                              text=True, env=env | {"CTA_DB": src})  # fmt: skip
         assert out.returncode == 0, out.stderr

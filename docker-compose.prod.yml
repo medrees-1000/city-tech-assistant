@@ -4,6 +4,10 @@
 # Only Caddy publishes ports (80 and 443). Postgres is on an internal network with no route out and no
 # published port; the API port 8000 is reachable only from Caddy. See docs/deploy-runbook.md.
 
+# A project name of its own: without it Compose names the project after the folder, which is also the
+# development stack's name (docker-compose.yml), and `up` would replace the development database container.
+name: cta
+
 x-logging: &log
   driver: json-file
   options:
