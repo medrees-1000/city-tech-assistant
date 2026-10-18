@@ -132,6 +132,18 @@ class Guard:
         """Whether the request carries a usable forwarded visitor (a plain IP in x-real-ip)."""
         return valid_ip(request.headers.get(FORWARDED_HEADER, "").strip())
 
+    def forwarded_family(self, request) -> str:
+        """"ipv4", "ipv6" or "none": the kind of the forwarded visitor, never the visitor itself. A
+        dual-stack client that switches between the two is two different visitors to the limiter."""
+        text = request.headers.get(FORWARDED_HEADER, "").strip()
+        for family, name in ((socket.AF_INET, "ipv4"), (socket.AF_INET6, "ipv6")):
+            try:
+                socket.inet_pton(family, text)
+            except (OSError, ValueError):
+                continue
+            return name
+        return "none"
+
     def known_visitor(self, request) -> bool:
         """Whether the limiter already holds a counter for this visitor (no identifier leaves)."""
         with self.lock:

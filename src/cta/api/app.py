@@ -72,12 +72,14 @@ def error(status: int, code: str, message: str, request: Request) -> JSONRespons
 
 def ask_line(request: Request, guard: guard_mod.Guard) -> None:
     """One structured line on stdout per /ask: did the shared secret match (so the forwarded visitor
-    is used), was a forwarded visitor present, had the limiter seen this visitor before. Booleans
-    only: never the secret, the salt, an address or a hash."""
+    is used), was a forwarded visitor present and of which family, had the limiter seen this
+    visitor before. Booleans and a family label only: never the secret, the salt, an address or a
+    hash."""
     print(json.dumps({
         "event": "ask", "request_id": request.state.request_id,
         "proxy_required": bool(guard.proxy_secret), "proxy_trusted": guard.proxy_trusted(request),
         "forwarded_present": guard.forwarded_present(request),
+        "forwarded_family": guard.forwarded_family(request),
         "visitor_seen_before": guard.known_visitor(request),
     }), flush=True)  # fmt: skip
 

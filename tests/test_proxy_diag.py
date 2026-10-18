@@ -90,5 +90,16 @@ def test_the_line_never_holds_the_secret_the_salt_an_address_or_a_hash(monkeypat
         assert secret not in out
     (ln,) = [json.loads(x) for x in out.splitlines() if x.startswith('{"event": "ask"')]
     assert set(ln) == {"event", "request_id", "proxy_required", "proxy_trusted",
-                       "forwarded_present", "visitor_seen_before"}  # fmt: skip
-    assert all(isinstance(ln[k], bool) for k in set(ln) - {"event", "request_id"})
+                       "forwarded_present", "forwarded_family", "visitor_seen_before"}  # fmt: skip
+    assert ln["forwarded_family"] == "ipv4"
+    flags = set(ln) - {"event", "request_id", "forwarded_family"}
+    assert all(isinstance(ln[k], bool) for k in flags)
+
+
+def test_the_family_label_tells_ipv4_from_ipv6_from_nothing(monkeypatch, capsys):
+    c = app(monkeypatch)
+    post(c, ip="203.0.113.7")
+    post(c, ip="2001:db8::1")
+    post(c, ip=None)
+    post(c, ip="junk")
+    assert [ln["forwarded_family"] for ln in lines(capsys)] == ["ipv4", "ipv6", "none", "none"]
