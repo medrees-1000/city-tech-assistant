@@ -4,6 +4,10 @@
 
 import type { ApiError } from "./api.ts";
 
+/** The same sentence as CRISIS_LINE in src/cta/api/screen.py (a test compares them). */
+export const CRISIS_LINE =
+  "If you are in crisis, you can call or text 988 (the 988 Suicide & Crisis Lifeline) at any time; in an emergency, call 911.";
+
 export const GENERIC = "Something went wrong. Please try again in a moment.";
 
 const MESSAGES: Record<string, string> = {
@@ -16,9 +20,9 @@ const MESSAGES: Record<string, string> = {
   invalid_request: "That question could not be sent. Please check it and try again.",
   invalid_question: "Please type a question that is not empty and not too long.",
   rate_limited: "You're asking quickly. Please wait a moment and try again.",
-  daily_cap: "The assistant has reached its limit for today. Please try again tomorrow.",
-  kill_switch: "The assistant is temporarily paused. Please check back later.",
-  monthly_cap: "The assistant is paused for the rest of this month to stay within its budget. Please check back next month.",
+  daily_cap: `The assistant has reached its limit for today. Please try again tomorrow. ${CRISIS_LINE}`,
+  kill_switch: `The assistant is temporarily paused. Please check back later. ${CRISIS_LINE}`,
+  monthly_cap: `The assistant is paused for the rest of this month to stay within its budget. Please check back next month. ${CRISIS_LINE}`,
   forbidden: "The assistant could not be reached from here. Please try again in a moment.",
 };
 

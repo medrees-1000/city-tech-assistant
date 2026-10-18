@@ -14,12 +14,22 @@ from cta.graph.clarify import TERM_NAME, TOPIC_WORDS, WORD
 from cta.index.departments import detect_departments
 from cta.redact import redact
 
+# The two numbers of the crisis replies live here once. The distress reply and the one sentence
+# added to every fixed "paused" reply (CRISIS_LINE, used by cta.api.guard) are built from them, so
+# the launch-day re-check of 988 and 911 covers both.
+LIFELINE = "988"
+EMERGENCY = "911"
+CRISIS_LINE = (
+    f"If you are in crisis, you can call or text {LIFELINE} (the {LIFELINE} Suicide & Crisis "
+    f"Lifeline) at any time; in an emergency, call {EMERGENCY}."
+)  # holds nothing a student typed
+
 TEXTS = {
     "distress": (
         "I'm really sorry you're going through this. I can't help with this, but you don't have "
-        "to face it alone. In the United States, you can call or text 988 (the 988 Suicide & "
-        "Crisis Lifeline) at any time, day or night. If you or someone else is in immediate "
-        "danger, call 911. Talking with someone you trust can help too."
+        f"to face it alone. In the United States, you can call or text {LIFELINE} (the {LIFELINE} "
+        "Suicide & Crisis Lifeline) at any time, day or night. If you or someone else is in "
+        f"immediate danger, call {EMERGENCY}. Talking with someone you trust can help too."
     ),
     "bereavement": (
         "I'm so sorry for your loss. I can't help with this here, but please reach out to "

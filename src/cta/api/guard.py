@@ -26,13 +26,16 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 
+from cta.api.screen import CRISIS_LINE
 from cta.settings import ROOT
 
 # The fixed replies. None contains anything the student typed.
 TEXTS = {
-    "kill_switch": "The assistant is temporarily paused. Please check back later.",
+    "kill_switch": f"The assistant is temporarily paused. Please check back later. {CRISIS_LINE}",
     "rate_limited": "You're asking quickly. Please wait a moment and try again.",
-    "daily_cap": "The assistant has reached its limit for today. Please try again tomorrow.",
+    "daily_cap": (
+        f"The assistant has reached its limit for today. Please try again tomorrow. {CRISIS_LINE}"
+    ),
     "timeout": "That took too long. Please try again in a moment.",
 }
 # Statuses of failed requests: their cost is unknown, so each counts a flat estimate.
@@ -79,7 +82,8 @@ def paused_text(contacts: dict | None = None) -> str:
     return (
         "The assistant is paused for the rest of this month to stay within its budget. It will "
         "answer questions again next month. For help now: "
-        f"{contact_line('registrar', contacts)} {contact_line('advisement', contacts)}"
+        f"{contact_line('registrar', contacts)} {contact_line('advisement', contacts)} "
+        f"{CRISIS_LINE}"
     )
 
 

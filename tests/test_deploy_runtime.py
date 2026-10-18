@@ -6,7 +6,7 @@ from datetime import UTC, date, datetime
 
 from cta.api import __main__ as api_main
 from cta.api import app as api_app
-from cta.api import guard
+from cta.api import guard, screen
 from tests.test_api import Client, ask, make_client_app, retrieve_answer
 from tests.test_guard import cfg_guard
 
@@ -82,7 +82,8 @@ def test_the_kill_switch_says_temporarily_paused_and_makes_no_model_call(monkeyp
     (tmp_path / "data" / "api_disabled").write_text("")  # the file kill switch, no restart
     calls = len(client.calls)
     body = ask(c).json()
-    assert body["answer"] == "The assistant is temporarily paused. Please check back later."
+    paused = "The assistant is temporarily paused. Please check back later."
+    assert body["answer"].startswith(paused) and body["answer"].endswith(screen.CRISIS_LINE)
     assert body["answer"] == guard.TEXTS["kill_switch"] and len(client.calls) == calls
     (tmp_path / "data" / "api_disabled").unlink()
     assert ask(c).json()["answer_type"] == "answer"
