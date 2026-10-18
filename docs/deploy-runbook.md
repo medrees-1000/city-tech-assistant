@@ -133,6 +133,13 @@ Proposal: keep 30 days for normal rows (it is what the page promises and is enou
 
 Safety-screen requests and our logs, today: for the regex tiers (self-harm, danger, bereavement, personal numbers, off-topic) our own log stores **no question text**, the fixed reply, the reason, zero cost and the length of the question. They are never sent to LangSmith (a test proves it, including the two output nets, which now withhold the reply text). I propose **no change** to what our log stores for them: it is already the minimum that still lets `/health` and the log reader count them.
 
+## Updating a running deployment after a code change
+
+1. Server, in the browser terminal: `cd ~/city-tech-assistant && git pull && sed -i "s/^CTA_COMMIT=.*/CTA_COMMIT=$(git rev-parse --short HEAD)/" .env.production && dc up -d --build` (rebuilds the API image; the database and the Caddy certificate are kept; never `down -v`).
+2. Vercel: only if `web/` changed, the push to master redeploys the page by itself; wait for Ready. (The diagnostic below changes the API only.)
+3. One run through the page: `uv run python scripts/smoke_live.py https://city-tech-assistant.vercel.app --prefix /api --health hidden` (twice in a row).
+4. Read what the API saw, on the server: `docker compose --env-file .env.production -f docker-compose.prod.yml logs --no-log-prefix --since 10m api | grep '"event": "ask"' | sed 's/.*"proxy_required"/"proxy_required"/'`. Each line shows `proxy_required`, `proxy_trusted`, `forwarded_present`, `forwarded_family` (ipv4, ipv6 or none) and `visitor_seen_before`. How to read it is in docs/decisions.md, "Per-visitor rate limit through the Vercel page: undiagnosed".
+
 ## Command verification (read 2026-10-18)
 
 Every command above that is not plain shell was checked against an official page on 2026-10-18; where a page did not confirm it, the step says **unverified** and it is listed here. No code was changed for this check.
