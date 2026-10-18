@@ -4,6 +4,8 @@ Written for the owner, who must be able to explain every line. Docs only: no cod
 
 > **Update, Oct 18, 2026 (Part A of the build):** the build is described in [docs/deploy-runbook.md](deploy-runbook.md) and "Deployment Part A" in `docs/decisions.md`. Where this plan and the build differ, the build wins: the monthly cap is the current UTC month at $5 (not a rolling 30 days; the owner chose it, caveat in the runbook); the visitor address comes from a shared secret plus `x-real-ip` in the API (no uvicorn proxy headers, no `X-Forwarded-For` rewrite in Caddy); the page forwards through `web/proxy.ts` (a header cannot be added by a `next.config` rewrite, and a `vercel.json` header transform was untested); Postgres is on an internal Docker network with no published port; `data/` is a bind mount, not baked into the image; the kill switch reply reads "The assistant is temporarily paused. Please check back later."; the daily cap stayed at $1.
 
+> **Update, Oct 18, 2026 (Lightsail):** the owner chose **AWS Lightsail**, not EC2. Instance `cta-server`, Ubuntu 24.04 LTS, the $12 plan (2 GB RAM, 2 vCPUs, 60 GB SSD, 3 TB transfer), region **Ohio (us-east-2a)**, dual-stack, static IP `cta-ip` = `3.135.33.79` attached, snapshots off, firewall rules HTTP 80, SSH 22 and HTTPS 443 (IPv4 only), a DuckDNS name with no IPv6 record. The EC2, security group, EBS, Elastic IP and `t3.small` text below is replaced; the cost is **$12 a month, $72 for 6 months**. Plan contents and prices are from the owner's console, not from an official page I read; whether the free-plan credits pay for Lightsail is **unconfirmed** (the owner checks Billing and Credits). The step order is in [docs/deploy-runbook.md](deploy-runbook.md).
+
 State checked first: repo `~/city-tech-assistant`, branch `master`, working tree clean, HEAD `d186e09` (a data-only commit on top of `45d6765`). Local Docker Postgres is `pgvector/pgvector:0.8.7-pg17`.
 
 ## Summary table
@@ -11,13 +13,12 @@ State checked first: repo `~/city-tech-assistant`, branch `master`, working tree
 | Item | Recommended default | Monthly cost | Source URL | Date read | Status |
 |---|---|---|---|---|---|
 | Web page | Vercel Hobby, free `vercel.app` address | $0 | https://vercel.com/docs/plans/hobby | 2026-10-18 | confirmed (non-commercial use only) |
-| Server plan | AWS Free account plan: $100 signup credit plus up to $100 more by activities, 6 months | $0 cash while credits last | https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier-plans.html | 2026-10-18 | confirmed |
-| Server size | EC2 `t3.small` (2 vCPU, 2 GiB), Linux, region us-east-1 | $15.26 from credits (0.0209 x 730 h) | https://aws.amazon.com/ec2/instance-types/t3/ | 2026-10-18 | price confirmed; region choice is mine |
-| Is `t3.small` allowed on the Free plan | Yes (list: t3.micro, t3.small, t4g.micro, t4g.small, c7i-flex.large, m7i-flex.large) | n/a | https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-free-tier-usage.html | 2026-10-18 | confirmed |
-| Public IPv4 | One address on the instance | $3.65 (0.005 x 730 h) | https://aws.amazon.com/vpc/pricing/ | 2026-10-18 | price confirmed; **unconfirmed** that credits cover it (see 1.2) |
-| Disk | 20 GB gp3 | $1.60 (20 x 0.08) | https://aws.amazon.com/ebs/pricing/ | 2026-10-18 | **unconfirmed**: the page does not name the region for the $0.08 |
-| Data transfer out | Expected under 1 GB a month | $0 (100 GB free a month) | https://aws.amazon.com/ec2/pricing/on-demand/ | 2026-10-18 | confirmed |
-| **AWS total** | | **about $20.51 from credits** | arithmetic above | 2026-10-18 | 6 months = $123.06, see 1.4 |
+| Server plan | AWS Free account plan: $100 signup credit plus up to $100 more by activities. Credits last 12 months; the Free plan itself ends at 6 months or when credits run out | $0 cash while credits last | https://aws.amazon.com/free/terms/ and https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier-plans.html | 2026-10-18 | confirmed; **unconfirmed** that credits pay for Lightsail |
+| Server | AWS Lightsail `cta-server`: $12 plan (2 GB RAM, 2 vCPUs, 60 GB SSD, 3 TB transfer), Ubuntu 24.04 LTS, Ohio (us-east-2a) | **$12 a month, $72 for 6 months** | owner's Lightsail console | 2026-10-18 | from the owner's console, not an official page |
+| Static IP | `cta-ip` (3.135.33.79), attached | $0 while attached (charged when not attached) | https://docs.aws.amazon.com/lightsail/latest/userguide/understanding-static-ip-addresses-in-amazon-lightsail.html | 2026-10-18 | confirmed |
+| Disk, IPv4, transfer | included in the plan (no separate disk or IPv4 line) | $0 extra | owner's console | 2026-10-18 | **unverified** on an official page |
+| Snapshots | off; the owner's own `pg_dump` is the backup | $0 (snapshots are billed separately) | owner's console | 2026-10-18 | **unverified** |
+| **AWS total** | | **$12 a month** | arithmetic: 12 x 6 | 2026-10-18 | 6 months = $72, see 1.4 |
 | Fallback server | Hetzner CX23 (2 vCPU, 4 GB) | EUR 5.49 + 0.50 IPv4 = EUR 5.99, excluding VAT | https://docs.hetzner.com/general/infrastructure-and-availability/price-adjustment/ and https://docs.hetzner.com/cloud/servers/primary-ips/overview/ | 2026-10-18 | prices confirmed; **availability unconfirmed** (3.1) |
 | Browser to API path | Same-origin `/api/*` rewrite on Vercel to the server (the app already does this) | $0 | https://vercel.com/docs/routing/rewrites | 2026-10-18 | confirmed (header behaviour); timeout **unconfirmed** |
 | HTTPS hostname for the server | Free DuckDNS name plus Caddy certificate | $0 | https://www.duckdns.org/ | 2026-10-18 | partly confirmed: free, terms page exists; limits unconfirmed |
@@ -26,7 +27,7 @@ State checked first: repo `~/city-tech-assistant`, branch `master`, working tree
 | LangSmith | Developer (free) plan, no card on file, scrubbed tracing ON | $0 | https://www.langchain.com/pricing and https://docs.langchain.com/langsmith/billing | 2026-10-18 | confirmed; behaviour past the limit only partly |
 | Budget alert | AWS Budgets cost budget with email alerts | $0 | https://aws.amazon.com/aws-cost-management/aws-budgets/pricing/ | 2026-10-18 | confirmed |
 
-Expected cash cost while the AWS credits last: **$0** (plus a domain if you choose one). Expected OpenAI cost: measured $0.00034 per request, so 100 questions a day is about $1.03 a month.
+Expected cash cost while the AWS credits last: **$0** ($12 a month of credits, $72 over the 6 months) (plus a domain if you choose one). Expected OpenAI cost: measured $0.00034 per request, so 100 questions a day is about $1.03 a month.
 
 ---
 
@@ -37,40 +38,37 @@ Expected cash cost while the AWS credits last: **$0** (plus a domain if you choo
 | Question | Answer | Source (read 2026-10-18) |
 |---|---|---|
 | Credit at signup | "USD $100 in credits after you create an account regardless of your account plan." | https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier-plans.html |
-| Extra credits | Up to $100 more "by completing activities" in the Explore AWS widget. Listed activities: launch an EC2 instance, use a Bedrock playground model, **set up a cost budget with AWS Budgets**, build a Lambda web app, create an RDS database. Four of the five say they incur charges deducted from the credits; the Budgets one does not. **The dollar value of each activity is not on the page: unconfirmed.** | https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier-plans-activities.html |
+| Extra credits | Up to $100 more "by completing activities" in the Explore AWS widget. Listed activities (a Lightsail instance may not count as the EC2 one: **unverified**): launch an EC2 instance, use a Bedrock playground model, **set up a cost budget with AWS Budgets**, build a Lambda web app, create an RDS database. Four of the five say they incur charges deducted from the credits; the Budgets one does not. **The dollar value of each activity is not on the page: unconfirmed.** | https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier-plans-activities.html |
 | How long | "Your free account plan ends after six months or when your credits are fully used - whichever occurs first." Activities must be done within 6 months of opening the account. | free-tier-plans.html above; https://aws.amazon.com/free/free-tier-faqs/ |
 | When it ends | The account closes automatically and you "lose access to your resources and data. AWS retains your content for 90 days before permanently deleting your account." You can upgrade to a Paid plan within 90 days; "Any remaining credits from your free account plan are automatically applied to future AWS bills." | free-tier-plans.html |
 | Credit card | The FAQ (read through a summarizing tool, not word for word) says not required for most new customers but "may" be requested to verify identity. **Unconfirmed**: the owner reports what the signup actually asks (step 2 in section 8). | https://aws.amazon.com/free/free-tier-faqs/ |
 | Services allowed | "Access to select AWS services and features". The excluded list is not on the doc pages ("a subset ... that would immediately consume the entire Free Tier credit amount"). EC2 is allowed: "Use credits to access Amazon EC2 features in both Free and Paid plans." | https://aws.amazon.com/free/compute/lightsail-vs-ec2/ ; FAQ above |
-| EC2 sizes on the Free plan (accounts created on or after July 15, 2025) | `t3.micro`, `t3.small`, `t4g.micro`, `t4g.small`, `c7i-flex.large`, `m7i-flex.large`. "You can't exceed your Free Tier limits." | https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-free-tier-usage.html |
-| Lightsail | The only official statement I found: "Evaluate Amazon Lightsail with a 90-day free trial **with the Paid plan**." Nothing says Lightsail is available on the Free plan: **treat as not allowed / unconfirmed; do not use it.** | https://aws.amazon.com/free/compute/lightsail-vs-ec2/ |
+| Instance type | Not relevant any more: the server is a Lightsail instance, so the EC2 size list (`t3.micro`, `t3.small` and others) no longer applies. Whether Lightsail is paid by free-plan credits is **unconfirmed**; the page I read in the first draft said only that Lightsail has a 90-day trial "with the Paid plan" | https://aws.amazon.com/free/compute/lightsail-vs-ec2/ |
+| Lightsail | The owner's account accepted the Free account plan when the instance was created. The free-terms page does not mention Lightsail (https://aws.amazon.com/free/terms/, read 2026-10-18). **Unconfirmed** whether credits pay for it: the owner checks Billing and Credits. | https://aws.amazon.com/free/terms/ |
 | Other promotions | Free plan accounts "are not eligible for other promotional credits and discounts." Joining AWS Organizations (and a few other things listed) upgrades the account to Paid automatically: do not join one. | free-tier-plans.html |
-| Credit expiry | The FAQ gives two answers: credits expire "6 months from the date you create your AWS account" (General Q6) and credits remaining after an upgrade expire 12 months after creation (Free plan Q8). **Unconfirmed which applies**; plan for 6 months. | free-tier-faqs |
+| Credit expiry | The terms page: "Free Tier Credits expire twelve months from the date you opened your account"; "Free Plan accounts will expire (1) six months from the date you opened your account" or when credits are used up, whichever comes first. So at month 6 the account can be upgraded to a Paid plan and unused credits remain until month 12 (an FAQ page I read earlier gave a conflicting 6-month answer for credits; the terms page is the one to trust). | https://aws.amazon.com/free/terms/ |
+| Sensitive data | "Free Plan accounts are provided for evaluation purposes and should not be used for processing sensitive data." The demo stores only redacted questions, no accounts and no student records, and the page says so; the README refresh adds one honest line about it (runbook step 28). | https://aws.amazon.com/free/terms/ |
 
-### 1.2 Public IPv4 and data transfer
+### 1.2 Static IP, firewall and transfer (Lightsail)
 
-- In-use public IPv4 address: "Hourly charge for In-use Public IPv4 Address $0.005" per hour; no free allowance is listed. https://aws.amazon.com/vpc/pricing/ (the page shows "(c) 2026" and no rate-change date).
-- Do the credits cover it? The Free Tier FAQ "doesn't say" whether credits cover public IPv4, EBS or data transfer, and the doc says "If you go beyond these monthly allowances, your AWS Free Tier credits are automatically applied to cover the eligible costs." The Free plan promises "No charges incur during usage", so I expect it to be drawn from credits, but this is **unconfirmed** until the Billing console shows it after day 1 (section 8, step 4).
-- Data transfer out: "AWS customers receive 100 GB of free data transfer out to the internet free each month." https://aws.amazon.com/ec2/pricing/on-demand/. One answer is about 0.4 KB of text plus sources (measured average answer 405 characters in the log), so a month is far under 1 GB.
+- Static IP: "There are no costs associated with static IP addresses when they are attached to a Lightsail instance. However, static IP addresses incur a charge when they aren't attached to an instance." Without one, "each time you stop or restart your instance, Lightsail assigns a new public IP address." https://docs.aws.amazon.com/lightsail/latest/userguide/understanding-static-ip-addresses-in-amazon-lightsail.html (read 2026-10-18). `cta-ip` (3.135.33.79) is attached, so no IP update job is ever needed for DuckDNS.
+- Firewall: rules only allow traffic; the guide I read says each instance has **two** independent firewalls, one for IPv4 and one for IPv6, and recommends opening port 22 only to the address that needs it (https://docs.aws.amazon.com/lightsail/latest/userguide/understanding-firewall-and-port-mappings-in-amazon-lightsail.html, read 2026-10-18). The owner's console shows **one table** for both: **unverified**. The rules now: HTTP 80 (any), SSH 22 (any, with Lightsail browser SSH) and HTTPS 443 (IPv4 only); the DuckDNS name has no IPv6 record so nobody is sent to a closed port. SSH is tightened only after the test day.
+- Disk, IPv4 and transfer: the $12 plan includes a 60 GB SSD and 3 TB of transfer, and there is no separate IPv4 charge, per the owner's console (**unverified** on an official page). One answer is about 0.4 KB of text plus sources, so a month is far under 1 GB.
+- Snapshots are off (billed separately, **unverified**); the backup is the index dump (section 7.3).
 
-### 1.3 Burn for the recommended size (t3.small)
+### 1.3 Burn
 
-| Line | Arithmetic (730 hours a month) | Per month |
-|---|---|---|
-| EC2 t3.small, Linux, US East (N. Virginia), $0.0209 an hour | 0.0209 x 730 | $15.26 |
-| Public IPv4 | 0.005 x 730 | $3.65 |
-| EBS gp3 20 GB at $0.08 per GB-month (region unnamed on the page) | 20 x 0.08 | $1.60 |
-| Data transfer | under the 100 GB free | $0 |
-| **Total** | | **$20.51** (about $0.67 a day) |
-
-T3 instances have a CPU-credit mode; the On-Demand page lists a surcharge for Unlimited mode ("$0.05 per vCPU-Hour for Linux"). I did not confirm which mode is the default, so choose **Standard** when launching (throttles instead of billing). This app is idle most of the time (a request is mostly waiting on OpenAI), so I do not expect a surcharge either way.
+| Line | Per month |
+|---|---|
+| Lightsail $12 plan (instance, SSD, transfer, attached static IP) | $12 |
+| **Total** | **$12** (about $0.40 a day); **$72 for 6 months** |
 
 ### 1.4 Does 6 months fit inside the credits?
 
-- 6 months x $20.51 = **$123.06**. The $100 signup credit alone lasts 100 / 20.51 = **4.9 months**, so it does **not** fit by itself.
-- With the extra credits it fits if the activities add at least $23.06 (the activity amounts are unconfirmed; five activities listed, so if they are equal each is $20, which is my assumption, not a fact). Two of them cost nothing to do and are needed anyway: launching the EC2 instance and creating the AWS Budget.
-- If the extra credits turn out to be smaller: a `t3.micro` ($0.0104 an hour) costs 0.0104 x 730 + 3.65 + 1.60 = $12.84 a month, or $77.04 over 6 months, which fits inside $100. I do not recommend it as the default (section 2) but it is the resize to make if the Billing console shows the credits running short. Resize: stop the instance, change the type, start (about 2 minutes; Elastic IP keeps the address). I did not read AWS's resize page, so treat the exact steps as **unconfirmed**.
-- Either way the plan ends at **6 months** (the account closes). The server therefore has a hard end date: signup date plus 6 months. The owner reports that date in step 2.
+- 6 months x $12 = **$72**, inside the $100 signup credit alone, *if* the credits pay for Lightsail (**unconfirmed**; Billing and Credits will show it).
+- The Free plan ends at 6 months (or when credits are used up). The credits last 12 months (terms page, read 2026-10-18), so the owner can upgrade to a Paid plan at month 6 and keep the unused credits until month 12: about $100 - $72 = $28 left, plus any activity credits, which would cover roughly two more months of the $12 plan, if credits apply to Lightsail.
+- Either way the Free plan has a hard end date: signup date plus 6 months. After an upgrade the instance costs $12 a month in cash once the credits are gone; Hetzner (section 3) is the alternative.
+- Free plan accounts are "for evaluation purposes and should not be used for processing sensitive data" (https://aws.amazon.com/free/terms/, read 2026-10-18). The demo holds redacted questions only; the README says it plainly.
 
 ---
 
@@ -95,9 +93,9 @@ All measured today on this machine, with no model call.
 
 **Estimate for the whole box** (my arithmetic, not a measurement): API 118 MB + per-request working memory (unmeasured, assume up to 100 to 200 MB under a few parallel requests) + Postgres 85 MB (up to about 200 MB with caches) + Caddy about 30 MB + Docker daemon and OS about 400 MB = roughly **0.8 to 1.0 GB**.
 
-**Recommendation: `t3.small` (2 GiB).** `t3.micro` has 1 GiB, which leaves almost no headroom and, with no swap, an out-of-memory kill would take the site down; the saving is only $7.67 a month of credits. The evidence gap (per-request peak memory) is closed on the test day: watch `docker stats` during the 20-question run and keep `t3.small` unless the peak stays under about 600 MB, in which case `t3.micro` becomes an option for the extra credit margin. CPU is not a concern: two vCPUs, and the work is waiting on the OpenAI API.
+**Recommendation: the $12 plan (2 GB RAM, 2 vCPUs).** A 1 GB plan would leave almost no headroom and an out-of-memory kill would take the site down. The evidence gap (per-request peak memory) is closed on the test day: watch `docker stats` during the 20-question run. A 2 GB swap file is added on the server (runbook step 5).
 
-Disk: 20 GB gp3 holds the OS (about 8 GB), the Docker images (Python app image with its dependencies and the pgvector image; **sizes not measured, I did not build them**), the database (25 MB) and a few dump files (5.5 MB each).
+Disk: the plan's 60 GB SSD holds the OS (about 8 GB), the Docker images (Python app image with its dependencies and the pgvector image; the app image is 435 MB, measured in the rehearsal), the database (25 MB) and a few dump files (5.5 MB each).
 
 Build note for the build session, from `docs/phase4-plan.md` section 7: the image must also ship `data/processed/courses` and `data/calendar/`; the fresh-clone check already shows the API will not start without them.
 
@@ -164,11 +162,11 @@ The server needs a hostname because the Vercel-to-server hop carries question te
 |---|---|---|---|
 | A. Buy a domain | **$11.08 a year** for a `.com` at Porkbun (registration and renewal), https://porkbun.com/products/domains . `.dev` is $12.87 after the first year. Cloudflare Registrar says it sells "at or below" cost but its page states no `.com` price, **unconfirmed**. | Stable, owned, boring; Caddy gets a Let's Encrypt certificate; can keep the name after AWS ends | Costs money and needs a card; one more account |
 | B. Free hostname | $0. DuckDNS is "free dynamic DNS hosted on AWS", funded by donations, sign-in through Google/GitHub/Reddit, no uptime statement. https://www.duckdns.org/ . The FAQ URL I tried was a 404, and the number of free names is **unconfirmed**. `duckdns.org` is on the Public Suffix List, so Let's Encrypt counts each name separately (limit "50 certificates ... per registered domain ... every 7 days", https://letsencrypt.org/docs/rate-limits/) | No cost, no card; set once and use | Depends on a donation-funded service with no stated uptime; its token is one more secret |
-| C. AWS's own name `ec2-...compute-1.amazonaws.com` | $0 | No signup | `*.compute-1.amazonaws.com` is on the Public Suffix List (so it is its own certificate bucket), but whether Let's Encrypt issues for it is **unconfirmed**, and the name changes whenever the public address changes |
+| C. A cloud provider's own hostname | $0 | No signup | Not used: a Lightsail static IP has no stable provider hostname I confirmed, and whether Let's Encrypt issues for such names is **unconfirmed** |
 
 Vercel proxying is not an alternative to A or B; it is what the app already does, and it is combined with one of them.
 
-**Recommendation:** keep the Vercel proxy (no code change to how the page calls the API) and use **B, a DuckDNS name, with Caddy's automatic certificate**. It is the simplest free option that keeps the question text encrypted on every hop. Test day proves it: if the certificate issues and renews cleanly, keep it. If DuckDNS misbehaves, buy a `.com` (about $0.92 a month), because only DNS changes. Allocate an AWS **Elastic IP** so the address survives a stop and start; it costs the same $0.005 an hour as any in-use public IPv4 (so it adds nothing beyond 1.3).
+**Recommendation:** keep the Vercel proxy (no code change to how the page calls the API) and use **B, a DuckDNS name, with Caddy's automatic certificate**. It is the simplest free option that keeps the question text encrypted on every hop. Test day proves it: if the certificate issues and renews cleanly, keep it. If DuckDNS misbehaves, buy a `.com` (about $0.92 a month), because only DNS changes. The Lightsail **static IP** `cta-ip` keeps the address across stops; set the DuckDNS IPv4 address to it and leave IPv6 empty (HTTPS is open on IPv4 only).
 
 The Vercel project's `API_URL` is then `https://<name>.duckdns.org`, and the free `*.vercel.app` address is the public address for now.
 
@@ -296,7 +294,7 @@ Fastest first. Each one is independent of the others.
 | `touch data/api_disabled` on the server (the file the Guard already checks, `DISABLED_FILE`) | Every `/ask` answers "The assistant is switched off for now. Please check back later." No model call. Remove the file to switch on. | seconds, no restart | `data/` must be a bind mount so the host can create the file; test it |
 | `CTA_API_DISABLED=1` in `.env`, restart the API container | same reply | under a minute | the config path |
 | Revoke the project's OpenAI key (dashboard) | the API cannot reach the model; costs stop at once | seconds | the page shows errors, not the polite message |
-| Stop the EC2 instance (AWS console) | everything stops, Vercel returns an error for `/api/*` | under a minute | the credits stop running down except for the disk and address |
+| Stop the Lightsail instance (console, **Stop**) | everything stops, Vercel returns an error for `/api/*` | under a minute | the plan is probably still billed while stopped (**unverified**); the attached static IP keeps its address |
 | Take the link out of the README and set the Vercel project to a maintenance deployment | stops visitors | minutes | I did not read Vercel's rollback or pause docs: **unconfirmed** |
 
 Use the first; practise it on the test day and write down how long it takes.
@@ -311,7 +309,7 @@ What can be rebuilt from `data/` (on the owner's machine, **not in git**):
 Plan:
 1. Nightly `pg_dump -Fc` inside the DB container to a dump file on the instance, keep 7 (5.5 MB each, measured), run by cron on the server.
 2. Weekly: the owner copies the newest dump to the laptop (`scp`, nothing secret in it except visitors' redacted questions).
-3. An EBS snapshot is an option; I could not confirm its price for the region (the EBS page names none), so I would not rely on it.
+3. A Lightsail snapshot is not used: snapshots are off and billed separately (**unverified**), so the owner's own `pg_dump` index dump is the backup.
 4. Restore drill on the test day: a throwaway container, `pg_restore`, compare row counts. A disaster restore is: new instance, compose up, `migrate`, `pg_restore` (or the three load commands if no dump survives, losing only the logs).
 
 ### 7.4 Log disk growth
@@ -325,7 +323,7 @@ Plan:
 - Secrets: `OPENAI_API_KEY` (the project key), `POSTGRES_PASSWORD`, `LANGSMITH_API_KEY`, the DuckDNS token, and the shared header secret (also stored in the Vercel project settings).
 - They live only in a `.env` file on the server, created by the owner by typing it on the server (an editor over SSH), mode 600. `.env` is git-ignored (checked: `git check-ignore .env` matches). **Never paste a value into this chat, a ticket, a screenshot or a commit.** When reporting back, say "set" or "not set", never the value.
 - Rotate on suspicion: OpenAI key (revoke in the dashboard, new key, edit `.env`, restart), LangSmith key, DuckDNS token, the header secret (change both ends: Vercel accepts old and new during the swap, per the Vercel page).
-- Network: the AWS security group allows 80 and 443 from anywhere and **22 only from your address**; Postgres stays bound to `127.0.0.1` (as in `docker-compose.yml`) and the API container is not published to the host at all; only Caddy is. SSH key login only, no password login; automatic security updates on. (These are my standard recommendations, not something I verified on an official page today.)
+- Network: the Lightsail firewall allows 80 and 443 (443 on IPv4 only) from anywhere and, once setup is finished, **22 only from your address** (the browser terminal then needs the Lightsail browser SSH option kept on, or your own SSH client with the downloaded key); Postgres stays bound to `127.0.0.1` (as in `docker-compose.yml`) and the API container is not published to the host at all; only Caddy is. SSH key login only, no password login; automatic security updates on. (These are my standard recommendations, not something I verified on an official page today.)
 
 ### 7.6 Launch-day check of the safety numbers
 
@@ -351,8 +349,8 @@ Never send me a key, token, password or the contents of `.env`. Each report-back
 | 1 | **Decide**: AWS first (this plan), and whether a $0.92-a-month domain is acceptable if DuckDNS fails; decide fail open or closed on the spend counter (5.3) | 10 | Your three answers |
 | 2 | **AWS account.** Create a new account at aws.amazon.com/free and choose the **Free account plan**. Do not join AWS Organizations. | 15 | Did signup ask for a card (yes/no)? Plan shown on the Billing home? Credit balance shown ($)? The plan end date shown? |
 | 3 | **AWS Budget.** Billing -> Budgets: a $5 monthly cost budget, email alerts at 50 %, 80 %, 100 % actual and 100 % forecast, no actions, no reports. Then open the Explore AWS widget and note the dollar value shown next to each activity. | 10 | Budget created (yes/no); the credit amount each activity shows; the balance after |
-| 4 | **EC2 instance.** Region us-east-1; `t3.small`; Ubuntu LTS; 20 GB gp3; CPU credits **Standard** under advanced details; a key pair you keep private; security group as 7.5; then allocate and attach an **Elastic IP**. Next day, open Billing and Cost Explorer. | 30, plus 5 next day | The instance type and region; the EC2, IPv4 and EBS daily cost lines from Cost Explorer; **whether the credit balance fell by that amount** (this settles the IPv4 and EBS question in 1.2); any free-plan warning |
-| 5 | **DuckDNS name.** Sign in with a provider, create a name, point it at the Elastic IP. The token is a secret. | 10 | The name you chose (public, not the token); whether any limit or terms page notice appeared |
+| 4 | **Lightsail instance** (done: `cta-server`, Ubuntu 24.04, $12 plan, Ohio us-east-2a, static IP `cta-ip`). Confirm the static IP is attached and the firewall rules (HTTP 80, SSH 22, HTTPS 443 IPv4 only), snapshots off. Next day, open Billing and Credits. | 15, plus 5 next day | Static IP attached, the three rules as shown, snapshots off; **whether the credit balance fell and the Lightsail charge was offset by credits**; whether any card was charged |
+| 5 | **DuckDNS name.** Sign in with a provider, create a name, set the IPv4 address to `3.135.33.79`, leave IPv6 empty. The token is a secret. Check from the browser terminal that the name resolves to `3.135.33.79` before Caddy starts. | 10 | The name you chose (public, not the token); whether any limit or terms page notice appeared |
 | 6 | **OpenAI project.** New project for this deployment with its own key; Limits: monthly spend limit **$7**, "Enforce a hard limit" on, alerts at $3 and $5. Optional but recommended: on a throwaway test project set a hard limit of $0.01 and make one tiny call, to see the `429 project_spend_limit_exceeded`. | 15, +10 for the optional test | The limit page text for the project (limit, whether the hard-limit toggle exists and is on); optionally what the test call returned (the error code only) |
 | 7 | **LangSmith.** Create a free account and workspace; **do not add a card**; create an API key (a secret). Open Settings -> Billing and Usage -> Usage limits and the Usage page. | 15 | What the usage-limits page says for a no-card account; the trace limit and retention shown for the workspace |
 | 8 | **Vercel.** Hobby account (GitHub login); import `medrees-1000/city-tech-assistant` with root directory `web`; add the environment variables `API_URL` and the header secret in the project settings; deploy. | 20 | The `vercel.app` address (public); the plan name shown; whether a change of `API_URL` needed a redeploy |
@@ -369,14 +367,14 @@ Total about 4 hours of hands-on time, spread over two or three days; steps 2 to 
 ### 9.1 The three biggest risks
 
 1. **The rate limiter sees the proxy, not the visitor** (4.2). If missed, either all visitors share 10 questions a minute (the site looks broken), or a wrong trust setting lets anyone fake an address and skip the per-visitor limit. Mitigation: the secret header, forwarded-for from `X-Real-IP`, trusted-proxy setting limited to the Caddy network, and the test-day check from two different networks.
-2. **A hard end date and an uncertain exit.** The AWS Free plan closes at 6 months or when credits run out, whichever is first, with data kept 90 days; the credits cover the burn only if the activity credits are at least $23.06 (unconfirmed amounts); and the Hetzner fallback may not be orderable (CX23 shows unavailable), with CPX22 at EUR 19.49. Mitigation: the credit balance check in week 1, the t3.micro option, backups off the box, and the README line (3).
+2. **A hard end date and an uncertain exit.** The AWS Free plan closes at 6 months or when credits run out, whichever is first, with data kept 90 days; the credits cover the burn ($72 for 6 months against a $100 signup credit) only if they apply to Lightsail (unconfirmed); Free plan accounts are for evaluation and "should not be used for processing sensitive data"; and the Hetzner fallback may not be orderable (CX23 shows unavailable), with CPX22 at EUR 19.49. Mitigation: the credit balance check in week 1, backups off the box, and the README line (3).
 3. **Money and privacy rest on controls I could not fully verify.** Spend: the app has a $1 daily cap but no monthly cap (about $30), and the OpenAI hard limit is contested by one community report. Privacy: scrubbed questions now go to a third party (LangSmith), names written in unusual ways are not removed (known-limits 21), and the hosts keep their own logs. Mitigation: the app-side monthly and daily caps, the OpenAI test in step 6, the new notice wording (6.4) before the link is public.
 
 Other, smaller: a single small server with no failover; Vercel Hobby is non-commercial only; an unmeasured peak memory per request; per-request timeout through the Vercel rewrite is unconfirmed; the data (`data/processed`) exists only on your laptop.
 
 ### 9.2 Rollback
 
-- **Stop everything now:** kill switch file (7.2), then stop the instance. Credits stop running down except the disk and address.
+- **Stop everything now:** kill switch file (7.2), then stop the Lightsail instance.
 - **Bad deployment of the page:** redeploy the previous Git commit on Vercel (the exact UI is unconfirmed; the Git route always works) or remove the rewrite and deploy a closed notice.
 - **Bad deployment on the server:** keep the previous image tag, `docker compose` back to it; the database schema only moves forward with `migrate`, so take a dump before every deploy.
 - **Remove the link from the README** whenever the site is down or ended (3).
@@ -397,9 +395,9 @@ Before: a fresh dump; the caps temporarily low through the environment variables
 | 7 | The slowest question you know (p95 was 10.3 s) through the Vercel path | answer returns, no gateway timeout |
 | 8 | OpenAI dashboard cost against `/health.spend_today_usd` | within about 10 % (embedding calls may differ); the hard limit confirmed in step 6 |
 | 9 | LangSmith | one trace per served question, none for blocked ones, no email, phone or ID in any payload, project retention shows 14 days; lower the limit and check that the assistant still answers when tracing fails |
-| 10 | Memory and disk | `docker stats` peak during check 1 (decides t3.small versus t3.micro), `df -h` |
+| 10 | Memory and disk | `docker stats` peak during check 1, `df -h` |
 | 11 | Backup and restore drill (7.3); certificate shows valid on the DuckDNS name | restored row counts equal; browser shows a valid certificate; Caddy renewal log line seen later in the week |
-| 12 | AWS credit balance before and after the day | the daily burn matches about $0.67; IPv4 and EBS confirmed as credit-covered |
+| 12 | AWS credit balance before and after the day | the daily burn matches about $0.40; the Lightsail charge is offset by credits and no card is charged |
 | 13 | A friend uses the thumbs buttons and reads the "What is saved?" text | the votes are saved; the text matches the code and mentions LangSmith and the hosts |
 
 After a pass: set the caps back to the 5.3 values, run the launch-day number check (7.6), update the README, push, and put the link in.
@@ -410,10 +408,10 @@ After a pass: set the caps back to the 5.3 values, run the launch-day number che
 
 - Whether AWS asks for a card at signup (FAQ: "may" be requested).
 - The dollar value of each AWS credit activity, and which of the two stated credit expiry rules applies.
-- Whether AWS credits cover the public IPv4 charge and EBS on the Free plan (expected, settled by the Billing console in step 4).
-- The region of the EBS $0.08 per GB-month price, and the EBS snapshot price.
-- Which CPU-credit mode `t3` launches with by default (I will choose Standard).
-- The resize steps for an instance (I did not read that page).
+- Whether the AWS free-plan credits pay for Lightsail at all (expected to be settled by Billing and Credits), whether AWS Budgets counts Lightsail, and whether stopped instances and snapshots are billed.
+- The $12 plan's contents (2 GB, 2 vCPUs, 60 GB, 3 TB) and the absence of a separate IPv4 or disk charge: from the owner's console, not an official page; the single firewall table versus the two firewalls the guide describes.
+- The Lightsail console wording (browser SSH option on the SSH rule, key download, Snapshots tab).
+- Resizing a Lightsail instance (not read).
 - Lightsail on the Free plan (the only statement is about a trial on the Paid plan).
 - Hetzner: whether CX23 or CAX11 can be ordered now; the VAT that applies to the owner; the price page itself showed blanks and "unavailable".
 - Cloudflare Registrar's `.com` price (Porkbun's $11.08 is confirmed).
