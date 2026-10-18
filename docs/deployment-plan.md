@@ -2,6 +2,8 @@
 
 Written for the owner, who must be able to explain every line. Docs only: no code, no account, no model call and no paid command was used. Every price, limit or policy below comes from an official page I read on **2026-10-18** (the URL is next to it). Where I could not confirm something from an official page it says **unconfirmed**. Figures I measured on this machine say "measured". Arithmetic is mine and is shown.
 
+> **Update, Oct 18, 2026 (Part A of the build):** the build is described in [docs/deploy-runbook.md](deploy-runbook.md) and "Deployment Part A" in `docs/decisions.md`. Where this plan and the build differ, the build wins: the monthly cap is the current UTC month at $5 (not a rolling 30 days; the owner chose it, caveat in the runbook); the visitor address comes from a shared secret plus `x-real-ip` in the API (no uvicorn proxy headers, no `X-Forwarded-For` rewrite in Caddy); the page forwards through `web/proxy.ts` (a header cannot be added by a `next.config` rewrite, and a `vercel.json` header transform was untested); Postgres is on an internal Docker network with no published port; `data/` is a bind mount, not baked into the image; the kill switch reply reads "The assistant is temporarily paused. Please check back later."; the daily cap stayed at $1.
+
 State checked first: repo `~/city-tech-assistant`, branch `master`, working tree clean, HEAD `d186e09` (a data-only commit on top of `45d6765`). Local Docker Postgres is `pgvector/pgvector:0.8.7-pg17`.
 
 ## Summary table
