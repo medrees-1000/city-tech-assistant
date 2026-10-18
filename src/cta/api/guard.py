@@ -1,7 +1,8 @@
 """Cost and abuse guards of the API (Phase 4 step 7, Stage 1; docs/decisions.md).
 
-Plain code, API layer only. In the order they run inside POST /ask: the kill switch, the
-per-visitor rate limit and the daily spend cap. The timeouts are applied in app.py.
+Plain code, API layer only. In the order they run inside POST /ask: the kill switch and the
+per-visitor rate limit (`stage1`), then the regex safety screen (app.py), then the daily and monthly
+spend caps (`cap_reason`). The timeouts are applied in app.py.
 
 Privacy: the visitor's network address is read in ONE place (`Guard.visitor_key`) and goes straight
 into a keyed hash (HMAC-SHA256). The key is CTA_IP_SALT from the environment, or a random one made
@@ -237,8 +238,18 @@ class Guard:
             reason = "kill_switch"
         elif self.rate_limited(self.visitor_key(request)):
             reason = "rate_limited"
-        elif self.over_cap(connect):
+        if reason:
+            self.blocked[reason] += 1
+        return reason
+
+    def cap_reason(self, connect: Callable) -> str | None:
+        """"daily_cap", "monthly_cap" or None. Called AFTER the regex safety screen (app.py): the
+        screen needs no model call and costs nothing, so a cap never replaces its reply."""
+        reason = None
+        if self.over_cap(connect):
             reason = "daily_cap"
+        elif self.over_monthly_cap(connect):
+            return "monthly_cap"  # over_monthly_cap counts its own block
         if reason:
             self.blocked[reason] += 1
         return reason
