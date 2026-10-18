@@ -1,7 +1,7 @@
 """Cost and abuse guards of the API (Phase 4 step 7, Stage 1; docs/decisions.md).
 
-Plain code, API layer only. In the order they run inside POST /ask: the kill switch and the
-per-visitor rate limit (`stage1`), then the regex safety screen (app.py), then the daily and monthly
+Plain code, API layer only. In the order they run inside POST /ask: the per-visitor rate limit
+(`stage1`), then the regex safety screen (app.py), then the kill switch and the daily and monthly
 spend caps (`cap_reason`). The timeouts are applied in app.py.
 
 Privacy: the visitor's network address is read in ONE place (`Guard.visitor_key`) and goes straight
@@ -238,19 +238,20 @@ class Guard:
     def stage1(self, request, connect: Callable) -> str | None:
         """The reason this request is blocked, or None. Counts the block."""
         reason = None
-        if self.disabled():
-            reason = "kill_switch"
-        elif self.rate_limited(self.visitor_key(request)):
+        if self.rate_limited(self.visitor_key(request)):
             reason = "rate_limited"
         if reason:
             self.blocked[reason] += 1
         return reason
 
     def cap_reason(self, connect: Callable) -> str | None:
-        """"daily_cap", "monthly_cap" or None. Called AFTER the regex safety screen (app.py): the
-        screen needs no model call and costs nothing, so a cap never replaces its reply."""
+        """"kill_switch", "daily_cap", "monthly_cap" or None. Called AFTER the regex safety screen
+        (app.py): the screen needs no model call and costs nothing, so neither the kill switch nor
+        a cap ever replaces its reply."""
         reason = None
-        if self.over_cap(connect):
+        if self.disabled():
+            reason = "kill_switch"
+        elif self.over_cap(connect):
             reason = "daily_cap"
         elif self.over_monthly_cap(connect):
             return "monthly_cap"  # over_monthly_cap counts its own block

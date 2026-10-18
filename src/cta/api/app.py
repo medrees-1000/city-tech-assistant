@@ -336,8 +336,8 @@ def create_app(
         guard.redacted += verdict.scrubbed
         note = screen.PERSONAL_NOTE if verdict.removed_details else None
         question = verdict.question  # what the model and the log see: emails, numbers, names gone
-        # The spend caps come after the regex safety screen above, so a student in distress still
-        # gets the 988 reply at a cap; every other route needs a model call and is paused.
+        # The kill switch and the spend caps come after the regex safety screen above, so a student
+        # in distress still gets the 988 reply; every other route needs a model call and is paused.
         cap = await run_in_threadpool(guard.cap_reason, connect)
         if cap:
             text = guard_mod.paused_text() if cap == "monthly_cap" else None
