@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { FOOTER_LINE } from "../lib/notice";
 
 const TOPICS = [
   {
@@ -49,9 +48,6 @@ export default function Welcome() {
         ))}
       </ul>
 
-      <footer>
-        <p className="unofficial">{FOOTER_LINE}</p>
-      </footer>
     </main>
   );
 }
