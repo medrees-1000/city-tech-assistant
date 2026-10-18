@@ -30,7 +30,8 @@ TEXTS = {
 }
 # Statuses of failed requests: their cost is unknown, so each counts a flat estimate.
 FAILED_STATUSES = ("provider_error", "internal_error", "timeout")
-BLOCK_REASONS = ("kill_switch", "rate_limited", "daily_cap", "timeout", "distress", "danger",
+BLOCK_REASONS = ("kill_switch", "rate_limited", "daily_cap", "monthly_cap", "timeout", "distress",
+                 "danger",
                  "bereavement", "personal_data", "injection", "output", "stress",
                  "non_english")  # fmt: skip
 DISABLED_FILE = Path("data") / "api_disabled"
@@ -42,6 +43,24 @@ def utc_now() -> datetime:
 
 def day_start(now: datetime) -> datetime:
     return now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def month_start(now: datetime) -> datetime:
+    """00:00 UTC on the first day of the month of `now` (the monthly cap counts from here)."""
+    return day_start(now).replace(day=1)
+
+
+def paused_text(contacts: dict | None = None) -> str:
+    """The fixed reply at the monthly cap. The contact lines are written by code from
+    config/contacts.yaml (the Registrar and Advisement), never by a model, and the text holds
+    nothing the student typed."""
+    from cta.graph.contact import contact_line
+
+    return (
+        "The assistant is paused for the rest of this month to stay within its budget. It will "
+        "answer questions again next month. For help now: "
+        f"{contact_line('registrar', contacts)} {contact_line('advisement', contacts)}"
+    )
 
 
 class Guard:
@@ -57,8 +76,10 @@ class Guard:
         self.spend_check_failures = 0
         self.redacted = 0  # questions scrubbed since the start (a count, no text)
         self._spend: tuple[float, float] | None = None  # (monotonic time, sum)
+        self._month_spend: tuple[float, float] | None = None  # the same for the UTC month
         # cost of requests whose log row could not be written, for the current UTC day (memory only)
         self._unlogged: tuple[datetime, float] = (day_start(self.now()), 0.0)
+        self._unlogged_month: tuple[datetime, float] = (month_start(self.now()), 0.0)
 
     # ---- 1. the kill switch ----
 
@@ -95,7 +116,13 @@ class Guard:
 
     def spend_today(self, conn) -> float:
         """Today's (UTC) cost of public requests; failed requests count a flat estimate."""
-        start = day_start(self.now())
+        return self.spend_since(conn, day_start(self.now()))
+
+    def spend_month(self, conn) -> float:
+        """This UTC month's cost of public requests (the same rows and estimate as the day)."""
+        return self.spend_since(conn, month_start(self.now()))
+
+    def spend_since(self, conn, start: datetime) -> float:
         row = conn.execute(
             "SELECT coalesce(sum(coalesce(cost_usd, "
             "CASE WHEN status = ANY(%s) THEN %s ELSE 0 END)), 0) "
@@ -113,10 +140,15 @@ class Guard:
             )
         with self.lock:
             self._unlogged = (day_start(self.now()), self.unlogged_today() + float(cost))
+            self._unlogged_month = (month_start(self.now()), self.unlogged_month() + float(cost))
 
     def unlogged_today(self) -> float:
         day, total = self._unlogged
         return total if day == day_start(self.now()) else 0.0
+
+    def unlogged_month(self) -> float:
+        month, total = self._unlogged_month
+        return total if month == month_start(self.now()) else 0.0
 
     def cached_spend(self, connect: Callable) -> float | None:
         """The sum, cached for spend_cache_s. None when the query failed (the caller fails open)."""
@@ -135,6 +167,32 @@ class Guard:
     def over_cap(self, connect: Callable) -> bool:
         total = self.cached_spend(connect)
         return total is not None and total + self.unlogged_today() >= self.s["daily_spend_cap_usd"]
+
+    # ---- 4. the monthly spend cap (checked AFTER the safety screen, see app.py) ----
+
+    def cached_month_spend(self, connect: Callable) -> float | None:
+        """This month's sum, cached for monthly_spend_cache_s. None when the query failed."""
+        now = self.monotonic()
+        if self._month_spend and now - self._month_spend[0] < self.s["monthly_spend_cache_s"]:
+            return self._month_spend[1]
+        try:
+            with connect() as conn:
+                total = self.spend_month(conn)
+        except Exception:  # noqa: BLE001 - any failure: count it, allow the request (fail open)
+            self.spend_check_failures += 1
+            return None
+        self._month_spend = (now, total)
+        return total
+
+    def over_monthly_cap(self, connect: Callable) -> bool:
+        """True when this month's cost has reached the cap. The caller answers paused_text() and
+        makes no model call; the regex safety screen has already run by then."""
+        total = self.cached_month_spend(connect)
+        cap = self.s["monthly_spend_cap_usd"]
+        over = total is not None and total + self.unlogged_month() >= cap
+        if over:
+            self.blocked["monthly_cap"] += 1
+        return over
 
     # ---- the order of the checks ----
 
@@ -156,11 +214,18 @@ class Guard:
         if total is not None:
             total += self.unlogged_today()
         cap = self.s["daily_spend_cap_usd"]
+        month = self.cached_month_spend(connect)
+        if month is not None:
+            month += self.unlogged_month()
+        month_cap = self.s["monthly_spend_cap_usd"]
         return {
             "disabled": self.disabled(),
             "spend_today_usd": None if total is None else round(total, 6),
             "spend_cap_usd": cap,
             "spend_cap_reached": total is not None and total >= cap,
+            "spend_month_usd": None if month is None else round(month, 6),
+            "monthly_cap_usd": month_cap,
+            "monthly_cap_reached": month is not None and month >= month_cap,
             "spend_check_failures": self.spend_check_failures,
             "blocked": {k: self.blocked.get(k, 0) for k in BLOCK_REASONS},
             "redacted": self.redacted,

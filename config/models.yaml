@@ -121,11 +121,14 @@ api:
   max_body_bytes: 4096
 
 # Guardrails (Phase 4 step 7, docs/guardrails-plan.md and docs/decisions.md). API layer only. Each value can be
-# overridden by an environment variable (CTA_API_DISABLED, CTA_DAILY_SPEND_CAP_USD, CTA_RATE_PER_MINUTE,
+# overridden by an environment variable (CTA_API_DISABLED, CTA_DAILY_SPEND_CAP_USD, CTA_MONTHLY_SPEND_CAP_USD, CTA_RATE_PER_MINUTE,
 # CTA_RATE_PER_DAY, CTA_MODEL_CALL_TIMEOUT_S, CTA_MODEL_RETRIES, CTA_REQUEST_TIMEOUT_S).
 guardrails:
   disabled: false                 # the kill switch; the file data/api_disabled does the same without a restart
   daily_spend_cap_usd: 1.00       # per UTC day, summed from request_logs rows with source "api"
+  monthly_spend_cap_usd: 5.00     # per UTC month, from the same rows; at the cap /ask answers a fixed "paused" reply
+                                  # with no model call (after the safety screen). Below the $7 OpenAI project limit.
+  monthly_spend_cache_s: 60       # the monthly sum is cached this long
   failed_request_cost_usd: 0.002  # counted for a failed request (its real cost is not known)
   spend_cache_s: 10               # the daily sum is cached this long
   rate_per_minute: 10             # per visitor, in memory only

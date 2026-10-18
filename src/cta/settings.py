@@ -178,6 +178,7 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
 # (config key, environment variable, type, minimum allowed value)
 GUARDRAIL_KEYS = (
     ("daily_spend_cap_usd", "CTA_DAILY_SPEND_CAP_USD", float, 0.0000001),
+    ("monthly_spend_cap_usd", "CTA_MONTHLY_SPEND_CAP_USD", float, 0.0000001),
     ("rate_per_minute", "CTA_RATE_PER_MINUTE", int, 1),
     ("rate_per_day", "CTA_RATE_PER_DAY", int, 1),
     ("model_call_timeout_s", "CTA_MODEL_CALL_TIMEOUT_S", float, 0.1),
@@ -185,6 +186,7 @@ GUARDRAIL_KEYS = (
     ("request_timeout_s", "CTA_REQUEST_TIMEOUT_S", float, 0.1),
     ("failed_request_cost_usd", "", float, 0.0),
     ("spend_cache_s", "", float, 0.0),
+    ("monthly_spend_cache_s", "", float, 0.0),
     ("rate_limit_max_keys", "", int, 1),
 )  # fmt: skip
 

@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { friendlyMessage, GENERIC, isTimeout } from "./errors.ts";
+import { codeForStatus, friendlyMessage, GENERIC, isTimeout } from "./errors.ts";
 
 const err = (code: string, message = "raw text from the server") => ({ code, message, request_id: "abc123" });
 
 test("every code the API or the page can produce has its own plain sentence", () => {
-  for (const code of ["unreachable", "timeout", "unavailable", "provider_error", "too_large", "invalid_request", "invalid_question", "rate_limited", "daily_cap", "kill_switch"]) {
+  for (const code of ["unreachable", "timeout", "unavailable", "provider_error", "too_large", "invalid_request", "invalid_question", "rate_limited", "daily_cap", "kill_switch", "monthly_cap", "forbidden"]) {
     const text = friendlyMessage(err(code));
     assert.notEqual(text, GENERIC, code);
     assert.doesNotMatch(text, /raw text|abc123|\b[45]\d\d\b|error|exception|traceback/i, code);
@@ -29,4 +29,14 @@ test("isTimeout recognises a fetch timeout or abort and nothing else", () => {
   assert.equal(isTimeout(new DOMException("a", "AbortError")), true);
   assert.equal(isTimeout(new TypeError("Failed to fetch")), false);
   assert.equal(isTimeout("nope"), false);
+});
+
+test("a status with no API error body maps to a friendly code: 429, 502, 503, 504 and 403", () => {
+  assert.equal(codeForStatus(429), "rate_limited");
+  assert.equal(codeForStatus(503), "unavailable");
+  assert.equal(codeForStatus(504), "timeout");
+  assert.equal(codeForStatus(502), "unreachable");
+  assert.equal(codeForStatus(500), "unreachable");
+  assert.equal(codeForStatus(403), "forbidden");
+  assert.equal(codeForStatus(404), null);
 });

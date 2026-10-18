@@ -18,7 +18,20 @@ const MESSAGES: Record<string, string> = {
   rate_limited: "You're asking quickly. Please wait a moment and try again.",
   daily_cap: "The assistant has reached its limit for today. Please try again tomorrow.",
   kill_switch: "The assistant is switched off for now. Please check back later.",
+  monthly_cap: "The assistant is paused for the rest of this month to stay within its budget. Please check back next month.",
+  forbidden: "The assistant could not be reached from here. Please try again in a moment.",
 };
+
+/** The error code for an HTTP status whose body was not one of the API's own error objects (a proxy,
+ * the host or the API answering 429, 502, 503 or 504 with its own text or a page). null: no rule. */
+export function codeForStatus(status: number): string | null {
+  if (status === 429) return "rate_limited";
+  if (status === 503) return "unavailable";
+  if (status === 408 || status === 504) return "timeout";
+  if (status === 403) return "forbidden";
+  if (status === 502 || status >= 500) return "unreachable";
+  return null;
+}
 
 /** The visitor-facing sentence for an error. An unknown code gets the generic sentence. */
 export function friendlyMessage(error: ApiError): string {

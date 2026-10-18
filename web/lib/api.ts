@@ -1,4 +1,4 @@
-import { isTimeout } from "./errors.ts";
+import { codeForStatus, isTimeout } from "./errors.ts";
 
 // The API contract (docs/phase4-plan.md, section 1) and the one fetch call. No logic besides the call.
 
@@ -104,6 +104,13 @@ const TIMEOUT: ApiError = {
   request_id: null,
 };
 
+/** An error for a failed HTTP status whose body was not the API's own error object (a proxy page, an
+ * empty body, a 429 or 503 from a layer in front of the API). The page shows its own plain sentence. */
+export function errorForStatus(status: number): ApiError {
+  const code = codeForStatus(status);
+  return code ? { code, message: "", request_id: null } : UNREACHABLE;
+}
+
 export const CLIENT_TIMEOUT_MS = 60_000; // the API's own request timeout is 45 s
 
 /** Ask one question. Only the API's own message and request id are ever passed on as an error. */
@@ -124,7 +131,7 @@ export async function ask(question: string, signal?: AbortSignal): Promise<AskRe
   try {
     body = await response.json();
   } catch {
-    return { ok: false, error: UNREACHABLE };
+    return { ok: false, error: response.ok ? UNREACHABLE : errorForStatus(response.status) };
   }
   if (response.ok) return { ok: true, data: body as AskResponse };
   const e = (body as { error?: { code?: unknown; message?: unknown }; request_id?: unknown }) ?? {};
@@ -133,7 +140,7 @@ export async function ask(question: string, signal?: AbortSignal): Promise<AskRe
     const id = typeof e.request_id === "string" ? e.request_id : null;
     return { ok: false, error: { code, message: e.error.message, request_id: id } };
   }
-  return { ok: false, error: UNREACHABLE };
+  return { ok: false, error: errorForStatus(response.status) };
 }
 
 export type FeedbackResult = { ok: true } | { ok: false; error: ApiError };

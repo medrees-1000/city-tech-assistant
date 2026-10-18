@@ -287,6 +287,13 @@ def create_app(
         guard.redacted += verdict.scrubbed
         note = screen.PERSONAL_NOTE if verdict.removed_details else None
         question = verdict.question  # what the model and the log see: emails, numbers, names gone
+        # The monthly cap comes after the regex safety screen above, so a student in distress still
+        # gets the 988 reply at the cap; every other route needs a model call and is paused.
+        if await run_in_threadpool(guard.over_monthly_cap, connect):
+            text = guard_mod.paused_text()
+            return await run_in_threadpool(
+                block, "monthly_cap", question, rid, today, started, text
+            )
         abandoned = threading.Event()
         try:
             return await asyncio.wait_for(
