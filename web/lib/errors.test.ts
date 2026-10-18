@@ -21,7 +21,7 @@ test("an unknown code or a server error gets the generic sentence, never the ser
 test("the rate-limit, daily-cap and switched-off sentences match the API's own wording", () => {
   assert.equal(friendlyMessage(err("rate_limited")), "You're asking quickly. Please wait a moment and try again.");
   assert.equal(friendlyMessage(err("daily_cap")), "The assistant has reached its limit for today. Please try again tomorrow.");
-  assert.equal(friendlyMessage(err("kill_switch")), "The assistant is switched off for now. Please check back later.");
+  assert.equal(friendlyMessage(err("kill_switch")), "The assistant is temporarily paused. Please check back later.");
 });
 
 test("isTimeout recognises a fetch timeout or abort and nothing else", () => {

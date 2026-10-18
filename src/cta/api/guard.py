@@ -29,7 +29,7 @@ from cta.settings import ROOT
 
 # The fixed replies. None contains anything the student typed.
 TEXTS = {
-    "kill_switch": "The assistant is switched off for now. Please check back later.",
+    "kill_switch": "The assistant is temporarily paused. Please check back later.",
     "rate_limited": "You're asking quickly. Please wait a moment and try again.",
     "daily_cap": "The assistant has reached its limit for today. Please try again tomorrow.",
     "timeout": "That took too long. Please try again in a moment.",

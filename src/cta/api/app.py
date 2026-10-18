@@ -12,7 +12,8 @@ import time
 import uuid
 from collections.abc import Callable
 from contextlib import ExitStack, asynccontextmanager
-from datetime import date
+from datetime import UTC, date, datetime
+from zoneinfo import ZoneInfo
 
 import psycopg
 from dotenv import load_dotenv
@@ -33,10 +34,27 @@ from cta.settings import ROOT, config_version, load_models
 
 
 def git_version() -> str:
-    done = subprocess.run(
-        ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, cwd=ROOT
-    )
+    """The commit this code was built from: CTA_COMMIT (set when the image is built, where there is
+    no .git folder), else git, else "unknown"."""
+    baked = os.environ.get("CTA_COMMIT", "").strip()
+    if baked:
+        return baked[:12]
+    try:
+        done = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, cwd=ROOT
+        )
+    except OSError:  # no git program in the image
+        return "unknown"
     return done.stdout.strip() or "unknown"
+
+
+NEW_YORK = ZoneInfo("America/New_York")
+
+
+def today_new_york(now: Callable[[], datetime] = lambda: datetime.now(UTC)) -> date:
+    """Today's date in New York (City Tech's time), not UTC: at 22:30 on Oct 18 in New York it is
+    already Oct 19 in UTC, and "today" in a student's question means the 18th."""
+    return now().astimezone(NEW_YORK).date()
 
 
 PROVIDER_MESSAGE = "The language model service failed. Try again."
@@ -58,7 +76,7 @@ def create_app(
     root=ROOT,
     check_startup: bool = True,
     router_factory: Callable | None = None,
-    clock: Callable[[], date] = date.today,
+    clock: Callable[[], date] = today_new_york,
     log_writer: Callable = requestlog.write,
     feedback_writer: Callable = requestlog.write_feedback,
     client_factory: Callable | None = None,
@@ -90,6 +108,14 @@ def create_app(
             return Router(conn, cfg, timed_client, events=events, contact=registrar)
 
     api = cfg["api"]
+    shown_settings = {  # key settings only: no secret and nothing a student typed
+        "chat_model": cfg["chat_model"], "embedding_model": cfg["embedding_model"],
+        "rescue": cfg["answer"].get("rescue", "off"),
+        "abstain_threshold": cfg["answer"]["abstain_threshold"],
+        "language_step": guards["language_step"], "non_english": guards["non_english"],
+        "rate_per_minute": guards["rate_per_minute"], "rate_per_day": guards["rate_per_day"],
+        "tracing": tracer is not None, "today_zone": "America/New_York",
+    }  # fmt: skip
     feedback_failures = [0]  # a failed vote write is counted here and shown in /health
     if env is None:  # the real process: the environment, with .env for local runs
         load_dotenv(root / ".env")
@@ -145,7 +171,8 @@ def create_app(
     @app.get("/health")
     def health():
         body = {
-            "status": "ok", "db": "ok", "version": version, "router": cfg["router"]["mode"],
+            "status": "ok", "db": "ok", "version": version, "config_version": cfg_version,
+            "router": cfg["router"]["mode"], "settings": shown_settings,
             "log_failures": record.failures, "feedback_failures": feedback_failures[0],
             **guard.health(connect),
         }  # fmt: skip

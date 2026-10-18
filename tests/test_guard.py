@@ -352,7 +352,7 @@ def test_health_has_exactly_the_new_keys_and_no_text(monkeypatch):
             "spend_check_failures", "blocked", "redacted", "spend_month_usd", "monthly_cap_usd",
             "monthly_cap_reached"} <= set(body)  # fmt: skip
     strings = {k: v for k, v in body.items() if isinstance(v, str)}
-    assert set(strings) == {"status", "db", "version", "router"}
+    assert set(strings) == {"status", "db", "version", "config_version", "router"}
 
 
 def test_the_logs_reader_accepts_the_guardrail_route():

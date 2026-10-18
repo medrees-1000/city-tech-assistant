@@ -72,6 +72,8 @@ def test_health_is_ok_with_the_database_up():
         "status",
         "db",
         "version",
+        "config_version",
+        "settings",
         "router",
         "log_failures",
         "feedback_failures",
@@ -173,7 +175,8 @@ def test_the_launcher_listens_on_localhost_only(monkeypatch):
     monkeypatch.setattr(api_main, "startup_problems", lambda cfg: [])
     monkeypatch.setattr(api_main.uvicorn, "run", lambda *a, **k: started.append(k))
     assert api_main.main(["x", "--port", "8123"]) == 0
-    assert started == [{"factory": True, "host": "127.0.0.1", "port": 8123, "access_log": False}]
+    assert started == [{"factory": True, "host": "127.0.0.1", "port": 8123, "access_log": False,
+                        "proxy_headers": False}]  # fmt: skip
 
 
 # ---- config ----
