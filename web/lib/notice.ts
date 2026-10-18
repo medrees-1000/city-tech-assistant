@@ -21,7 +21,7 @@ export const NOTICE_AFTER_FIRST = `City Tech Assistant is AI and can make mistak
 export const NOTICE_TITLE = "What is saved?";
 
 export const NOTICE_POINTS: string[] = [
-  "Questions and answers are saved for 30 days with emails, phone numbers and ID numbers removed. Older ones are deleted by a clean-up command that is run by hand for now.",
+  "Questions and answers are saved for 30 days with emails, phone numbers and ID numbers removed. Older ones are deleted automatically every day.",
   "Names are removed from your question where we can detect them (for example after \"my name is\", \"I'm\" or \"this is\"). A name written another way may be saved, so please don't type personal information.",
   "Also saved: which pages were used, how long each step took, and what the request cost (numbers only).",
   "If you press the thumbs up or down, that vote is saved with the answer. Nothing else is saved with it.",

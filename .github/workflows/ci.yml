@@ -32,3 +32,19 @@ jobs:
       - run: npm ci --prefix web
       - run: npm test --prefix web
       - run: npm run typecheck --prefix web
+      - run: npm run build --prefix web
+
+  image:
+    # builds the production image and checks the compose file; nothing is pushed anywhere
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --build-arg CTA_COMMIT=${{ github.sha }} -t cta-api:ci .
+      - run: docker run --rm cta-api:ci python -c "import cta.api.app, zoneinfo; zoneinfo.ZoneInfo('America/New_York')"
+      - name: Compose file is valid (dummy values, no secrets)
+        run: |
+          cp .env.production.example .env.production
+          docker compose --env-file .env.production -f docker-compose.prod.yml config -q
+        env:
+          POSTGRES_PASSWORD: ci-dummy
+          CTA_HOSTNAME: example.invalid

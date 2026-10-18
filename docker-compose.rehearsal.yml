@@ -1,0 +1,7 @@
+# Local rehearsal on a laptop, on top of docker-compose.prod.yml: Caddy answers plain HTTP on
+# 127.0.0.1:8080 (set CTA_HOSTNAME=http://localhost in the env file), nothing is published on 80 or 443.
+#   docker compose --env-file .env.rehearsal -f docker-compose.prod.yml -f docker-compose.rehearsal.yml up -d --build
+services:
+  caddy:
+    ports: !override
+      - "127.0.0.1:8080:80"

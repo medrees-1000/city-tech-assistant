@@ -1,0 +1,23 @@
+# HTTPS front of the API. CTA_HOSTNAME is the DuckDNS name (for example myname.duckdns.org); Caddy gets and
+# renews its certificate by itself. The page's proxy (web/proxy.ts) is the only expected caller.
+# There is no `log` directive on purpose: Caddy writes no access log (https://caddyserver.com/docs/caddyfile/directives/log).
+{
+	admin off
+}
+
+{$CTA_HOSTNAME} {
+	request_body {
+		max_size 8KB
+	}
+	# only the two paths the page uses; /health, /docs and the rest are not public
+	@page {
+		method POST
+		path /ask /feedback
+	}
+	handle @page {
+		reverse_proxy api:8000
+	}
+	handle {
+		respond "Not found" 404
+	}
+}

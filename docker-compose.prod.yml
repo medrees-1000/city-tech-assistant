@@ -1,0 +1,114 @@
+# Production stack on the one small server: Caddy (HTTPS) -> API -> Postgres with pgvector.
+# Run it with the production variables:
+#   docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+# Only Caddy publishes ports (80 and 443). Postgres is on an internal network with no route out and no
+# published port; the API port 8000 is reachable only from Caddy. See docs/deploy-runbook.md.
+
+x-logging: &log
+  driver: json-file
+  options:
+    max-size: "10m"   # without these the json-file driver never rotates its logs
+    max-file: "3"
+
+x-api: &api
+  build:
+    context: .
+    args:
+      CTA_COMMIT: ${CTA_COMMIT:-unknown}
+  image: cta-api:${CTA_COMMIT:-latest}
+  restart: unless-stopped
+  logging: *log
+
+services:
+  db:
+    # pgvector 0.8.7 on Postgres 17; pinned so a pull never changes the database version.
+    image: pgvector/pgvector:0.8.7-pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cta
+      POSTGRES_DB: cta
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.production}
+    volumes:
+      - cta_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cta -d cta"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    mem_limit: 384m      # measured idle: 85 MiB (docs/deployment-plan.md, section 2)
+    logging: *log
+    networks: [backend]
+
+  migrate:
+    <<: *api
+    command: ["python", "-m", "cta.index.db", "migrate"]
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql://cta:${POSTGRES_PASSWORD}@db:5432/cta
+    depends_on:
+      db:
+        condition: service_healthy
+    mem_limit: 256m
+    networks: [backend]
+
+  api:
+    <<: *api
+    env_file: .env.production
+    environment:
+      DATABASE_URL: postgresql://cta:${POSTGRES_PASSWORD}@db:5432/cta
+    volumes:
+      # the collected data (data/processed and data/calendar), copied to the server by hand; also where
+      # the kill switch file data/api_disabled goes. Not part of the image.
+      - ./data:/app/data
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/health', timeout=4)"]
+      interval: 30s
+      timeout: 6s
+      retries: 3
+      start_period: 40s
+    mem_limit: 640m      # measured 118 MB idle, plus working memory per request (unmeasured: test day)
+    networks: [backend, edge]
+
+  purge:
+    <<: *api
+    # the 30 days the page promises: delete API request logs older than that, every day
+    command: ["sh", "-c", "while true; do python -m cta.api.purge --days 30; sleep 86400; done"]
+    environment:
+      DATABASE_URL: postgresql://cta:${POSTGRES_PASSWORD}@db:5432/cta
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    mem_limit: 128m
+    networks: [backend]
+
+  caddy:
+    image: caddy:2.10
+    restart: unless-stopped
+    environment:
+      CTA_HOSTNAME: ${CTA_HOSTNAME:?set CTA_HOSTNAME in .env.production}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+    mem_limit: 96m
+    logging: *log
+    networks: [edge]
+
+networks:
+  backend:
+    internal: true       # Postgres, the migration and the purge job: no route to the internet
+  edge: {}
+
+volumes:
+  cta_pgdata:
+  caddy_data:
+  caddy_config:

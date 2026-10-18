@@ -1,0 +1,18 @@
+# The production image holds code and config only. data/ is mounted at run time (docker-compose.prod.yml).
+.git
+.github
+.venv
+**/__pycache__
+.pytest_cache
+.ruff_cache
+.env
+.env.*
+data
+docs
+eval
+tests
+scripts
+web
+graphify-out
+*.md
+!README.md

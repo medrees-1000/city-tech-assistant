@@ -268,7 +268,9 @@ def test_the_notice_says_what_the_code_does():
     text = notice_text()
     # 30 days: the purge command's examples and the plan use 30, and the notice says it
     assert "saved for 30 days" in text
-    assert "run by hand" in text  # there is no automatic deletion: the purge is a command
+    # the production stack runs the purge every day (docker-compose.prod.yml, checked in
+    # tests/test_deploy_files.py); the purge itself is the command below
+    assert "deleted automatically every day" in text
     purge_doc = (ROOT / "src" / "cta" / "api" / "purge.py").read_text(encoding="utf-8")
     assert "--days 30" in purge_doc
     # emails, phone numbers, ID numbers (and SSN-like numbers) are the patterns of cta.redact

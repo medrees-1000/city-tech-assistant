@@ -231,3 +231,9 @@ data/cache/
 
 # the kill switch file of the API (step 7)
 data/api_disabled
+
+# production and rehearsal secrets (docs/deploy-runbook.md)
+.env.production
+.env.rehearsal
+backups/
+*.dump
