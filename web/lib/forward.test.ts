@@ -12,10 +12,16 @@ test("the secret and the visitor address are added when a secret is configured",
   assert.equal(out.get("content-type"), "application/json");
 });
 
-test("x-real-ip wins over x-forwarded-for, and only the first forwarded entry counts", () => {
-  assert.equal(visitorAddress(h({ "x-real-ip": "198.51.100.1", "x-forwarded-for": "203.0.113.7" })), "198.51.100.1");
+test("x-forwarded-for (overwritten by Vercel) wins over x-real-ip; only its first entry counts", () => {
+  assert.equal(visitorAddress(h({ "x-real-ip": "198.51.100.1", "x-forwarded-for": "203.0.113.7" })), "203.0.113.7");
   assert.equal(visitorAddress(h({ "x-forwarded-for": "203.0.113.7, 10.0.0.1" })), "203.0.113.7");
+  assert.equal(visitorAddress(h({ "x-real-ip": "198.51.100.1" })), "198.51.100.1");
   assert.equal(visitorAddress(h({})), null);
+});
+
+test("a visitor who sends their own x-real-ip cannot choose the address the API sees", () => {
+  const out = forwardHeaders(h({ "x-forwarded-for": "203.0.113.7", "x-real-ip": "1.2.3.4" }), "s");
+  assert.equal(out.get(REAL_IP_HEADER), "203.0.113.7");
 });
 
 test("a header the visitor sends to forge the secret is replaced, never passed on", () => {
