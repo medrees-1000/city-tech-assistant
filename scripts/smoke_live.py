@@ -34,10 +34,12 @@ class Smoke:
         # only with the secret, and Vercel replaces it with the real visitor
         self.headers = {"x-real-ip": visitor, **({"x-cta-proxy-secret": secret} if secret else {})}
         self.sent = 0
+        self.first_at: float | None = None  # when the first /ask was sent (the limit is per minute)
         self.rows: list[tuple[str, bool, str]] = []
 
     def ask(self, question: str) -> dict:
         self.sent += 1
+        self.first_at = self.first_at or time.monotonic()
         r = self.client.post(f"{self.prefix}/ask", json={"question": question}, headers=self.headers)
         if r.status_code != 200:
             raise AssertionError(f"HTTP {r.status_code}")
@@ -117,7 +119,8 @@ def run(s: Smoke, health: str, health_url: str) -> None:
             if detail_of(b) == "rate_limited":
                 need(n <= LIMIT_PER_MINUTE + 1, f"limited only at request {n}")
                 return f"refused request {n} of the minute"
-        raise AssertionError("never rate limited")
+        seconds = time.monotonic() - (s.first_at or time.monotonic())
+        raise AssertionError(f"never rate limited ({s.sent} requests over {seconds:.0f} s)")
 
     def health_check():
         r = s.client.get(health_url)
