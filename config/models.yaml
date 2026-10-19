@@ -139,11 +139,6 @@ guardrails:
   # Tester round 1b, Part 2: a question that does not look English gets ONE small model call that detects its
   # language and translates it to English (docs/archive/language-plan.md). CTA_LANGUAGE_STEP overrides it.
   language_step: true
-  # What a non-English question gets (docs/decisions.md, "Tester round 1b, Part 2"): "english_only" = a fixed English
-  # notice asking the student to ask again in English, no retrieval (option 3, the default since the option 1
-  # probes failed rule R4); "translate" = answer in English from the translation (option 1, kept behind this
-  # switch). CTA_NON_ENGLISH overrides it.
-  non_english: "english_only"
   personal_data: "redact_and_refuse"   # off | redact | redact_and_refuse
 
 # Optional developer tracing with LangSmith (docs/decisions.md, "Near-miss floor and tracing"). OFF by default and only

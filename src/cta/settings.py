@@ -226,13 +226,6 @@ def guardrail_settings(block: dict, env: dict) -> dict:
             f"guardrails.personal_data must be off, redact or redact_and_refuse, not {shown!r}"
         )
     screen_flag = env.get("CTA_INJECTION_SCREEN", "").strip().lower()
-    out["non_english"] = (
-        env.get("CTA_NON_ENGLISH", "").strip() or out.get("non_english", "english_only")
-    ).lower()
-    if out["non_english"] not in ("english_only", "translate"):
-        raise ValueError(
-            f"guardrails.non_english must be english_only or translate, not {out['non_english']!r}"
-        )
     language_flag = env.get("CTA_LANGUAGE_STEP", "").strip().lower()
     out["language_step"] = (
         language_flag in ("1", "true", "yes", "on")
