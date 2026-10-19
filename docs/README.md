@@ -12,6 +12,6 @@
 | What the assistant cannot do | [known-limits.md](known-limits.md) |
 | The guardrail design and the Phase 4 plan | [guardrails-plan.md](guardrails-plan.md), [phase4-plan.md](phase4-plan.md) |
 | Calendar rows the owner verified | [calendar-verification.md](calendar-verification.md) |
-| Generated, do not edit: section ids for eval gold sources, the eval question review | [section-index.md](section-index.md) (`scripts/make_section_index.py`), [eval-review.md](eval-review.md) (`scripts/make_eval_review.py`) |
+| Generated, do not edit: section ids for eval gold sources | [section-index.md](section-index.md) (`scripts/make_section_index.py`) |
 | The judge hand-check sheet the judge code reads | [judge-check.md](judge-check.md) |
 | Finished plans, results and candidate lists | [archive/README.md](archive/README.md) |
