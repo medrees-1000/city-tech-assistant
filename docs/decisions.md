@@ -1638,3 +1638,16 @@ Behavior of the app and the README numbers are unchanged.
 - The `translate` mode of `guardrails.non_english` (answering a non-English question from its translation; rejected by rule R4): the `non_english` config key and `CTA_NON_ENGLISH`, the mode dict and the first-option note text in `api/language.py`, the code after the notice in `api/app.py` that only a translated question could reach, the `non_english` entry of the `/health` settings, and the tests that asserted that path. The language detection step and the English notice are unchanged.
 - Tests: `make_client_app` in `tests/test_api.py` now uses an empty folder as the repo root (the kill-switch file and page records are no longer read from the real checkout) and pins the guard's clock; `pytest` prints failing test names by default (`addopts = "-rf"`). `tests/helpers.py` holds the one fake `Model` that two files had copies of; the `events` fixture is in `tests/conftest.py`. The other same-named helpers (`Client`, `chunk`, `make_router`, ...) differ in behavior and stay where they are.
 - Rejected retrieval and prompt experiments (kept "off" until now): hybrid and BM25 search (`src/cta/index/bm25.py`, `rrf`, the keyword functions and the fusion branch in `index/search.py`), the department filter (`allowed_sql`; `detect_departments` stays: the contact, clarify and screen steps use it), `pool_b` (now `POOLS` holds `pool_a` only), the answer format rule (`FORMAT_RULE`, `eval/format_check.py`); config keys `retrieval.mode`, `candidates`, `rrf_k`, `dept_filter` and `answer.format_rule`; variables `CTA_RETRIEVAL_MODE`, `CTA_DEPT_FILTER`, `CTA_ANSWER_FORMAT_RULE`; flags `--mode`, `--dept-filter`, `--format-rule` and `--rerank pool_b`; tests `test_bm25.py`, `test_hybrid.py`, `test_format_rule.py` (+ its fixture), the filter tests of `test_dept_filter.py` (the detection tests stay as `test_detect_departments.py`) and the pool_b test. The database columns that served keyword search (`tsv`) are left alone: no migration was touched. If this commit ever needs undoing, revert it alone.
+
+Tracked size before and after Cleanup 2 (before = the state after the first cleanup; eval is mostly stored run results):
+
+| Area | Files before | Files after | Lines before | Lines after |
+|---|---|---|---|---|
+| src | 100 | 93 | 18,745 | 17,148 |
+| tests | 136 | 130 | 37,825 | 36,473 |
+| scripts | 10 | 11 | 1,011 | 1,044 |
+| web | 60 | 60 | 5,116 | 5,116 |
+| docs | 68 | 44 | 20,503 | 9,837 |
+| config | 5 | 5 | 615 | 594 |
+| eval | 81 | 38 | 177,649 | 84,237 |
+| data | 1 | 1 | 2,450 | 2,450 |
