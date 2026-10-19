@@ -108,3 +108,11 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if "needs_data" in item.keywords:
             item.add_marker(skip)
+
+
+@pytest.fixture(scope="module")
+def events():
+    """The verified calendar rows (shared by the router, advice and contact tests)."""
+    from cta.graph import build
+
+    return build.load_events()

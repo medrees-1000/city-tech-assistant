@@ -3,13 +3,13 @@ as a quote, copied from the chunk text at run time. No network, no database, no 
 
 import inspect
 from datetime import date
-from types import SimpleNamespace
 
 import pytest
 
 from cta import answer as answer_module
 from cta.index.search import Search
 from cta.settings import load_models
+from tests.helpers import Model
 
 RULE = {"chunk": "page/x#1", "starts_with": "No portion of the fee"}
 SENTENCE = "No portion of the fee is refundable, except in cases where the College cancels it."
@@ -160,18 +160,6 @@ def test_the_config_names_the_two_chunks_and_validates_its_entries(tmp_path):
     with pytest.raises(ValueError, match="quote_addenda"):
         load_models(path, env={})
     assert yaml.safe_load(bad)  # the file is still valid YAML; only the entry is wrong
-
-
-class Model:
-    def __init__(self, content):
-        self.content = content
-        self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
-
-    def create(self, **kw):
-        usage = SimpleNamespace(prompt_tokens=10, completion_tokens=5)
-        return SimpleNamespace(
-            choices=[SimpleNamespace(message=SimpleNamespace(content=self.content))], usage=usage
-        )
 
 
 def ask(monkeypatch, content, sources, question="How much refund do I get?"):

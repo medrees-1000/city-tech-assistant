@@ -34,11 +34,6 @@ OFF = load_models(
 TODAY = date(2026, 10, 11)
 
 
-@pytest.fixture(scope="module")
-def events():
-    return build.load_events()
-
-
 def row(rid="fall-2026-040", **kw):
     base = {
         "id": rid, "term": "Fall 2026", "event": "Last day to withdraw.",

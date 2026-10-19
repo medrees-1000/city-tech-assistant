@@ -202,11 +202,6 @@ def make_router(monkeypatch, events, contacts, abstain=True):
     return Router(None, cfg, lambda: script, events=events), script
 
 
-@pytest.fixture(scope="module")
-def events():
-    return build.load_events()
-
-
 def test_contacts_on_adds_the_line_to_a_clear_retrieve_abstain_and_records_the_office(
     monkeypatch, events
 ):
