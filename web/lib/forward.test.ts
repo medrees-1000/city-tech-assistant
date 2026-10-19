@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { apiTarget, forwardHeaders, PROXY_HEADER, REAL_IP_HEADER, visitorAddress } from "./forward.ts";
+import { apiTarget, forwardHeaders, PROXY_HEADER, REAL_IP_HEADER, VISITOR_HEADER, visitorAddress } from "./forward.ts";
 
 const h = (o: Record<string, string>) => new Headers(o);
 
@@ -41,4 +41,14 @@ test("with no secret configured (local development) nothing is added", () => {
 test("the target drops the /api prefix and keeps the query; the default is the local API", () => {
   assert.equal(apiTarget("/api/ask", "", "https://x.duckdns.org").href, "https://x.duckdns.org/ask");
   assert.equal(apiTarget("/api/feedback", "?a=1", undefined).href, "http://127.0.0.1:8000/feedback?a=1");
+});
+
+test("x-cta-visitor carries the visitor address and replaces anything the client sent", () => {
+  const out = forwardHeaders(h({ "x-forwarded-for": "203.0.113.7", [VISITOR_HEADER]: "1.2.3.4, 5.6.7.8" }), "s");
+  assert.equal(out.get(VISITOR_HEADER), "203.0.113.7");
+  assert.equal(out.get(REAL_IP_HEADER), "203.0.113.7"); // the existing headers are unchanged
+  const noAddress = forwardHeaders(h({ [VISITOR_HEADER]: "1.2.3.4" }), "s");
+  assert.equal(noAddress.get(VISITOR_HEADER), null);
+  const noSecret = forwardHeaders(h({ "x-forwarded-for": "203.0.113.7", [VISITOR_HEADER]: "1.2.3.4" }), undefined);
+  assert.equal(noSecret.get(VISITOR_HEADER), null);
 });

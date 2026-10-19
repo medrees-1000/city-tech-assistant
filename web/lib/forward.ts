@@ -6,6 +6,8 @@
 
 export const PROXY_HEADER = "x-cta-proxy-secret";
 export const REAL_IP_HEADER = "x-real-ip";
+// A header of our own: Vercel may replace x-real-ip on the hop to the API, but not a custom header.
+export const VISITOR_HEADER = "x-cta-visitor";
 
 /** The visitor's address as the host reports it: the first x-forwarded-for entry, else x-real-ip. */
 export function visitorAddress(incoming: Headers): string | null {
@@ -21,9 +23,13 @@ export function forwardHeaders(incoming: Headers, secret: string | undefined): H
   const address = visitorAddress(incoming);
   out.delete(PROXY_HEADER);
   out.delete(REAL_IP_HEADER);
+  out.delete(VISITOR_HEADER); // always overwritten, never appended to or passed on from the client
   if (secret) {
     out.set(PROXY_HEADER, secret);
-    if (address) out.set(REAL_IP_HEADER, address);
+    if (address) {
+      out.set(REAL_IP_HEADER, address);
+      out.set(VISITOR_HEADER, address);
+    }
   }
   return out;
 }
