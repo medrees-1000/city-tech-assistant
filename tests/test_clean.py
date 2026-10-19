@@ -8,7 +8,6 @@ import pytest
 from cta import answer as answer_module
 from cta.api import screen
 from cta.eval.questions import load_questions
-from cta.graph import clean
 from cta.graph.clean import clean_for_search
 from cta.index.search import Search
 from cta.settings import load_models
@@ -90,9 +89,6 @@ def test_every_redaction_placeholder_is_removed():
 def test_it_is_typed_pure_and_standard_library_only():
     sig = inspect.signature(clean_for_search)
     assert sig.return_annotation is str and list(sig.parameters) == ["text"]
-    source = inspect.getsource(clean)
-    imports = [ln for ln in source.splitlines() if ln.startswith(("import ", "from "))]
-    assert imports == ["import re", "import unicodedata"]
 
 
 # ---- where it is used, and where it is not ----

@@ -26,7 +26,7 @@ def L(
     plain = text.replace("**", "")
     marked = f"**{plain}**" if bold else text
     return PLine(
-        marked, plain, page, top, top + size, x0, x1, size, bold, 842.0, first, margin, col
+        marked, plain, page, top, x0, x1, size, bold, 842.0, first, margin, col
     )
 
 

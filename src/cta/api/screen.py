@@ -76,7 +76,6 @@ DISTRESS_NO_NUMBER = (
     "face it alone. Talking with someone you trust, or reaching local emergency services if you "
     "are in danger, can help."
 )
-REASONS = ("distress", "danger", "bereavement", "personal_data", "injection", "output", "stress")
 
 DISTRESS = (
     "kill myself", "killing myself", "suicide", "suicidal", "end my life", "ending my life",
@@ -192,7 +191,8 @@ NOTE_TAGS = ("EMAIL", "PHONE", "ID", "NAME")
 
 @dataclass
 class Screened:
-    reason: str | None  # one of REASONS, or None when the question may go on
+    # distress, danger, bereavement, personal_data, injection, output or stress; None: it goes on
+    reason: str | None
     question: str  # the question as it goes to the model and the log (scrubbed)
     scrubbed: bool = False  # something was replaced
     removed_details: bool = False  # an e-mail, phone, ID-shaped number or name was removed

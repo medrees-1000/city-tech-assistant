@@ -11,7 +11,6 @@ answer. The answer has three parts (docs/decisions.md, "Step 5: NO ADVICE"):
 
 import re
 from dataclasses import dataclass
-from datetime import date
 
 from cta.answer import Answer
 from cta.graph import render
@@ -86,22 +85,6 @@ ACTIONS = (
     ),
 )  # fmt: skip
 
-# Phrases that would make an answer a recommendation. Checked by code on what the assistant writes.
-BANNED = (
-    "i recommend", "i'd recommend", "i would recommend", "my recommendation", "you should",
-    "you ought", "i suggest", "i'd suggest", "i advise", "it is best", "it's best",
-    "it would be better", "you'd be better", "better off", "consider dropping",
-    "consider withdrawing", "is a good idea", "is a bad idea",
-)  # fmt: skip
-
-
-def advice_phrases(text: str) -> list[str]:
-    """Banned phrases in the text. The fixed sentence is removed first: it says "whether you
-    should" in order to refuse, which is not a recommendation."""
-    lowered = text.replace(SENTENCE, "").lower().replace("’", "'")
-    return [p for p in BANNED if p in lowered]
-
-
 def matched_actions(question: str, intent: str | None = None) -> list[Action]:
     """The actions the question asks about, or [] when it is not an advice question."""
     if intent == "prerequisite":
@@ -128,28 +111,6 @@ def calendar_rows(pool: list[dict], actions: list[Action]) -> list[dict]:
 
 
 CITATION = re.compile(r"\[(\d+)\]")
-MONTH_NAMES = (
-    "january february march april may june july august september october november december".split()
-)
-WORD_DATE = re.compile(rf"\b({'|'.join(MONTH_NAMES)})\.? (\d{{1,2}})\b", re.IGNORECASE)
-SLASH_DATE = re.compile(r"\b(\d{1,2})/(\d{1,2})(?:/\d{2,4})?\b")
-
-
-def dates_in(text: str) -> set[tuple[int, int]]:
-    """(month, day) of every "September 3" and "9/3" in the text."""
-    found = {(MONTH_NAMES.index(m.group(1).lower()) + 1, int(m.group(2)))
-             for m in WORD_DATE.finditer(text)}  # fmt: skip
-    return found | {(int(m.group(1)), int(m.group(2))) for m in SLASH_DATE.finditer(text)}
-
-
-def untraceable_dates(ans: Answer, today: date | None = None) -> set[tuple[int, int]]:
-    """Dates in the answer that no cited source holds (an empty set is what the rule asks for).
-    Today's date is allowed: it is the date the pipeline gives the model (docs/decisions.md)."""
-    held: set[tuple[int, int]] = {(today.month, today.day)} if today else set()
-    for n in ans.citations:
-        if 1 <= n <= len(ans.sources):
-            held |= dates_in(ans.sources[n - 1].get("text", ""))
-    return dates_in(ans.text) - held
 
 
 def shift(text: str, by: int) -> str:

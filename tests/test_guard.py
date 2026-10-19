@@ -12,6 +12,7 @@ import httpx
 import openai
 import pytest
 
+from cta.answer import THRESHOLD_ABSTAIN
 from cta.api import convert, guard, requestlog, schema
 from cta.eval.questions import load_questions
 from cta.index import embed
@@ -24,6 +25,7 @@ from tests.helpers import (
     cfg_for,
     cfg_guard,
     make_client_app,
+    reply,
     req,
     retrieve_answer,
     settings,
@@ -221,14 +223,16 @@ def test_a_failed_counter_allows_the_request_and_is_counted(monkeypatch):
     assert c.get("/health").json()["spend_check_failures"] >= 1
 
 
-def test_the_topic_call_cost_is_inside_the_logged_cost():
-    # success_record stores hf.cost_usd["total"], which topic.rewrite adds the topic call to
-    import inspect
-
-    from cta.api import topic
-
-    assert 'hf.cost_usd["total"] = hf.cost_usd["total"] + call.cost' in inspect.getsource(topic)
-    assert '"cost_usd": hf.cost_usd["total"]' in inspect.getsource(requestlog.success_record)
+def test_the_topic_call_cost_is_inside_the_logged_cost(monkeypatch):
+    stub = retrieve_answer(THRESHOLD_ABSTAIN, True, "below_threshold", citations=())
+    client = Client(topic=reply("student hours", True))
+    c = make_client_app(client, monkeypatch, stub)
+    body = ask(c, "when are student hours?").json()
+    costs = body["how_found"]["cost_usd"]
+    assert client.calls[-1] == "topic" and costs["topic"] > 0  # the call ran and was priced
+    parts = sum(v for k, v in costs.items() if k != "total")
+    assert costs["total"] == pytest.approx(parts)  # the total holds the topic call
+    assert c.logs[-1]["cost_usd"] == costs["total"]  # and the logged cost is that total
 
 
 # ---- 4. the timeouts ----

@@ -127,12 +127,28 @@ def test_the_fixed_sentence_is_in_the_answer_once_and_first(events):
     assert not ans.abstained and ans.row_ids == rendered.row_ids
 
 
+# Phrases that would make an answer a recommendation. Checked on what the code writes.
+BANNED = (
+    "i recommend", "i'd recommend", "i would recommend", "my recommendation", "you should",
+    "you ought", "i suggest", "i'd suggest", "i advise", "it is best", "it's best",
+    "it would be better", "you'd be better", "better off", "consider dropping",
+    "consider withdrawing", "is a good idea", "is a bad idea",
+)  # fmt: skip
+
+
+def advice_phrases(text: str) -> list[str]:
+    """Banned phrases in the text. The fixed sentence is removed first: it says "whether you
+    should" in order to refuse, which is not a recommendation."""
+    lowered = text.replace(advice.SENTENCE, "").lower().replace("’", "'")
+    return [p for p in BANNED if p in lowered]
+
+
 def test_no_advice_phrase_in_the_code_written_parts(events):
     rendered = render.render_rows(rows(events), "r@x.edu", "Fall 2026")
-    assert advice.advice_phrases(advice.SENTENCE) == []  # the refusal itself is not advice
-    assert advice.advice_phrases(f"{advice.SENTENCE} You should drop.") == ["you should"]
-    assert advice.advice_phrases(rendered.text) == []
-    assert advice.advice_phrases("I recommend it. You should drop. It's best.") == [
+    assert advice_phrases(advice.SENTENCE) == []  # the refusal itself is not advice
+    assert advice_phrases(f"{advice.SENTENCE} You should drop.") == ["you should"]
+    assert advice_phrases(rendered.text) == []
+    assert advice_phrases("I recommend it. You should drop. It's best.") == [
         "i recommend", "you should", "it's best"
     ]  # fmt: skip
 
@@ -147,14 +163,6 @@ def test_citations_are_policy_sources_first_then_calendar_rows(events):
     used = {int(x) for x in re.findall(r"\[(\d+)\]", ans.text)}
     assert used == set(range(1, n + 1))  # every number in the text is a source, none is missing
     assert f"[{3}]" in ans.sources[2]["text"]  # the row's own text carries its new number
-
-
-def test_every_date_is_traceable_to_a_cited_source(events):
-    rendered = render.render_rows(rows(events), "r@x.edu", "Fall 2026")
-    ans = advice.compose(policy_answer("Drop by September 3 [1]."), rendered)
-    assert advice.untraceable_dates(ans) == set()
-    bad = advice.compose(policy_answer("Drop by October 31 [1]."), rendered)
-    assert advice.untraceable_dates(bad) == {(10, 31)}
 
 
 def test_no_calendar_rows_gives_the_sentence_and_the_policy_only():
@@ -257,13 +265,3 @@ def test_only_the_advice_call_gets_the_larger_limit(monkeypatch, events):
     assert {k: v for k, v in advice_cfg["answer"].items() if k != "max_output_tokens"} == {
         k: v for k, v in other_cfg["answer"].items() if k != "max_output_tokens"
     }
-
-
-def test_todays_date_is_allowed_and_no_other_untraceable_date_is(events):
-    rendered = render.render_rows(rows(events), "r@x.edu", "Fall 2026")
-    text = "Drop by September 3 [1]. Since today is October 11, 2026, that has passed. Also Oct 31."
-    ans = advice.compose(policy_answer(text), rendered)
-    assert advice.untraceable_dates(ans) == {(10, 11)}  # without today: October 11 is flagged
-    assert advice.untraceable_dates(ans, TODAY) == set()  # TODAY is 2026-10-11
-    other = advice.compose(policy_answer("Drop by October 31 [1]."), rendered)
-    assert advice.untraceable_dates(other, TODAY) == {(10, 31)}

@@ -114,14 +114,6 @@ noun_cues: ["my financial aid", "my aid", "my fafsa", "my tap", "my refund", "my
 account_signals: ["status", "approved", "denied", "deposited", "pending", "owe", "owed", "did my", "has my", "have my",
                   "why is my", "why was my", "why did my", "why hasn't my", "where is my", "wheres my", "where's my"]
 
-# Rule 5: chunk ids "pdf/<name>#n" -> office. page/, dept/, contact: and catalog: chunks need no entry
-# (their owner or department is in the id or in the chunk).
-pdf_offices:
-  dropping-withdrawing-fall-2026: registrar
-  financial-aid-refund-calendar-2026-2027: financial-aid
-  special-circumstances-flyer: special-circumstances
-  cunyfirst-student-reference: financial-aid
-
 # Rule 5 (batch 1, Oct 17, 2026): topic words -> office, used only when none of the rules above names an office
 # (a refusal that would otherwise carry no contact). Whole words or phrases, lowercase, matched case-insensitively
 # on the question. Inflections and the typos seen in the held-out questions are listed as aliases. At most two
@@ -146,6 +138,3 @@ topic_cues:
 # Phrases removed from the question before the topic words are matched, so an ordinary use of a cue word does not
 # add an office ("registered nurse" is a profession, not a registration question).
 topic_ignore: ["registered nurse", "registered nurses", "registered dental hygienist", "registered dental hygienists"]
-
-# Rule 7: nothing above applies.
-fallback: registrar

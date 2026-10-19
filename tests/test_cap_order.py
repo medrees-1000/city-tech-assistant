@@ -88,7 +88,6 @@ def test_stage1_no_longer_holds_the_daily_cap_and_the_screen_sits_between_them()
     assert first < middle < src.index("guard.cap_reason", middle)
     stage1 = inspect.getsource(guard.Guard.stage1)
     assert "disabled" not in stage1  # the kill switch is no longer in front of the screen
-    assert screen.REASONS  # the screen's reasons are what the caps never replace
 
 
 def switched_off_app(monkeypatch, caps=None):

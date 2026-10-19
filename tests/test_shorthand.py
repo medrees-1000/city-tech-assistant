@@ -76,20 +76,23 @@ def test_the_answer_step_replaces_the_token_and_keeps_citations_and_abstain_dete
     assert ab.text.startswith("ABSTAIN:") and PHRASE in ab.text and ab.abstained is True
 
 
-def test_every_final_text_path_goes_through_the_answer_step():
-    """The answer text leaves the server only as the JSON of /ask (no streaming anywhere): the
-    API takes ans.text from the router, the router from cta.answer.answer (retrieval, advice,
-    calendar fall-through) or from the chain node. The two places a model writes the text call
-    explain_shorthand; the renderers that quote the catalog do not."""
-    import inspect
+def test_the_text_of_the_api_reply_is_scrubbed_on_the_retrieval_and_the_advice_path(monkeypatch):
+    """The answer text leaves the server only as the JSON of /ask (no streaming anywhere). The
+    retrieval answer and the advice answer (which wraps a retrieval answer) are written by the
+    model; both must come back with the token explained. The chain paths are tested below."""
+    from cta.graph import advice
+    from tests.helpers import Client, make_client_app
+    from tests.helpers import ask as ask_api
 
-    from cta.graph import build
-
-    assert "explain_shorthand(" in inspect.getsource(answer_module.answer)
-    assert "chains.explain_shorthand(" in inspect.getsource(build.make_nodes)
-    from cta.graph import chain_render
-
-    assert "explain_shorthand" not in inspect.getsource(chain_render)
+    found = Search([chunk()], False, 1, 10, 0.0, top_vector_similarity=0.8)
+    monkeypatch.setattr(answer_module, "search", lambda *a, **k: found)
+    model = Client("other", answer="It is listed as PRE_CST3500_CST3600. [1]")
+    c = make_client_app(model, monkeypatch)
+    for question in ("What does the catalog list for CST 3504?", "Should I drop CST 3504?"):
+        body = ask_api(c, question).json()
+        text = body["answer"]
+        assert (advice.SENTENCE in text) == question.startswith("Should I"), question
+        assert PHRASE in text and "PRE_CST3500_CST3600" not in text, question
 
 
 def _records():

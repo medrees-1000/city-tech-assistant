@@ -1,7 +1,7 @@
 """The contact line after an abstention (Phase 3, step 4c). Plain code: the model never writes it.
 
 Contact policy v2: a contact is added only when the office clearly applies, else none.
-`office_for` returns the office of the first rule that applies:
+`offices_for` returns the offices of the first rule that applies:
   1. a calendar abstain -> the Registrar;
   2. a chain "no record" abstain -> the department of the code prefix (one of four), else none;
   3. exactly one of the four departments named in the question (alias or course prefix);
@@ -40,20 +40,11 @@ def has_word(text: str, words: list[str]) -> bool:
     return any(re.search(rf"\b{re.escape(w)}\b", text) for w in words)
 
 
-def account_cue(question: str, contacts: dict) -> bool:
-    """Does the question hold an account word (one with an office, or one with no office)?"""
-    text = question.lower()
-    return has_word(text, contacts.get("account_only", [])) or any(
-        has_word(text, words) for words in contacts["cues"].values()
-    )
-
-
 def personal_account_cue(question: str, contacts: dict) -> bool:
     """Is this abstention shown as a personal-account refusal? An `account_only` word always counts;
     so does an office cue that names account data by itself (my gpa, my balance ...); a possessive
     plus an office noun ("my financial aid", "my tuition") counts only together with an account
-    signal ("status", "did my", "why is my" ...). `account_cue` is unchanged and still chooses the
-    card."""
+    signal ("status", "did my", "why is my" ...). `cue_office` still chooses the card."""
     text = question.lower().replace("\u2019", "'")
     if has_word(text, contacts.get("account_only", [])):
         return True
@@ -98,12 +89,6 @@ def offices_for(question: str, ans, contacts: dict | None = None) -> list[str]:
         return []  # the course is in none of the four departments: no office applies
     first = named_department(question) or cue_office(question, contacts)
     return [first] if first else topic_offices(question, contacts)
-
-
-def office_for(question: str, ans, contacts: dict | None = None) -> str | None:
-    """The main office that clearly applies, or None (then no contact is added)."""
-    found = offices_for(question, ans, contacts)
-    return found[0] if found else None
 
 
 def contact_line(key: str, contacts: dict | None = None) -> str:

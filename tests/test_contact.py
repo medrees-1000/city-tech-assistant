@@ -28,7 +28,8 @@ def ans(reason="below_threshold", first=None, abstained=True, text="ABSTAIN: not
 
 
 def office(question, **kw):
-    return contact.office_for(question, ans(**kw), C)
+    found = contact.offices_for(question, ans(**kw), C)
+    return found[0] if found else None
 
 
 # ---- the wording ----
@@ -260,7 +261,6 @@ def test_a_calendar_abstain_is_byte_identical_with_the_switch_on(monkeypatch, ev
     ],
 )
 def test_account_only_words_are_account_questions_with_no_office(question):
-    assert contact.account_cue(question, C) is True
     assert contact.cue_office(question, C) is None
     assert office(question) is None  # no card: the data names no office for these
 
@@ -268,14 +268,6 @@ def test_account_only_words_are_account_questions_with_no_office(question):
 def test_my_aid_maps_to_financial_aid_and_wins_over_an_account_only_word():
     assert office("Why is my aid late?") == "financial-aid"
     assert office("My EMPLID is 12345678, why is my aid late?") == "financial-aid"
-    assert contact.account_cue("Why is my aid late?", C)
-
-
-def test_account_words_need_the_whole_word_and_a_plain_question_is_not_one():
-    assert not contact.account_cue("What is a logon page?", C)
-    assert not contact.account_cue("Who can help me with aid?", C)  # not first person
-    assert not contact.account_cue("How do I apply?", C)
-    assert not contact.account_cue("A student identification card", C)
 
 
 def test_hold_and_account_cues_name_no_office_because_the_data_names_none():
@@ -283,9 +275,3 @@ def test_hold_and_account_cues_name_no_office_because_the_data_names_none():
         assert word in C["account_only"]
         assert not any(word in words for words in C["cues"].values())
     assert office("Do I have a hold on my account?") is None
-
-
-def test_a_hold_question_that_is_not_about_the_students_own_account_is_not_a_cue():
-    assert not contact.account_cue("What is a hold?", C)
-    assert not contact.account_cue("Can a hold be placed by the Bursar?", C)
-    assert not contact.account_cue("Do holds stop registration?", C)

@@ -34,6 +34,12 @@ SECTION_GROUPS = (
 )
 
 
+def source_label(chunk: dict) -> str:
+    if chunk["kind"] == "course":
+        return f"Course catalog: {chunk['id'].removeprefix('catalog:')}"
+    return chunk["source"]
+
+
 def sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 

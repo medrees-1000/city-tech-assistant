@@ -67,7 +67,7 @@ def test_the_cd9d2a93_question_is_a_plain_abstention_with_the_financial_aid_card
     assert (
         contact.cue_office(q, TABLE) == "financial-aid"
     )  # the contact logic is untouched (policy v2)
-    assert contact.account_cue(q, TABLE) is True  # the old function is unchanged and still says yes
+    assert old_account_cue(q, TABLE) is True  # the old rule, kept below, still says yes
 
 
 def test_the_two_new_cues_are_the_only_account_only_additions_and_the_new_keys_exist():
@@ -94,7 +94,7 @@ def test_a_possessive_noun_alone_is_not_enough_but_with_a_signal_it_is():
     assert not contact.personal_account_cue("what is the status of the registrar line", TABLE)
 
 
-def test_office_for_and_cue_office_are_unchanged():
+def test_cue_office_is_unchanged():
     assert contact.cue_office("why is my aid late", TABLE) == "financial-aid"
     assert contact.cue_office("whats my gpa", TABLE) == "registrar"
     assert contact.cue_office("what is my balance", TABLE) == "bursar"
@@ -113,13 +113,21 @@ def dev_questions():
     return out
 
 
+def old_account_cue(question, contacts):
+    """The rule that chose "personal account" before this change: any office cue or account word."""
+    text = question.lower()
+    return contact.has_word(text, contacts.get("account_only", [])) or any(
+        contact.has_word(text, words) for words in contacts["cues"].values()
+    )
+
+
 def old_code(reason, question):
     """The relabel rule before this change: any office cue or account word."""
     if reason is None:
         return None
     if reason.startswith(convert.OWN_CODES):
         return reason
-    if contact.account_cue(question, TABLE):
+    if old_account_cue(question, TABLE):
         return "personal_account"
     return reason if reason == "below_threshold" else "model"
 
@@ -151,7 +159,7 @@ def test_exactly_these_dev_questions_would_be_relabelled_differently_and_none_el
     for qid in (
         differ
     ):  # each is a possessive plus an office noun with no account signal: a policy question
-        assert contact.account_cue(dev[qid], TABLE) and not contact.personal_account_cue(
+        assert old_account_cue(dev[qid], TABLE) and not contact.personal_account_cue(
             dev[qid], TABLE
         )
         assert (
