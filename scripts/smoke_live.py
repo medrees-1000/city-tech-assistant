@@ -32,7 +32,10 @@ class Smoke:
         self.client, self.prefix = client, prefix.rstrip("/")
         # the made-up visitor goes with every request: the local page forwards it, the API trusts it
         # only with the secret, and Vercel replaces it with the real visitor
-        self.headers = {"x-real-ip": visitor, **({"x-cta-proxy-secret": secret} if secret else {})}
+        # x-cta-visitor is the header the API prefers (web/proxy.ts sets it); direct runs send the
+        # same made-up visitor in both, and the page proxy overwrites both
+        self.headers = {"x-real-ip": visitor, "x-cta-visitor": visitor,
+                        **({"x-cta-proxy-secret": secret} if secret else {})}  # fmt: skip
         self.sent = 0
         self.first_at: float | None = None  # when the first /ask was sent (the limit is per minute)
         self.rows: list[tuple[str, bool, str]] = []
