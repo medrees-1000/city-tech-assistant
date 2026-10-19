@@ -316,11 +316,7 @@ def test_the_notice_claim_of_no_ip_and_no_cookies_is_true_of_the_code():
         assert "localStorage" not in code and "sessionStorage" not in code, path
         # the API never reads x-forwarded-for; the page's proxy (web/lib/forward.ts) reads the
         # host's copy once, to pass it on in x-real-ip, and stores nothing (no cookie or storage)
-        # TEMPORARY exception: guard.addr_tags hashes it into a 6-hex diagnostic tag (twice: the
-        # header name and its tag key); the visitor key never uses it. Remove with addr_tags.
-        if path.name == "guard.py":
-            assert code.lower().count("x-forwarded-for") == 2, path
-        elif path.name not in ("forward.ts", "forward.test.ts"):
+        if path.name not in ("forward.ts", "forward.test.ts"):
             assert "x-forwarded-for" not in code.lower(), path
         if path.name != "guard.py":  # the one place that reads the address (step 7, rule 8)
             assert "request.client" not in code, path
@@ -331,7 +327,7 @@ def test_the_notice_claim_of_no_ip_and_no_cookies_is_true_of_the_code():
     lines = [ln for ln in inspect.getsource(guard).splitlines() if "request.client" in ln]
     assert len(lines) == 1  # one read, and it is in visitor_key, which only hashes it
     key_source = inspect.getsource(guard.Guard.visitor_key)
-    tag_source = inspect.getsource(guard.Guard.tag)  # the keyed hash, shared with addr_tags
+    tag_source = inspect.getsource(guard.Guard.tag)  # the keyed hash that visitor_key calls
     assert "request.client" in key_source and "self.tag(" in key_source
     assert "sha256" in tag_source and "hmac" in tag_source
     rest = inspect.getsource(guard).replace(key_source, "").replace(tag_source, "")

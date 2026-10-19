@@ -141,26 +141,6 @@ def component_cost(run: dict) -> dict[str, float]:
     }  # fmt: skip
 
 
-def example_answers(label: str, ids: list[str]) -> dict[str, str]:
-    """The stored answer text of these questions in a run (from request_logs; questions are redacted)."""
-    from cta.index.db import connect
-    from cta.redact import redact
-
-    questions = {q["id"]: q["question"] for q in load_questions()}
-    out = {}
-    with connect() as conn:
-        row = conn.execute(
-            "SELECT id FROM eval_runs WHERE label = %s ORDER BY id DESC LIMIT 1", (label,)
-        ).fetchone()
-        for qid in ids:
-            got = conn.execute(
-                "SELECT answer FROM request_logs WHERE run_id = %s AND question = %s ORDER BY id DESC LIMIT 1",
-                (row[0], redact(questions[qid])),
-            ).fetchone()
-            out[qid] = got[0] if got else "(not logged)"
-    return out
-
-
 def per_question_table(runs: list[dict], ids: list[str], gold: dict[str, list[str]]) -> list[str]:
     out = [
         "| id | gold rows | " + " | ".join(r["label"] for r in runs) + " |",

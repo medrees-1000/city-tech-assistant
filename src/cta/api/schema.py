@@ -95,13 +95,3 @@ class AskResponse(BaseModel):
     contact: Contact | None
     how_found: HowFound
     meta: Meta
-
-
-class ErrorBody(BaseModel):
-    code: str
-    message: str
-
-
-class ErrorResponse(BaseModel):
-    error: ErrorBody
-    request_id: str | None = None

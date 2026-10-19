@@ -1,5 +1,5 @@
-"""Batch 1, item 2 (docs/polish-triage.md G1-3): names typed without "my name is". Plain patterns on
-the question only; no network, no database, no model."""
+"""Batch 1, item 2 (docs/archive/polish-triage.md G1-3): names typed without "my name is". Plain
+patterns on the question only; no network, no database, no model."""
 
 import pytest
 

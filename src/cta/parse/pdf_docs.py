@@ -26,7 +26,6 @@ LIGATURES = {"ﬀ": "ff", "ﬁ": "fi", "ﬂ": "fl", "ﬃ": "ffi", "ﬄ": "ffl"}
 BULLETS = ("•", "", "▪", "", "·", "●", "◦")
 END_PUNCT = (".", "!", "?", ",", ";")  # a bold line ending like this is a sentence, not a heading
 TERMINAL = (".", "!", "?", ":", ")", '"', "”")
-LINE_TOLERANCE = 2.5
 GAP_FACTOR = 0.15  # a gap wider than this fraction of the font size is a space between words
 
 

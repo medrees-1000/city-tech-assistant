@@ -31,7 +31,7 @@ class Rendered:
 
 
 def registrar_contact(path: Path = REGISTRAR_FILE) -> str:
-    """Emails and phones from the contact record (the file make_calendar_candidates.py uses)."""
+    """Emails and phones from the contact record."""
     try:
         record = json.loads(path.read_text(encoding="utf-8"))
         return ", ".join([*record["emails"], *record["phones"]]) or NO_CONTACT

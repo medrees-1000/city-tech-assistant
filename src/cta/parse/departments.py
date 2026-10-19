@@ -350,10 +350,6 @@ def strip_inactive(items: list, stripped: list[dict], where: str) -> list:
 # ---- the rendering of program parts -------------------------------------------------------
 
 
-def blocks_markdown(blocks: list[Block]) -> list[Block]:
-    return blocks
-
-
 MAP_HEADER = [
     "Requirement",
     "Rule notes",

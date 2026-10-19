@@ -196,7 +196,7 @@ The collected data is not in the repo, so this is not a one-command reproduce: t
 ## Repo layout, tests, license
 
 - `src/cta/`: `crawl`, `parse`, `index` (chunks, embeddings, search), `graph` (router, calendar, chain), `api` (FastAPI and guards), `eval`, `validate`. `web/` is the Next.js page; `config/` settings and sources; `db/migrations/`; `eval/` questions and results; `scripts/`; `docs/` decisions, plans and results.
-- Tests: 3,086 Python tests (`uv run pytest`) and 121 web tests (`npm test --prefix web`). On my machine all 3,086 Python tests pass; in a fresh clone without the collected data, 2,449 pass and 637 skip with a reason (they need the data or Postgres) and none fail. `ruff check` is clean.
+- Tests: 3,164 Python tests (`uv run pytest`) and 142 web tests (`npm test --prefix web`). On my machine all 3,164 Python tests pass; in a fresh clone without the collected data, 2,534 pass and 630 skip with a reason (they need the data or Postgres) and none fail. `ruff check` is clean.
 - License: MIT for the code (see [LICENSE](LICENSE)). No crawled City Tech content is included. `eval/questions.jsonl` quotes short passages from public City Tech pages in its gold answers; the project is not affiliated with City Tech or CUNY.
 
 ## Contact

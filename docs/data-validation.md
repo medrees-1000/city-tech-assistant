@@ -72,14 +72,14 @@ PDFs, departments, calendar). A missing input is SKIPPED, never a pass.
 2. **Courses:** pick 20 random courses and compare code, title, credits and prerequisite text with
    the live catalog page. At least 3 per department, plus 2 cross-listed courses.
    **Done by the owner before 2026-10-11** (exact date not recorded; sheet:
-   `docs/manual-check-courses.md`).
+   `docs/archive/manual-check-courses.md`).
 3. **Pages:** open 10 random cleaned web pages and confirm no menu junk and no missing sections.
    **Done by the owner before 2026-10-11** (exact date not recorded).
 4. **Programs:** for each department, compare the credit total and required course list with the
-   live catalog program page. **Done 2026-10-11** (owner, `docs/manual-check-programs.md`; the open
+   live catalog program page. **Done 2026-10-11** (owner, `docs/archive/manual-check-programs.md`; the open
    source facts stay as they are, see the log).
 5. **Contacts:** confirm each office's phone/email in the data against the live page.
-   **Done 2026-10-11** (owner, `docs/manual-check-contacts.md`).
+   **Done 2026-10-11** (owner, `docs/archive/manual-check-contacts.md`).
 
 ## Recording results
 

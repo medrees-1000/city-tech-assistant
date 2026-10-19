@@ -1,6 +1,7 @@
-"""Replay check of contact policy v2 (docs/step4c-plan.md, "v2"). No model or embedding call.
+"""Replay check of contact policy v2 (docs/archive/step4c-plan.md, "v2"). No model or embedding
+call.
 
-    uv run python -m cta.eval.contact_replay [--write docs/step4c-replay-v2.md]
+    uv run python -m cta.eval.contact_replay [--write docs/archive/step4c-replay-v2.md]
 
 Takes the dev answers stored in request_logs for 4b-run1..3, rebuilds each real answer (the log
 replaces emails and phones by [EMAIL] and [PHONE]; the rebuild is checked by redacting it again),

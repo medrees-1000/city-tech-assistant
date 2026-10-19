@@ -1,5 +1,5 @@
 # ruff: noqa: E501
-"""Report on the step 4b runs: the measures M1 to M6 and the keep rule R1 to R6 of docs/step4b-plan.md.
+"""Report on the step 4b runs: the measures M1 to M6 and the keep rule R1 to R6 of docs/archive/step4b-plan.md.
 
     uv run python -m cta.eval.chain_report --runs 4b-run1 4b-run2 4b-run3 --router2 router2-run1 router2-run2 router2-run3
 

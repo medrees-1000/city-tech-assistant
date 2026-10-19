@@ -133,23 +133,6 @@ class Guard:
         """Whether the request carries a usable forwarded visitor (a plain IP in x-real-ip)."""
         return valid_ip(request.headers.get(FORWARDED_HEADER, "").strip())
 
-    def forwarded_family(self, request) -> str:
-        """"ipv4", "ipv6" or "none": the kind of the forwarded visitor, never the visitor itself. A
-        dual-stack client that switches between the two is two different visitors to the limiter."""
-        text = request.headers.get(FORWARDED_HEADER, "").strip()
-        for family, name in ((socket.AF_INET, "ipv4"), (socket.AF_INET6, "ipv6")):
-            try:
-                socket.inet_pton(family, text)
-            except (OSError, ValueError):
-                continue
-            return name
-        return "none"
-
-    def known_visitor(self, request) -> bool:
-        """Whether the limiter already holds a counter for this visitor (no identifier leaves)."""
-        with self.lock:
-            return self.visitor_key(request) in self.visitors
-
     def tag(self, value: str) -> str:
         """The salted HMAC-SHA256 of a visitor value, in hex (the limiter key; never logged)."""
         return hmac.new(self.salt, value.encode(), hashlib.sha256).hexdigest()
@@ -166,19 +149,6 @@ class Guard:
                     host = forwarded
                     break
         return self.tag(host)
-
-    def addr_tags(self, request) -> dict[str, str | None]:
-        """TEMPORARY diagnostic (docs/decisions.md): a 6-hex salted tag for each candidate
-        header, null when the header is missing. The same tag means the same value; no raw value."""
-        first_xff = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
-        values = {
-            "x-real-ip": request.headers.get("x-real-ip", "").strip(),
-            "x-forwarded-for": first_xff,
-            "x-vercel-forwarded-for": request.headers.get("x-vercel-forwarded-for", "").strip(),
-            "x-vercel-proxied-for": request.headers.get("x-vercel-proxied-for", "").strip(),
-            VISITOR_HEADER: request.headers.get(VISITOR_HEADER, "").strip(),
-        }
-        return {name: self.tag(v)[:6] if v else None for name, v in values.items()}
 
     def rate_limited(self, key: str) -> bool:
         """Count this request for `key`; True when it is over the per-minute or per-day limit."""

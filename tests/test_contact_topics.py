@@ -1,5 +1,5 @@
-"""Batch 1, item 1 (docs/polish-triage.md G1-1): topic cues add an office to a refusal that would
-carry none. No network, no database, no model."""
+"""Batch 1, item 1 (docs/archive/polish-triage.md G1-1): topic cues add an office to a refusal
+that would carry none. No network, no database, no model."""
 
 from types import SimpleNamespace
 

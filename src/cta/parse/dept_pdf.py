@@ -26,7 +26,6 @@ COLUMN_BASE = {"L": 30.0, "F": 30.0, "R": 306.6}  # left edge of the text in eac
 FOOTER = re.compile(r"^\d+ / \d+$")
 # The broken glyph U+2BD1 stands for a lost "ff" ligature. It is repaired only in these known words.
 BROKEN_WORDS = {"O⯑ers": "Offers", "O⯑ce": "Office"}
-BROKEN_CHAR = "⯑"
 H_DEPT, H_SECTION, H_TITLE, H_CARD, H_SUB = 14.4, 12.2, 10.1, 9.4, 8.3
 
 
@@ -371,11 +370,6 @@ def key_of(line: PLine) -> str | None:
 
 def key_value(line: PLine, key: str) -> str:
     return line.plain[len(key) :].strip()
-
-
-def join_plain(lines: list[PLine]) -> str:
-    """Wrapped lines of one value joined with a space ("-"-ended words are not joined here)."""
-    return " ".join(ln.plain for ln in lines).strip()
 
 
 def parse_card(lines: list[PLine], flags: list[str], where: str) -> Card:
