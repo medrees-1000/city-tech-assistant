@@ -130,8 +130,12 @@ class Guard:
         return bool(self.proxy_secret) and self.proxy_ok(request)
 
     def forwarded_present(self, request) -> bool:
-        """Whether the request carries a usable forwarded visitor (a plain IP in x-real-ip)."""
-        return valid_ip(request.headers.get(FORWARDED_HEADER, "").strip())
+        """Whether the request carries a usable forwarded visitor (a plain IP) in a header the
+        limiter key reads: x-cta-visitor or x-real-ip when the secret matched, else x-real-ip.
+        Logging only; visitor_key makes the same choice."""
+        trusted = self.proxy_trusted(request)
+        names = (VISITOR_HEADER, FORWARDED_HEADER) if trusted else (FORWARDED_HEADER,)
+        return any(valid_ip(request.headers.get(name, "").strip()) for name in names)
 
     def tag(self, value: str) -> str:
         """The salted HMAC-SHA256 of a visitor value, in hex (the limiter key; never logged)."""

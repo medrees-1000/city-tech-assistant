@@ -52,6 +52,14 @@ def test_a_missing_forwarded_visitor_is_logged(monkeypatch, capsys):
     assert [ln["forwarded_present"] for ln in lines(capsys)] == [False, False]
 
 
+def test_forwarded_present_counts_x_cta_visitor_when_trusted_but_not_otherwise(monkeypatch, capsys):
+    c = app(monkeypatch)
+    post(c, ip=None, **{"x-cta-visitor": IP})  # the header the API uses, no x-real-ip at all
+    post(c, ip=None, **{"x-cta-visitor": "junk"})
+    post(c, secret="wrong", ip=None, **{"x-cta-visitor": IP})  # not trusted: the header is ignored
+    assert [ln["forwarded_present"] for ln in lines(capsys)] == [True, False, False]
+
+
 def test_local_use_with_no_secret_is_not_trusted(monkeypatch, capsys):
     c = app(monkeypatch, env={})
     post(c, secret=None)
