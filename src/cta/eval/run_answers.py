@@ -155,8 +155,6 @@ def make_judge_call(cfg: dict, client):
 
 # ---- calendar scoring (step 4a) ----
 
-CALENDAR_LABELS = ("calendar wrong row", "calendar missed", "calendar abstained")
-
 
 def calendar_result(q: dict, ans: Answer, version: int = 1) -> tuple[dict, str | None, str]:
     """Deterministic score of a calendar-only gold question from the rows the answer states.

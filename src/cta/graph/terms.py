@@ -10,7 +10,6 @@ import re
 from dataclasses import dataclass, field
 from datetime import date
 
-SEASONS = ("winter", "spring", "summer", "fall")
 SEASON_YEAR = re.compile(
     r"\b(winter|spring|summer|fall|autumn)\s*(?:semester|term|session)?\s*,?\s*(\d{4})\b", re.I
 )

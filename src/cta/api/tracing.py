@@ -110,16 +110,6 @@ def embeddings_summary(response) -> dict:
 # ---- the tracer ----
 
 
-class NullRecorder:
-    """What a request holds when tracing is off: nothing happens."""
-
-    def finish(self, response) -> None:
-        return None
-
-    def withhold(self, response) -> None:
-        return None
-
-
 WITHHELD = "[reply withheld: handled by the safety checks]"
 
 
