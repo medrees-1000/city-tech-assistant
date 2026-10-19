@@ -749,3 +749,23 @@ done. All five manual checks are now done (1, 4 and 5 are recorded in earlier en
 Dev runs `baseline-dev` (rubric v1) and `baseline-dev-judge-v2` (rubric v2), test run `baseline-final`; results in
 `eval/results/`, analysis in `docs/baseline-findings.md`. Owner check of 8 dev judge verdicts: correctness 6/8 (v1)
 and 7/8 (v2), faithfulness 7/8. All automatic data checks pass (`python -m cta.validate`, including the new `entities` area).
+
+## Safety replies and contacts re-check — 2026-10-19
+
+Source: City Tech Public Safety, https://citytech.cuny.edu/public-safety/emergency.aspx, read by the owner on 2026-10-19 (facts as given to me; the page was not fetched). Read-only check: nothing was changed.
+
+Official facts: Dispatcher, "Dial 5555 from any on-campus telephone", otherwise 718-260-5555. NYC Police/Fire: from a campus telephone dial 9-911, otherwise 9-1-1. Public Safety phone 718-260-5550, email publicsafety@citytech.cuny.edu, 300 Jay Street, Namm Hall 109 (N-109), Brooklyn, NY 11201.
+
+| Where | Value in the code | Against the page |
+|---|---|---|
+| `src/cta/api/screen.py` `TEXTS["danger"]` | "call 911" | Differs for campus phones: the page says dial 9-911 from a campus telephone. |
+| same | Public Safety "(718) 260-5550" | Matches. |
+| same | "24 hours a day" | Not in the facts above; it comes from the older page text of Oct 16 (docs/decisions.md). Not confirmed today. |
+| same | "from a campus phone, dial 5550" | Not in the facts above (older page text of Oct 16). Not confirmed today. |
+| same | "or 5555 in an emergency" | 5555 matches the Dispatcher from a campus phone. The off-campus Dispatcher number 718-260-5555 is not in the reply. |
+| same | no email, no address | Not an error; publicsafety@citytech.cuny.edu and Namm Hall 109 are not printed. |
+| same | National Domestic Violence Hotline 1-800-799-7233 (SAFE), text START to 88788; NYC 1-800-621-4673 (HOPE) | Not on the Public Safety page; checked Oct 16, 2026 against thehotline.org and nyc.gov (docs/decisions.md). Not re-checked today. |
+| `screen.py` `LIFELINE`, `EMERGENCY`, `TEXTS["distress"]`, `CRISIS_LINE`; `web/lib/errors.ts` `CRISIS_LINE` | 988 (the 988 Suicide & Crisis Lifeline, call or text), 911 | 988 source: https://988lifeline.org (docs/decisions.md, "documented exception"). 911 is the national emergency number; from a campus phone the page says 9-911. |
+| `config/contacts.yaml` | office phones and emails for the registrar, advisement, bursar, financial aid, admissions, special circumstances and four departments | Collected from the site on 2026-10-11 (`cta.validate`, area "contacts"). Public Safety is not in this file (kept in `screen.py`, see the comment there). Not part of today's comparison. |
+
+Open for the owner: the wording of the danger reply (911 versus 9-911 from a campus phone, the off-campus Dispatcher number, "dial 5550", "24 hours a day"). No text was changed.
