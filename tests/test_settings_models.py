@@ -2,7 +2,7 @@ import pytest
 
 from cta import answer as ans_mod
 from cta.redact import redact
-from cta.settings import answer_model, check_answer_model, cost_usd, load_models, secret_status
+from cta.settings import answer_model, check_answer_model, cost_usd, load_models
 
 
 def test_defaults_load_and_dimensions_follow_model():
@@ -33,13 +33,6 @@ def test_cost_usd():
     assert cost_usd(cfg, "text-embedding-3-small", 1_000_000) == pytest.approx(0.02)
     with pytest.raises(ValueError):
         cost_usd(cfg, "nope", 1)
-
-
-def test_secret_status_hides_values():
-    status = secret_status({"OPENAI_API_KEY": "sk-secret"})
-    assert status["OPENAI_API_KEY"] == "set"
-    assert status["POSTGRES_PASSWORD"] == "missing"
-    assert "sk-secret" not in str(status)
 
 
 @pytest.mark.parametrize(

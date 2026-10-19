@@ -1,7 +1,10 @@
 """The local API (Phase 4). No network, no database, no paid call: the connection is a stub."""
 
+import functools
 import json
-from datetime import date
+import tempfile
+from datetime import UTC, date, datetime
+from pathlib import Path
 from types import SimpleNamespace
 
 import psycopg
@@ -266,6 +269,13 @@ def cfg_for(**api):
     return cfg
 
 
+# An empty folder as the repo root, so the kill-switch file and the page records are never read
+# from the real checkout; a test that needs real records passes tmp_root=ROOT.
+guard_class = api_app.guard_mod.Guard
+EMPTY_ROOT = Path(tempfile.mkdtemp(prefix="cta-test-root-"))
+FIXED_NOW = datetime(2026, 10, 11, 15, 0, tzinfo=UTC)  # the guard's day and minute windows
+
+
 def make_client_app(client, monkeypatch, stub=None, cfg=None, tmp_root=None, connect=ok_connect,
                     clock=lambda: TODAY, log_writer=None, feedback_writer=None,
                     env=None, headers=None):  # fmt: skip
@@ -273,6 +283,9 @@ def make_client_app(client, monkeypatch, stub=None, cfg=None, tmp_root=None, con
     if stub is not None:
         monkeypatch.setattr(build, "answer", lambda *a, **k: stub)
     monkeypatch.setattr(chains, "load_records", lambda *a, **k: WORLD)
+    # the guard reads the real clock by default; pin it so day and minute windows cannot drift
+    pinned = functools.partial(guard_class, now=lambda: FIXED_NOW, monotonic=lambda: 1000.0)
+    monkeypatch.setattr(api_app.guard_mod, "Guard", pinned)
 
     def factory(conn, cfg):
         return Router(conn, cfg, lambda: client, events=EVENTS, contact=REGISTRAR)
@@ -290,13 +303,19 @@ def make_client_app(client, monkeypatch, stub=None, cfg=None, tmp_root=None, con
 
     writer = log_writer or remember
     app = api_app.create_app(cfg, connect=connect, check_startup=False, router_factory=factory,
-                             root=tmp_root or ROOT, clock=clock, log_writer=writer,
+                             root=tmp_root or EMPTY_ROOT, clock=clock, log_writer=writer,
                              feedback_writer=feedback_writer or vote_writer,
                              client_factory=lambda: client,
                              env={} if env is None else env)  # fmt: skip
     test_client = TestClient(app, raise_server_exceptions=False, headers=headers)
     test_client.logs, test_client.votes = logs, votes
     return test_client
+
+
+def test_the_test_app_reads_neither_the_real_clock_nor_the_real_checkout(monkeypatch):
+    guard = make_client_app(Client(), monkeypatch).app.state.guard
+    assert guard.now() == FIXED_NOW and guard.root == EMPTY_ROOT
+    assert not guard.disabled()  # no data/api_disabled file in the empty root
 
 
 def ask(client, question="How do I apply for graduation?"):

@@ -728,10 +728,6 @@ def course_region(items: list) -> tuple[list[dict], Counter]:
     return [{"title": c["title"], "page": c["page"]} for c in cards], chars
 
 
-def blank_programs_page(items: list, parts_overview_end: int) -> bool:
-    return False
-
-
 class Parsed:
     """One department PDF after reading and splitting (before records are built)."""
 

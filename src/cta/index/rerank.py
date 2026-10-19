@@ -1,6 +1,6 @@
 """LLM reranker (Phase 3, step 3): one chat call per question scores the candidate chunks 0 to 10.
 
-    retrieval.rerank: off | pool_a | pool_b      (config/models.yaml; default off = the baseline)
+    retrieval.rerank: off | pool_a      (config/models.yaml; default off = the baseline)
 
 The first stage fetches a pool (POOLS below); the model scores how directly each candidate's text
 answers the question; the candidates are sorted by score and the caller keeps the top k. Scores are
@@ -25,11 +25,8 @@ CACHE_PATH = ROOT / "data" / "cache" / "rerank.json"
 PROMPT_VERSION = 1
 CHUNK_TOKENS = 400  # fixed in advance (docs/experiments.md, step 3), not tuned
 MAX_SCORE = 10
-# The two variants, fixed in advance. The pool is fetched with this mode and filter, then reranked.
-POOLS = {
-    "pool_a": {"mode": "vector", "dept_filter": "off", "size": 20},
-    "pool_b": {"mode": "hybrid_bm25", "dept_filter": "on", "size": 30},
-}
+# The pool is the vector top `size`, then reranked (a second variant, pool_b, was removed).
+POOLS = {"pool_a": {"size": 20}}
 
 INSTRUCTIONS = """\
 You rank passages for a question from a City Tech (CUNY) student. You get the question and numbered

@@ -17,11 +17,6 @@ DEV = [q for q in load_questions() if q["split"] == "dev"]
 ADVICE_IDS = {"q30", "q47", "q91", "q92"}
 
 
-@pytest.fixture(scope="module")
-def events():
-    return build.load_events()
-
-
 # ---- the detector ----
 
 

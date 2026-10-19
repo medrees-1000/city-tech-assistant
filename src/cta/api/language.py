@@ -29,23 +29,19 @@ ENGLISH_WORDS = frozenset(
 WORD = re.compile(r"[a-z]+")
 MIN_ENGLISH_WORDS = 2
 
-# Option 3 (the default while option 1 fails its rule): what a non-English question gets, after the
-# note line in the student's language. A fixed English reply; nothing the student typed is in it.
+# What a non-English question gets, after the note line in the student's language. A fixed English
+# reply; nothing the student typed is in it.
 NON_ENGLISH_REPLY = (
     "I can currently answer questions in English only. Please ask your question again in English, "
     "and I'll show you the rules and dates that apply."
 )
-FALLBACK_NOTE = "This answer is in English; the sources are in English."  # option 1 (translate)
-# Option 3 (english_only, the default) has no answer, so its note must not talk about "the answer".
-FALLBACK_NOTE_ENGLISH_ONLY = "I can currently answer in English only."
-# What the model is asked to write in the student's language, by mode (tester round 1b follow-up)
-NOTE_RULES = {
-    "translate": "ONE short sentence in the language of the question that says the answer will be "
-    "in English and that the sources are in English.",
-    "english_only": "ONE short sentence in the language of the question that says the assistant "
-    "can currently answer in English only.",
-}
-FALLBACK_NOTES = {"translate": FALLBACK_NOTE, "english_only": FALLBACK_NOTE_ENGLISH_ONLY}
+# The line used when the model's note is unusable. It must not mention "the answer": there is none.
+FALLBACK_NOTE = "I can currently answer in English only."
+# What the model is asked to write in the student's language
+NOTE_RULE = (
+    "ONE short sentence in the language of the question that says the assistant "
+    "can currently answer in English only."
+)
 NOTE_MAX_CHARS = 160
 ENGLISH_MAX_CHARS = 1000
 ECHOED_LABEL = re.compile(r"^\s*(?:question|translation|english)\s*:\s*", re.IGNORECASE)
@@ -70,9 +66,9 @@ class Language:
     call: JsonCall | None = None  # tokens, cost and time of the model call
 
 
-def valid_note(raw, mode: str = "translate") -> str:
-    """The note when it is one short safe sentence; else the fixed English line of the mode."""
-    fallback = FALLBACK_NOTES[mode]
+def valid_note(raw) -> str:
+    """The note when it is one short safe sentence; else the fixed English line."""
+    fallback = FALLBACK_NOTE
     if not isinstance(raw, str) or "\n" in raw or "\r" in raw:
         return fallback
     text = " ".join(raw.split())
@@ -81,10 +77,9 @@ def valid_note(raw, mode: str = "translate") -> str:
     return text
 
 
-def system_prompt(mode: str) -> str:
-    """The language prompt with the note rule of the mode (option 1: "the answer is in English";
-    option 3: "I can currently answer in English only")."""
-    return PROMPT.read_text(encoding="utf-8").replace("{note_rule}", NOTE_RULES[mode])
+def system_prompt() -> str:
+    """The language prompt with the note rule filled in."""
+    return PROMPT.read_text(encoding="utf-8").replace("{note_rule}", NOTE_RULE)
 
 
 def is_english_code(code: str) -> bool:
@@ -95,9 +90,8 @@ def detect(text: str, cfg: dict, client_factory: Callable) -> Language:
     """The language and the English text of `text` (already redacted). Never raises."""
     if looks_english(text):
         return Language(english=text)
-    mode = cfg["guardrails"]["non_english"]
     messages = [
-        {"role": "system", "content": system_prompt(mode)},
+        {"role": "system", "content": system_prompt()},
         {
             "role": "user",
             "content": text,
@@ -124,7 +118,7 @@ def detect(text: str, cfg: dict, client_factory: Callable) -> Language:
         )  # the original, byte for byte
     return Language(
         code=code, english=" ".join(ECHOED_LABEL.sub("", english, count=1).split()),
-        note=valid_note(data.get("note"), mode),
+        note=valid_note(data.get("note")),
         skipped=False, call=call,
     )  # fmt: skip
 

@@ -124,7 +124,7 @@ def create_app(
         "chat_model": cfg["chat_model"], "embedding_model": cfg["embedding_model"],
         "rescue": cfg["answer"].get("rescue", "off"),
         "abstain_threshold": cfg["answer"]["abstain_threshold"],
-        "language_step": guards["language_step"], "non_english": guards["non_english"],
+        "language_step": guards["language_step"],
         "rate_per_minute": guards["rate_per_minute"], "rate_per_day": guards["rate_per_day"],
         "tracing": tracer is not None, "today_zone": "America/New_York",
     }  # fmt: skip
@@ -249,8 +249,6 @@ def create_app(
             "language_step"
         ]:  # one small call, only for a question that does not look English
             lang = language.detect(question, cfg, client_factory)
-        router_text, lang_note, details = question, None, False
-        scrubbed_translation = False
         if lang.code != "en":
             # every screen runs again on the English translation: the screens are English-only
             verdict = screen.screen(lang.english, guards)
@@ -260,29 +258,24 @@ def create_app(
                 text = f"{lang.note}\n\n{screen.reply(verdict.reason, guards)}"
                 return block(verdict.reason, question, rid, today, started, text, None, 0.0,
                              True, lang)  # fmt: skip
-            router_text, lang_note, details = verdict.question, lang.note, verdict.removed_details
-            lang.english = router_text  # the scrubbed translation is what is stored and shown
-            scrubbed_translation = verdict.scrubbed
-            if guards["non_english"] == "english_only":
-                # option 3: the screens above ran on the translation; now a fixed English notice, no
-                # retrieval, no answer. If the original needed scrubbing, the scrubbed translation
-                # is what gets logged.
-                guard.blocked["non_english"] += 1
-                shown = router_text if scrubbed_translation else question
-                text = f"{lang.note}\n\n{language.NON_ENGLISH_REPLY}"
-                return block(
-                    "non_english", shown, rid, today, started, text, None, 0.0, False, lang
-                )
+            # the screens ran on the translation; now a fixed English notice, no retrieval, no
+            # answer. If the original needed scrubbing, the scrubbed translation is what gets
+            # logged and stored.
+            lang.english = verdict.question
+            guard.blocked["non_english"] += 1
+            shown = verdict.question if verdict.scrubbed else question
+            text = f"{lang.note}\n\n{language.NON_ENGLISH_REPLY}"
+            return block("non_english", shown, rid, today, started, text, None, 0.0, False, lang)
         try:
             with connect() as conn, ExitStack() as stack:
                 # the trace starts here: after the scrub and every guardrail, with the scrubbed text
                 trace = (
-                    stack.enter_context(tracer.request(router_text, rid, trace_meta))
+                    stack.enter_context(tracer.request(question, rid, trace_meta))
                     if tracer
                     else None
                 )
                 try:
-                    ans = router_factory(conn, cfg).answer(router_text, today, log=False)
+                    ans = router_factory(conn, cfg).answer(question, today, log=False)
                 except ApiError:
                     failed("provider_error", conn)
                     return JSONResponse(
@@ -293,20 +286,13 @@ def create_app(
                     failed("internal_error", conn)
                     raise
                 response = convert.to_response(
-                    ans, router_text, cfg, today, rid, version, url_map, by_id
+                    ans, question, cfg, today, rid, version, url_map, by_id
                 )
-                # as typed (redacted); if the translation needed scrubbing (a name or number the
-                # original's wording hid) the scrubbed translation is stored instead
-                response.question = router_text if scrubbed_translation else question
-                topic.rewrite(router_text, response, cfg, client_factory)
+                response.question = question  # as typed (redacted)
+                topic.rewrite(question, response, cfg, client_factory)
                 language.add_to_response(response, lang)
-                # lines at the start of the answer: the language note (in the student's language),
-                # then the note that personal details were removed, then the answer
-                lines = [lang_note] if lang_note else []
-                if note or details:
-                    lines.append(screen.PERSONAL_NOTE)
-                if lines:
-                    response.answer = "\n\n".join([*lines, response.answer])
+                if note:  # the note that personal details were removed comes first
+                    response.answer = f"{screen.PERSONAL_NOTE}\n\n{response.answer}"
                 net_distress = response.abstained and screen.names_self_harm(response.answer)
                 net_leak = screen.leaks_key(response.answer)
                 if trace:  # a reply the output nets turn into a safety reply is not recorded

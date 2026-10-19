@@ -3,7 +3,6 @@ answer text is replaced with a plain phrase; the chain renderer's verbatim text 
 No network, no database, no model call."""
 
 from datetime import date
-from types import SimpleNamespace
 
 import pytest
 
@@ -11,6 +10,7 @@ from cta import answer as answer_module
 from cta.graph import chain as ch
 from cta.index.search import Search
 from cta.settings import load_models
+from tests.helpers import Model
 
 PHRASE = ch.SHORTHAND_REPLACEMENT
 assert PHRASE == "a prerequisite code the catalog does not spell out"
@@ -51,17 +51,6 @@ def test_lowercase_look_alikes_and_normal_rule_text_are_not_touched(text):
 def test_no_expansion_is_ever_written():
     out = ch.explain_shorthand("PRE_CST3500_CST3600")
     assert "3500" not in out and "3600" not in out and "CST" not in out
-
-
-class Model:
-    def __init__(self, content):
-        self.content = content
-        self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
-
-    def create(self, **kw):
-        usage = SimpleNamespace(prompt_tokens=10, completion_tokens=5)
-        msg = SimpleNamespace(content=self.content)
-        return SimpleNamespace(choices=[SimpleNamespace(message=msg)], usage=usage)
 
 
 def chunk(sim=0.8):

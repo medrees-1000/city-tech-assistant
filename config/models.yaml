@@ -17,10 +17,6 @@ answer:
   # behaviour). The classifier, selector, topic call, reranker and the model-written chain answers always use
   # chat_model. CTA_ANSWER_MODEL and --answer-model override it.
   model: null
-  # Step 3b: "off" | "on" (quoted: bare off/on are YAML booleans). "on" adds one formatting rule to the retrieval
-  # answer prompt (cta.answer.FORMAT_RULE); calendar and prerequisite answers are written by code and unaffected.
-  # CTA_ANSWER_FORMAT_RULE and --format-rule override it. Default off until its pre-registered rule is decided.
-  format_rule: "off"
   # Checked 2026-10-12 with one real call to gpt-6-luna (Chat Completions): temperature, top_p and
   # reasoning_effort "none" were all accepted without error (docs/decisions.md).
   temperature: 0.1
@@ -65,24 +61,12 @@ judge:
   reasoning_effort: none
   max_output_tokens: 400
 
-# Retrieval (Phase 3). `mode` is the experiment switch: vector (the frozen baseline), hybrid (Postgres ts_rank
-# keyword side; rejected in experiment 1) or hybrid_bm25 (BM25 keyword side, experiment 1b). CTA_RETRIEVAL_MODE
-# overrides it in .env. Hybrid = vector top `candidates` + keyword top `candidates`, reciprocal rank fusion.
+# Retrieval: exact vector search; the model reranker then reorders the best chunks.
 retrieval:
-  mode: vector
-  candidates: 20
-  rrf_k: 60
-  # Department filter (Phase 3, step 2a): off | on. With a department named in the question, chunks of scope
-  # "department" belonging to another department are dropped. CTA_DEPT_FILTER overrides it. Works with every mode.
-  dept_filter: "off"   # quoted: bare off/on are booleans in YAML
-  # LLM reranker (Phase 3, step 3): off | pool_a | pool_b (pools are fixed in src/cta/index/rerank.py).
+  # LLM reranker (Phase 3, step 3): off | pool_a (the pool is fixed in src/cta/index/rerank.py).
   # CTA_RERANK overrides it. Quoted for the same YAML reason. pool_a since experiment 3 (kept by its
   # pre-registered rule); CTA_RERANK=off reproduces the earlier vector-only retrieval.
   rerank: "pool_a"
-  # Fallback query rewrite (experiment E1, casual round): off | on. When on, a plain question whose
-  # first retrieval scores under the answer cutoff gets one small model call that rewrites it into a
-  # search query, and retrieval runs once more. CTA_FALLBACK_REWRITE overrides it. Quoted (YAML).
-  fallback_rewrite: "off"
 
 # Reranker call (the model is chat_model). Fixed in advance; see docs/experiments.md, step 3.
 rerank:
@@ -143,11 +127,6 @@ guardrails:
   # Tester round 1b, Part 2: a question that does not look English gets ONE small model call that detects its
   # language and translates it to English (docs/archive/language-plan.md). CTA_LANGUAGE_STEP overrides it.
   language_step: true
-  # What a non-English question gets (docs/decisions.md, "Tester round 1b, Part 2"): "english_only" = a fixed English
-  # notice asking the student to ask again in English, no retrieval (option 3, the default since the option 1
-  # probes failed rule R4); "translate" = answer in English from the translation (option 1, kept behind this
-  # switch). CTA_NON_ENGLISH overrides it.
-  non_english: "english_only"
   personal_data: "redact_and_refuse"   # off | redact | redact_and_refuse
 
 # Optional developer tracing with LangSmith (docs/decisions.md, "Near-miss floor and tracing"). OFF by default and only

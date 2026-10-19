@@ -69,17 +69,6 @@ def record_for(
     return rec
 
 
-def merge_manifest(path: Path, results: list[dict]) -> list[dict]:
-    """Add or replace manifest entries by URL (used when a few pages are fetched later)."""
-    manifest = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
-    by_url = {e["url"]: e for e in manifest}
-    for r in results:
-        by_url[r["url"]] = r
-    merged = list(by_url.values())
-    path.write_text(json.dumps(merged, indent=1), encoding="utf-8")
-    return merged
-
-
 def panel_list(contact: dict) -> list[dict]:
     return [{"heading": p["heading"], "markdown": p["markdown"]} for p in contact["panels"]]
 

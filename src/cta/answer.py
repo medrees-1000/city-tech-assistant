@@ -21,7 +21,6 @@ from cta.graph.clean import clean_for_search
 from cta.index.chunks import token_counter
 from cta.index.db import connect
 from cta.index.embed import ApiError, make_client, with_retries
-from cta.index.rewrite import rewrite_query
 from cta.index.search import Search, search
 from cta.redact import redact
 from cta.settings import answer_model, cost_usd, load_models
@@ -54,15 +53,6 @@ Rules:
 6. Today's date is given after the sources. Use it to decide what "this fall" or "now" means.
 """
 
-# Step 3b, round 2 (docs/decisions.md): added to the system prompt only when answer.format_rule
-# is "on". The round 1 sentence ("... dates, tiers or amounts ...") is quoted in docs/decisions.md.
-FORMAT_RULE = (
-    "7. When the sources give several dates or tiers that depend on a condition "
-    "(for example, when you first registered), write a short bullet list, one per line, "
-    "each tier with its date; keep the sentence before the list to one line and state the "
-    "condition in it. Otherwise answer in sentences, as before.\n"
-)
-
 
 @dataclass
 class Answer:
@@ -81,7 +71,6 @@ class Answer:
     chat_ms: int = 0
     near_miss: bool = False  # a below-threshold abstention that lists the closest pages
     rescued: bool = False  # under the cutoff, but sent on to the answer model by the rescue rule
-    rewrite: dict | None = None  # the fallback query rewrite, when it ran (experiment E1)
 
     @property
     def cost(self) -> float:
@@ -192,15 +181,11 @@ def format_source(n: int, chunk: dict) -> str:
     return "\n".join(lines) + "\n\n" + chunk["text"]
 
 
-def build_messages(
-    chunks: list[dict], today: date, question: str, format_rule: str = "off"
-) -> list[dict]:
-    """Instructions first (system), then sources, then the date and the question last. With
-    format_rule "on" the system prompt gets one more rule; nothing else differs."""
+def build_messages(chunks: list[dict], today: date, question: str) -> list[dict]:
+    """Instructions first (system), then sources, then the date and the question last."""
     sources = "\n\n---\n\n".join(format_source(n, c) for n, c in enumerate(chunks, 1))
     user = f"Sources:\n\n{sources}\n\nToday's date: {today.isoformat()}\nQuestion: {question}"
-    system = INSTRUCTIONS + FORMAT_RULE if format_rule == "on" else INSTRUCTIONS
-    return [{"role": "system", "content": system}, {"role": "user", "content": user}]
+    return [{"role": "system", "content": INSTRUCTIONS}, {"role": "user", "content": user}]
 
 
 def parse_reply(reply: str, n_sources: int) -> dict:
@@ -260,36 +245,6 @@ def log_request(
     conn.commit()
 
 
-def fallback_search(
-    conn, cfg: dict, client_factory, query: str, first: Search, k: int, kwargs: dict
-) -> tuple[Search, dict, float, int, int]:
-    """Experiment E1. The first retrieval was under the cutoff: rewrite the query (one small call)
-    and search again. Returns (the search to use, the note for the trace, extra cost, extra prompt
-    and completion tokens). The search to use is the second one if it reaches the cutoff, else the
-    better of the two (so a near-miss uses the better similarity). Any failure: the first search."""
-    threshold = cfg["answer"]["abstain_threshold"]
-    rw = rewrite_query(client_factory(), cfg, query)
-    note = {"query": rw.query, "first_similarity": first.top_vector_similarity, "used": False,
-            "cost": rw.cost, "ms": round(rw.ms, 1), "error": rw.error}  # fmt: skip
-    extra, p_tok, c_tok = rw.cost, rw.prompt_tokens, rw.completion_tokens
-    if not rw.query:
-        return first, note, extra, p_tok, c_tok
-    # probe without the reranker (one cached or tiny embedding): the reranker's model call is only
-    # worth paying for when the new query reaches the cutoff
-    probe = search(
-        conn, rw.query, k, cfg=cfg, client_factory=client_factory, rerank="off", **kwargs
-    )
-    note["second_similarity"] = probe.top_vector_similarity
-    if probe.top_vector_similarity >= threshold:
-        note["used"] = True
-        second = search(conn, rw.query, k, cfg=cfg, client_factory=client_factory, **kwargs)
-        return second, note, extra + first.total_cost + probe.total_cost, p_tok, c_tok
-    if probe.top_vector_similarity > first.top_vector_similarity:
-        note["better_of_two"] = True
-        return probe, note, extra + first.total_cost, p_tok, c_tok
-    return first, note, extra + probe.total_cost, p_tok, c_tok
-
-
 def answer(
     conn,
     question: str,
@@ -302,7 +257,6 @@ def answer(
     dry_run: bool = False,
     log: bool = True,
     run_id: int | None = None,
-    rewrite: bool = False,
 ) -> Answer:
     cfg = cfg or load_models()
     started = time.perf_counter()
@@ -313,16 +267,7 @@ def answer(
         conn, clean_for_search(question), k or cfg["answer"]["k"], cfg=cfg,
         client_factory=client_factory, **kwargs,
     )  # fmt: skip
-    note, extra, extra_p, extra_c = None, 0.0, 0, 0
-    if (rewrite and not dry_run and cfg["retrieval"].get("fallback_rewrite") == "on"
-            and found.top_vector_similarity < cfg["answer"]["abstain_threshold"]):  # fmt: skip
-        found, note, extra, extra_p, extra_c = fallback_search(
-            conn, cfg, client_factory, clean_for_search(question), found,
-            k or cfg["answer"]["k"], kwargs,
-        )  # fmt: skip
     ans = Answer("", False, None, found.results, search=found)
-    ans.rewrite, ans.chat_cost = note, extra
-    ans.prompt_tokens, ans.completion_tokens = extra_p, extra_c
     # The threshold is on the best VECTOR cosine similarity in both retrieval modes,
     # never on a fused score.
     ans.rescued = rescue_applies(cfg, found.top_vector_similarity, found.rerank)
@@ -335,9 +280,7 @@ def answer(
             ans.sources, ans.citations = pages, list(range(1, len(pages) + 1))
             ans.text, ans.near_miss = near_miss_text(pages), True
     else:
-        ans.prompt = build_messages(
-            found.results, today, question, cfg["answer"].get("format_rule", "off")
-        )
+        ans.prompt = build_messages(found.results, today, question)
         if dry_run:
             return ans
         chat_started = time.perf_counter()

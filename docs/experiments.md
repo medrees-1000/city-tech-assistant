@@ -1,5 +1,7 @@
 # Experiments (Phase 3)
 
+> **Note (Oct 19, 2026):** the code behind the rejected experiments below (hybrid and BM25 search, the department filter, `pool_b`, the answer format rule, and the fallback rewrite) was removed in the cleanup, together with their switches, flags and result files. The commands and file names in this document are reproducible at git tag `pre-cleanup`. The reranker (`pool_a`) is still live.
+
 One entry per experiment, newest last. Protocol: `docs/archive/phase3-plan.md`. Comparison file for dev:
 `eval/results/baseline-dev-60.json` (the frozen system on the 40 dev questions; 30 of them are retrieval-scored). Each entry has
 the change, the config switch, the metric deltas, cost and latency deltas, the questions that got better or worse, the decision, and
@@ -412,7 +414,7 @@ through the existing pipeline (retrieve, rerank, answer) **unchanged**. Nothing 
 - **Selector:** one model call (same settings, JSON `{"row_ids": [...]}`), input = question, today's date, the term and the pool as lines `id | event | date_raw | weekday_raw | applies_to`; instruction: return the id of every row that answers the question, `[]` if none does, never produce dates. Ids not in the pool are rejected
   (counted and reported). An empty list, or a failed or malformed call, = abstain ("I could not find that in the <term> calendar" plus the Registrar contact); never a fallback to guessing.
 - **Renderer (plain code; the only thing that writes dates):** weekday and date in words from `date_start` (weekday must equal `weekday_raw`, otherwise `weekday_raw` is rendered and the mismatch counted), ranges and year-crossing ranges, then the event, then "(<term> calendar, <pdf file name>, last updated <date>; the calendar can change)",
-  rows sorted by date, "(applies to: ...)" when `applies_to` is set. A null date (TBA) renders as "not announced yet" plus the Registrar contact (read from the contacts file `make_calendar_candidates.py` uses). The result carries the row ids as its sources.
+  rows sorted by date, "(applies to: ...)" when `applies_to` is set. A null date (TBA) renders as "not announced yet" plus the Registrar contact (read from the contact record in `data/processed/contacts`). The result carries the row ids as its sources.
 - **Prompts** (classifier, selector) are written once and committed **before any paid call**, are never edited after seeing dev results; a second prompt would be a new experiment.
 - **Scoring for calendar-only gold** (all gold sources are calendar row ids; deterministic, no judge; recorded as `calendar_scoring: 1` in run configs): **correct** = the returned row ids equal the gold ids; **partial** = a non-empty proper subset; **incorrect** = any returned id outside the gold set (a "wrong date stated") or an abstention, **or the question was not answered by the calendar route** (it returns no row ids). Gold ABSTAIN
   questions use the existing abstention rule. Ambiguous or CLARIFY questions stay "not supported yet" until step 5. New failure labels for calendar results: calendar wrong row, calendar missed, calendar abstained; every other label is unchanged.

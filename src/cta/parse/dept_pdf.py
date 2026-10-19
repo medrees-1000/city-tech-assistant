@@ -26,7 +26,6 @@ COLUMN_BASE = {"L": 30.0, "F": 30.0, "R": 306.6}  # left edge of the text in eac
 FOOTER = re.compile(r"^\d+ / \d+$")
 # The broken glyph U+2BD1 stands for a lost "ff" ligature. It is repaired only in these known words.
 BROKEN_WORDS = {"O⯑ers": "Offers", "O⯑ce": "Office"}
-H_DEPT, H_SECTION, H_TITLE, H_CARD, H_SUB = 14.4, 12.2, 10.1, 9.4, 8.3
 
 
 @dataclass

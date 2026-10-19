@@ -1,12 +1,11 @@
 """Retrieval: embed the question, return the k best chunks.
 
-    uv run python -m cta.index.search "How do I apply for graduation?" -k 5 [--mode hybrid]
+    uv run python -m cta.index.search "How do I apply for graduation?" -k 5 [--rerank pool_a]
 
-Two modes (config `retrieval.mode`, default vector = the frozen baseline):
-- vector: exact cosine scan over all chunks, no filters.
-- hybrid (Phase 3, step 1, rejected, off): the vector top N plus the Postgres ts_rank keyword top N.
-- hybrid_bm25 (step 1b): the vector top N plus the BM25 top N (cta.index.bm25), same fusion.
-  Fusion is reciprocal rank fusion; then the top k. No filters in any mode.
+Vector search: exact cosine scan over all chunks, no filters. With `retrieval.rerank` set to pool_a
+(the production setting) a model then reorders the 20 best chunks (cta.index.rerank). The keyword
+(hybrid, BM25) variants and the department filter were rejected experiments and were removed in the
+cleanup of Oct 19, 2026; they are reproducible at git tag pre-cleanup.
 Question embeddings are cached in data/cache/query_embeddings.json (speed and repeatable eval runs;
 never answers). The key is a hash of the model name and the exact question, so the question text
 itself is not stored, and another model never reuses old vectors.
@@ -20,10 +19,8 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from cta.index import bm25
 from cta.index import rerank as reranker
 from cta.index.db import connect
-from cta.index.departments import allowed_sql, detect_departments
 from cta.index.embed import ApiError, embed_texts, make_client
 from cta.index.jsoncache import read_cache, write_cache
 from cta.settings import ROOT, cost_usd, load_models
@@ -43,11 +40,8 @@ class Search:
     tokens: int
     cost: float
     question_key: str = field(repr=False, default="")
-    mode_used: str = "vector"  # "hybrid", "vector", or "vector (empty keyword query)"
     top_vector_similarity: float | None = None  # best cosine similarity in the vector list
     retrieval_ms: float = 0.0  # the whole search call, including the query embedding if not cached
-    dept_filter_applied: bool = False
-    detected_departments: list[str] = field(default_factory=list)
     rerank_mode: str = "off"
     rerank: reranker.Rerank | None = None  # the reranker's outcome, when it ran
     pool: list[dict] = field(default_factory=list, repr=False)  # the candidates it scored
@@ -76,62 +70,6 @@ def query_vector(question: str, cfg: dict, client_factory, cache_path: Path):
     return vectors[0], tokens, 1, False
 
 
-def rrf(
-    vector_ids: list[str],
-    keyword_ids: list[str],
-    k: int = 60,
-    keyword_name: str = "keyword_rank",
-) -> list[dict]:
-    """Reciprocal rank fusion: score = sum over the lists of 1 / (k + rank), ranks from 1. A chunk
-    in both lists gets both terms. Best score first; ties break by id."""
-    scores: dict[str, dict] = {}
-    for name, ids in (("vector_rank", vector_ids), (keyword_name, keyword_ids)):
-        for rank, cid in enumerate(ids, 1):
-            entry = scores.setdefault(
-                cid,
-                {
-                    "id": cid,
-                    "rrf_score": 0.0,
-                    "vector_rank": None,
-                    "keyword_rank": None,
-                    "bm25_rank": None,
-                },
-            )
-            entry[name] = rank
-            entry["rrf_score"] += 1.0 / (k + rank)
-    return sorted(scores.values(), key=lambda e: (-e["rrf_score"], e["id"]))
-
-
-def tsquery_text(lexemes: list[str]) -> str:
-    """An OR query over already-normalised lexemes, each quoted so no character in it is syntax."""
-    quoted = ["'" + lex.replace("\\", "\\\\").replace("'", "''") + "'" for lex in lexemes]
-    return " | ".join(quoted)
-
-
-def keyword_lexemes(conn, question: str) -> list[str]:
-    """The question's lexemes under the same 'english' configuration as the index (stop words
-    dropped, ordinary words stemmed, codes such as EET 3672 or MAT 1275CO kept)."""
-    rows = conn.execute(
-        "SELECT lexeme FROM unnest(to_tsvector('english', %s)) ORDER BY lexeme", (question,)
-    )
-    return [r[0] for r in rows]
-
-
-def keyword_ids(conn, query: str, limit: int, departments: list[str] | None = None) -> list[str]:
-    """Chunk ids matching any lexeme, best ts_rank first, ties by id. ts_rank counts how often and
-    where the query words occur in a chunk; it does not weigh rare words more than common ones (no
-    inverse document frequency), so "student" counts as much as "3672", and it does not normalise by
-    chunk length."""
-    keep = f" AND {allowed_sql()}" if departments else ""
-    params = (query, *((departments,) if departments else ()), query, limit)
-    rows = conn.execute(
-        f"SELECT id FROM chunks WHERE tsv @@ to_tsquery('simple', %s){keep} "
-        "ORDER BY ts_rank(tsv, to_tsquery('simple', %s)) DESC, id LIMIT %s",
-        params,
-    )
-    return [r[0] for r in rows]
-
-
 def row_dict(row, rank: int) -> dict:
     return {"rank": rank, "similarity": row[-1]} | dict(zip(RESULT_COLUMNS, row[:-1], strict=True))
 
@@ -144,8 +82,6 @@ def search(
     cfg: dict | None = None,
     client_factory=make_client,
     cache_path: Path = CACHE_PATH,
-    mode: str | None = None,
-    dept_filter: str | None = None,
     rerank: str | None = None,
     rerank_limit: float | None = None,
 ) -> Search:
@@ -156,79 +92,20 @@ def search(
         return search_reranked(
             conn, question, k, rerank, cfg, client_factory, cache_path, rerank_limit, started
         )
-    mode = mode or cfg["retrieval"]["mode"]
-    n = cfg["retrieval"]["candidates"]
-    # Department filter (step 2a): with a department named in the question, drop chunks whose scope
-    # is 'department' and whose department is another one. Applied to every candidate list before
-    # any ranking is cut, so lower-ranked chunks move up. Nothing changes if none is detected.
-    detected = (
-        sorted(detect_departments(question))
-        if (dept_filter or cfg["retrieval"]["dept_filter"]) == "on"
-        else []
-    )
-    keep = f" AND {allowed_sql()}" if detected else ""
     vector, tokens, calls, hit = query_vector(question, cfg, client_factory, cache_path)
     literal = "[" + ",".join(map(str, vector)) + "]"
     columns = ", ".join(RESULT_COLUMNS)
-    select = f"SELECT {columns}, 1 - (embedding <=> %s::vector) AS similarity FROM chunks"
-    used, query, lexemes = "vector", "", []
-    if mode == "hybrid":
-        lexemes = keyword_lexemes(conn, question)
-        query = tsquery_text(lexemes)
-    elif mode == "hybrid_bm25":
-        lexemes = bm25.query_lexemes(conn, question)
-    if mode in ("hybrid", "hybrid_bm25"):
-        used = mode if lexemes else "vector (empty keyword query)"
-    fused_mode = used in ("hybrid", "hybrid_bm25")
-    params = (literal, *((detected,) if detected else ()), literal, n if fused_mode else k)
     rows = conn.execute(
-        f"{select} WHERE embedding IS NOT NULL{keep} "
-        "ORDER BY embedding <=> %s::vector, id LIMIT %s",
-        params,
+        f"SELECT {columns}, 1 - (embedding <=> %s::vector) AS similarity FROM chunks "
+        "WHERE embedding IS NOT NULL ORDER BY embedding <=> %s::vector, id LIMIT %s",
+        (literal, literal, k),
     ).fetchall()
-    # The abstain threshold reads this value: the best vector cosine similarity AFTER the department
-    # filter, so it is equal to or lower than the unfiltered one. It differs only when the single
-    # best-matching chunk in the index belongs to a department the question does not name (rare for
-    # a question that names one, and the case the filter exists to correct).
+    # The abstain threshold reads this value: the best vector cosine similarity.
     top_similarity = rows[0][-1] if rows else None
-    if not fused_mode:
-        results = [
-            row_dict(r, i)
-            | {"vector_rank": i, "keyword_rank": None, "bm25_rank": None}
-            | {"dept_filter_applied": bool(detected), "detected_departments": detected}
-            for i, r in enumerate(rows, 1)
-        ]
-    else:
-        by_id = {r[0]: r for r in rows}
-        if used == "hybrid":
-            keyword, name = keyword_ids(conn, query, n, detected or None), "keyword_rank"
-        else:
-            keyword, name = bm25.bm25_ids(conn, lexemes, 10_000), "bm25_rank"
-            if detected:
-                rows_ok = conn.execute(f"SELECT id FROM chunks WHERE {allowed_sql()}", (detected,))
-                allowed = {r[0] for r in rows_ok}
-                keyword = [cid for cid in keyword if cid in allowed]
-            keyword = keyword[:n]
-        fused = rrf([r[0] for r in rows], keyword, cfg["retrieval"]["rrf_k"], name)[:k]
-        missing = [e["id"] for e in fused if e["id"] not in by_id]
-        if missing:  # keyword-only hits: fetch them with their cosine similarity
-            extra = conn.execute(f"{select} WHERE id = ANY(%s)", (literal, missing)).fetchall()
-            by_id |= {r[0]: r for r in extra}
-        results = [
-            row_dict(by_id[e["id"]], i)
-            | e
-            | {
-                "id": e["id"],
-                "dept_filter_applied": bool(detected),
-                "detected_departments": detected,
-            }
-            for i, e in enumerate(fused, 1)
-        ]
     cost = cost_usd(cfg, cfg["embedding_model"], tokens)
     return Search(
-        results, hit, calls, tokens, cost, cache_key(cfg["embedding_model"], question),
-        mode_used=used, top_vector_similarity=top_similarity,
-        dept_filter_applied=bool(detected), detected_departments=detected,
+        [row_dict(r, i) for i, r in enumerate(rows, 1)], hit, calls, tokens, cost,
+        cache_key(cfg["embedding_model"], question), top_vector_similarity=top_similarity,
         retrieval_ms=(time.perf_counter() - started) * 1000,
     )  # fmt: skip
 
@@ -243,7 +120,7 @@ def search_reranked(
     pool = reranker.POOLS[rerank]
     first = search(
         conn, question, pool["size"], cfg=cfg, client_factory=client_factory,
-        cache_path=cache_path, mode=pool["mode"], dept_filter=pool["dept_filter"], rerank="off",
+        cache_path=cache_path, rerank="off",
     )  # fmt: skip
     outcome = reranker.rerank(
         question, first.results, cfg, client_factory=client_factory, max_cost=rerank_limit,
@@ -271,13 +148,7 @@ def main(argv: list[str]) -> int:
     parser.add_argument("question")
     parser.add_argument("-k", type=int, default=5)
     parser.add_argument(
-        "--mode", choices=("vector", "hybrid", "hybrid_bm25"), help="override retrieval.mode"
-    )
-    parser.add_argument(
-        "--dept-filter", choices=("off", "on"), help="override retrieval.dept_filter"
-    )
-    parser.add_argument(
-        "--rerank", choices=("off", "pool_a", "pool_b"), help="override retrieval.rerank"
+        "--rerank", choices=("off", "pool_a"), help="override retrieval.rerank"
     )
     args = parser.parse_args(argv[1:])
     try:
@@ -286,8 +157,6 @@ def main(argv: list[str]) -> int:
                 conn,
                 args.question,
                 args.k,
-                mode=args.mode,
-                dept_filter=args.dept_filter,
                 rerank=args.rerank,
             )
     except ApiError as e:

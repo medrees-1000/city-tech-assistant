@@ -2,7 +2,7 @@ import json
 import shutil
 from pathlib import Path
 
-from cta.parse.pages import build_contacts, build_pages, merge_manifest, record_for, slug_of
+from cta.parse.pages import build_contacts, build_pages, record_for, slug_of
 from tests.test_parse_html import PAGES
 
 HOST = "https://www.citytech.cuny.edu"
@@ -128,14 +128,6 @@ def test_contact_panel_is_marked_embed_false():
                             "fetched_at": "t", "content_hash": "h", "http_status": 200,
                             "kind": "office", "owner": "bursar"})  # fmt: skip
     assert rec["contact"]["embed"] is False
-
-
-def test_merge_manifest_adds_and_replaces_by_url(tmp_path):
-    path = tmp_path / "m.json"
-    path.write_text(json.dumps([{"url": "a", "status": 404}, {"url": "b", "status": 200}]))
-    merged = merge_manifest(path, [{"url": "a", "status": 200}, {"url": "c", "status": 200}])
-    assert [(e["url"], e["status"]) for e in merged] == [("a", 200), ("b", 200), ("c", 200)]
-    assert json.loads(path.read_text()) == merged
 
 
 def test_page_metadata_adds_doc_type_and_note_and_no_index_overrides_index(tmp_path):

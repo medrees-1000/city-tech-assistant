@@ -10,10 +10,35 @@ from cta.index import search as srch
 from cta.index.chunks import get_encoding
 from cta.settings import load_models
 from tests.test_answer import FakeChatClient
-from tests.test_dept_filter import ids, world
 from tests.test_search import vec
 
 CFG = load_models(env={})
+
+
+def put(conn, cid, scope, dept, embedding, text="plain text"):
+    conn.execute(
+        "INSERT INTO chunks (id, kind, source, source_id, doc_type, department, scope, fetched_at, "
+        "heading_path, text, content_hash, meta_hash, embedding, embedding_model) "
+        "VALUES (%s, 'section', 's', %s, 'faq', %s, %s, 'x', %s, %s, 'h', 'm', %s, %s)",
+        (cid, cid, dept, scope, cid, text, embedding, CFG["embedding_model"]),
+    )
+    conn.commit()
+
+
+def world(conn):
+    """Query vector is vec(1, 0). The CST page is the closest chunk, then the others."""
+    put(conn, "cst-page", "department", "CST-NYT", vec(1.0, 0.0), "zebra")
+    put(conn, "eet-page", "department", "EET-NYT", vec(0.9, 0.1), "zebra")
+    put(conn, "office", "city_tech", None, vec(0.8, 0.2), "zebra")
+    put(conn, "cuny-doc", "cuny", None, vec(0.7, 0.3), "zebra")
+    put(
+        conn, "cst-course", "city_tech", "CST-NYT", vec(0.6, 0.4), "zebra"
+    )  # a course: city_tech scope
+    put(conn, "math-page", "department", "MATH-NYT", vec(0.5, 0.5), "zebra")
+
+
+def ids(found_):
+    return [r["id"] for r in found_.results]
 
 
 def chunk(n, text="some text"):
@@ -149,16 +174,13 @@ def test_the_switch_values_and_the_default():
         load_models(env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "off"})["retrieval"]["rerank"]
         == "off"
     )
-    assert load_models(env={"CTA_RERANK": "pool_b"})["retrieval"]["rerank"] == "pool_b"
+    assert load_models(env={"CTA_RERANK": "pool_a"})["retrieval"]["rerank"] == "pool_a"
     with pytest.raises(ValueError, match="rerank"):
         load_models(env={"CTA_RERANK": "yes"})
 
 
 def test_the_pools_are_the_ones_fixed_in_advance():
-    assert rr.POOLS == {
-        "pool_a": {"mode": "vector", "dept_filter": "off", "size": 20},
-        "pool_b": {"mode": "hybrid_bm25", "dept_filter": "on", "size": 30},
-    }
+    assert rr.POOLS == {"pool_a": {"size": 20}}
 
 
 def run(conn, tmp_path, rerank_mode, reply_text, question="What does the EET department do?", k=3):
@@ -187,15 +209,6 @@ def test_pool_a_reranks_the_vector_top_20_and_keeps_the_top_k(conn, tmp_path):
     assert [r["first_stage_rank"] for r in found.results] == [3, 5, 6]
     assert len(found.pool) == 6 and found.rerank_mode == "pool_a" and not found.rerank.failed
     assert found.total_cost == pytest.approx(found.cost + found.rerank.cost)
-
-
-@pytest.mark.integration
-def test_pool_b_uses_bm25_and_the_department_filter(conn, tmp_path):
-    world(conn)
-    found, _ = run(conn, tmp_path, "pool_b", reply(9, 8, 7, 6), "zebra EET")
-    assert found.dept_filter_applied and found.detected_departments == ["EET-NYT"]
-    assert "cst-page" not in [c["id"] for c in found.pool]
-    assert len(found.pool) == 4 and ids(found) == [c["id"] for c in found.pool][:3]
 
 
 @pytest.mark.integration
