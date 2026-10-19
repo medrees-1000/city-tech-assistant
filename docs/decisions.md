@@ -1611,3 +1611,9 @@ The orange pill "Independent student project, not affiliated with City Tech or C
 **Verified** on Oct 18 and 19: the smoke test passed 9 of 9 with the limit refusing at request 11, on school Wi-Fi and on a phone hotspot. The parked branch `route-handlers` was not needed.
 
 **The temporary diagnostics are removed** (`visitor_tag`, `addr_tags`, `forwarded_family`, `visitor_seen_before`, `scripts/tag_counts.py`); the ask log line keeps `proxy_required`, `proxy_trusted` and `forwarded_present`. Earlier entries about the diagnostics stay as history.
+
+## Cleanup, Oct 19 2026: removed finished one-off scripts; recoverable at git tag pre-cleanup
+Behavior of the app and the README numbers are unchanged (`readme_numbers.py` and `recompute_final.py` give the same output as before).
+- Temporary visitor diagnostics: `scripts/tag_counts.py`, `tests/test_tag_counts.py`, and the log fields `visitor_tag`, `addr_tags`, `forwarded_family`, `visitor_seen_before`.
+- Unused code: `example_answers`, `NullRecorder`, `ErrorResponse`, `ErrorBody`, `join_plain`, `blocks_markdown`, `CALENDAR_LABELS`, `SEASONS`, `LINE_TOLERANCE`, `BROKEN_CHAR`; config keys `eval.k_values`, `max_input_tokens` (2), `context_tokens` (2).
+- One-off report and replay scripts: `chain2_report`, `chain_dry_check`, `chain_render_report`, `contact_topic_replay`, `format_rule_report`, `language_probes_build`, `language_probes_run`, `make_manual_check`, `milestone1_report`, `model_exp_report`, `quote_addenda_replay`, `shorthand_replay`, `band_review` (all in `scripts/`).
