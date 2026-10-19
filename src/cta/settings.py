@@ -28,7 +28,6 @@ def build_user_agent(sources: dict) -> str:
 
 RETRIEVAL_MODES = ("vector", "hybrid", "hybrid_bm25")
 RERANK_MODES = ("off", "pool_a", "pool_b")
-SECRET_KEYS = ("OPENAI_API_KEY", "POSTGRES_PASSWORD", "DATABASE_URL")
 MODEL_OVERRIDES = {
     "embedding_model": "CTA_EMBEDDING_MODEL",
     "chat_model": "CTA_CHAT_MODEL",
@@ -277,14 +276,6 @@ def refuse_tracing(env: dict | None = None) -> None:
         raise RuntimeError(
             f"tracing is enabled ({', '.join(on)}); unset it: runs must not send text out"
         )
-
-
-def secret_status(env: dict | None = None) -> dict[str, str]:
-    """Which secrets are set, as 'set' / 'missing'. Values are never returned."""
-    if env is None:
-        load_dotenv(ROOT / ".env")
-        env = dict(os.environ)
-    return {k: "set" if env.get(k, "").strip() else "missing" for k in SECRET_KEYS}
 
 
 def cost_usd(cfg: dict, model: str, input_tokens: int, output_tokens: int = 0) -> float:

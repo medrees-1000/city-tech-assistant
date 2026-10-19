@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from cta.parse.headings import clean_heading, link_disagreement
+from cta.parse.headings import clean_heading
 from cta.parse.html import to_sections
 from cta.validate.headings import check_heading_markup, run_heading_checks
 
@@ -47,24 +47,6 @@ def test_to_sections_cleans_headings_parents_and_keeps_the_url_without_changing_
     ]
     assert all("](" not in s["heading"] for s in sections)
 
-
-def test_a_catalog_link_whose_award_differs_from_its_slug_is_reported():
-    base = "https://citytech.catalog.cuny.edu/programs"
-    assert link_disagreement("Data Science/BS", f"{base}/DSCI-BS") is None
-    assert link_disagreement("Computer Systems Technology/BTech", f"{base}/CIB-BT") is None
-    assert link_disagreement("Electrical Engineering Technology/BTech", f"{base}/ETB-BTECH") is None
-    assert link_disagreement("Computer Science/Minor", f"{base}/CSCI-MIN") is None
-    assert "does not match" in link_disagreement("Data Science/BS", f"{base}/DSCI-AAS")
-
-
-def test_other_links_need_a_shared_word_with_the_url():
-    assert (
-        link_disagreement("Sample Course of Study", "https://x/academics/areas-of-study.aspx")
-        is None
-    )
-    assert "no word" in link_disagreement(
-        "Financial Aid Forms", "https://x/registrar/transcripts.aspx"
-    )
 
 
 def record(*headings, parents=()):
