@@ -7,7 +7,6 @@ import json
 import logging
 import time
 from datetime import UTC, datetime, timedelta
-from types import SimpleNamespace
 
 import httpx
 import openai
@@ -17,43 +16,28 @@ from cta.api import convert, guard, requestlog, schema
 from cta.eval.questions import load_questions
 from cta.index import embed
 from cta.settings import ROOT, guardrail_settings, load_models
-from tests.test_api import Client, ask, cfg_for, make_client_app, retrieve_answer
+from tests.helpers import (
+    DEFAULTS,
+    Client,
+    SpendConn,
+    ask,
+    cfg_for,
+    cfg_guard,
+    make_client_app,
+    req,
+    retrieve_answer,
+    settings,
+)
 
 DEV = [q for q in load_questions() if q["split"] == "dev"]
-DEFAULTS = load_models(env={})["guardrails"]
 
 
-def settings(**over):
-    return {**DEFAULTS, **over}
 
 
-def req(host="1.2.3.4"):
-    return SimpleNamespace(client=SimpleNamespace(host=host))
 
 
-class SpendConn:
-    """A connection whose only job is to answer the spend query with a fixed sum."""
-
-    def __init__(self, total=0.0, fail=False):
-        self.total, self.fail, self.queries = total, fail, []
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *exc):
-        return False
-
-    def execute(self, sql, params=None):
-        if self.fail:
-            raise ConnectionError("boom")
-        self.queries.append((sql, params))
-        return SimpleNamespace(fetchone=lambda: (self.total,))
 
 
-def cfg_guard(**over):
-    cfg = cfg_for()
-    cfg["guardrails"] = {**cfg["guardrails"], **over}
-    return cfg
 
 
 # ---- the settings and their environment overrides ----

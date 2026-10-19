@@ -5,8 +5,15 @@ from datetime import UTC, datetime
 import pytest
 
 from cta.api import guard, hygiene
-from tests.test_api import Client, ask, make_client_app, retrieve_answer
-from tests.test_guard import SpendConn, cfg_guard, settings
+from tests.helpers import (
+    Client,
+    SpendConn,
+    ask,
+    cfg_guard,
+    make_client_app,
+    retrieve_answer,
+    settings,
+)
 
 CLEAN = "when is add/drop dl"
 WEIRD = [

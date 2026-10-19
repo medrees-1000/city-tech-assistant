@@ -6,20 +6,29 @@ import dataclasses
 import json
 import logging
 import os
-import time
 from types import SimpleNamespace
 
 import langsmith as ls
 import pytest
-from langsmith import Client
 
 from cta.api import tracing
 from cta.api.checks import StartupError
 from cta.settings import ROOT, enabled_tracing, load_models
-from tests.test_api import ENV, EVENTS, ask, cfg_for, make_app, make_client_app, retrieve_answer
-from tests.test_api import Client as FakeModel
+from tests.helpers import (
+    ENV,
+    EVENTS,
+    KEY,
+    app_with,
+    ask,
+    cfg_for,
+    fake_tracing,
+    flush,
+    make_app,
+    make_client_app,
+    retrieve_answer,
+)
+from tests.helpers import Client as FakeModel
 
-KEY = "lsv2_pt_THISISAFAKEKEYFORTESTS0123456789"
 RAW = {
     "email": "test.person123@example.com",
     "phone": "718-260-5800",
@@ -32,107 +41,16 @@ QUESTION = (
 )
 
 
-class Resp:
-    status_code = 200
-    text = "{}"
-    headers: dict = {}
-    content = b"{}"
-    ok = True
-
-    def json(self):
-        return {}
-
-    def raise_for_status(self):
-        pass
 
 
-class FakeSession:
-    """Records every request the langsmith client would make; sends nothing."""
-
-    def __init__(self):
-        self.calls = []
-
-    def request(self, method, url, **kw):
-        body = kw.get("data") or kw.get("json") or b""
-        if not isinstance(body, bytes | str):
-            body = json.dumps(body, default=str)
-        self.calls.append(
-            (method, url, body if isinstance(body, str) else body.decode("utf-8", "replace"))
-        )
-        return Resp()
-
-    def get(self, url, **kw):
-        return self.request("GET", url, **kw)
-
-    def post(self, url, **kw):
-        return self.request("POST", url, **kw)
-
-    def patch(self, url, **kw):
-        return self.request("PATCH", url, **kw)
-
-    def close(self):
-        pass
-
-    def mount(self, *a, **k):
-        return None
-
-    @property
-    def everything(self) -> str:
-        return "\n".join(f"{m} {u} {b}" for m, u, b in self.calls)
 
 
-def fake_tracing():
-    session = FakeSession()
-    client = Client(
-        api_key="k", api_url="http://fake.local", session=session, auto_batch_tracing=False,
-        hide_inputs=tracing.scrub_payload, hide_outputs=tracing.scrub_payload,
-        hide_metadata=tracing.scrub_payload, omit_traced_runtime_info=True, info={},
-    )  # fmt: skip
-    return tracing.Tracing(client, "test-project"), session
 
 
-def app_with(monkeypatch, tracer, client=None, cfg=None, stub=None):
-    monkeypatch.setattr(tracing.Tracing, "from_settings", classmethod(lambda cls, c, e: tracer))
-    client = client or FakeModel("calendar", "Fall 2026", ["fall-2026-040"])
-    return make_client_app(client, monkeypatch, stub, cfg=cfg)
 
 
-def trace_complete(calls, root="ask") -> bool:
-    """True when the run named `root` was POSTed (the SDK posts runs from background threads in no
-    fixed order, so the expected root must be waited for by name) and every POSTed run was also
-    PATCHed (its end was sent)."""
-    posted, roots = set(), set()
-    for method, _url, body in calls:
-        if method != "POST":
-            continue
-        try:
-            run = json.loads(body)
-        except ValueError:
-            continue
-        if isinstance(run, dict) and run.get("id"):
-            posted.add(run["id"])
-            if run.get("name") == root:
-                roots.add(run["id"])
-    patched = {url.rsplit("/", 1)[-1] for method, url, _ in calls if method == "PATCH"}
-    return bool(posted) and bool(roots) and posted <= patched
 
 
-def flush(tracer, session=None, expect=True, root="ask"):
-    """Make the captured traffic complete. `client.flush()` drains the SDK's own queue; the runs
-    themselves are posted from background threads, so then wait for an explicit condition: with
-    `expect` (a trace is supposed to exist) every run that was POSTed has also been PATCHed (its end
-    was sent), and at least one was. Bounded by a hard timeout so a missing trace fails the
-    assertion that follows instead of hanging. `expect=False`: nothing was traced by design, so
-    nothing can be in flight and no wait is needed."""
-    tracer.client.flush()
-    session = session or tracer.client.session
-    if not expect:
-        return
-    deadline = time.monotonic() + 15
-    while time.monotonic() < deadline:
-        if trace_complete(list(session.calls), root):
-            return
-        time.sleep(0.01)
 
 
 # ---- the scrubber ----
@@ -377,7 +295,7 @@ def test_a_request_blocked_by_the_kill_switch_the_rate_limit_or_the_cap_creates_
         cfg["guardrails"].update(tweak)
         connect = None
         if "daily_spend_cap_usd" in tweak:
-            from tests.test_guard import SpendConn
+            from tests.helpers import SpendConn
 
             connect = lambda: SpendConn(1.0)  # noqa: E731
         monkeypatch.setattr(

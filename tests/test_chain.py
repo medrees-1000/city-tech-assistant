@@ -14,6 +14,7 @@ from cta.graph import chain as ch
 from cta.graph.build import Router
 from cta.index.search import Search
 from cta.settings import load_models
+from tests.helpers import WORLD, rec, recs
 
 CFG = load_models(
     env={
@@ -35,14 +36,8 @@ OFF = load_models(
 TODAY = date(2026, 10, 11)
 
 
-def rec(code, text="", style=None, title=None, dept="CST-NYT"):
-    return {"code": code, "title": title or f"Title of {code}", "credits": 3, "description": f"About {code}.",
-            "prerequisite_text": text, "prereq_style": style or ("text" if text else "none"), "rule_id": None,
-            "course_group_id": "1", "department": dept, "department_name": "Dept", "fetched_at": "x", "programs": []}  # fmt: skip
 
 
-def recs(*records):
-    return {r["code"]: r for r in records}
 
 
 # ---- the walk ----
@@ -389,14 +384,6 @@ def make_router(client, monkeypatch, records, cfg=CFG):
     return Router(None, cfg, lambda: client, events=[], contact="c"), seen
 
 
-WORLD = recs(
-    rec("AA 1001", "PRE: BB 1001"),
-    rec("BB 1001", "PRE: ENG 1101"),
-    rec("DD 1001", "PRE_X", "shorthand"),
-    rec(
-        "CST 1001", ""
-    ),  # a CST prefix is in the data, so CST 4999 is "no record", not "outside" (item D)
-)
 
 
 def test_a_prerequisite_question_is_answered_by_the_chain_node(monkeypatch):

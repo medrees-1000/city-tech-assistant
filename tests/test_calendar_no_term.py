@@ -8,8 +8,7 @@ import pytest
 from cta.eval.questions import load_questions
 from cta.graph import build, terms
 from cta.settings import ROOT, load_models
-from tests.test_api import Client, ask, make_client_app
-from tests.test_router import TODAY, Script, make_router
+from tests.helpers import TODAY, Client, Script, ask, make_client_app, make_router
 
 CFG = load_models(
     env={"CTA_RERANK": "off", "CTA_ROUTER_CHAIN": "off", "CTA_ROUTER_CONTACTS": "off"}

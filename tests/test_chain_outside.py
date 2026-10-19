@@ -7,8 +7,7 @@ from cta.api import convert
 from cta.graph import build, chain_render
 from cta.graph import chain as ch
 from cta.settings import ROOT, load_models
-from tests.test_api import Client, ask, make_client_app
-from tests.test_router import TODAY, Script, make_router
+from tests.helpers import TODAY, Client, Script, ask, make_client_app, make_router
 
 RECORDS = ch.load_records()
 CFG = load_models(env={"CTA_RERANK": "off", "CTA_ROUTER_CHAIN": "on", "CTA_ROUTER_CONTACTS": "on"})

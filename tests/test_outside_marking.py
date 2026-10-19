@@ -10,31 +10,11 @@ import pytest
 from cta.graph import chain as ch
 from cta.graph import chain_render as cr
 from cta.settings import ROOT
+from tests.helpers import MARK, PREFIXES, RECORDS, outside_rewrite
 
-RECORDS = ch.load_records()
-PREFIXES = ch.known_prefixes(RECORDS)
 BEFORE = json.loads((ROOT / "tests/fixtures/chain_render_before_outside_marking.json").read_text())
-MARK = re.compile(r"\b([A-Z]{2,5}) (\w+) \(no catalog record\)")
-ASKED = re.compile(
-    r"There is no catalog record for (\S+ \S+) "
-    r"in the four departments \(CST, Math, EET, Dental Hygiene\)\."
-)
 
 
-def outside_rewrite(old: str) -> str:
-    """What the new render must equal: only the marking of outside-prefix codes rewritten."""
-    text = MARK.sub(
-        lambda m: (
-            m.group(0) if m.group(1) in PREFIXES else f"{m.group(1)} {m.group(2)} ({cr.OUTSIDE})"
-        ),
-        old,
-    )
-    return ASKED.sub(
-        lambda m: (
-            m.group(0) if m.group(1).split()[0] in PREFIXES else ch.outside_sentence(m.group(1))
-        ),
-        text,
-    )
 
 
 def new_render(code_or_codes) -> str:

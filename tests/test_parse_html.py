@@ -1,26 +1,9 @@
 import re
-from pathlib import Path
 
 from bs4 import BeautifulSoup
 
-from cta.parse.html import parse_page, render_markdown
-
-PAGES = Path(__file__).parent / "fixtures" / "pages"
-HOST = "https://www.citytech.cuny.edu"
-
-
-def parse(name: str, path: str = "/x.aspx", kind: str = "office", owner: str = "bursar") -> dict:
-    meta = {
-        "source_url": HOST + path, "final_url": HOST + path,
-        "fetched_at": "2026-10-11T00:00:00+00:00", "content_hash": "abc",
-        "http_status": 200, "kind": kind, "owner": owner,
-    }  # fmt: skip
-    html = (
-        (PAGES / f"{name}.html").read_bytes()
-        if (PAGES / f"{name}.html").exists()
-        else name.encode()
-    )
-    return parse_page(html, meta)
+from cta.parse.html import render_markdown
+from tests.helpers import PAGES, parse
 
 
 def inline_page(main_html: str, panels_html: str = "") -> dict:

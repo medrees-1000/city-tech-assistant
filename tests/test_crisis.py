@@ -8,8 +8,7 @@ from cta.api import screen
 from cta.eval.questions import load_questions
 from cta.settings import load_models
 from tests.crisis_phrases import NEGATIVES, TIER1_POSITIVES, TIER2_NEW_POSITIVES
-from tests.test_api import Client, ask, make_client_app, retrieve_answer
-from tests.test_topic import reply
+from tests.helpers import Client, ask, make_client_app, reply, retrieve_answer
 
 G = load_models(env={})["guardrails"]
 DEV = [q for q in load_questions() if q["split"] == "dev"]

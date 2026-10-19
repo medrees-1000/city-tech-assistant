@@ -1,21 +1,18 @@
 import json
-from pathlib import Path
 
 import pytest
 
 from cta.index import chunks as ch
 from cta.settings import load_models
+from tests.helpers import PROCESSED_FIXTURES, words
 
-FIXTURES = Path(__file__).parent / "fixtures" / "processed"
 CFG = load_models(env={})
 
 
-def words(text: str) -> int:  # token counter without tiktoken or network
-    return len(text.split())
 
 
 def build(count=words):
-    return ch.build_chunks(FIXTURES, CFG, count)
+    return ch.build_chunks(PROCESSED_FIXTURES, CFG, count)
 
 
 def by_id():
@@ -89,14 +86,14 @@ def test_hashes_are_stable_and_separate():
 
 
 def test_duplicate_id_fails():
-    one = ch.raw_chunks(FIXTURES)[0]
+    one = ch.raw_chunks(PROCESSED_FIXTURES)[0]
     with pytest.raises(ValueError, match="duplicate chunk ids"):
         ch.check_chunks([one, dict(one)], words, 6000)
 
 
 def test_token_guard_fails_instead_of_truncating():
     with pytest.raises(ValueError, match="over max_chunk_tokens"):
-        ch.check_chunks(ch.raw_chunks(FIXTURES), words, 3)
+        ch.check_chunks(ch.raw_chunks(PROCESSED_FIXTURES), words, 3)
 
 
 def test_gold_problems(tmp_path):

@@ -11,7 +11,7 @@ from cta.answer import THRESHOLD_ABSTAIN
 from cta.api import convert
 from cta.graph import contact
 from cta.settings import ROOT
-from tests.test_api import Client, ask, make_client_app, retrieve_answer
+from tests.helpers import Client, ask, make_client_app, retrieve_answer
 
 TABLE = contact.load_contacts()
 

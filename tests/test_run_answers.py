@@ -4,47 +4,23 @@ import json
 
 import pytest
 
-from cta.answer import Answer
 from cta.eval import run_answers as ra
 from cta.settings import load_models
+from tests.helpers import ans, question, stored_chunk, top
 
-CFG = load_models(
+RUN_ANSWERS_CFG = load_models(
     env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "off"}
 )  # the reranker has its own tests
 
 
-def chunk(source_id, merged=(), sim=0.7):
-    return {"id": source_id, "source_id": source_id, "merged_section_ids": list(merged),
-            "similarity": sim, "kind": "section", "source": "https://x", "heading_path": "H",
-            "terms": [], "last_updated": None, "text": "body"}  # fmt: skip
 
 
-def top(*ids):
-    return [chunk(i) for i in ids] + [chunk(f"f{n}") for n in range(10 - len(ids))]
 
 
-class FakeSearch:
-    cache_hit = False
-    cost = 0.0
-    total_cost = 0.0
 
 
-def ans(text="The deadline is Nov 6 [1].", abstained=False, cost=0.0002, sources=None, **kw):
-    a = Answer(
-        text,
-        abstained,
-        "r" if abstained else None,
-        sources or top("g")[:5],
-        citations=kw.get("citations", [1]),
-        invalid_citations=kw.get("invalid", []),
-    )
-    a.search, a.chat_cost, a.latency_ms, a.chat_ms = FakeSearch(), cost, 1200, 900
-    return a
 
 
-def question(qid="q1", gold="Nov 6", sources=("g",), qtype="lookup"):
-    return {"id": qid, "question": "When?", "gold_answer": gold, "type": qtype, "department": None,
-            "gold_sources": [{"id": s} for s in sources]}  # fmt: skip
 
 
 def judge_reply(correctness="correct", faithfulness="yes"):
@@ -139,7 +115,7 @@ def test_failure_labels(top10, answer, expected):
 
 def test_label_through_merged_section_id():
     judge = fake_judge(judge_reply("partial"))
-    top10 = [chunk("parent", merged=["g"])] + top()[1:]
+    top10 = [stored_chunk("parent", merged=["g"])] + top()[1:]
     assert ra.evaluate_question(question(), ans(), top10, judge)["label"] == "generation error"
 
 
@@ -314,7 +290,7 @@ def test_rubric_is_versioned_and_in_the_prompt():
 
 @pytest.mark.integration
 def test_rubric_version_is_stored_in_the_run_config(conn):
-    run_id = ra.start_run(conn, "t", "dev", CFG, {"rejudge_of": "x"})
+    run_id = ra.start_run(conn, "t", "dev", RUN_ANSWERS_CFG, {"rejudge_of": "x"})
     config = conn.execute("SELECT config FROM eval_runs WHERE id = %s", (run_id,)).fetchone()[0]
     assert config["rubric_version"] == 3 and config["rejudge_of"] == "x"
 

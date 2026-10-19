@@ -9,7 +9,7 @@ from cta.api import convert, requestlog, schema, screen
 from cta.eval.questions import load_questions
 from cta.settings import load_models
 from tests.attack_strings import ATTACKS
-from tests.test_api import Client, ask, cfg_for, make_client_app, retrieve_answer
+from tests.helpers import Client, ask, cfg_for, make_client_app, retrieve_answer
 
 DEV = [q for q in load_questions() if q["split"] == "dev"]
 G = load_models(env={})["guardrails"]

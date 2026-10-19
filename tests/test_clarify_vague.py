@@ -6,7 +6,7 @@ import pytest
 from cta.eval.questions import load_questions
 from cta.graph import clarify
 from tests.clarify_phrases import NEGATIVES, POSITIVES
-from tests.test_api import Client, ask, make_client_app
+from tests.helpers import Client, ask, make_client_app
 
 DEV = [q for q in load_questions() if q["split"] == "dev"]
 

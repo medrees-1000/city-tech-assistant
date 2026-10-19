@@ -10,10 +10,20 @@ import time
 from cta.answer import THRESHOLD_ABSTAIN
 from cta.api import tracing
 from cta.settings import config_version, load_models
-from tests.test_api import Client as FakeModel
-from tests.test_api import ask, cfg_for, make_client_app, retrieve_answer
-from tests.test_crisis import reply
-from tests.test_tracing import KEY, app_with, fake_tracing, flush
+from tests.helpers import (
+    KEY,
+    app_with,
+    ask,
+    cfg_for,
+    fake_tracing,
+    flush,
+    make_client_app,
+    reply,
+    retrieve_answer,
+)
+from tests.helpers import (
+    Client as FakeModel,
+)
 
 QUESTION = "When is the last day to withdraw in Fall 2026?"
 
@@ -104,7 +114,7 @@ def test_screened_and_off_topic_requests_make_no_trace_and_no_model_call(monkeyp
 
 
 def test_a_request_paused_by_the_monthly_cap_makes_no_trace(monkeypatch):
-    from tests.test_guard import SpendConn
+    from tests.helpers import SpendConn
 
     tracer, session = fake_tracing()
     cfg = cfg_for()

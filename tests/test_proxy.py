@@ -8,8 +8,16 @@ import logging
 
 from cta.api import guard
 from cta.api.checks import startup_problems
-from tests.test_api import CFG, Client, FakeConn, make_client_app, retrieve_answer
-from tests.test_guard import cfg_guard, req, settings
+from tests.helpers import (
+    CFG,
+    Client,
+    FakeConn,
+    cfg_guard,
+    make_client_app,
+    req,
+    retrieve_answer,
+    settings,
+)
 
 SECRET = "s" * 32
 SALT = "x" * 32

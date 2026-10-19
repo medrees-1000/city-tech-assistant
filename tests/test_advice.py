@@ -9,9 +9,18 @@ from cta.answer import Answer
 from cta.eval.questions import load_questions
 from cta.graph import advice, build, render, terms
 from cta.index.search import Search
-from tests.test_api import Client, ask, make_client_app
-from tests.test_clarify import CFG, stored_intents
-from tests.test_router import TODAY, Script, make_router
+from tests.helpers import (
+    CLARIFY_CFG as CFG,
+)
+from tests.helpers import (
+    TODAY,
+    Client,
+    Script,
+    ask,
+    make_client_app,
+    make_router,
+    stored_intents,
+)
 
 DEV = [q for q in load_questions() if q["split"] == "dev"]
 ADVICE_IDS = {"q30", "q47", "q91", "q92"}

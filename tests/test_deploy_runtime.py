@@ -7,8 +7,7 @@ from datetime import UTC, date, datetime
 from cta.api import __main__ as api_main
 from cta.api import app as api_app
 from cta.api import guard, screen
-from tests.test_api import Client, ask, make_client_app, retrieve_answer
-from tests.test_guard import cfg_guard
+from tests.helpers import Client, ask, cfg_guard, make_client_app, retrieve_answer
 
 
 def utc(*args):

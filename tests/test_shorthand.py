@@ -98,8 +98,7 @@ def _records():
 
 @pytest.mark.skipif(not _records(), reason="no processed course records")
 def test_the_model_written_chain_answer_is_scrubbed_but_the_chain_renderer_is_not(monkeypatch):
-    from tests.test_api import Client
-    from tests.test_chain_render import CFG_CODE, CFG_MODEL, route
+    from tests.helpers import CFG_CODE, CFG_MODEL, Client, route
 
     model_client = Client("prerequisite", answer="It is listed as PRE_CST3500_CST3600. [1]")
     out = route(CFG_MODEL, model_client, monkeypatch)

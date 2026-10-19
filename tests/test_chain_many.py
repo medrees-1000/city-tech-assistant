@@ -11,8 +11,7 @@ from cta.graph import advice
 from cta.graph import chain as ch
 from cta.graph import chain_render as cr
 from cta.settings import ROOT
-from tests.test_api import Client
-from tests.test_chain_render import CFG_CODE, CFG_MODEL, HEADING, route
+from tests.helpers import CFG_CODE, CFG_MODEL, HEADING, Client, route
 
 RECORDS = ch.load_records()
 pytestmark = pytest.mark.skipif(not RECORDS, reason="no processed course records")

@@ -1,68 +1,42 @@
 """The local API (Phase 4). No network, no database, no paid call: the connection is a stub."""
 
-import functools
 import json
-import tempfile
-from datetime import UTC, date, datetime
-from pathlib import Path
-from types import SimpleNamespace
+from datetime import date
 
 import psycopg
 import pytest
 from fastapi.testclient import TestClient
 
-from cta.answer import THRESHOLD_ABSTAIN, Answer
+from cta.answer import THRESHOLD_ABSTAIN
 from cta.api import __main__ as api_main
 from cta.api import app as api_app
 from cta.api import convert, schema
 from cta.api.checks import StartupError, startup_problems
-from cta.graph import build, render
-from cta.graph import chain as chains
+from cta.graph import build
 from cta.graph.build import Router
 from cta.index.db import migration_files
 from cta.index.embed import ApiError
-from cta.index.rerank import Rerank
-from cta.index.search import Search
 from cta.settings import ROOT, TRACING_VARIABLES, load_models
-from tests.test_chain import WORLD
-
-ENV = {"OPENAI_API_KEY": "sk-test"}
-CFG = load_models(env={})  # router on, contacts on: the defaults
-
-
-class FakeConn:
-    """Answers SELECT 1 and the schema_migrations query; nothing else."""
-
-    def __init__(self, applied):
-        self.applied = applied
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *exc):
-        return False
-
-    def execute(self, sql, *args):
-        return [(n,) for n in self.applied] if "schema_migrations" in sql else [(1,)]
-
-
-def all_applied():
-    return [p.name for p in migration_files()]
-
-
-def ok_connect():
-    return FakeConn(all_applied())
-
-
-def down_connect():
-    raise ConnectionError("password authentication failed for user cta at 10.0.0.5")
-
-
-def make_app(**kw):
-    return api_app.create_app(
-        CFG, connect=kw.pop("connect", ok_connect), env=kw.pop("env", ENV), **kw
-    )
-
+from tests.helpers import (
+    CFG,
+    EMPTY_ROOT,
+    ENV,
+    EVENTS,
+    FIXED_NOW,
+    PAGE,
+    TODAY,
+    Client,
+    FakeConn,
+    all_applied,
+    ask,
+    cfg_for,
+    chunk,
+    down_connect,
+    make_app,
+    make_client_app,
+    ok_connect,
+    retrieve_answer,
+)
 
 # ---- /health ----
 
@@ -201,115 +175,18 @@ def test_env_example_lists_the_new_names():
 
 # ================= POST /ask (step 3) =================
 
-TODAY = date(2026, 10, 11)
-EVENTS = build.load_events()
-REGISTRAR = render.registrar_contact()
-PAGE = "https://www.citytech.cuny.edu/registrar/faqs.aspx"
 
 
-class Client:
-    """Scripted chat client: classifier, calendar selector, chain answer and retrieval answer."""
-
-    def __init__(self, intent="other", mention=None, row_ids=(), answer="ok [1]", fail=None,
-                 topic=None):  # fmt: skip
-        self.intent, self.mention, self.row_ids = intent, mention, list(row_ids)
-        self.topic = topic  # the topic call's reply text; None = an unusable reply
-        self.answer_text, self.fail, self.calls = answer, fail, []
-        self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
-
-    def create(self, **kw):
-        system = kw["messages"][0]["content"]
-        which = (
-            "classify" if system.startswith("You route")
-            else "select" if system.startswith("You choose")
-            else "topic" if system.startswith("You label")
-            else "language" if system.startswith("You detect the language")
-            else "answer"
-        )  # fmt: skip
-        self.calls.append(which)
-        if self.fail:
-            raise self.fail
-        reply = {
-            "classify": json.dumps({"intent": self.intent, "term_mention": self.mention}),
-            "select": json.dumps({"row_ids": self.row_ids}),
-            "answer": self.answer_text,
-            "topic": self.topic if self.topic is not None else "not json",
-            # round 1b: a short English question may reach the language step; "en" means no change
-            "language": json.dumps({"language": "en", "english": "x", "note": ""}),
-        }[which]
-        usage = SimpleNamespace(prompt_tokens=100, completion_tokens=10)
-        return SimpleNamespace(
-            choices=[SimpleNamespace(message=SimpleNamespace(content=reply))], usage=usage
-        )
 
 
-def chunk(cid, source=PAGE, kind="section", **kw):
-    base = {"id": cid, "kind": kind, "source": source, "source_id": cid, "merged_section_ids": [],
-            "doc_type": "faq", "department": None, "scope": "city_tech", "term": None, "terms": [],
-            "heading_path": "FAQ > Question", "last_updated": None, "text": "Some  text\nhere.",
-            "similarity": 0.7, "rank": 1}  # fmt: skip
-    return base | kw
 
 
-def retrieve_answer(text="Yes. [1]", abstained=False, reason=None, citations=(1,), n=3):
-    chunks = [chunk(f"page/registrar/faqs#{i}", rank=i) for i in range(1, n + 1)]
-    pool = [chunk(f"page/registrar/faqs#{i}", rank=i, similarity=0.9 - i / 10) for i in range(1, 8)]
-    scores = [5.0, 1.0, 9.0, 0.0, 0.0, 0.0, 0.0]
-    rerank = Rerank(order=[2, 0, 1, 3, 4, 5, 6], scores=scores, ms=11.0, prompt_tokens=40,
-                    completion_tokens=5, cost=0.0004)  # fmt: skip
-    search = Search(chunks, True, 0, 7, 1e-7, top_vector_similarity=0.8, retrieval_ms=60.0,
-                    rerank_mode="pool_a", rerank=rerank, pool=pool)  # fmt: skip
-    return Answer(text, abstained, reason, chunks, list(citations), [], search, prompt_tokens=300,
-                  completion_tokens=20, chat_cost=0.0002, chat_ms=400)  # fmt: skip
 
 
-def cfg_for(**api):
-    cfg = load_models(env={"CTA_RERANK": "off", "CTA_ROUTER_CHAIN": "on"})
-    cfg["api"] |= api
-    return cfg
 
 
-# An empty folder as the repo root, so the kill-switch file and the page records are never read
-# from the real checkout; a test that needs real records passes tmp_root=ROOT.
-guard_class = api_app.guard_mod.Guard
-EMPTY_ROOT = Path(tempfile.mkdtemp(prefix="cta-test-root-"))
-FIXED_NOW = datetime(2026, 10, 11, 15, 0, tzinfo=UTC)  # the guard's day and minute windows
 
 
-def make_client_app(client, monkeypatch, stub=None, cfg=None, tmp_root=None, connect=ok_connect,
-                    clock=lambda: TODAY, log_writer=None, feedback_writer=None,
-                    env=None, headers=None):  # fmt: skip
-    cfg = cfg or cfg_for()
-    if stub is not None:
-        monkeypatch.setattr(build, "answer", lambda *a, **k: stub)
-    monkeypatch.setattr(chains, "load_records", lambda *a, **k: WORLD)
-    # the guard reads the real clock by default; pin it so day and minute windows cannot drift
-    pinned = functools.partial(guard_class, now=lambda: FIXED_NOW, monotonic=lambda: 1000.0)
-    monkeypatch.setattr(api_app.guard_mod, "Guard", pinned)
-
-    def factory(conn, cfg):
-        return Router(conn, cfg, lambda: client, events=EVENTS, contact=REGISTRAR)
-
-    logs, votes = [], {}  # the rows the API would have written, and the votes it would have saved
-
-    def remember(conn, record):
-        logs.append(record)
-
-    def vote_writer(conn, request_id, vote):
-        if request_id not in {r["request_id"] for r in logs}:
-            return False
-        votes[request_id] = vote
-        return True
-
-    writer = log_writer or remember
-    app = api_app.create_app(cfg, connect=connect, check_startup=False, router_factory=factory,
-                             root=tmp_root or EMPTY_ROOT, clock=clock, log_writer=writer,
-                             feedback_writer=feedback_writer or vote_writer,
-                             client_factory=lambda: client,
-                             env={} if env is None else env)  # fmt: skip
-    test_client = TestClient(app, raise_server_exceptions=False, headers=headers)
-    test_client.logs, test_client.votes = logs, votes
-    return test_client
 
 
 def test_the_test_app_reads_neither_the_real_clock_nor_the_real_checkout(monkeypatch):
@@ -318,8 +195,6 @@ def test_the_test_app_reads_neither_the_real_clock_nor_the_real_checkout(monkeyp
     assert not guard.disabled()  # no data/api_disabled file in the empty root
 
 
-def ask(client, question="How do I apply for graduation?"):
-    return client.post("/ask", json={"question": question})
 
 
 # ---- the contract ----

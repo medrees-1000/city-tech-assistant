@@ -6,18 +6,14 @@ import re
 
 import pytest
 
-from cta.answer import Answer
-from cta.graph import build, chain_render
 from cta.graph import chain as ch
-from cta.graph.build import Router
-from cta.index.search import Search
+from cta.graph import chain_render
 from cta.settings import ROOT, load_models
-from tests.test_api import Client
+from tests.helpers import CFG_CODE, CFG_MODEL, HEADING, Client, route
 
 RECORDS = ch.load_records()
 pytestmark = pytest.mark.skipif(not RECORDS, reason="no processed course records")
 CODES = sorted(RECORDS)
-HEADING = re.compile(r"^### (.+?) — (.+?) \[(\d+)\]$", re.M)
 
 
 def chain_of(code):
@@ -225,31 +221,8 @@ def test_no_catalog_text_today_holds_a_markup_character():
 
 # ---- the router switch ----
 
-CFG_CODE = load_models(
-    env={
-        "CTA_RERANK": "off",
-        "CTA_ROUTER_MODE": "on",
-        "CTA_ROUTER_CHAIN": "on",
-        "CTA_ROUTER_CONTACTS": "off",
-        "CTA_ROUTER_CHAIN_RENDER": "code",
-    }  # fmt: skip
-)
-CFG_MODEL = load_models(
-    env={
-        "CTA_RERANK": "off",
-        "CTA_ROUTER_MODE": "on",
-        "CTA_ROUTER_CHAIN": "on",
-        "CTA_ROUTER_CONTACTS": "off",
-        "CTA_ROUTER_CHAIN_RENDER": "model",
-    }  # fmt: skip
-)
 
 
-def route(cfg, client, monkeypatch, question="What are the prerequisites for CST 3504?"):
-    stub = Answer("old path [1]", False, None, [], [1], [], Search([], False, 0, 0, 0.0))
-    monkeypatch.setattr(build, "answer", lambda *a, **k: stub)
-    router = Router(None, cfg, lambda: client, events=[], contact="c")
-    return router.answer(question, build.date(2026, 10, 13), log=False)
 
 
 def test_the_switch_defaults_to_code_since_the_keep_rule_passed_and_is_validated():

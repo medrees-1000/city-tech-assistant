@@ -9,8 +9,7 @@ from cta.index import rerank as rr
 from cta.index import search as srch
 from cta.index.chunks import get_encoding
 from cta.settings import load_models
-from tests.test_answer import FakeChatClient
-from tests.test_search import vec
+from tests.helpers import FakeChatClient, vec
 
 CFG = load_models(env={})
 

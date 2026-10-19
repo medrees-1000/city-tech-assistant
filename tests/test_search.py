@@ -6,28 +6,7 @@ import math
 import pytest
 
 from cta.index import search as srch
-from cta.settings import load_models
-
-CFG = load_models(
-    env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "off"}
-)  # the reranker has its own tests
-DIM = CFG["embedding_dimensions"]
-
-
-def vec(*head: float) -> list[float]:
-    """A vector that starts with `head` and is zero elsewhere."""
-    return list(head) + [0.0] * (DIM - len(head))
-
-
-class FakeClient:
-    def __init__(self, vector):
-        self.vector, self.calls = vector, 0
-        self.embeddings = self
-
-    def create(self, model, input):
-        self.calls += 1
-        data = [type("D", (), {"index": 0, "embedding": self.vector})()]
-        return type("R", (), {"data": data, "usage": type("U", (), {"total_tokens": 7})()})()
+from tests.helpers import DIM, SEARCH_CFG, FakeClient, vec
 
 
 def factory(vector):
@@ -47,8 +26,8 @@ def test_cache_key_includes_the_model():
 def test_cache_hit_makes_no_client_call(tmp_path):
     path = tmp_path / "c.json"
     client, make = factory(vec(1.0))
-    first = srch.query_vector("hello", CFG, make, path)
-    second = srch.query_vector("hello", CFG, make, path)
+    first = srch.query_vector("hello", SEARCH_CFG, make, path)
+    second = srch.query_vector("hello", SEARCH_CFG, make, path)
     assert (first[2], first[3]) == (1, False) and (second[2], second[3]) == (0, True)
     assert client.calls == 1 and first[0] == second[0]
 
@@ -56,8 +35,8 @@ def test_cache_hit_makes_no_client_call(tmp_path):
 def test_other_model_does_not_reuse_the_vector(tmp_path):
     path = tmp_path / "c.json"
     client, make = factory(vec(1.0))
-    srch.query_vector("hello", CFG, make, path)
-    other = {**CFG, "embedding_model": "text-embedding-3-large", "embedding_dimensions": DIM}
+    srch.query_vector("hello", SEARCH_CFG, make, path)
+    other = {**SEARCH_CFG, "embedding_model": "text-embedding-3-large", "embedding_dimensions": DIM}
     srch.query_vector("hello", other, make, path)
     assert client.calls == 2
 
@@ -68,16 +47,17 @@ def test_missing_or_corrupt_cache_does_not_crash(tmp_path, content):
     if content is not None:
         path.write_text(content)
     client, make = factory(vec(1.0))
-    vector, _, calls, hit = srch.query_vector("hello", CFG, make, path)
+    vector, _, calls, hit = srch.query_vector("hello", SEARCH_CFG, make, path)
     assert calls == 1 and not hit and len(vector) == DIM
     assert json.loads(path.read_text())  # rewritten as a valid cache
 
 
 def test_wrong_size_cached_vector_is_ignored(tmp_path):
     path = tmp_path / "c.json"
-    path.write_text(json.dumps({srch.cache_key(CFG["embedding_model"], "hello"): [0.1, 0.2]}))
+    key = srch.cache_key(SEARCH_CFG["embedding_model"], "hello")
+    path.write_text(json.dumps({key: [0.1, 0.2]}))
     client, make = factory(vec(1.0))
-    assert srch.query_vector("hello", CFG, make, path)[3] is False
+    assert srch.query_vector("hello", SEARCH_CFG, make, path)[3] is False
 
 
 # ---- database: throwaway schema ----
@@ -97,7 +77,7 @@ def loaded(conn):
             "INSERT INTO chunks (id, kind, source, source_id, doc_type, scope, fetched_at, "
             "heading_path, text, content_hash, meta_hash, embedding, embedding_model) "
             "VALUES (%s, 'section', 'src', %s, 'faq', 'city_tech', 'x', %s, %s, 'h', 'm', %s, %s)",
-            (cid, cid, f"Heading {cid}", f"text {cid}", v, CFG["embedding_model"]),
+            (cid, cid, f"Heading {cid}", f"text {cid}", v, SEARCH_CFG["embedding_model"]),
         )
     conn.commit()
     return conn
@@ -105,7 +85,9 @@ def loaded(conn):
 
 def run(conn, tmp_path, k=4):
     client, make = factory(vec(1.0, 0.0))
-    return srch.search(conn, "q", k, cfg=CFG, client_factory=make, cache_path=tmp_path / "c.json")
+    return srch.search(
+        conn, "q", k, cfg=SEARCH_CFG, client_factory=make, cache_path=tmp_path / "c.json"
+    )
 
 
 @pytest.mark.integration

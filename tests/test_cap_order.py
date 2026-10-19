@@ -6,8 +6,7 @@ and fake counters only: no network, no database, no paid call."""
 import pytest
 
 from cta.api import guard, screen
-from tests.test_api import Client, ask, make_client_app, retrieve_answer
-from tests.test_guard import SpendConn, cfg_guard
+from tests.helpers import Client, SpendConn, ask, cfg_guard, make_client_app, retrieve_answer
 
 SAFETY = [
     ("I want to kill myself", "988", "distress"),

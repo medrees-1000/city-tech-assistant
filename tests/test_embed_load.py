@@ -12,7 +12,8 @@ import pytest
 from cta.index import chunks as ch
 from cta.index import embed, load
 from cta.settings import load_models
-from tests.test_chunks import FIXTURES, words
+from tests.helpers import PROCESSED_FIXTURES as FIXTURES
+from tests.helpers import words
 
 CFG = load_models(env={})
 DIM = CFG["embedding_dimensions"]

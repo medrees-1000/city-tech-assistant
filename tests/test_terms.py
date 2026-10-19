@@ -10,8 +10,7 @@ from cta.parse.terms import (
     tag_terms,
     terms_in,
 )
-from tests.test_parse_html import PAGES
-from tests.test_parse_pages import entry
+from tests.helpers import PAGES, entry
 
 
 def sec(heading, markdown="body", parents=()):

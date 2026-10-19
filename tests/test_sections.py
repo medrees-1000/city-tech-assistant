@@ -1,5 +1,5 @@
 from cta.parse.sections import has_table, merge_tables_into_parents
-from tests.test_parse_html import parse
+from tests.helpers import parse
 
 
 def section(heading, level, markdown, parents=()):

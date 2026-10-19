@@ -51,7 +51,7 @@ def apply_the_three_rewrites(old: str) -> str:
 def with_outside_marking(text: str) -> str:
     """Tester round 1b (1a) came after this polish round: it also rewrites the marking of a named
     course whose prefix is in no record (docs/decisions.md)."""
-    from tests.test_outside_marking import outside_rewrite
+    from tests.helpers import outside_rewrite
 
     return outside_rewrite(text)
 
@@ -196,8 +196,8 @@ def test_3c_the_calendar_route_keeps_its_line_at_the_top(rows):
 
 
 def test_3c_the_graph_passes_the_assumed_term_to_the_end(monkeypatch):
-    from tests.test_advice import CFG, make_router
-    from tests.test_router import TODAY, Script
+    from tests.helpers import CLARIFY_CFG as CFG
+    from tests.helpers import TODAY, Script, make_router
 
     router, _ = make_router(Script("other"), monkeypatch, load_events(), CFG)
     ans = router.answer("Should I withdraw from my biology class?", TODAY, log=False)

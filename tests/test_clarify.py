@@ -1,36 +1,27 @@
 """Step 4 CLARIFY: the detector, the graph node, the API contract, the log row and the eval rule.
 No network, no database, no paid call. The dev questions are read; the test split is not."""
 
-import json
 
 import pytest
 
 from cta.api import convert, requestlog, schema
 from cta.eval import run_answers as ra
-from cta.eval.questions import load_questions
 from cta.graph import advice, build, clarify
-from cta.settings import ROOT, load_models
-from tests.test_api import Client, ask, make_client_app
-from tests.test_router import TODAY, Script, make_router
+from tests.helpers import (
+    CLARIFY_CFG,
+    DEV,
+    TODAY,
+    Client,
+    Script,
+    ask,
+    make_client_app,
+    make_router,
+    stored_intents,
+)
 
-DEV = [q for q in load_questions() if q["split"] == "dev"]
 STATED = {"q88", "q89"}  # the dev questions the detector must fire on
-CFG = load_models(env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "on", "CTA_ROUTER_CHAIN": "on"})
 
 
-def stored_intents() -> list[tuple[str, str]]:
-    """(question text, intent) for every stored dev answer that carries a router record."""
-    text = {q["id"]: q["question"] for q in DEV}
-    out = []
-    for path in sorted((ROOT / "eval" / "results").glob("*.json")):
-        run = json.loads(path.read_text(encoding="utf-8"))
-        if not isinstance(run, dict) or run.get("split") != "dev":
-            continue
-        for r in run.get("per_question", []):
-            intent = (r.get("router") or {}).get("intent")
-            if intent and r["id"] in text:
-                out.append((text[r["id"]], intent))
-    return out
 
 
 # ---- the detector ----
@@ -56,7 +47,7 @@ def test_the_stored_classifier_outputs_change_nothing():
 
 
 def test_the_routing_function_is_unchanged_for_every_question_that_does_not_fire():
-    after_classify = build.make_nodes(build.Deps(None, CFG, None, [], "c"))[1]
+    after_classify = build.make_nodes(build.Deps(None, CLARIFY_CFG, None, [], "c"))[1]
     old = {"prerequisite": "chain", "calendar": "calendar"}  # anything else went to retrieve
     for text, intent in stored_intents():
         state = {"question": text, "intent": intent}
@@ -137,7 +128,7 @@ def test_the_reply_is_the_fixed_template_with_the_terms_from_the_config():
 def test_a_clarified_request_makes_the_classifier_call_and_nothing_else(monkeypatch):
     script = Script("calendar")
     events = build.load_events()
-    router, seen = make_router(script, monkeypatch, events, CFG)
+    router, seen = make_router(script, monkeypatch, events, CLARIFY_CFG)
     ans = router.answer("When is the due date?", TODAY, log=False)
     assert script.calls == ["classify"] and seen == []
     assert ans.route == "clarify" and ans.text == clarify.reply_text()
@@ -147,7 +138,7 @@ def test_a_clarified_request_makes_the_classifier_call_and_nothing_else(monkeypa
 
 def test_a_clear_question_still_takes_its_old_route(monkeypatch):
     script = Script("calendar", "Fall 2026", ["fall-2026-040"])
-    router, seen = make_router(script, monkeypatch, build.load_events(), CFG)
+    router, seen = make_router(script, monkeypatch, build.load_events(), CLARIFY_CFG)
     ans = router.answer("When is the filing period for February 2027 graduation?", TODAY, log=False)
     assert ans.route == "calendar" and script.calls == ["classify", "select"]
 
@@ -157,7 +148,7 @@ def test_the_log_function_stores_the_route(conn):
                                     build.Search([], False, 0, 0, 0.0))  # fmt: skip
     router_ans.route, router_ans.today = "clarify", TODAY
     router_ans.router = {"route": "clarify"}
-    build.log_request(conn, "When is the due date?", router_ans, CFG, None)
+    build.log_request(conn, "When is the due date?", router_ans, CLARIFY_CFG, None)
     (route,) = conn.execute("SELECT route FROM request_logs").fetchone()
     assert route == "clarify"
 
@@ -237,7 +228,7 @@ def test_a_clarify_reply_on_any_other_question_is_a_failure(qtype):
 
 def test_an_ambiguous_question_that_is_not_clarified_is_scored_as_before():
     from cta.answer import Answer
-    from tests.test_run_answers import ans, top
+    from tests.helpers import ans, top
 
     r = ra.evaluate_question(question("ambiguous"), ans(), top("g"), no_judge)
     assert r["label"] == "not supported yet" and r["correctness"] is None

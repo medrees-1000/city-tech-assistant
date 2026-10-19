@@ -22,7 +22,7 @@ from cta.api import convert
 from cta.eval import run_answers as ra
 from cta.index.search import Search
 from cta.settings import ROOT, load_models
-from tests.test_api import Client, ask, make_client_app, retrieve_answer
+from tests.helpers import Client, ask, make_client_app, retrieve_answer
 
 CFG = load_models(env={})
 CUTOFF, MARGIN = CFG["answer"]["abstain_threshold"], CFG["answer"]["near_miss_margin"]
@@ -250,7 +250,7 @@ def test_a_plain_below_threshold_abstention_is_unchanged_through_the_api(monkeyp
 
 
 def test_the_eval_runner_still_reads_the_near_miss_text_as_an_abstention():
-    from tests.test_run_answers import ans as stored_answer
+    from tests.helpers import ans as stored_answer
 
     text = near_miss_text(closest_pages(results()))
     q = {"id": "q45", "question": "x", "gold_answer": "ABSTAIN", "gold_sources": [],

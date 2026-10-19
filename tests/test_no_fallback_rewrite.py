@@ -7,7 +7,7 @@ from pathlib import Path
 
 from cta import answer
 from cta.settings import load_models
-from tests.test_api import Client, ask, make_client_app, retrieve_answer
+from tests.helpers import Client, ask, make_client_app, retrieve_answer
 
 ROOT = Path(__file__).resolve().parents[1]
 

@@ -2,8 +2,7 @@
 
 import json
 
-from tests.test_api import Client, make_client_app, retrieve_answer
-from tests.test_guard import cfg_guard
+from tests.helpers import Client, cfg_guard, make_client_app, retrieve_answer
 
 SECRET, SALT = "s" * 32, "x" * 32
 ENV = {"CTA_PROXY_SECRET": SECRET, "CTA_IP_SALT": SALT}

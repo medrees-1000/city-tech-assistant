@@ -1,13 +1,12 @@
 """Answer tests: fake client for embeddings and chat, throwaway schema, no network."""
 
 from datetime import date
-from types import SimpleNamespace
 
 import pytest
 
 from cta import answer as ans_mod
 from cta.settings import load_models
-from tests.test_search import DIM, FakeClient, vec
+from tests.helpers import DIM, FakeChatClient, vec
 
 CFG = load_models(
     env={"CTA_RERANK": "off", "CTA_ROUTER_MODE": "off"}
@@ -15,19 +14,6 @@ CFG = load_models(
 TODAY = date(2026, 10, 11)
 
 
-class FakeChatClient(FakeClient):
-    def __init__(self, query, reply="The deadline is Nov 6 [1]."):
-        super().__init__(query)
-        self.reply, self.chat_calls, self.messages = reply, 0, None
-        self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create_chat))
-
-    def create_chat(self, **kwargs):
-        self.chat_calls += 1
-        self.messages = kwargs["messages"]
-        self.kwargs = kwargs
-        message = SimpleNamespace(content=self.reply)
-        usage = SimpleNamespace(prompt_tokens=1000, completion_tokens=500)
-        return SimpleNamespace(choices=[SimpleNamespace(message=message)], usage=usage)
 
 
 def add_chunk(conn, cid, embedding, kind="section", **kw):

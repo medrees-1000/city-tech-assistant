@@ -10,7 +10,7 @@ from cta.graph.build import Router
 from cta.index.departments import load_departments
 from cta.index.search import Search
 from cta.settings import load_models
-from tests.test_router import TODAY, Script
+from tests.helpers import TODAY, Script
 
 C = contact.load_contacts()
 REGISTRAR = "Contact the Registrar: registrar@citytech.cuny.edu, 718-260-5800."

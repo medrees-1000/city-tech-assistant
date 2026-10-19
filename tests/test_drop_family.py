@@ -9,7 +9,7 @@ import pytest
 from cta.eval.questions import load_questions
 from cta.graph import build, drop_family
 from tests.drop_phrases import NEGATIVES, POSITIVES
-from tests.test_router import Script, make_router
+from tests.helpers import Script, make_router
 
 
 def calendar_rows():
