@@ -48,13 +48,16 @@ TEXTS = {
     ),
 }
 # Danger from someone else (post-freeze, owner decision of Oct 16, 2026): fixed text supplied by the
-# owner. Sources and the date they were checked: docs/decisions.md. The Public Safety line is kept
-# here and not in config/contacts.yaml, because that file is checked against collected data
-# (`cta.validate`) and this contact is not in it. Re-check every number before a public launch.
+# owner. Sources and the date they were checked: docs/decisions.md; the campus, Dispatcher and
+# 9-911 wording follows https://citytech.cuny.edu/public-safety/emergency.aspx as read on
+# 2026-10-19. The Public Safety line is kept here and not in config/contacts.yaml, because that
+# file is checked against collected data (`cta.validate`) and this contact is not in it. Re-check
+# every number before a public launch.
 TEXTS["danger"] = (
-    "I'm really sorry this is happening to you. If you are in immediate danger, call 911. If it "
-    "is happening on campus, City Tech Public Safety is available 24 hours a day at "
-    "(718) 260-5550 (from a campus phone, dial 5550, or 5555 in an emergency). For support with "
+    "I'm really sorry this is happening to you. If you are in immediate danger, call 911 (from a "
+    "campus telephone, dial 9-911). If it is happening on campus, you can reach the City Tech "
+    "Public Safety Dispatcher by dialing 5555 from any on-campus telephone, or at 718-260-5555 "
+    "from any other phone. The Public Safety office phone is (718) 260-5550. For support with "
     "abuse or domestic violence, you can call the National Domestic Violence Hotline any time at "
     "1-800-799-7233 (SAFE) or text START to 88788. In New York City, the 24-hour NYC hotline is "
     "1-800-621-4673 (HOPE)."

@@ -769,3 +769,13 @@ Official facts: Dispatcher, "Dial 5555 from any on-campus telephone", otherwise 
 | `config/contacts.yaml` | office phones and emails for the registrar, advisement, bursar, financial aid, admissions, special circumstances and four departments | Collected from the site on 2026-10-11 (`cta.validate`, area "contacts"). Public Safety is not in this file (kept in `screen.py`, see the comment there). Not part of today's comparison. |
 
 Open for the owner: the wording of the danger reply (911 versus 9-911 from a campus phone, the off-campus Dispatcher number, "dial 5550", "24 hours a day"). No text was changed.
+
+## Danger reply wording: Public Safety numbers — 2026-10-19
+
+Source: City Tech Public Safety, https://citytech.cuny.edu/public-safety/emergency.aspx, read by the owner on 2026-10-19 (facts given to me; the page was not fetched): the Dispatcher is reached by dialing 5555 from any on-campus telephone, otherwise 718-260-5555; for NYC Police/Fire, dial 9-911 from a campus telephone, otherwise 9-1-1; Public Safety contact phone 718-260-5550.
+
+Old text (`TEXTS["danger"]` in `src/cta/api/screen.py`, from the owner's text of Oct 16, 2026): "…If you are in immediate danger, call 911. If it is happening on campus, City Tech Public Safety is available 24 hours a day at (718) 260-5550 (from a campus phone, dial 5550, or 5555 in an emergency). For support with abuse or domestic violence, …"
+
+New text: "…If you are in immediate danger, call 911 (from a campus telephone, dial 9-911). If it is happening on campus, you can reach the City Tech Public Safety Dispatcher by dialing 5555 from any on-campus telephone, or at 718-260-5555 from any other phone. The Public Safety office phone is (718) 260-5550. For support with abuse or domestic violence, …"
+
+Removed because the page does not confirm them: "dial 5550 from a campus phone" and "available 24 hours a day". The 988 text, the domestic violence hotline and the NYC hotline wording are unchanged. Not re-checked yet: the National Domestic Violence Hotline (1-800-799-7233, text START to 88788) and the NYC hotline (1-800-621-4673) against their own official sites; the last check was Oct 16, 2026 (docs/decisions.md). The reply is still a fixed text from the regex safety screen, with no model call.
