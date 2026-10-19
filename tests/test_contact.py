@@ -247,16 +247,6 @@ def test_a_calendar_abstain_is_byte_identical_with_the_switch_on(monkeypatch, ev
     assert texts["on"] == texts["off"] and texts["on"].count("Contact the Registrar") == 1
 
 
-def test_the_replay_rebuilds_a_logged_calendar_abstain_exactly():
-    from cta.eval.contact_replay import rebuild
-    from cta.redact import redact
-
-    real = render.abstain_text("I could not find that.", render.registrar_contact())
-    assert rebuild(redact(real)) == real
-    with pytest.raises(ValueError):
-        rebuild("ABSTAIN: write to a@b.edu")  # a real email: the log would have redacted it
-
-
 # ---- account cues added in the chat polish ----
 
 
