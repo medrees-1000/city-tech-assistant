@@ -382,7 +382,7 @@ def is_injection(question: str) -> bool:
     return any(p.search(question) for p in INJECTION)
 
 
-# Batch 1, item 2 (docs/polish-triage.md G1-3): more ways a student may type their own name.
+# Batch 1, item 2 (docs/archive/polish-triage.md G1-3): more ways a student may type their own name.
 # Plain patterns, no name list and no library; they run on the QUESTION only. For the cues
 # "i'm", "i am", "this is", "name is", "name:" and "call me" the next word must start with a
 # capital letter, be more than an acronym (a capital followed by lowercase letters) and not be a

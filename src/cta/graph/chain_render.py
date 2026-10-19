@@ -1,4 +1,4 @@
-"""The chain answer written by plain code (chain layout, docs/chain-layout-plan.md, item 1).
+"""The chain answer written by plain code (chain layout, docs/archive/chain-layout-plan.md, item 1).
 
 No model writes anything. One block per course with a catalog record, in the walk's order:
 

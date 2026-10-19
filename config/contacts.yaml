@@ -6,7 +6,7 @@
 # Printed: email and phone only. `room` and `hours` are stored, never printed (owner decision).
 #
 # Derived with the dev abstentions in view; the test split at the final milestone is the real check
-# of the office table, the cues and the chunk map (docs/step4c-plan.md).
+# of the office table, the cues and the chunk map (docs/archive/step4c-plan.md).
 
 offices:
   registrar:

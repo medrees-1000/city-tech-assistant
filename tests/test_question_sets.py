@@ -20,7 +20,8 @@ TEST = ["q62", "q66", "q69", "q72", "q73", "q74"]
 
 
 def calendar_rows():
-    # q88 and later are the dev questions of the chain layout round (docs/chain-layout-plan.md)
+    # q88 and later are the dev questions of the chain layout round
+    # (docs/archive/chain-layout-plan.md)
     return [
         q for q in load_questions() if "calendar" in q.get("tags", []) and int(q["id"][1:]) <= 87
     ]

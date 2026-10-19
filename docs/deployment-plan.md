@@ -336,7 +336,7 @@ From `docs/decisions.md` ("Pre-launch checklist" and "Post-freeze safety fix"). 
 | City Tech Public Safety (718) 260-5550; campus phone 5550; emergency 5555 | same; **the page URL was never recorded** | the owner finds the City Tech Public Safety page and records its URL this time |
 | 988 and 911 | Tier 1 reply in `screen.py` | the 988 Lifeline site; record the URL used |
 
-Report back only "matches" or "differs: <number>"; I update the constants and the pinned test text if one differs. Also confirm the two hotline pages still load. This is the last blocker listed in `docs/polish-triage.md` (G1-2).
+Report back only "matches" or "differs: <number>"; I update the constants and the pinned test text if one differs. Also confirm the two hotline pages still load. This is the last blocker listed in `docs/archive/polish-triage.md` (G1-2).
 
 ---
 

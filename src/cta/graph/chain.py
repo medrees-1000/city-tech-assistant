@@ -1,7 +1,7 @@
 """The prerequisite-chain walk, the asked-course extraction and the LangChain tool (step 4b).
 
 Plain, deterministic code; no model decides which courses are in a chain. The rules are those of
-docs/chain-candidates.md and docs/step4b-plan.md:
+docs/archive/chain-candidates.md and docs/archive/step4b-plan.md:
 - course codes come from a record's resolved prerequisite text (a bare number after a code takes its
   prefix); a code after "MUST NOT", "NOT HAVE" or "NOT" in the same clause is an exclusion (listed,
   not followed); breadth-first with a visited set; depth at most 4; at most 15 courses with records;

@@ -1,7 +1,7 @@
 """Compare saved answer-level runs (no database, no network). Used for step 3b.
 
     uv run python -m cta.eval.answer_compare report --off A B C --on D E F [--judge-repeat G]
-    uv run python -m cta.eval.answer_compare v3-check OLD NEW        (writes docs/judge-check-v3.md)
+    uv run python -m cta.eval.answer_compare v3-check OLD NEW  # -> docs/archive/judge-check-v3.md
 
 `report` prints, for two arms of three runs each: the metrics (mean and range over the runs), the
 rule written in docs/experiments.md (step 3b), the cost and latency split, a per-question table of
@@ -361,8 +361,8 @@ def main(argv: list[str]) -> int:
         return 0
     questions = {q["id"]: q for q in load_questions()}
     text = verdict_diff_markdown(load_run(args.old), load_run(args.new), questions)
-    (ROOT / "docs" / "judge-check-v3.md").write_text(text, encoding="utf-8")
-    print("wrote docs/judge-check-v3.md")
+    (ROOT / "docs" / "archive" / "judge-check-v3.md").write_text(text, encoding="utf-8")
+    print("wrote docs/archive/judge-check-v3.md")
     return 0
 
 

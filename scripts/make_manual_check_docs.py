@@ -1,4 +1,4 @@
-"""Write docs/manual-check-programs.md and docs/manual-check-contacts.md (blank result columns).
+"""Write docs/archive/manual-check-programs.md and docs/archive/manual-check-contacts.md (blank result columns).
 
 Run: uv run python scripts/make_manual_check_docs.py
 Both files are built from data/processed; the owner fills the Result column by hand.
@@ -201,8 +201,8 @@ def contacts_doc() -> str:
 
 
 def main() -> None:
-    (ROOT / "docs" / "manual-check-programs.md").write_text(programs_doc(), encoding="utf-8")
-    (ROOT / "docs" / "manual-check-contacts.md").write_text(contacts_doc(), encoding="utf-8")
+    (ROOT / "docs" / "archive" / "manual-check-programs.md").write_text(programs_doc(), encoding="utf-8")
+    (ROOT / "docs" / "archive" / "manual-check-contacts.md").write_text(contacts_doc(), encoding="utf-8")
 
 
 if __name__ == "__main__":

@@ -2,6 +2,13 @@
 
 Short notes on choices that are not obvious from the code. Newest last.
 
+## Current state (Oct 19, 2026)
+- **Live:** the Next.js page on Vercel (`web/`) forwards `/api/ask` and `/api/feedback` to the API on a Lightsail server (Docker: API, Postgres with pgvector, Caddy). The page sets the shared secret and the visitor address in `x-cta-visitor`; the API trusts them only with a matching secret (see "Visitor address through the Vercel page").
+- **Answer path:** LangGraph router (`router.mode: on`) to the calendar table, the prerequisite-chain walk (`chain: on`, written by code) or retrieval with the LLM reranker (`rerank: pool_a`) and the rescue rule (`rescue: on`); every abstention carries an office contact (`contacts: on`). Safety screens, the kill switch, per-visitor rate limits and spend caps run in the API before the model.
+- **Off in production (code kept, reachable only by config):** hybrid and BM25 retrieval, the department filter, `pool_b`, the format rule, the fallback query rewrite (E1) and answering non-English questions by translation (`non_english: english_only` is the setting).
+- **Results:** the final test run is frozen at git tag `final-run-frozen`; its numbers are printed by `scripts/readme_numbers.py` and checked by `scripts/recompute_final.py`.
+- **Where things are:** [docs/README.md](README.md) maps the docs; finished plans and result sheets are in `docs/archive/`. Entries below are history and keep the paths they had when written.
+
 ## Term tags on sections (Oct 11, 2026)
 
 - Every section has `terms`, a list that may be empty. An entry is an explicit term name: Summer I,
@@ -1619,3 +1626,4 @@ Behavior of the app and the README numbers are unchanged (`readme_numbers.py` an
 - One-off report and replay scripts: `chain2_report`, `chain_dry_check`, `chain_render_report`, `contact_topic_replay`, `format_rule_report`, `language_probes_build`, `language_probes_run`, `make_manual_check`, `milestone1_report`, `model_exp_report`, `quote_addenda_replay`, `shorthand_replay`, `band_review` (all in `scripts/`).
 - Question-authoring scripts (their questions are already in `eval/questions.jsonl`, and the merge scripts refuse to run again): `make_calendar_candidates`, `make_chain_candidates`, `make_eval_candidates`, `verify_chain_candidates`, `merge_calendar_questions`, `merge_chain_questions` (all in `scripts/`), with `tests/test_calendar_candidates.py`, `tests/test_chain_candidates.py`, `tests/test_verify_chain.py`, and the merge-script and `kept_rows` tests in `tests/test_question_sets.py` (the other tests there stay). The generated candidate documents stay in `docs/`.
 - `docker-compose.rehearsal.yml` (the local rehearsal override; the runbook and CI never used it). The `.env.rehearsal` line in `.gitignore` stays: `tests/test_deploy_files.py` checks that it is ignored, and a stray rehearsal secret file must not be committed.
+- Docs: 40 finished plans, results, candidate lists and review sheets moved to `docs/archive/` (index in `docs/archive/README.md`); `docs/README.md` is the start-here map. `docs/judge-check.md` stays because the judge code and a test read it. The generators of `judge-check-v3`, `judge-check-v3b`, `calendar-same-date` and the `manual-check-*` sheets now write into `docs/archive/`. Old entries in this file keep the paths they had when written.

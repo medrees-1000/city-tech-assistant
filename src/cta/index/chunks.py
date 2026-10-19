@@ -3,8 +3,8 @@
     uv run python -m cta.index.chunks --stats    # counts, tokens, cost, gold-source check
     uv run python -m cta.index.chunks --write    # also save data/processed/chunks.jsonl
 
-Three kinds (docs/phase2-plan.md, section a): section, course, contact. Calendar events are not
-chunked; the calendar table answers those questions.
+Three kinds (docs/archive/phase2-plan.md, section a): section, course, contact. Calendar events
+are not chunked; the calendar table answers those questions.
 """
 
 import hashlib

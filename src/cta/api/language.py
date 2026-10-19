@@ -1,4 +1,5 @@
-"""The language step of the API (tester round 1b, Part 2; docs/language-plan.md, docs/decisions.md).
+"""The language step of the API (tester round 1b, Part 2; docs/archive/language-plan.md,
+docs/decisions.md).
 
 A question that does not look English gets ONE small model call that detects its language and
 translates it to English; the rest of the pipeline (and every guardrail screen) then works on the

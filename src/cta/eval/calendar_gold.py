@@ -1,7 +1,7 @@
 # ruff: noqa: E501  (long report strings)
 """Same-date rows of the calendar-only questions, and re-scoring stored runs (step 4a-2).
 
-    uv run python -m cta.eval.calendar_gold      # writes docs/calendar-same-date.md
+    uv run python -m cta.eval.calendar_gold      # writes docs/archive/calendar-same-date.md
 
 For every calendar-only question it lists the rows that share the date_start of a gold row (any term,
 not the gold rows themselves, not rows that are only a "For more info" web address) with a proposed
@@ -20,7 +20,7 @@ from cta.graph.terms import link_row
 from cta.settings import ROOT
 from cta.validate.calendar import load_events_for_indexing
 
-OUT = ROOT / "docs" / "calendar-same-date.md"
+OUT = ROOT / "docs" / "archive" / "calendar-same-date.md"
 EVENTS = ROOT / "data" / "calendar" / "calendar_events.json"
 # The owner's recommendation (pre-filled, 2026-10-12): the first listed row stays required, the
 # second becomes an acceptable extra. Applied to eval/questions.jsonl only after the owner says so.

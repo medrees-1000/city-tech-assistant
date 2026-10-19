@@ -56,7 +56,7 @@ Other observations (no check covers these yet):
 - The full catalog has one duplicated code, `AFR 2000` (outside the four departments).
 - Course titles are the API `name` field, abbreviated by the catalog (for example
   "Software Development .NET Fram", "Prin Of Dh Care 4").
-- Manual check sheet: `docs/manual-check-courses.md` (20 courses). Not done yet.
+- Manual check sheet: `docs/archive/manual-check-courses.md` (20 courses). Not done yet.
 
 ## 2026-10-11: extra course fields (rebuilt from saved raw data, no new crawl)
 
@@ -510,8 +510,8 @@ calendar PDFs are re-read in memory and the table file is not touched):
 - Nothing fails. The 2 accepted page findings are the known `writing-intensive-fall26.aspx` (200, empty main
   content) and `writing-intensive.aspx` (404). The 30 course warnings are unchanged: 2 `RLA_CollegeOption`
   courses without a pathways label and 28 prerequisite codes that are not Active catalog courses.
-- Manual check sheets: `docs/manual-check-programs.md` (open items first: Cybersecurity and Applied
-  Mathematics credit mismatches, the MATH minor's incomplete title) and `docs/manual-check-contacts.md`,
+- Manual check sheets: `docs/archive/manual-check-programs.md` (open items first: Cybersecurity and Applied
+  Mathematics credit mismatches, the MATH minor's incomplete title) and `docs/archive/manual-check-contacts.md`,
   both built by `scripts/make_manual_check_docs.py`. One thing to look at while checking contacts: the
   financial aid page's PHONE HOURS table prints Tuesday as "9:00 PM - 5:00 PM" (left as printed).
 
@@ -540,7 +540,7 @@ Part A, office hours. Before this step the hours were stored only as panel text 
 - New check `hours_missing` / `hours_incomplete` (in `cta.validate.pages`): the raw HTML of every page is read
   again with the same panel selector; a panel counts as an hours panel when its heading has "hours" or its
   visible text has a clock time (comments are ignored). It fails if that owner's record has no hours, or if a
-  clock time printed in such a panel is not in the stored hours. All owners pass. `docs/manual-check-contacts.md`
+  clock time printed in such a panel is not in the stored hours. All owners pass. `docs/archive/manual-check-contacts.md`
   has an Hours column ("none printed" only where the raw HTML has no hours panel; chair rows say "department
   hours, see above" for CST and "none printed" for the others).
 
@@ -711,12 +711,12 @@ The EET root "Our Mission" section is tagged Summer 2026 only because an advisem
 - New check in `cta.eval.questions` and in `python -m cta.validate` (area "eval", not in CI): fails if any
   question outside q25-q29 has gold_answer "TODO" or "FILL_FROM_CALENDAR", plus the earlier row and gold-source
   checks. Result: 30 questions, 0 problems; no placeholder left.
-- Manual checks by the owner, 2026-10-11: `docs/manual-check-programs.md` and `docs/manual-check-contacts.md`
+- Manual checks by the owner, 2026-10-11: `docs/archive/manual-check-programs.md` and `docs/archive/manual-check-contacts.md`
   were checked and are correct (owner's report). The open source facts stay as they are: Cybersecurity (degree
   maps 114 - 118 vs "Earn at least 120-124 credits") and Applied Mathematics (117 - 119 vs "Earn at least 120")
   credit totals differ in the catalog printout, and the MATH minor's title is printed as "Computer Science -".
 - `docs/data-validation.md` manual checks: 1 (calendar, 2026-10-11 entry), 4 (programs) and 5 (contacts) are
-  marked done. **No record exists for** 2 (20 random courses; sheet `docs/manual-check-courses.md`, "not done yet"
+  marked done. **No record exists for** 2 (20 random courses; sheet `docs/archive/manual-check-courses.md`, "not done yet"
   in the earlier entry) and 3 (10 random cleaned pages); they stay open.
 - Pre-push audit (report only, nothing changed):
   - Tracked files over 500 KB: none. Largest: the Dropping and Withdrawing PDF fixture (283 KB), the Winter 2027
@@ -726,13 +726,13 @@ The EET root "Our Mission" section is tagged Summer 2026 only because an advisem
     commit on any ref. `.env.example` has `CTA_CONTACT_EMAIL=` with no value.
   - The value of CTA_CONTACT_EMAIL is in no tracked file and in no commit (`git log --all -S`). Email addresses
     in tracked files: 67 on citytech.cuny.edu (public office, department and chair contacts, in the test page
-    fixtures, `docs/manual-check-contacts.md`, `docs/eval-review.md`, `docs/validation-log.md` and
+    fixtures, `docs/archive/manual-check-contacts.md`, `docs/eval-review.md`, `docs/validation-log.md` and
     `eval/questions.jsonl`), and test placeholders (x.edu, example.edu, example.com, b.edu).
 
 ## Manual checks 2 and 3 recorded — 2026-10-11
 
 The owner reports that manual check 2 (20 random courses against the live catalog pages, sheet
-`docs/manual-check-courses.md`) and manual check 3 (10 random cleaned web pages, no menu junk and no missing
+`docs/archive/manual-check-courses.md`) and manual check 3 (10 random cleaned web pages, no menu junk and no missing
 sections) were done before 2026-10-11. The exact date was not recorded. `docs/data-validation.md` marks both
 done. All five manual checks are now done (1, 4 and 5 are recorded in earlier entries).
 
@@ -747,7 +747,7 @@ done. All five manual checks are now done (1, 4 and 5 are recorded in earlier en
 ## Phase 2 baseline recorded — 2026-10-12
 
 Dev runs `baseline-dev` (rubric v1) and `baseline-dev-judge-v2` (rubric v2), test run `baseline-final`; results in
-`eval/results/`, analysis in `docs/baseline-findings.md`. Owner check of 8 dev judge verdicts: correctness 6/8 (v1)
+`eval/results/`, analysis in `docs/archive/baseline-findings.md`. Owner check of 8 dev judge verdicts: correctness 6/8 (v1)
 and 7/8 (v2), faithfulness 7/8. All automatic data checks pass (`python -m cta.validate`, including the new `entities` area).
 
 ## Safety replies and contacts re-check — 2026-10-19

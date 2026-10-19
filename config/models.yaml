@@ -13,7 +13,7 @@ chat_model: gpt-6-luna          # answers
 judge_model: gpt-5.6-terra      # eval judge: stronger than the answer model, on purpose
 
 answer:
-  # Model that writes retrieval-route answers (docs/model-experiment-plan.md). null = chat_model (today's
+  # Model that writes retrieval-route answers (docs/archive/model-experiment-plan.md). null = chat_model (today's
   # behaviour). The classifier, selector, topic call, reranker and the model-written chain answers always use
   # chat_model. CTA_ANSWER_MODEL and --answer-model override it.
   model: null
@@ -101,13 +101,13 @@ router:
   # Prerequisite-chain tool (Phase 3, step 4b): off | on (on since step 4b-final; CTA_ROUTER_CHAIN=off or --chain off turns it off). With "on" the classifier has a third intent,
   # "prerequisite", answered by a deterministic chain walk. CTA_ROUTER_CHAIN overrides it. Quoted (YAML booleans).
   chain: "on"
-  # Who writes the chain answer (chain layout, docs/chain-layout-plan.md): "model" = the answer model, from the
+  # Who writes the chain answer (chain layout, docs/archive/chain-layout-plan.md): "model" = the answer model, from the
   # chain description (the 4b behaviour); "code" = plain code (cta.graph.chain_render), no model call after the
-  # classifier. "code" since the pre-registered keep rule passed (docs/chain-layout-results.md); "model" is the fallback. CTA_ROUTER_CHAIN_RENDER overrides it.
+  # classifier. "code" since the pre-registered keep rule passed (docs/archive/chain-layout-results.md); "model" is the fallback. CTA_ROUTER_CHAIN_RENDER overrides it.
   chain_render: "code"
   # Contact line on every abstention (Phase 3, step 4c): off | on. Plain code (src/cta/graph/contact.py) appends
   # "Contact <name>: <email>, <phone>." from config/contacts.yaml; the model never writes it. On since step 4c
-  # (replay check D1 to D8 of docs/step4c-plan.md passed); CTA_ROUTER_CONTACTS=off or --contacts off turns it off. Quoted (YAML booleans).
+  # (replay check D1 to D8 of docs/archive/step4c-plan.md passed); CTA_ROUTER_CONTACTS=off or --contacts off turns it off. Quoted (YAML booleans).
   contacts: "on"
   temperature: 0
   reasoning_effort: none
@@ -141,7 +141,7 @@ guardrails:
   distress_reply: "988"           # "988" names the 988 Suicide & Crisis Lifeline and 911; "none" names no number
   injection_screen: true
   # Tester round 1b, Part 2: a question that does not look English gets ONE small model call that detects its
-  # language and translates it to English (docs/language-plan.md). CTA_LANGUAGE_STEP overrides it.
+  # language and translates it to English (docs/archive/language-plan.md). CTA_LANGUAGE_STEP overrides it.
   language_step: true
   # What a non-English question gets (docs/decisions.md, "Tester round 1b, Part 2"): "english_only" = a fixed English
   # notice asking the student to ask again in English, no retrieval (option 3, the default since the option 1
@@ -186,7 +186,7 @@ models:
     input: 2.00
     cached_input: 0.10
     output: 10.00
-  gpt-6-sol:      # the challenger of docs/model-experiment-plan.md; accepts luna's settings (probed 2026-10-14)
+  gpt-6-sol:      # the challenger of docs/archive/model-experiment-plan.md; accepts luna's settings (probed 2026-10-14)
     kind: chat    # price read 2026-10-14 from https://developers.openai.com/api/docs/pricing
     input: 2.00
     cached_input: 0.20

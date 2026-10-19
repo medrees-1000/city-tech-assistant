@@ -1,7 +1,7 @@
 # ruff: noqa: E501  (long report strings)
 """Judge hand-check sheet for step 3b (no model call; reads results files, request_logs and chunks).
 
-    uv run python -m cta.eval.judge_sheet           # writes docs/judge-check-v3b.md
+    uv run python -m cta.eval.judge_sheet           # writes docs/archive/judge-check-v3b.md
     uv run python -m cta.eval.judge_sheet --agreement   # prints the rubric v3 agreement row
 
 Each item shows the question, the gold answer, the model's answer, the judge's verdicts and reasons
@@ -22,7 +22,7 @@ from cta.redact import redact
 from cta.settings import ROOT
 
 CHECK = ROOT / "docs" / "judge-check.md"
-OUT = ROOT / "docs" / "judge-check-v3b.md"
+OUT = ROOT / "docs" / "archive" / "judge-check-v3b.md"
 # (question, run label, how to name it) in the order the owner asked for
 ITEMS = [
     ("q22", "baseline-dev-60-v3", "stored baseline answer, arm OFF run 1 (rubric v3 verdicts)"),

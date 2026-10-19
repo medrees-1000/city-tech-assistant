@@ -191,7 +191,7 @@ The dev server is bound to 127.0.0.1 (`next dev -H 127.0.0.1`), so the proxy is 
 
 
 ## Contact policy v2 (2026-10-13)
-The contact card is shown only when the office clearly applies (named department or course prefix, account-word cue, calendar abstention, chain no-record for one of the four departments). Otherwise `contact` is null, the answer has no contact line, and the chat page shows the abstain box alone, with no card and no empty gap. See `docs/decisions.md` ("Contact policy v2") and `docs/step4c-plan.md` ("v2").
+The contact card is shown only when the office clearly applies (named department or course prefix, account-word cue, calendar abstention, chain no-record for one of the four departments). Otherwise `contact` is null, the answer has no contact line, and the chat page shows the abstain box alone, with no card and no empty gap. See `docs/decisions.md` ("Contact policy v2") and `docs/archive/step4c-plan.md` ("v2").
 
 ## Request logging: what is stored and what is not (step 5; the page notice in step 6 summarises this)
 
