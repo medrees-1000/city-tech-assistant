@@ -88,11 +88,13 @@ def test_the_line_never_holds_the_secret_the_salt_an_address_or_a_hash(monkeypat
     key = hmac.new(SALT.encode(), IP.encode(), hashlib.sha256).hexdigest()
     for secret in (SECRET, SALT, IP, "testclient", key, key[:12]):
         assert secret not in out
+    assert f'"visitor_tag": "{key[:6]}"' in out  # only the first 6 characters of the key
     (ln,) = [json.loads(x) for x in out.splitlines() if x.startswith('{"event": "ask"')]
     assert set(ln) == {"event", "request_id", "proxy_required", "proxy_trusted",
-                       "forwarded_present", "forwarded_family", "visitor_seen_before"}  # fmt: skip
+                       "forwarded_present", "forwarded_family", "visitor_seen_before",
+                       "visitor_tag"}  # fmt: skip
     assert ln["forwarded_family"] == "ipv4"
-    flags = set(ln) - {"event", "request_id", "forwarded_family"}
+    flags = set(ln) - {"event", "request_id", "forwarded_family", "visitor_tag"}
     assert all(isinstance(ln[k], bool) for k in flags)
 
 
@@ -103,3 +105,15 @@ def test_the_family_label_tells_ipv4_from_ipv6_from_nothing(monkeypatch, capsys)
     post(c, ip=None)
     post(c, ip="junk")
     assert [ln["forwarded_family"] for ln in lines(capsys)] == ["ipv4", "ipv6", "none", "none"]
+
+
+def test_the_visitor_tag_is_six_hex_characters_stable_per_visitor_and_different_between_visitors(
+    monkeypatch, capsys
+):
+    c = app(monkeypatch)
+    post(c, ip="203.0.113.1")
+    post(c, ip="203.0.113.1")
+    post(c, ip="203.0.113.2")
+    a, b, other = (ln["visitor_tag"] for ln in lines(capsys))
+    assert len(a) == 6 and all(ch in "0123456789abcdef" for ch in a)
+    assert a == b and a != other
