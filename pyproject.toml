@@ -32,6 +32,7 @@ select = ["E", "F", "I", "B", "UP"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-rf"  # always print the names of failing tests
 markers = [
     "integration: needs the Docker Postgres (skipped when it is not running)",
     "needs_data: needs the collected data in data/processed (skipped when it is absent)",
