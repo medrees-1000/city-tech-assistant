@@ -175,7 +175,7 @@ def test_below_the_band_the_old_text_stays(monkeypatch):
 def test_at_the_cutoff_it_answers_and_the_prompt_is_the_normal_one(monkeypatch):
     ans = run(monkeypatch, CUTOFF, dry_run=True)
     assert not ans.abstained and not ans.near_miss and ans.text == ""
-    expected = answer_module.build_messages(results(), TODAY, "whats the tuition deadline", "off")
+    expected = answer_module.build_messages(results(), TODAY, "whats the tuition deadline")
     assert ans.prompt == expected  # the answered path is exactly what it was
 
 

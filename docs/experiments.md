@@ -1,5 +1,7 @@
 # Experiments (Phase 3)
 
+> **Note (Oct 19, 2026):** the code behind the rejected experiments below (hybrid and BM25 search, the department filter, `pool_b`, the answer format rule, and the fallback rewrite) was removed in the cleanup, together with their switches, flags and result files. The commands and file names in this document are reproducible at git tag `pre-cleanup`. The reranker (`pool_a`) is still live.
+
 One entry per experiment, newest last. Protocol: `docs/archive/phase3-plan.md`. Comparison file for dev:
 `eval/results/baseline-dev-60.json` (the frozen system on the 40 dev questions; 30 of them are retrieval-scored). Each entry has
 the change, the config switch, the metric deltas, cost and latency deltas, the questions that got better or worse, the decision, and

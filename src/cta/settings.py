@@ -26,8 +26,7 @@ def build_user_agent(sources: dict) -> str:
     return crawl["user_agent_template"].format(email=email)
 
 
-RETRIEVAL_MODES = ("vector", "hybrid", "hybrid_bm25")
-RERANK_MODES = ("off", "pool_a", "pool_b")
+RERANK_MODES = ("off", "pool_a")
 MODEL_OVERRIDES = {
     "embedding_model": "CTA_EMBEDDING_MODEL",
     "chat_model": "CTA_CHAT_MODEL",
@@ -105,17 +104,6 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
         raise ValueError("answer.rescue_similarity_floor must be at least 0 and below the cutoff")
     if not 0 <= minimum <= 10:
         raise ValueError("answer.rescue_reranker_min must be between 0 and 10")
-    cfg["answer"].setdefault("format_rule", "off")
-    if env.get("CTA_ANSWER_FORMAT_RULE", "").strip():
-        cfg["answer"]["format_rule"] = env["CTA_ANSWER_FORMAT_RULE"].strip()
-    if cfg["answer"]["format_rule"] not in ("off", "on"):
-        raise ValueError(
-            f"answer.format_rule must be off or on, not {cfg['answer']['format_rule']!r}"
-        )
-    if env.get("CTA_RETRIEVAL_MODE", "").strip():
-        cfg["retrieval"]["mode"] = env["CTA_RETRIEVAL_MODE"].strip()
-    if env.get("CTA_DEPT_FILTER", "").strip():
-        cfg["retrieval"]["dept_filter"] = env["CTA_DEPT_FILTER"].strip()
     if env.get("CTA_RERANK", "").strip():
         cfg["retrieval"]["rerank"] = env["CTA_RERANK"].strip()
     if cfg["retrieval"]["rerank"] not in RERANK_MODES:
@@ -155,14 +143,6 @@ def load_models(path: Path = ROOT / "config" / "models.yaml", env: dict | None =
             cfg["api"]["today"] = date.fromisoformat(str(cfg["api"]["today"]))
         except ValueError:
             raise ValueError(f"api.today must be YYYY-MM-DD, not {cfg['api']['today']!r}") from None
-    if cfg["retrieval"]["dept_filter"] not in ("off", "on"):
-        raise ValueError(
-            f"retrieval.dept_filter must be off or on, not {cfg['retrieval']['dept_filter']!r}"
-        )
-    if cfg["retrieval"]["mode"] not in RETRIEVAL_MODES:
-        raise ValueError(
-            f"retrieval.mode must be one of {RETRIEVAL_MODES}, not {cfg['retrieval']['mode']!r}"
-        )
     cfg["guardrails"] = guardrail_settings(cfg.get("guardrails") or {}, env)
     cfg["tracing"] = {"enabled": bool((cfg.get("tracing") or {}).get("enabled", False))}
     # production switches tracing on through the environment only (the file default stays false)

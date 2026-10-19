@@ -42,9 +42,3 @@ def detect_departments(question: str, departments: dict | None = None) -> set[st
         if dept_id:
             found.add(dept_id)
     return found
-
-
-def allowed_sql() -> str:
-    """SQL condition (one %s parameter: the detected ids) that keeps a chunk: any chunk whose
-    scope is not 'department', or whose department is among the detected ids."""
-    return "(scope <> 'department' OR department = ANY(%s))"

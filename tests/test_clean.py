@@ -110,7 +110,7 @@ def test_the_search_query_is_cleaned_and_the_answer_prompt_keeps_the_question(mo
     monkeypatch.setattr(
         answer_module,
         "build_messages",
-        lambda results, today, question, rule: [{"role": "user", "content": question}],
+        lambda results, today, question: [{"role": "user", "content": question}],
     )
     raw = TESTER["52595199"][0]
     got = answer_module.answer(

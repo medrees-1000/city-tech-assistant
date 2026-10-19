@@ -157,7 +157,7 @@ def run(
     out=print,
     rerank_budget: float | None = None,
 ) -> dict:
-    retrieved, calls, hits, cost, timing, detected = {}, 0, 0, 0.0, {}, {}
+    retrieved, calls, hits, cost, timing = {}, 0, 0, 0.0, {}
     outcomes, pools, spent = {}, {}, 0.0
     for q in questions:
         allowance = None if rerank_budget is None else rerank_budget - spent
@@ -167,7 +167,6 @@ def run(
             spent += found.rerank.cost
         retrieved[q["id"]] = found.results
         timing[q["id"]] = found.retrieval_ms
-        detected[q["id"]] = found.detected_departments
         calls += found.api_calls
         hits += found.cache_hit
         cost += found.cost
@@ -206,7 +205,7 @@ def run(
     out(f"\nquery embeddings: {hits} cache hits, {calls} API calls, real cost ${cost:.7f}")
     lat = latency(list(timing.values()))
     out(
-        f"retrieval mode {cfg['retrieval']['mode']}: search time median {lat['median']:.1f} ms, "
+        f"search time median {lat['median']:.1f} ms, "
         f"p95 {lat['p95']:.1f} ms (n={lat['n']})"
     )
     ranks = [
@@ -216,7 +215,6 @@ def run(
             "department": r["department"],
             "first_rank": r["first_rank"],
             "tags": r["tags"],
-            "detected_departments": detected[r["id"]],
             "retrieval_ms": round(timing[r["id"]], 1),
             "retrieved_ids": [c["source_id"] for c in retrieved[r["id"]]],
             **(
@@ -243,7 +241,6 @@ def run(
         "by_department": by_dept,
         "per_question": ranks,
         "cost": {"usd": cost, "api_calls": calls, "cache_hits": hits},
-        "retrieval_mode": cfg["retrieval"]["mode"],
         "retrieval_latency_ms": latency(list(timing.values())),
         "rerank": summary_rerank,
         **question_ids_record(questions),
@@ -284,14 +281,10 @@ def main(argv: list[str]) -> int:
     p.add_argument("--questions", type=Path, help="questions file (default: the file of the split)")
     p.add_argument("--label", required=True)
     p.add_argument("--final", action="store_true", help="allow --split test (step 9 only)")
-    p.add_argument(
-        "--mode", choices=("vector", "hybrid", "hybrid_bm25"), help="override retrieval.mode"
-    )
-    p.add_argument("--dept-filter", choices=("off", "on"), help="override retrieval.dept_filter")
     p.add_argument("--ids", help="comma-separated question ids (within the split)")
     p.add_argument("--tag", help="only questions with this tag, for example calendar")
     p.add_argument(
-        "--rerank", choices=("off", "pool_a", "pool_b"), help="override retrieval.rerank"
+        "--rerank", choices=("off", "pool_a"), help="override retrieval.rerank"
     )
     p.add_argument(
         "--rerank-budget", type=float, default=0.10,
@@ -310,10 +303,6 @@ def main(argv: list[str]) -> int:
         print(f"refused: {e}")
         return 2
     cfg = load_models()
-    if args.mode:
-        cfg["retrieval"]["mode"] = args.mode
-    if args.dept_filter:
-        cfg["retrieval"]["dept_filter"] = args.dept_filter
     if args.rerank:
         cfg["retrieval"]["rerank"] = args.rerank
     try:

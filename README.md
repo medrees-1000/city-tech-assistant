@@ -139,11 +139,11 @@ Each experiment had a keep rule written before the run; two rules needed amendme
 | Experiment | Result |
 |---|---|
 | Stronger answer model (gpt-6-sol) | Correct share 0.859 against 0.923; about 5.5 times the cost. Rejected. |
-| Formatting rule for multi-date answers (two rounds) | Both rounds failed their rules (six answers turned into bullet lists; then 4 of 81 changed against a limit of 3). Off. |
+| Formatting rule for multi-date answers (two rounds) | Both rounds failed their rules (six answers turned into bullet lists; then 4 of 81 changed against a limit of 3). Code removed in the cleanup; reproducible at tag `pre-cleanup`. |
 | Answering non-English questions from a translation | Failed its rule (hard failures in three of five languages). The assistant replies in English that it answers in English only. |
 | Fallback query rewrite for casual questions | Failed twice. The second time a question that must not be answered with one case was answered in 3 of 3 runs. Code removed in the cleanup; reproducible at tag `pre-cleanup`. |
 | Lowering the 0.59 cutoff | No cutoff separates valid from out-of-scope questions. Unchanged; I added the near-miss reply instead. |
-| Hybrid keyword search, department filter | Rejected by their rules. Code kept, off. |
+| Hybrid keyword search, department filter | Rejected by their rules. Code removed in the cleanup; reproducible at tag `pre-cleanup`. |
 
 ## Where it still fails
 

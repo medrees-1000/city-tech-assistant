@@ -961,10 +961,6 @@ def main(argv: list[str]) -> int:
     p.add_argument("--final", action="store_true", help="allow --split test (part B only)")
     p.add_argument("--rejudge", metavar="OLD_LABEL", help="re-judge a stored run, no answer calls")
     p.add_argument("--relabel", metavar="LABEL", help="recompute failure labels, no API call")
-    p.add_argument(
-        "--mode", choices=("vector", "hybrid", "hybrid_bm25"), help="override retrieval.mode"
-    )
-    p.add_argument("--dept-filter", choices=("off", "on"), help="override retrieval.dept_filter")
     p.add_argument("--rescue", choices=("off", "on"), help="override answer.rescue")
     p.add_argument("--ids", help="comma-separated question ids (within the split)")
     p.add_argument("--tag", help="only questions with this tag, for example calendar")
@@ -972,7 +968,6 @@ def main(argv: list[str]) -> int:
     p.add_argument("--selector", type=int, choices=(1, 2), help="override router.selector")
     p.add_argument("--chain", choices=("off", "on"), help="override router.chain")
     p.add_argument("--contacts", choices=("off", "on"), help="override router.contacts")
-    p.add_argument("--format-rule", choices=("off", "on"), help="override answer.format_rule")
     p.add_argument("--answer-model", help="override answer.model (retrieval-route answers only)")
     p.add_argument("--chain-render", choices=("model", "code"), help="override router.chain_render")
     p.add_argument(
@@ -984,7 +979,7 @@ def main(argv: list[str]) -> int:
         "--budget-labels", help="comma-separated labels of the runs that count against --budget"
     )
     p.add_argument(
-        "--rerank", choices=("off", "pool_a", "pool_b"), help="override retrieval.rerank"
+        "--rerank", choices=("off", "pool_a"), help="override retrieval.rerank"
     )
     p.add_argument(
         "--budget", type=float, metavar="USD",
@@ -1006,10 +1001,6 @@ def main(argv: list[str]) -> int:
         print(f"refused: {e}")
         return 2
     cfg = load_models()
-    if args.mode:
-        cfg["retrieval"]["mode"] = args.mode
-    if args.dept_filter:
-        cfg["retrieval"]["dept_filter"] = args.dept_filter
     if args.rerank:
         cfg["retrieval"]["rerank"] = args.rerank
     if args.router:
@@ -1024,8 +1015,6 @@ def main(argv: list[str]) -> int:
         cfg["answer"]["rescue"] = args.rescue
     if args.chain_render:
         cfg["router"]["chain_render"] = args.chain_render
-    if args.format_rule:
-        cfg["answer"]["format_rule"] = args.format_rule
     if args.answer_model:
         cfg["answer"]["model"] = args.answer_model
         check_answer_model(cfg)

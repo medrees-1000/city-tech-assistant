@@ -53,15 +53,6 @@ Rules:
 6. Today's date is given after the sources. Use it to decide what "this fall" or "now" means.
 """
 
-# Step 3b, round 2 (docs/decisions.md): added to the system prompt only when answer.format_rule
-# is "on". The round 1 sentence ("... dates, tiers or amounts ...") is quoted in docs/decisions.md.
-FORMAT_RULE = (
-    "7. When the sources give several dates or tiers that depend on a condition "
-    "(for example, when you first registered), write a short bullet list, one per line, "
-    "each tier with its date; keep the sentence before the list to one line and state the "
-    "condition in it. Otherwise answer in sentences, as before.\n"
-)
-
 
 @dataclass
 class Answer:
@@ -190,15 +181,11 @@ def format_source(n: int, chunk: dict) -> str:
     return "\n".join(lines) + "\n\n" + chunk["text"]
 
 
-def build_messages(
-    chunks: list[dict], today: date, question: str, format_rule: str = "off"
-) -> list[dict]:
-    """Instructions first (system), then sources, then the date and the question last. With
-    format_rule "on" the system prompt gets one more rule; nothing else differs."""
+def build_messages(chunks: list[dict], today: date, question: str) -> list[dict]:
+    """Instructions first (system), then sources, then the date and the question last."""
     sources = "\n\n---\n\n".join(format_source(n, c) for n, c in enumerate(chunks, 1))
     user = f"Sources:\n\n{sources}\n\nToday's date: {today.isoformat()}\nQuestion: {question}"
-    system = INSTRUCTIONS + FORMAT_RULE if format_rule == "on" else INSTRUCTIONS
-    return [{"role": "system", "content": system}, {"role": "user", "content": user}]
+    return [{"role": "system", "content": INSTRUCTIONS}, {"role": "user", "content": user}]
 
 
 def parse_reply(reply: str, n_sources: int) -> dict:
@@ -293,9 +280,7 @@ def answer(
             ans.sources, ans.citations = pages, list(range(1, len(pages) + 1))
             ans.text, ans.near_miss = near_miss_text(pages), True
     else:
-        ans.prompt = build_messages(
-            found.results, today, question, cfg["answer"].get("format_rule", "off")
-        )
+        ans.prompt = build_messages(found.results, today, question)
         if dry_run:
             return ans
         chat_started = time.perf_counter()
