@@ -47,6 +47,7 @@ BLOCK_REASONS = ("kill_switch", "rate_limited", "daily_cap", "monthly_cap", "tim
 DISABLED_FILE = Path("data") / "api_disabled"
 PROXY_HEADER = "x-cta-proxy-secret"
 FORWARDED_HEADER = "x-real-ip"
+VISITOR_HEADER = "x-cta-visitor"  # set by web/proxy.ts; preferred over x-real-ip when trusted
 
 
 def utc_now() -> datetime:
@@ -149,14 +150,35 @@ class Guard:
         with self.lock:
             return self.visitor_key(request) in self.visitors
 
+    def tag(self, value: str) -> str:
+        """The salted HMAC-SHA256 of a visitor value, in hex (the limiter key; never logged)."""
+        return hmac.new(self.salt, value.encode(), hashlib.sha256).hexdigest()
+
     def visitor_key(self, request) -> str:
         """A keyed hash (HMAC-SHA256) of the network address. The only read of the address in the
-        API. With a proxy secret set and sent, the address is the one the proxy forwarded."""
+        API. With a proxy secret set and sent, the address is the one the proxy forwarded:
+        x-cta-visitor first, then x-real-ip; otherwise the connection address."""
         host = request.client.host if request.client else ""
         if self.proxy_secret and self.proxy_ok(request):
-            forwarded = request.headers.get(FORWARDED_HEADER, "").strip()
-            host = forwarded if valid_ip(forwarded) else host
-        return hmac.new(self.salt, host.encode(), hashlib.sha256).hexdigest()
+            for name in (VISITOR_HEADER, FORWARDED_HEADER):
+                forwarded = request.headers.get(name, "").strip()
+                if valid_ip(forwarded):
+                    host = forwarded
+                    break
+        return self.tag(host)
+
+    def addr_tags(self, request) -> dict[str, str | None]:
+        """TEMPORARY diagnostic (docs/decisions.md): a 6-hex salted tag for each candidate
+        header, null when the header is missing. The same tag means the same value; no raw value."""
+        first_xff = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+        values = {
+            "x-real-ip": request.headers.get("x-real-ip", "").strip(),
+            "x-forwarded-for": first_xff,
+            "x-vercel-forwarded-for": request.headers.get("x-vercel-forwarded-for", "").strip(),
+            "x-vercel-proxied-for": request.headers.get("x-vercel-proxied-for", "").strip(),
+            VISITOR_HEADER: request.headers.get(VISITOR_HEADER, "").strip(),
+        }
+        return {name: self.tag(v)[:6] if v else None for name, v in values.items()}
 
     def rate_limited(self, key: str) -> bool:
         """Count this request for `key`; True when it is over the per-minute or per-day limit."""

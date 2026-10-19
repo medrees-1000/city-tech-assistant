@@ -84,6 +84,7 @@ def ask_line(request: Request, guard: guard_mod.Guard) -> None:
         # TEMPORARY (docs/decisions.md): 6 hex characters of the salted key, to see whether the
         # visitor changes between requests. Remove when the investigation is closed.
         "visitor_tag": guard.visitor_key(request)[:6],
+        "addr_tags": guard.addr_tags(request),  # TEMPORARY, same reason
     }), flush=True)  # fmt: skip
 
 

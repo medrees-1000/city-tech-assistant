@@ -15,8 +15,8 @@ def lines(capsys):
     return [json.loads(ln) for ln in out.splitlines() if ln.startswith('{"event": "ask"')]
 
 
-def post(c, secret=SECRET, ip=IP):
-    headers = {}
+def post(c, secret=SECRET, ip=IP, **extra):
+    headers = dict(extra)
     if secret is not None:
         headers["x-cta-proxy-secret"] = secret
     if ip is not None:
@@ -47,9 +47,7 @@ def test_a_changing_forwarded_visitor_shows_as_never_seen_before(monkeypatch, ca
     assert [ln["visitor_seen_before"] for ln in lines(capsys)] == [False] * 4
 
 
-def test_a_wrong_or_missing_secret_is_logged_as_not_trusted_and_still_rejected(
-    monkeypatch, capsys
-):
+def test_a_wrong_or_missing_secret_is_logged_as_not_trusted_and_still_rejected(monkeypatch, capsys):
     c = app(monkeypatch)
     assert post(c, secret="wrong").status_code == 403
     assert post(c, secret=None).status_code == 403
@@ -92,9 +90,9 @@ def test_the_line_never_holds_the_secret_the_salt_an_address_or_a_hash(monkeypat
     (ln,) = [json.loads(x) for x in out.splitlines() if x.startswith('{"event": "ask"')]
     assert set(ln) == {"event", "request_id", "proxy_required", "proxy_trusted",
                        "forwarded_present", "forwarded_family", "visitor_seen_before",
-                       "visitor_tag"}  # fmt: skip
+                       "visitor_tag", "addr_tags"}  # fmt: skip
     assert ln["forwarded_family"] == "ipv4"
-    flags = set(ln) - {"event", "request_id", "forwarded_family", "visitor_tag"}
+    flags = set(ln) - {"event", "request_id", "forwarded_family", "visitor_tag", "addr_tags"}
     assert all(isinstance(ln[k], bool) for k in flags)
 
 
@@ -117,3 +115,62 @@ def test_the_visitor_tag_is_six_hex_characters_stable_per_visitor_and_different_
     a, b, other = (ln["visitor_tag"] for ln in lines(capsys))
     assert len(a) == 6 and all(ch in "0123456789abcdef" for ch in a)
     assert a == b and a != other
+
+
+def post_visitor(c, real_ip, visitor):
+    headers = {"x-cta-visitor": visitor} if visitor is not None else {}
+    return post(c, ip=real_ip, **headers)
+
+
+def test_x_cta_visitor_is_the_visitor_when_trusted_even_if_x_real_ip_changes(monkeypatch, capsys):
+    c = app(monkeypatch)
+    for node in ("198.51.100.1", "198.51.100.2", "198.51.100.3"):  # a changing hop address
+        post_visitor(c, node, "203.0.113.9")
+    first, second, third = lines(capsys)
+    assert first["visitor_seen_before"] is False
+    assert second["visitor_seen_before"] is third["visitor_seen_before"] is True
+    assert first["visitor_tag"] == second["visitor_tag"] == third["visitor_tag"]
+
+
+def test_an_invalid_x_cta_visitor_falls_back_to_x_real_ip(monkeypatch, capsys):
+    c = app(monkeypatch)
+    post_visitor(c, "203.0.113.5", "not-an-ip")
+    post_visitor(c, "203.0.113.5", None)
+    a, b = lines(capsys)
+    assert a["visitor_tag"] == b["visitor_tag"] and b["visitor_seen_before"] is True
+
+
+class FakeRequest:
+    def __init__(self, headers, host="172.18.0.9"):
+        self.headers = headers
+        self.client = type("C", (), {"host": host})()
+
+
+def test_x_cta_visitor_is_ignored_without_a_matching_secret():
+    g = cfg_guard_guard()
+    conn = g.visitor_key(FakeRequest({}))
+    for headers in ({"x-cta-visitor": IP}, {"x-cta-visitor": IP, "x-cta-proxy-secret": "wrong"}):
+        assert g.visitor_key(FakeRequest(headers)) == conn  # the connection address, as before
+    ok = g.visitor_key(FakeRequest({"x-cta-visitor": IP, "x-cta-proxy-secret": SECRET}))
+    assert ok == g.tag(IP) and ok != conn
+
+
+def cfg_guard_guard():
+    from cta.api.guard import Guard
+
+    return Guard({"disabled": False, "rate_limit_max_keys": 100}, proxy_secret=SECRET, ip_salt=SALT)
+
+
+def test_addr_tags_hold_six_hex_characters_or_null_and_no_raw_value(monkeypatch, capsys):
+    c = app(monkeypatch)
+    post(c, **{"x-forwarded-for": "198.51.100.77, 10.0.0.1", "x-cta-visitor": "203.0.113.9"})
+    out = capsys.readouterr().out
+    (ln,) = [json.loads(x) for x in out.splitlines() if x.startswith('{"event": "ask"')]
+    tags = ln["addr_tags"]
+    assert set(tags) == {"x-real-ip", "x-forwarded-for", "x-vercel-forwarded-for",
+                         "x-vercel-proxied-for", "x-cta-visitor"}  # fmt: skip
+    assert tags["x-vercel-forwarded-for"] is None and tags["x-vercel-proxied-for"] is None
+    for name in ("x-real-ip", "x-forwarded-for", "x-cta-visitor"):
+        assert len(tags[name]) == 6 and all(ch in "0123456789abcdef" for ch in tags[name])
+    for raw in (SECRET, SALT, IP, "198.51.100.77", "203.0.113.9", "10.0.0.1"):
+        assert raw not in out
