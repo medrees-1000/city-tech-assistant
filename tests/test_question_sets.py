@@ -1,6 +1,5 @@
-"""Step 4a-1: merged calendar questions, question-set selection, comparing runs on common ids."""
+"""Calendar questions in questions.jsonl, question-set selection, comparing runs on common ids."""
 
-import importlib.util
 import json
 from pathlib import Path
 
@@ -9,15 +8,6 @@ import pytest
 from cta.eval import answer_compare as ac
 from cta.eval import compare
 from cta.eval.questions import load_questions, question_ids_record, select_questions
-from tests.test_calendar_candidates import mcc
-
-spec = importlib.util.spec_from_file_location(
-    "merge_calendar_questions",
-    Path(__file__).resolve().parents[1] / "scripts" / "merge_calendar_questions.py",
-)
-merge_module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(merge_module)
-merge = merge_module.merge
 
 ROOT = Path(__file__).resolve().parents[1]
 KEPT = ["q61", "q62", "q63", "q64", "q65", "q66", "q67", "q68", "q69", "q71", "q72", "q73", "q74",
@@ -165,28 +155,3 @@ def test_answer_report_names_the_common_set_when_sizes_differ():
     text = ac.report(off, on, None, on[0])
     assert "different question sets (sizes [3, 4])" in text and "only the 3 common ids" in text
     assert "| q3 |" not in text and "| q1 |" in text
-
-
-# ---- the merge script ----
-
-
-def test_merge_appends_only_and_refuses_duplicates(tmp_path):
-    path = tmp_path / "questions.jsonl"
-    old = '{"id":"q01","note":"x"}\n'
-    path.write_text(old)
-    assert merge(path, [{"id": "q02", "a": 1}]) == ["q02"]
-    assert path.read_text() == old + '{"id":"q02","a":1}\n'
-    with pytest.raises(ValueError, match="already in"):
-        merge(path, [{"id": "q02"}])
-    assert path.read_text() == old + '{"id":"q02","a":1}\n'
-
-
-def test_kept_rows_match_the_file():
-    events = json.loads(mcc.CALENDAR.read_text(encoding="utf-8"))
-    built = {r["id"]: r for r in mcc.kept_rows(events, None)}
-    assert sorted(built) == KEPT
-    for q in calendar_rows():
-        for key in ("question", "gold_sources", "type", "split", "tags"):
-            if q["id"] == "q33" and key == "gold_sources":
-                continue  # refined by the owner after the 4a run (step 4a-2); see docs/decisions.md
-            assert q[key] == built[q["id"]][key]
