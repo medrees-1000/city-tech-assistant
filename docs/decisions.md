@@ -1651,3 +1651,25 @@ Tracked size before and after Cleanup 2 (before = the state after the first clea
 | config | 5 | 5 | 615 | 594 |
 | eval | 81 | 38 | 177,649 | 84,237 |
 | data | 1 | 1 | 2,450 | 2,450 |
+
+## Cleanup 3, Oct 19 2026: structure; recoverable at git tag pre-cleanup
+Behavior of the app and the README numbers are unchanged. Fewer, clearer files: modules and tests that had one user were merged into it. Passed tests 3,041 -> 3,035 (real tree; fresh clone 2,429 passed and 606 skipped): the six tests that went are listed below.
+- Tests: no test file imports another one any more; the shared fakes (`Client`, `make_client_app`, `Script`, `SpendConn`, ...) are in `tests/helpers.py`. Test files merged by feature (flat folder, every test kept except as listed): crisis (4 files + 3 phrase modules -> `test_crisis.py` + `crisis_data.py`), guard / monthly cap / cap order -> `test_guard.py`, proxy + proxy diag -> `test_proxy.py`, the three tracing files -> `test_tracing.py`, chain + shorthand -> `test_chain.py`, chain render / many / outside / outside marking -> `test_chain_render.py`, the five small validation files -> `test_validate.py`, the four contact files -> `test_contact.py`, the two calendar answer files -> `test_calendar_answers.py`, the phrase-list modules folded into `test_advice.py`, `test_clarify.py` and `test_drop_family.py`, and `test_no_fallback_rewrite`, `test_sections`, `test_recompute_final`, `test_web_icons`, `test_embed_load`, `test_rerank` and the three crawl files into their neighbours. Where a file used a module-level `pytestmark`, the same skip mark is now on exactly the tests that had it. The privacy and safety-order source-text tests stay. Web tests: 17 files -> 12, same 142 tests.
+- Source modules merged into their only importer: `crawl/robots.py`, `urls.py`, `store.py` -> `crawl/fetcher.py`; `parse/headings.py` -> `parse/html.py`; `validate/entities.py`, `headings.py` -> `validate/pages.py`; `api/hygiene.py` -> `api/screen.py`; `graph/drop_family.py` -> `graph/clarify.py` (functions renamed `drop_family_applies`, `drop_family_rows`, `DROP_FAMILY_VERSION`); `parse/sections.py` -> `index/chunks.py`; `index/jsoncache.py` -> `index/embed.py`; `eval/metrics.py` -> `eval/run_retrieval.py`; `eval/blind_export.py`, `blind_sheet.py` -> `eval/blind.py` (`python -m cta.eval.blind export|make|parse`). One copy each of `source_label` (now in `index/chunks.py`) and `squash` (`validate/findings.py`). Not merged on purpose: `graph/state` (import cycle), `index/metadata`, `pdf_docs` + `dept_pdf`, `redact` (graph, eval and index must not import `cta.api`).
+- Removed code that only tests used: `contact.office_for` and `contact.account_cue` (the pre-registered relabel check in `test_personal_account.py` keeps its old rule as a local `old_account_cue`), `advice.untraceable_dates` and `dates_in` (2 tests), `advice.advice_phrases` and `BANNED` (moved into `test_advice.py`, where the test still uses them), `screen.REASONS`, `PLine.bottom`, `eval/review.py` and `scripts/make_eval_review.py` (2 tests). Two source-text tests became behavior tests (the topic call's cost is inside the logged cost; the API reply carries the explained shorthand on the retrieval and advice paths). The `getsource` import check of `cta.graph.clean` is gone.
+- Unused config keys: `sources.yaml`: `skip_pages`, `not_collected_notes`, `pdfs_skipped`, `catalog_api.school`; `contacts.yaml`: `pdf_offices`, `fallback`. `known_data` stays (a test reads it).
+- Markdown: `scripts/README.md`, `eval/README.md`, `tests/fixtures/README.md` and `docs/archive/README.md` were folded into the root README ("Repo map"), the top of `docs/results.md`, the top of `tests/conftest.py` and `docs/README.md`. `CLAUDE.md` no longer says hybrid retrieval or full-text.
+- Left alone: `html.render_markdown` and `pdf_docs.render_markdown` (40 tests use them), `LogEntry.timestamp` (a fetch-log column), the `tsv` database columns, the other `src/cta/eval` tools, the archive docs, the two `chain_render_before_*.json` snapshots.
+
+Tracked size before and after Cleanup 3 (before = the state after Cleanup 2; eval is mostly stored run results):
+
+| Area | Files before | Files after | Lines before | Lines after |
+|---|---|---|---|---|
+| src | 93 | 80 | 17,148 | 16,965 |
+| tests | 130 | 94 | 36,473 | 36,677 |
+| scripts | 11 | 9 | 1,044 | 990 |
+| web | 60 | 55 | 5,116 | 5,103 |
+| docs | 44 | 43 | 9,850 | 9,854 |
+| config | 5 | 5 | 594 | 565 |
+| eval | 38 | 37 | 84,237 | 84,207 |
+| data | 1 | 1 | 2,450 | 2,450 |

@@ -219,7 +219,7 @@ Scripts (run from the repo root, `uv run python scripts/<name>.py`; they are not
 | `export_final_answers.py` | copies the stored answers of an eval run from the database to `eval/results/<label>-answers.jsonl`, because `request_logs` is purged after 30 days |
 | `test_catalog_api.py` | shows that the public catalog API can be read without logging in (2 requests); a script, not a pytest test |
 
-- Tests: 3,041 Python tests (`uv run pytest`) and 142 web tests (`npm test --prefix web`). On my machine all 3,041 Python tests pass; in a fresh clone without the collected data, 2,435 pass and 606 skip with a reason (they need the data or Postgres) and none fail. `ruff check` is clean.
+- Tests: 3,035 Python tests (`uv run pytest`) and 142 web tests (`npm test --prefix web`). On my machine all 3,035 Python tests pass; in a fresh clone without the collected data, 2,429 pass and 606 skip with a reason (they need the data or Postgres) and none fail. `ruff check` is clean.
 - License: MIT for the code (see [LICENSE](LICENSE)). No crawled City Tech content is included. `eval/questions.jsonl` quotes short passages from public City Tech pages in its gold answers; the project is not affiliated with City Tech or CUNY.
 
 ## Contact
