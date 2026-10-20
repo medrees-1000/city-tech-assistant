@@ -244,6 +244,9 @@ def create_app(
                            f"{api['max_question_chars']} characters."}, "request_id": rid},
                 status_code=422, headers={"X-Request-ID": rid},
             )  # fmt: skip
+        if screen.asks_capabilities(question):  # a fixed scope reply: no model call, no router
+            return block("capabilities", question, rid, today, started,
+                         screen.TEXTS["capabilities"])  # fmt: skip
         lang = language.Language(english=question)
         if guards[
             "language_step"

@@ -1673,3 +1673,14 @@ Tracked size before and after Cleanup 3 (before = the state after Cleanup 2; eva
 | config | 5 | 5 | 594 | 565 |
 | eval | 38 | 37 | 84,237 | 84,207 |
 | data | 1 | 1 | 2,450 | 2,450 |
+
+## Fixes 1, Oct 20 2026 (branch fixes1; from the live-test findings of Oct 19)
+
+1. **Assumed-term line** (`render.render_rows`): shown only when every rendered row is from the assumed term. Reason: a Spring 2027 commencement row was introduced with "Assuming the current term, Fall 2026." One existing test (`test_router.py`, mixed Fall and Spring rows) was edited because its paragraph numbers counted that line.
+2. **"What can you do / what can I ask"** (`screen.asks_capabilities`, called from `app.serve`, not from `screen()`): one fixed scope reply with examples, no model call, logged as `blocked_capabilities`, not counted in `/health` blocked. Reason: it fell through to retrieval and got the off-topic refusal. One existing `test_api.py` case used this question as an abstain example; it now uses "who is the mayor".
+3. **Topic prompt** (`topic.txt`): City Tech courses and course codes in the four departments are in scope. Reason: "class code for NLP" abstained, and the topic call then called it off-topic.
+4. **Missing tuition-due part** (`build.payment_gap_note`, calendar route only): if the question asks when tuition, a payment or a bill is due and no chosen row is about payment, the answer adds a fixed "I did not find a tuition payment due date for {term}" sentence and the Bursar contact. Reason: a two-part question dropped the tuition part silently (known-limits 20).
+5. **Passed dates** (`render_rows` / `row_line`, optional `today`): a row whose end date (or date) is before today gets "(this date has passed)"; TBA rows and `today=None` are unchanged.
+6. **Registrar topic cues** (`config/contacts.yaml`): section, sections, seat, seats, "class schedule", "open classes". The named-department rule still comes first, so "what sections of CST 1101 are open" keeps the CST card (tested).
+
+**Deliberately skipped:** a rule-6 sentence in the retrieval answer prompt for passed dates (needs a full paid dev eval); a professor or instructor card; the 18-credits question (the data holds no credit-load rule). **Owner to do after deploy:** check the NLP phrasings on the live site.

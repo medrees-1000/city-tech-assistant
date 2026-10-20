@@ -100,7 +100,15 @@ def source_chunk(row: dict, text: str) -> dict:
     }  # fmt: skip
 
 
-def row_line(row: dict, number: int, contact: str) -> tuple[str, bool]:
+def has_passed(row: dict, today: date | None) -> bool:
+    """True when the row's end date (its date if it has no end) is before today. A TBA row never."""
+    last = row["date_end"] or row["date_start"]
+    return bool(today and last and date.fromisoformat(last) < today)
+
+
+def row_line(
+    row: dict, number: int, contact: str, today: date | None = None
+) -> tuple[str, bool]:
     """One row of the answer: the date in bold, the event and its citation number (no provenance:
     that is one line per calendar). A row with no date is "not announced yet" plus the Registrar."""
     mismatch = False
@@ -111,6 +119,8 @@ def row_line(row: dict, number: int, contact: str) -> tuple[str, bool]:
         line = f"{row['event']}: not announced yet [{number}]"
     if row["applies_to"]:
         line += f" (applies to: {row['applies_to']})"
+    if has_passed(row, today):
+        line += " (this date has passed)"
     if not row["date_start"]:
         line += f" Contact the Registrar: {contact}."
     return line, mismatch
@@ -125,7 +135,9 @@ def provenance_line(key: tuple[str, str, str]) -> str:
     return f"From the {term} calendar ({pdf}, last updated {updated}). The calendar can change."
 
 
-def render_rows(rows: list[dict], contact: str, assumed_term: str | None = None) -> Rendered:
+def render_rows(
+    rows: list[dict], contact: str, assumed_term: str | None = None, today: date | None = None
+) -> Rendered:
     """Rows grouped by calendar (groups in order of their earliest row, rows by date inside one),
     numbered [1], [2] ... in the order shown, one provenance line after each group."""
     groups: dict[tuple[str, str, str], list[dict]] = {}
@@ -138,14 +150,14 @@ def render_rows(rows: list[dict], contact: str, assumed_term: str | None = None)
         lines = []
         for row in group:
             n += 1
-            line, bad = row_line(row, n, contact)
+            line, bad = row_line(row, n, contact, today)
             lines.append(f"- {line}" if several else line)
             sources.append(source_chunk(row, row_text(row, n, contact)[0]))
             mismatches += bad
             if not row["date_start"]:
                 tba.append(row["id"])
         parts += ["\n".join(lines), provenance_line(key)]
-    if assumed_term:
+    if assumed_term and all(r["term"] == assumed_term for r in ordered):
         parts.insert(0, f"Assuming the current term, {assumed_term}.")
     return Rendered("\n\n".join(parts), sources, [r["id"] for r in ordered], mismatches, tba)
 

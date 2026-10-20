@@ -600,12 +600,34 @@ def test_the_renderer_names_each_rows_own_calendar_and_sorts_across_terms():
     out = render.render_rows([spring, fall], "c", assumed_term="Fall 2026")
     paragraphs = out.text.split("\n\n")
     assert out.row_ids == ["fall-2026-039", "spring-2027-040"]
-    assert paragraphs[1].startswith("- ") and paragraphs[3].startswith("- ")
-    assert paragraphs[2] == (
+    assert paragraphs[0].startswith("- ") and paragraphs[2].startswith("- ")
+    assert paragraphs[1] == (
         "From the Fall 2026 calendar (fall_2026.pdf, last updated 2026-09-15). "
         "The calendar can change."
     )
-    assert paragraphs[4] == (
+    assert paragraphs[3] == (
         "From the Spring 2027 calendar (spring_2027.pdf, last updated 2026-07-27). "
         "The calendar can change."
     )
+
+
+# ---- a calendar answer that cannot cover the tuition-due part of a two-part question ----
+
+
+def test_a_two_part_question_says_the_tuition_due_part_was_not_found(monkeypatch, events):
+    script = Script("calendar", "Spring 2027", ["spring-2027-005"])  # the 100% refund row
+    router, _ = make_router(script, monkeypatch, events)
+    q = "What's the refund deadline for Spring 2027 and when is tuition due?"
+    ans = router.answer(q, TODAY, log=False)
+    assert ans.route == "calendar" and ans.row_ids == ["spring-2027-005"]
+    assert "I did not find a tuition payment due date for Spring 2027 in my sources." in ans.text
+    assert "Contact the Bursar: bursar@citytech.cuny.edu." in ans.text
+
+
+def test_a_pure_refund_question_gets_no_payment_sentence(monkeypatch, events):
+    script = Script("calendar", "Spring 2027", ["spring-2027-005"])
+    router, _ = make_router(script, monkeypatch, events)
+    ans = router.answer("What's the refund deadline for Spring 2027?", TODAY, log=False)
+    assert "did not find" not in ans.text and "Bursar" not in ans.text
+    ans = router.answer("Last day to drop for a 100% tuition refund deadline?", TODAY, log=False)
+    assert "did not find" not in ans.text

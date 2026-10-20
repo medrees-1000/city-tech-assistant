@@ -279,6 +279,14 @@ def test_the_topic_prompt_keeps_the_capitals_of_place_names_and_still_bans_peopl
     assert "Never include the name of a person" in text
 
 
+def test_the_topic_prompt_counts_city_tech_courses_and_course_codes_as_in_scope():
+    from cta.api.topic import PROMPT
+
+    text = PROMPT.read_text(encoding="utf-8")
+    assert "courses and\ncourse codes in those departments" in text
+    assert text.index("course codes in those") < text.index("Anything else")
+
+
 @pytest.mark.parametrize(
     "typed",
     [

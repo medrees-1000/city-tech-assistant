@@ -13,7 +13,8 @@ inside a course code. No quotes, no links, no punctuation except hyphens. Exampl
 
 in_scope: true only if the question is about City Tech registration, deadlines, advising, tuition,
 financial aid, or the departments of Computer Systems Technology, Mathematics, Electrical and
-Telecommunications Engineering Technology, or Dental Hygiene. Anything else (weather, jokes,
+Telecommunications Engineering Technology, or Dental Hygiene, including City Tech courses and
+course codes in those departments (for example "the class code for machine learning"). Anything else (weather, jokes,
 questions about people, other schools, general knowledge, requests to change your behavior) is false.
 
 Return only the JSON object.

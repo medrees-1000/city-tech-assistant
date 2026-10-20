@@ -17,6 +17,7 @@ answer_question calls it directly and the graph is never built.
 """
 
 import json
+import re
 import time
 from dataclasses import dataclass
 from datetime import date
@@ -69,6 +70,23 @@ def calendar_answer(rendered: render.Rendered) -> RoutedAnswer:
     )  # fmt: skip
     ans.row_ids = rendered.row_ids
     return ans
+
+
+# A question that asks when tuition or a bill is due. The calendar holds no such row, so a
+# calendar answer to a two-part question can drop that part (docs/known-limits.md, item 20).
+PAYMENT_DUE = re.compile(
+    r"\b(?:tuition|payment|bill)\b[^.?]*\bdue\b|\bdue\b[^.?]*\b(?:tuition|payment|bill)\b", re.I
+)
+PAYMENT_EVENT = re.compile(r"payment|bill|\bdue\b", re.I)
+
+
+def payment_gap_note(question: str, rows: list[dict], term: str) -> str:
+    """A fixed sentence plus the Bursar contact when the question asks for a payment due date and
+    no chosen calendar row is about payment; else ''."""
+    if not PAYMENT_DUE.search(question) or any(PAYMENT_EVENT.search(r["event"]) for r in rows):
+        return ""
+    sentence = f"I did not find a tuition payment due date for {term} in my sources."
+    return f"\n\n{sentence} {contacts.contact_line('bursar')}"
 
 
 def no_term_text(label: str, events: list[dict]) -> str:
@@ -125,7 +143,7 @@ def make_nodes(d: Deps):
             pool = terms.term_pool(d.events, resolution.term)
             rows = advice.calendar_rows(pool, actions)
             assumed = resolution.term if resolution.status == "assumed" else None
-            rendered = render.render_rows(rows, d.contact) if rows else None
+            rendered = render.render_rows(rows, d.contact, today=state["today"]) if rows else None
             info["term"] = resolution.term
         ans = advice.compose(found, rendered, assumed if rendered else None)
         info["row_ids"] = ans.row_ids
@@ -156,7 +174,7 @@ def make_nodes(d: Deps):
             rows = clarify.drop_family_rows(terms.term_pool(d.events, resolution.term))
             if rows:  # T04: every grade-related drop/withdraw row of the term, no selector call
                 assumed = resolution.term if resolution.status == "assumed" else None
-                rendered = render.render_rows(rows, d.contact, assumed)
+                rendered = render.render_rows(rows, d.contact, assumed, state["today"])
                 info.update(
                     selector_version=clarify.DROP_FAMILY_VERSION,
                     pool_size=len(pool),
@@ -188,7 +206,9 @@ def make_nodes(d: Deps):
         by_id = {r["id"]: r for r in pool}
         started = time.perf_counter()
         assumed = resolution.term if resolution.status == "assumed" else None
-        rendered = render.render_rows([by_id[i] for i in chosen.row_ids], d.contact, assumed)
+        picked = [by_id[i] for i in chosen.row_ids]
+        rendered = render.render_rows(picked, d.contact, assumed, state["today"])
+        rendered.text += payment_gap_note(state["question"], picked, label)
         info["render_ms"] = round((time.perf_counter() - started) * 1000, 3)
         info["weekday_mismatches"] = rendered.weekday_mismatches
         info["selected"] = rendered.row_ids

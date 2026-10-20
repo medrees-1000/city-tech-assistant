@@ -272,7 +272,7 @@ def test_a_threshold_abstention_with_a_clear_office_has_a_card_and_no_contact_se
 @pytest.mark.parametrize(
     ("question", "chunk"),
     [
-        ("what questions can I ask you", "page/MATH-NYT/faqs#12"),
+        ("who is the mayor", "page/MATH-NYT/faqs#12"),
         ("tell me a joke", "page/financial-aid/faqs#9"),  # (was "my mom died": step 7 answers that)
         ("Should I take an Incomplete?", "page/registrar/incomplete#1"),
     ],
@@ -748,3 +748,17 @@ def test_the_production_configuration_never_enabled_the_rewrite_and_no_path_is_l
     assert "rewrite" not in inspect.signature(answer.answer).parameters
     assert not hasattr(answer, "fallback_search")
     assert importlib.util.find_spec("cta.index.rewrite") is None
+
+
+# ---- the fixed "what can you do" reply ----
+
+
+def test_a_capability_question_gets_the_fixed_reply_with_no_model_call_and_one_log_row(monkeypatch):
+    client = Client()
+    c = make_client_app(client, monkeypatch, retrieve_answer())
+    body = ask(c, "what questions can i ask you").json()
+    assert body["answer_type"] == "guardrail" and body["route"] == "guardrail"
+    assert "financial aid" in body["answer"] and body["citations"] == [] and not body["abstained"]
+    assert client.calls == []  # no classifier, no retrieval, no topic call
+    assert c.logs[-1]["status"] == "blocked_capabilities" and c.logs[-1]["cost_usd"] == 0.0
+    assert c.get("/health").json()["blocked"].get("capabilities") is None  # not counted there

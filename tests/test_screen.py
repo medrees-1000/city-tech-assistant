@@ -561,3 +561,33 @@ def test_a_name_note_changes_nothing_else_in_the_answer(monkeypatch):
     assert noted["answer"] == f"{NOTE}\n\n{plain['answer']}"
     for key in ("citations", "contact", "answer_type", "route", "abstained"):
         assert noted[key] == plain[key], key
+
+
+# ---- the fixed "what can you do" reply (not part of screen()) ----
+
+
+@pytest.mark.parametrize(
+    "question",
+    ["what questions can i ask you", "What can you do?", "what can I ask", "How can you help me?",
+     "hi, what can you help with", "what kinds of questions can i ask you?"],
+)  # fmt: skip
+def test_capability_questions_match(question):
+    assert screen.asks_capabilities(question)
+    assert screen.screen(question, G).reason is None  # screen() itself never fires on them
+
+
+@pytest.mark.parametrize(
+    "question",
+    ["what can i do about a hold", "what can you tell me about CST 1101",
+     "how can you help me drop a class", "what questions are on the final", "what can i ask you "
+     "about financial aid deadlines for spring"],
+)  # fmt: skip
+def test_ordinary_questions_do_not_match_the_capability_reply(question):
+    assert not screen.asks_capabilities(question)
+
+
+def test_the_capability_text_lists_the_scope_and_holds_no_student_text():
+    text = screen.TEXTS["capabilities"]
+    for word in ("registration", "deadlines", "advising", "tuition and payment", "financial aid",
+                 "Computer Systems Technology", "Mathematics", "Dental Hygiene"):  # fmt: skip
+        assert word in text
