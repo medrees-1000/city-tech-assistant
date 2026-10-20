@@ -83,6 +83,23 @@ TEXTS["danger"] = (
     "1-800-621-4673 (HOPE)."
 )
 TEXTS["output"] = TEXTS["injection"]
+# "What can you do / what can I ask": a fixed scope reply, no model call. Not a safety guard and not
+# run by screen(); app.serve() calls asks_capabilities after the screen, kill switch and caps.
+TEXTS["capabilities"] = (
+    "I answer questions about City Tech registration, deadlines, advising, tuition and payment, "
+    "financial aid, and four departments: Computer Systems Technology, Mathematics, Electrical "
+    "and Telecommunications Engineering Technology, and Dental Hygiene. For example: \"When is the "
+    "last day to withdraw from a class?\", \"How do I apply for graduation?\" or \"What financial "
+    "aid options are there?\""
+)
+CAPABILITIES = re.compile(
+    r"^(?:(?:hi|hello|hey|so)\b[ ,]*)?(?:"
+    r"what (?:can|could) you (?:do|help(?: me)? with|answer)"
+    r"|what (?:(?:kinds? of )?questions|things|topics) (?:can|could) i ask(?: you)?"
+    r"|what (?:can|could) i ask(?: you)?(?: about)?"
+    r"|how can you help(?: me)?|what do you do|what are you able to do"
+    r")[ ?.!]*$"
+)
 # Tier 2 (tester round 1, item A): ordinary academic stress. No number, no contact, no claim.
 TEXTS["stress"] = (
     "That sounds really stressful, and I'm sorry you're dealing with it. I can't give personal "
@@ -492,6 +509,11 @@ def screen(question: str, g: dict) -> Screened:
         return Screened("stress", question)
     clean = scrub(question) if g["personal_data"] != "off" else question
     return Screened(None, clean, clean != question, removed_personal_details(question, clean))
+
+
+def asks_capabilities(question: str) -> bool:
+    """True when the whole question is "what can you do" / "what can I ask" (anchored, short)."""
+    return bool(CAPABILITIES.match(lowered(question).strip()))
 
 
 def reply(reason: str, g: dict) -> str:
