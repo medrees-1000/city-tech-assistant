@@ -22,7 +22,6 @@ from cta.eval.questions import (
     tree_courses,
     tree_without_records,
 )
-from cta.eval.review import render
 
 SECTION = {
     "id": "page/registrar/faqs#3", "source": "https://x/faqs.aspx", "heading_path": "FAQs > Grades",
@@ -292,43 +291,6 @@ def test_load_questions_reads_lines_and_names_the_bad_line(tmp_path):
     path.write_text(json.dumps(good()) + "\n{broken\n", encoding="utf-8")
     with pytest.raises(ValueError, match="line 2"):
         load_questions(path)
-
-
-def test_review_marks_empty_and_unresolved_questions_and_shows_gold_text(tmp_path):
-    d = data()
-    d.processed = tmp_path
-    (tmp_path / "pages" / "registrar").mkdir(parents=True)
-    sections = [{"markdown": "first"}, {"markdown": "second"}, {"markdown": "Grades text"}]
-    (tmp_path / "pages" / "registrar" / "faqs.json").write_text(json.dumps({"sections": sections}))
-    cal = {"id": "fall-2026-044", "source": CALENDAR, "heading": "Fall 2026: SAP appeal deadline"}
-    rows = [
-        good(),
-        good(id="q02", gold_sources=[]),
-        good(id="q03", gold_sources=[{**cal, "id": "TODO"}]),
-        good(
-            id="q04",
-            gold_sources=[
-                cal,
-                {"id": "catalog:DEN 2400", "source": "catalog_course", "heading": "DEN 2400"},
-            ],
-        ),
-    ]
-    text = render(rows, d)
-    assert "## q01\n" in text and "Grades text" in text
-    assert "## q02 — **NO GOLD SOURCES**" in text
-    assert "## q03 — **UNRESOLVED**" in text and "UNRESOLVED: unresolved (TODO)" in text
-    assert "- weekday as printed: Friday" in text and "- date: 2026-11-13" in text
-    assert "Prerequisite text: Prerequisites: DEN 2300 & DEN 2315" in text
-
-
-def test_review_shows_the_tree_for_q20_and_q22_only(tmp_path):
-    src = [{"id": "catalog:DEN 2400", "source": "catalog_course", "heading": "DEN 2400"}]
-    text = render(
-        [good(id="q20", gold_sources=src), good(id="q21", gold_sources=src)], chain_data()
-    )
-    assert text.count("Prerequisite tree below DEN 2400") == 1
-    assert "Courses in the tree with records: DEN 2400, DEN 2300, DEN 1200, DEN 2315." in text
-    assert "Named but with no record: BIO 3302." in text
 
 
 def test_a_placeholder_gold_answer_fails_except_for_the_exempt_abstain_questions():

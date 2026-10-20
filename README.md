@@ -215,7 +215,6 @@ Scripts (run from the repo root, `uv run python scripts/<name>.py`; they are not
 | `readme_numbers.py` | prints the README and `docs/results.md` tables from `eval/results/` (no network, no cost) |
 | `recompute_final.py final-run` | recomputes the final-run headline numbers from scratch as a check; exits with 1 because four retrieval numbers differ from the stored ones (the table-merge map is not passed; see the file's docstring) |
 | `make_section_index.py` | rewrites `docs/section-index.md` (section ids for choosing eval gold sources) from `data/processed` |
-| `make_eval_review.py` | writes `docs/eval-review.md` (each question with its gold sources); the committed copy was removed because it was out of date |
 | `make_manual_check_docs.py` | writes the blank manual-check sheets for programs and contacts into `docs/archive/` |
 | `export_final_answers.py` | copies the stored answers of an eval run from the database to `eval/results/<label>-answers.jsonl`, because `request_logs` is purged after 30 days |
 | `test_catalog_api.py` | shows that the public catalog API can be read without logging in (2 requests); a script, not a pytest test |
