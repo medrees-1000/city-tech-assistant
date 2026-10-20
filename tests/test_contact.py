@@ -752,3 +752,21 @@ def test_a_must_refuse_question_is_still_refused_through_the_api(monkeypatch):
         body["abstain_reason"] == "personal_account"
         and body["contact"]["office"] == "financial-aid"
     )
+
+
+# ---- sections, seats and schedules go to the Registrar (fixes1, Oct 20, 2026) ----
+
+
+@pytest.mark.parametrize(
+    "question",
+    ["what sections are open this fall", "are there any seats left", "where is the class schedule",
+     "which open classes are there on Monday"],
+)  # fmt: skip
+def test_section_seat_and_schedule_words_choose_the_registrar(question):
+    assert offices(question) == ["registrar"]
+
+
+def test_a_teaching_question_still_gets_no_card_and_a_named_course_keeps_its_department():
+    assert offices("who is teaching calculus") == []
+    # rule 3 (the named department) still comes before the topic words
+    assert offices("what sections of CST 1101 are open") == ["CST-NYT"]
