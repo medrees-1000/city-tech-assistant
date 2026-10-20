@@ -1,20 +1,90 @@
 # ruff: noqa: E501  (the sheet header is prose; long lines are fine)
-"""The grading sheet for the blind A/B grading (docs/decisions.md, version 2 pre-registration).
+"""The blind A/B grading of the version 2 casual held-out set (docs/decisions.md, version 2
+pre-registration): the export of the two answer files, the grading sheet and its parser.
 
-    uv run python -m cta.eval.blind_sheet make BLIND.jsonl QUESTIONS.jsonl SHEET.md
-    uv run python -m cta.eval.blind_sheet parse SHEET.md GRADES.json
+    uv run python -m cta.eval.blind export BASELINE-answers.jsonl FIX-answers.jsonl OUT-PREFIX
+    uv run python -m cta.eval.blind make BLIND.jsonl QUESTIONS.jsonl SHEET.md
+    uv run python -m cta.eval.blind parse SHEET.md GRADES.json
 
-`make` writes one Markdown sheet from the blind file of cta.eval.blind_export, in the blind file's
-(shuffled) order. It shows the question as typed, the confirmed expected behavior, and the two
-answers; nothing that names the configuration. `parse` reads the filled-in sheet back into JSON
-(graded_blind true), rejects any grade word that is not allowed and lists every blank. Neither
-command reads the key file, calls a model or touches the database.
+`export` reads the two answer files written by scripts/export_final_answers.py and writes
+OUT-PREFIX-blind.jsonl (one row per question: the two answers as "A" and "B", the configuration
+hidden, the A/B assignment random per question) and OUT-PREFIX-key.json (which configuration is
+A for each question). Open the key file only after grading. Calls no model and no database.
+Fields that would give the configuration away (route, abstain reason) are left out.
+
+`make` writes one Markdown sheet from the blind file, in the blind file's (shuffled) order. It
+shows the question as typed, the confirmed expected behavior, and the two answers; nothing that
+names the configuration. `parse` reads the filled-in sheet back into JSON (graded_blind true),
+rejects any grade word that is not allowed and lists every blank. Neither `make` nor `parse`
+reads the key file, calls a model or touches the database.
+(This file was blind_export.py and blind_sheet.py.)
 """
 
 import json
+import random
 import re
 import sys
 from pathlib import Path
+
+# ---- the blind export (was blind_export.py) ----
+
+SHOWN = ("answer", "citations", "sources_shown")
+
+
+def load_answers(path: Path) -> dict[str, dict]:
+    rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
+    return {r["id"]: r for r in rows}
+
+
+def blind_rows(
+    baseline: dict[str, dict], fix: dict[str, dict], rng: random.Random
+) -> tuple[list[dict], dict[str, dict[str, str]]]:
+    """(rows to grade, key). The same question ids must be in both runs. Rows are shuffled too,
+    so the file order does not follow the run order."""
+    if baseline.keys() != fix.keys():
+        only = sorted(baseline.keys() ^ fix.keys())
+        raise ValueError(f"the two runs do not have the same questions: {', '.join(only)}")
+    rows, key = [], {}
+    for qid in baseline:
+        baseline_is_a = rng.random() < 0.5
+        a, b = (baseline[qid], fix[qid]) if baseline_is_a else (fix[qid], baseline[qid])
+        key[qid] = {
+            "A": "baseline" if baseline_is_a else "fix",
+            "B": "fix" if baseline_is_a else "baseline",
+        }
+        rows.append({
+            "id": qid, "question": baseline[qid]["question"],
+            **{f"{f}_A": a.get(f) for f in SHOWN}, **{f"{f}_B": b.get(f) for f in SHOWN},
+        })  # fmt: skip
+    rng.shuffle(rows)
+    return rows, key
+
+
+def export_main(argv: list[str], rng: random.Random | None = None) -> int:
+    if len(argv) != 4:
+        print("usage: blind export BASELINE-answers.jsonl FIX-answers.jsonl OUT-PREFIX")
+        return 2
+    baseline, fix = load_answers(Path(argv[1])), load_answers(Path(argv[2]))
+    out = Path(argv[3])
+    blind, key = out.with_name(out.name + "-blind.jsonl"), out.with_name(out.name + "-key.json")
+    if blind.exists() or key.exists():
+        print(f"refused: {blind.name} or {key.name} already exists")
+        return 2
+    try:
+        rows, assignment = blind_rows(baseline, fix, rng or random.SystemRandom())
+    except ValueError as e:
+        print(f"refused: {e}")
+        return 2
+    blind.write_text(
+        "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8"
+    )
+    key.write_text(json.dumps(assignment, indent=1) + "\n", encoding="utf-8")
+    print(f"{len(rows)} questions written to {blind.name}; the key is in {key.name} (not yet)")
+    return 0
+
+
+
+# ---- the grading sheet (was blind_sheet.py) ----
 
 GRADES = ("correct", "partial", "acceptable_abstain", "incorrect", "wrongly_abstained")
 PREFIX = "CONFIRMED Oct 17, 2026 by owner. "
@@ -106,7 +176,7 @@ def parse_sheet(text: str) -> tuple[dict, list[str], list[str]]:
     return grades, blanks, bad
 
 
-def main(argv: list[str]) -> int:
+def sheet_main(argv: list[str]) -> int:
     if len(argv) == 5 and argv[1] == "make":
         blind = [json.loads(x) for x in Path(argv[2]).read_text(encoding="utf-8").splitlines() if x]
         qs = {}
@@ -142,6 +212,13 @@ def main(argv: list[str]) -> int:
         return 0
     print(__doc__)
     return 2
+
+
+def main(argv: list[str]) -> int:
+    """`blind export ...` writes the blind files; `blind make|parse ...` does the sheet."""
+    if len(argv) > 1 and argv[1] == "export":
+        return export_main([argv[0], *argv[2:]])
+    return sheet_main(argv)
 
 
 if __name__ == "__main__":
