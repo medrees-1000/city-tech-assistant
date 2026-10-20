@@ -78,7 +78,7 @@ With `router.chain_render: "code"` (default since the pre-registered keep rule p
 
 | Step | Layer | Runs in the eval runner? | Notes |
 |---|---|---|---|
-| input hygiene (control, bidi, zero-width characters removed, whitespace collapsed) | API | no | `api/hygiene.py` |
+| input hygiene (control, bidi, zero-width characters removed, whitespace collapsed) | API | no | `api/screen.py` |
 | Stage 1 guard: kill switch, rate limit, daily spend cap | API | no | `api/guard.py`; a blocked request is answered 200 with `answer_type: "guardrail"` |
 | Stage 2 screens on the question: distress, bereavement, personal data (SSN-shaped, long digit runs), prompt injection, stress; names, e-mails, phone and ID numbers scrubbed | API | no | `api/screen.py`; fixed replies, no model call |
 | language step (`guardrails.language_step`): one small call for a question that does not look English; `non_english: english_only` returns a fixed English notice | API | no | `api/language.py` |

@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from cta.api import guard, hygiene
+from cta.api import guard, screen
 from tests.helpers import (
     Client,
     SpendConn,
@@ -29,18 +29,18 @@ WEIRD = [
 
 @pytest.mark.parametrize(("name", "text"), WEIRD)
 def test_hidden_characters_are_removed_and_whitespace_collapsed(name, text):
-    assert hygiene.normalize(text) == CLEAN
+    assert screen.normalize(text) == CLEAN
 
 
 @pytest.mark.parametrize(("name", "text"), WEIRD)
 def test_normalizing_twice_changes_nothing(name, text):
-    once = hygiene.normalize(text)
-    assert hygiene.normalize(once) == once
+    once = screen.normalize(text)
+    assert screen.normalize(once) == once
 
 
 def test_ordinary_text_and_accents_are_untouched():
-    assert hygiene.normalize("¿Cuándo es la fecha límite?") == "¿Cuándo es la fecha límite?"
-    assert hygiene.normalize("a\tb") == "a b"
+    assert screen.normalize("¿Cuándo es la fecha límite?") == "¿Cuándo es la fecha límite?"
+    assert screen.normalize("a\tb") == "a b"
 
 
 @pytest.mark.parametrize(("name", "text"), WEIRD)
