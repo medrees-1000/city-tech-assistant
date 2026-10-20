@@ -170,9 +170,9 @@ source and the PDF block is stored with `embed: false` (like the page contact bl
 ```
 config/sources.yaml   -> crawler/API client -> data/raw/ (untouched HTML/PDF/JSON + fetch log)
                                             -> parse/clean -> data/processed/ (one JSON record per section/course)
-                                            -> validate (docs/data-validation.md) -> chunk + embed -> Postgres (pgvector + full-text)
+                                            -> validate (docs/data-validation.md) -> chunk + embed -> Postgres (pgvector)
 calendar PDFs -> hand-verified data/calendar/calendar_events.json -> Postgres table
-question -> LangGraph router -> [calendar lookup | hybrid retrieval | abstain] -> answer + citations
+question -> LangGraph router -> [calendar lookup | vector retrieval + reranker | abstain] -> answer + citations
 every request -> logs (chunks, latency, tokens, cost) -> eval + dashboard
 ```
 
@@ -264,7 +264,7 @@ tests/
 1. Collect: catalog API client, rule cache, Tier 1 crawl, PDF parsers, calendar table; run
    validation; write 30 starter eval questions.
 2. Baseline: chunk, embed, vector-only RAG; record metrics.
-3. Improve: hybrid search, reranker, term filtering, LangGraph router + calendar tool. Compare to baseline.
+3. Improve: reranker, term filtering, LangGraph router + calendar tool (hybrid search was tried and rejected: docs/experiments.md). Compare to baseline.
 4. Product: FastAPI + Next.js UI, logging dashboard, CI eval, deployment, README with results and failure analysis.
 
 ## Working rules for Claude Code

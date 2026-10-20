@@ -2,6 +2,16 @@
 
 Every table below is printed by `python3 scripts/readme_numbers.py` from the committed files in `eval/results/` (`final-run.json`, `final-run-pass2.json`, `final-run-owner-grades.json`, `final-config-dev.json`, `baseline-dev-60-v3.json`, `casual-b0.json`). The script does not read any question file. The final test run (`final-run`) was done once with the code frozen at `final-run-frozen`; the test split had also been run three times in milestone 1 and before, so it is not untouched (see `docs/decisions.md`, "Corrections after review"); `docs/decisions.md` ("Final run" and "Final run, addendum") has the rules written before the run. The two owner grades (q50 correct, q74 partial) were given after seeing the results and are labelled that way everywhere.
 
+## Files behind the numbers (`eval/results/`)
+
+Nothing in `eval/results/` is edited by hand after a run: each file is one run (config, git commit, and one record per question: retrieval, route, answer checks, cost, latency). They are frozen; change a number and the README no longer reproduces. Older run files were deleted in the cleanups; they are in git at tag `pre-cleanup`.
+- Final run: `final-run.json` (test split), `final-run-pass2.json` (second judge pass), `final-run-owner-grades.json` (owner grades for answers the judge left ungraded), `final-run-answers.jsonl` (the answer texts; the database log is purged after 30 days).
+- `final-config-dev.json`: the dev split with the final configuration. `casual-b0.json`: casual-round baseline.
+- Earlier baselines the README mentions: `baseline.json`, `baseline-dev.json`, `baseline-dev-60.json`, `baseline-dev-60-v3.json`, `baseline-final.json`, `ms1-old.json`, `ms1-new.json`, `cv2-dev-fix.json`.
+- Dev runs that tests read as stored data: `tester1-*`, `4b-run1..3`, `chain-code-run1,2`, `router-run1..3`, `router2-run1..3`.
+- `blind/`: the blind grading sheet, key and owner grades of the version 2 casual held-out set (cv2).
+- Reproduce the numbers: `python3 scripts/readme_numbers.py` and `python3 scripts/recompute_final.py final-run`; compare two retrieval runs with `uv run python -m cta.eval.compare OLD.json NEW.json`.
+
 Reading notes:
 - "Normal-gold questions" are the questions whose gold answer is a fact from the sources. Abstention, clarify, NO ADVICE and calendar-only questions are scored by rules and listed separately.
 - The dev set is the set I tuned on. It holds 91 questions, 20 of them casual-wording questions (q104 to q123) that I added late, after seeing that casual wording failed.

@@ -7,6 +7,22 @@ import pytest
 from cta.crawl.fetcher import Fetcher, RawStore
 from cta.index import db
 
+# Where the fixtures in tests/fixtures/ came from:
+# - catalog_page.json, catalog_rules.json, rule_shorthand_full.json: real answers of the catalog
+#   API (saved 2026-10-11); the nested `departments` objects were trimmed. The page holds the
+#   cross-listed trio EET/CET/MECH 3672, a shorthand rule (CST 4900), a course with no rule and
+#   non-pilot courses; the rules cover the pilot courses only.
+# - page.html, robots_disallow.txt, pages/placeholders_only.html: small hand-written fixtures.
+# - pages/*.html: real pages of the 2026-10-11 crawl with only <script>/<style> blocks removed
+#   (menu, banner, sidebar and footer stay, so the tests prove they are left out). Several were
+#   chosen for a defect: spaces in a mailto link, an empty main div, login links, tab panes,
+#   malformed tables, nested contact panels.
+# - calendar/winter_2027.pdf, pdfs/*.pdf (refund calendar, Dropping and Withdrawing, Dental
+#   Hygiene department PDF) and pdfs/dent_rules.json: the real files. The other PDFs are not
+#   committed (data/pdfs/ is git-ignored); tests that need them skip when they are missing.
+# - processed/: small samples of processed records for the chunk tests. chain_render_before_*.json
+#   and chain_single_render_sha256.json: chain texts (and hashes) saved before two changes, so
+#   the tests can prove what changed.
 FIXTURES = Path(__file__).parent / "fixtures"
 UA = "CityTechAssistantBot/0.1 (student portfolio project; contact: test@example.com)"
 
