@@ -246,9 +246,6 @@ ROUTER_CFG = load_models(
 )
 
 
-TODAY = date(2026, 10, 11)
-
-
 def routed_ans(rows=(), route="calendar", abstained=False):
     ans = RoutedAnswer("t", abstained, None, [], search=Search([], False, 0, 0, 0.0))
     ans.row_ids, ans.route = list(rows), route
@@ -440,8 +437,6 @@ def parse(name: str, path: str = "/x.aspx", kind: str = "office", owner: str = "
 
 
 # ---- from test_parse_pages ----
-
-HOST = "https://www.citytech.cuny.edu"
 
 
 def entry(path, name, kind="office", owner="bursar", status=200, error=""):

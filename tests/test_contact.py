@@ -1,16 +1,28 @@
-"""Step 4c: the contact line after an abstention (plain code), its switch and its wiring."""
+"""The contact line after an abstention (plain code, step 4c): its rules, its switch and its wiring;
+the topic cues that add an office to a refusal that would carry none (batch 1, item 1); the
+department detection it uses; and the personal-account label (near-miss polish and possessive
+cue, item 2). No network, no database, no model, no paid call.
+"""
 
+import json
+import re
 from types import SimpleNamespace
 
 import pytest
 
-from cta.answer import Answer
+from cta.answer import THRESHOLD_ABSTAIN, Answer
+from cta.api import convert
 from cta.graph import build, contact, render
 from cta.graph.build import Router
+from cta.index import departments as deps
 from cta.index.departments import load_departments
 from cta.index.search import Search
-from cta.settings import load_models
-from tests.helpers import TODAY, Script
+from cta.settings import ROOT, load_models
+from tests.helpers import TODAY, Client, Script, ask, make_client_app, retrieve_answer
+
+# ---- from test_contact.py ----
+#
+# Step 4c: the contact line after an abstention (plain code), its switch and its wiring.
 
 C = contact.load_contacts()
 REGISTRAR = "Contact the Registrar: registrar@citytech.cuny.edu, 718-260-5800."
@@ -275,3 +287,472 @@ def test_hold_and_account_cues_name_no_office_because_the_data_names_none():
         assert word in C["account_only"]
         assert not any(word in words for words in C["cues"].values())
     assert office("Do I have a hold on my account?") is None
+
+
+# ---- from test_contact_topics.py ----
+#
+# Batch 1, item 1 (docs/archive/polish-triage.md G1-1): topic cues add an office to a refusal
+# that would carry none. No network, no database, no model.
+
+def topic_ans(reason="below_threshold", abstained=True, text="ABSTAIN: I could not find this."):
+    return SimpleNamespace(abstained=abstained, abstain_reason=reason, sources=[], text=text)
+
+
+def offices(question, **kw):
+    return contact.offices_for(question, topic_ans(**kw), C)
+
+
+@pytest.mark.parametrize(
+    "question,expected",
+    [
+        ("how much fafsa pays", ["financial-aid"]),  # cv2-02
+        ("i am in 7th semester when do i graudate", ["registrar"]),  # cv2-03 (typo alias)
+        ("how mnay credits still left", ["advisement"]),  # cv2-05
+        ("why am I taking finaincal managment", ["advisement"]),  # cv2-10
+        ("I want to graudate early", ["advisement", "registrar"]),  # cv2-13, priority order
+        ("why does dental hygine students gets charged 20$ per patinet", ["DENT-NYT"]),  # cv2-37
+        ("who is the chair of registrar I want to email this trash guy", ["registrar"]),  # cv2-40
+        ("does dental hugein share classes", ["DENT-NYT"]),
+        ("who is my advsor", ["advisement"]),
+        ("what if I don't pay my tution", ["bursar"]),
+        ("what is the SAP rule", ["financial-aid"]),
+        ("How do I get a TRANSCRIPT", ["registrar"]),  # case-insensitive
+    ],
+)
+def test_topic_words_choose_the_office(question, expected):
+    assert offices(question) == expected
+
+
+@pytest.mark.parametrize(
+    "question",
+    ["how to become a senator in SGA", "is mechanical engineering hard", "payload tapestry aids"],
+)
+def test_no_topic_word_or_only_part_of_a_word_means_no_office(question):
+    assert offices(question) == []  # whole words only: payload, tapestry and aids match nothing
+
+
+def test_at_most_two_offices_in_the_order_of_the_priority_list():
+    q = "fafsa tuition graduate advisor dental"
+    assert offices(q) == ["DENT-NYT", "financial-aid"]
+    assert C["topic_priority"][:2] == ["DENT-NYT", "financial-aid"]
+
+
+def test_the_existing_rules_come_first_and_topics_are_not_added_to_them():
+    assert offices("what is my gpa and tuition") == ["registrar"]  # a first-person cue
+    assert offices("CST tuition") == ["CST-NYT"]  # a named department
+    assert offices("when is it", reason="calendar_no_row") == ["registrar"]
+    assert offices("tuition", reason="chain_outside_departments") == []
+    assert offices("tuition", reason="chain_no_record") == []  # no department named: still none
+
+
+def test_the_cues_live_in_config_not_in_code():
+    custom = {**C, "topic_priority": ["bursar"], "topic_cues": {"bursar": ["zebra"]}}
+    assert contact.offices_for("a zebra question", topic_ans(), custom) == ["bursar"]
+    assert contact.offices_for("fafsa", topic_ans(), custom) == []
+
+
+def test_every_topic_office_exists_and_every_word_is_lowercase():
+    for office in C["topic_priority"]:
+        assert office in C["offices"] and office in C["topic_cues"]
+    for words in C["topic_cues"].values():
+        assert all(w == w.lower() and w.strip() == w for w in words)
+
+
+# ---- only text is added ----
+
+
+def test_add_contact_only_appends_text_and_keeps_everything_else():
+    a = topic_ans(text="ABSTAIN: I could not find this.")
+    before = a.text
+    key = contact.add_contact(a, "how much fafsa pays")
+    assert key == "financial-aid"
+    assert a.text.startswith(before) and a.text.startswith("ABSTAIN:")
+    assert a.abstained is True and a.abstain_reason == "below_threshold"
+    assert a.text == f"{before} {contact.contact_line('financial-aid', C)}"
+
+
+def test_two_offices_put_the_main_one_last_so_the_page_card_can_strip_it():
+    a = topic_ans()
+    assert contact.add_contact(a, "I want to graudate early") == "advisement"
+    main, second = contact.contact_line("advisement", C), contact.contact_line("registrar", C)
+    assert a.text.endswith(main) and second in a.text
+    assert a.text.removesuffix(main).rstrip().endswith(second)  # the other line stays in the text
+
+
+def test_an_answer_that_did_not_abstain_is_never_touched():
+    a = topic_ans(abstained=False, reason=None, text="Fall classes start on ...")
+    assert contact.add_contact(a, "how much fafsa pays") is None
+    assert a.text == "Fall classes start on ..."
+
+
+def test_adding_twice_adds_nothing_the_second_time():
+    a = topic_ans()
+    contact.add_contact(a, "I want to graudate early")
+    once = a.text
+    contact.add_contact(a, "I want to graudate early")
+    assert a.text == once
+
+
+def test_a_question_with_no_office_leaves_the_refusal_exactly_as_it_was():
+    a = topic_ans()
+    assert contact.add_contact(a, "how to become a senator in SGA") is None
+    assert a.text == "ABSTAIN: I could not find this."
+
+
+def test_the_eval_harness_still_reads_the_same_abstain_marker():
+    from cta.answer import MARKER, parse_reply
+
+    a = topic_ans(text=f"{MARKER} nothing found.")
+    contact.add_contact(a, "how much fafsa pays")
+    assert parse_reply(a.text, 3)["abstained"] is True  # the same detection as before
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "when do I get a refund",
+        "how are refunds paid",
+        "was it refunded",
+        "can I get my money back",
+    ],
+)
+def test_refund_words_name_the_bursar(question):
+    assert offices(question) == ["bursar"]
+
+
+def test_drop_and_refund_list_the_bursar_first_and_the_registrar_second():
+    # the fixed priority order puts the Bursar before the Registrar; two offices at most
+    assert offices("if I drop with W do I get money refunded") == ["bursar", "registrar"]
+    assert offices("drop a class, withdraw, refund, tuition, fafsa") == ["financial-aid", "bursar"]
+
+
+# ---- register, enroll, sign up for classes (added Oct 17, 2026, found by review) ----
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "how do I register for classes",
+        "how to register",
+        "i am registering late, what do i do",
+        "I already registered but the class is gone",
+        "how do I sign up for classes",
+        "how do I sign up for a class",
+        "how do I enroll",
+        "can I still enroll in a course",
+        "I'm enrolling next semester",
+    ],
+)
+def test_register_and_enroll_words_name_the_registrar(question):
+    assert offices(question) == ["registrar"]
+
+
+def test_a_named_department_or_a_first_person_cue_behaves_as_before():
+    assert offices("how do I register for CST 1101") == ["CST-NYT"]  # the department rule first
+    assert offices("how do I register for dental hygiene") == ["DENT-NYT"]
+    assert offices("what is my gpa after I registered") == ["registrar"]  # a first-person cue
+
+
+def test_registrar_still_ranks_after_the_other_offices_and_two_is_the_most():
+    assert offices("how do I register and pay the tuition bill") == ["bursar", "registrar"]
+    assert offices("register, fafsa, tuition, advisor") == ["financial-aid", "bursar"]
+
+
+def test_registered_nurse_does_not_add_a_card_but_other_uses_do():
+    assert offices("is the registered nurse program here") == []
+    assert offices("do you offer registered nurses courses") == []
+    assert (
+        offices("registered dental hygienist exam dates") == []
+    )  # a profession, not a department word
+    assert offices("I registered nurse training but how do I register") == ["registrar"]
+    assert "registered nurse" in C["topic_ignore"]
+
+
+def test_the_ignore_phrases_live_in_config():
+    custom = {**C, "topic_ignore": ["zebra register"], "topic_priority": ["registrar"]}
+    assert contact.offices_for("zebra register", topic_ans(), custom) == []
+    assert contact.offices_for("register", topic_ans(), custom) == ["registrar"]
+
+
+# ---- from test_detect_departments.py ----
+#
+# Department detection by alias and code (used by the contact, clarify and screen steps).
+
+def found(question: str) -> set[str]:
+    return deps.detect_departments(question)
+
+
+# ---- detection (no database) ----
+
+
+def test_aliases_match_whole_words_and_ignore_case():
+    assert found("What does the Electrical Engineering Technology department offer?") == {"EET-NYT"}
+    assert found("what does the eet department offer") == {"EET-NYT"}
+    assert found("Is there a Computer Systems Technology internship?") == {"CST-NYT"}
+    assert found("How do I join the dental hygiene program?") == {"DENT-NYT"}
+    assert found("What is my math placement?") == {"MATH-NYT"}
+    assert found("Electrical & Telecommunications Engineering Technology degrees") == {"EET-NYT"}
+    assert found("Electrical and Telecommunications Engineering Technology degrees") == {"EET-NYT"}
+
+
+def test_aliases_do_not_match_inside_other_words():
+    assert found("Meet the chair of the college") == set()  # "meet" is not "EET"
+    assert found("How many feet is it?") == set()
+    assert found("Is mathematical logic offered?") == set()  # "Math" is not "mathematical"
+    assert found("What is the CSTA award?") == set()
+
+
+def test_etet_and_eet_both_mean_the_electrical_department():
+    assert found("ETET office hours") == {"EET-NYT"} == found("EET office hours")
+    assert found("etet student hours") == {"EET-NYT"}
+
+
+@pytest.mark.parametrize(
+    ("question", "expected"),
+    [
+        ("What are the prerequisites for EET 3672?", {"EET-NYT"}),
+        ("What are the prerequisites for EET3672?", {"EET-NYT"}),
+        ("prerequisites for eet 3672", {"EET-NYT"}),
+        ("What do I need before MAT 1275CO?", {"MATH-NYT"}),
+        ("Can I take TCET 4102?", {"EET-NYT"}),  # a second EET-department prefix
+        ("Is MEDU 4000 offered?", {"MATH-NYT"}),
+        ("What is DEN 2400?", {"DENT-NYT"}),
+        ("What is MST 1101?", {"CST-NYT"}),  # legacy prefix the catalog lists under CST
+        ("What is CET 3672?", set()),  # a cross-listed prefix of another department: not mapped
+        ("What is MECH 3672?", set()),
+        ("What is the deadline for Fall 2026?", set()),  # "Fall 2026" looks like a code and is not
+    ],
+)
+def test_course_codes_map_through_their_prefix(question, expected):
+    assert found(question) == expected
+
+
+def test_two_departments_in_one_question():
+    assert found("Compare MAT 2675 with CST 1101") == {"MATH-NYT", "CST-NYT"}
+    assert found("Do Dental Hygiene students take math?") == {"DENT-NYT", "MATH-NYT"}
+
+
+def test_no_department_detected():
+    assert found("How do I apply for graduation at City Tech?") == set()
+    assert found("") == set()
+
+
+def test_every_prefix_belongs_to_one_department_in_the_config():
+    seen: dict[str, str] = {}
+    for dept_id, info in deps.load_departments().items():
+        for prefix in info["prefixes"]:
+            assert seen.setdefault(prefix, dept_id) == dept_id
+    assert set(deps.load_departments()) == {"CST-NYT", "MATH-NYT", "EET-NYT", "DENT-NYT"}
+
+
+# ---- from test_personal_account.py ----
+#
+# Near-miss polish and possessive cue, item 2 (docs/decisions.md): a possessive plus an office noun
+# alone no longer makes a policy abstention a personal-account refusal. The two lists were written
+# before the code. No network, no database, no paid call. Only dev questions are read.
+
+TABLE = contact.load_contacts()
+
+MUST_REFUSE = [
+    "what is my financial aid status", "do I have a hold on my account", "how much do I owe",
+    "did my TAP get approved", "when will my refund be deposited", "what are my grades",
+    "why was my financial aid denied", "is my application complete", "wheres my refund at",
+    "did my fafsa go thru", "why is my aid so late", "whats my gpa rn",
+    "i cant log in to cunyfirst", "what is my balance", "has my tap been approved yet",
+    "do i have any holds on my account",
+]  # fmt: skip
+MUST_NOT = [
+    "what happens if i dont accept my financial aid award by the deadline",
+    "how does my financial aid get disbursed",
+    "what do i need to do to keep my financial aid",
+    "how do i accept my loan on cunyfirst",
+    "when is my tuition bill due this fall",
+    "how does my tuition get refunded if i drop",
+    "does my financial aid cover books",
+    "what happens to my refund if i withdraw",
+    "how is my tuition calculated",
+    "do i need to reapply for my tap every year",
+    "what is the deadline to renew my fafsa",
+    "how do i set up a payment plan for my tuition",
+    "can i use my financial aid for summer classes",
+    "what is the last day to drop to get my tuition back",
+]  # fmt: skip
+
+
+def code(question, reason="below_threshold"):
+    return convert.abstain_code(reason, question, TABLE)
+
+
+def test_the_lists_have_the_pre_registered_sizes():
+    assert (len(MUST_REFUSE), len(MUST_NOT)) == (16, 14)
+
+
+@pytest.mark.parametrize("question", MUST_REFUSE)
+def test_every_must_refuse_question_is_still_a_personal_account_refusal(question):
+    assert code(question) == "personal_account"
+    assert code(question, "some model sentence") == "personal_account"
+
+
+@pytest.mark.parametrize("question", MUST_NOT)
+def test_no_must_not_question_is_relabelled(question):
+    assert code(question) == "below_threshold"
+    assert code(question, "some model sentence") == "model"
+
+
+def test_the_cd9d2a93_question_is_a_plain_abstention_with_the_financial_aid_card_kept():
+    q = "what happens if i dont accept my financial aid award by the deadline"
+    assert code(q) == "below_threshold"
+    assert (
+        contact.cue_office(q, TABLE) == "financial-aid"
+    )  # the contact logic is untouched (policy v2)
+    assert old_account_cue(q, TABLE) is True  # the old rule, kept below, still says yes
+
+
+def test_the_two_new_cues_are_the_only_account_only_additions_and_the_new_keys_exist():
+    assert {"how much do i owe", "is my application complete"} <= set(TABLE["account_only"])
+    assert len(TABLE["account_only"]) == 11
+    assert set(TABLE["noun_cues"]) == {
+        "my financial aid", "my aid", "my fafsa", "my tap", "my refund", "my tuition", "my bill",
+    }  # fmt: skip
+    for word in ("status", "approved", "denied", "deposited", "did my", "why is my", "wheres my"):
+        assert word in TABLE["account_signals"]
+    # every noun cue is one of the existing office cues: nothing new chooses a card
+    existing = {w for words in TABLE["cues"].values() for w in words}
+    assert set(TABLE["noun_cues"]) <= existing
+
+
+def test_a_possessive_noun_alone_is_not_enough_but_with_a_signal_it_is():
+    assert not contact.personal_account_cue("what is my financial aid", TABLE)
+    assert contact.personal_account_cue("what is my financial aid status", TABLE)
+    assert not contact.personal_account_cue("how does my tuition work", TABLE)
+    assert contact.personal_account_cue("what is my balance", TABLE)  # a data cue by itself
+    assert contact.personal_account_cue(
+        "Why hasn’t my aid arrived", TABLE
+    )  # a curly apostrophe works
+    assert not contact.personal_account_cue("what is the status of the registrar line", TABLE)
+
+
+def test_cue_office_is_unchanged():
+    assert contact.cue_office("why is my aid late", TABLE) == "financial-aid"
+    assert contact.cue_office("whats my gpa", TABLE) == "registrar"
+    assert contact.cue_office("what is my balance", TABLE) == "bursar"
+    assert contact.cue_office("do i have a hold on my account", TABLE) is None
+
+
+# ---- zero changes for the dev questions ----
+
+
+def dev_questions():
+    out = {}
+    for line in (ROOT / "eval/questions.jsonl").read_text(encoding="utf-8").splitlines():
+        if re.search(r'"split": ?"dev"', line):  # selected by its raw text before it is parsed
+            row = json.loads(line)
+            out[row["id"]] = row["question"]
+    return out
+
+
+def old_account_cue(question, contacts):
+    """The rule that chose "personal account" before this change: any office cue or account word."""
+    text = question.lower()
+    return contact.has_word(text, contacts.get("account_only", [])) or any(
+        contact.has_word(text, words) for words in contacts["cues"].values()
+    )
+
+
+def old_code(reason, question):
+    """The relabel rule before this change: any office cue or account word."""
+    if reason is None:
+        return None
+    if reason.startswith(convert.OWN_CODES):
+        return reason
+    if old_account_cue(question, TABLE):
+        return "personal_account"
+    return reason if reason == "below_threshold" else "model"
+
+
+# The pre-registered "zero changes" check could not be literally empty: q13 ("When is my tuition
+# bill due this fall?") is a dev question AND on the owner's must-not list, so its relabel must
+# change if it ever abstained. Checked instead: the exact set of dev questions whose relabel would
+# differ, and that only q98 of them actually abstained through retrieval in the stored dev runs.
+HYPOTHETICAL_CHANGES = {
+    "q13",
+    "q14",
+    "q53",
+    "q59",
+    "q96",
+    "q97",
+    "q98",
+}  # all personal_account -> plain
+
+
+def test_exactly_these_dev_questions_would_be_relabelled_differently_and_none_else():
+    dev = dev_questions()
+    assert len(dev) == 91
+    differ = set()
+    for qid, question in dev.items():
+        for reason in ("below_threshold", "some model sentence", "calendar_unsupported_term", None):
+            if code(question, reason) != old_code(reason, question):
+                differ.add(qid)
+    assert differ == HYPOTHETICAL_CHANGES
+    for qid in (
+        differ
+    ):  # each is a possessive plus an office noun with no account signal: a policy question
+        assert old_account_cue(dev[qid], TABLE) and not contact.personal_account_cue(
+            dev[qid], TABLE
+        )
+        assert (
+            code(dev[qid]) == "below_threshold"
+            and old_code("below_threshold", dev[qid]) == "personal_account"
+        )
+
+
+def test_in_the_stored_dev_runs_only_q98_abstained_through_retrieval_among_them():
+    dev = dev_questions()
+    abstained = set()
+    for label in ("tester1-dev", "tester1-new8", "tester1-nearmiss2"):
+        run = json.loads((ROOT / f"eval/results/{label}.json").read_text(encoding="utf-8"))
+        for r in run["per_question"]:
+            if (
+                r["id"] in dev
+                and r["abstained"]
+                and r["route"] in ("other", "calendar_fallthrough")
+            ):
+                abstained.add(r["id"])
+    assert abstained & HYPOTHETICAL_CHANGES == {
+        "q98"
+    }  # the others were answered: no relabel applies
+    # every dev question that abstained and is not q98 gets the same code before and after
+    for qid in abstained - {"q98"}:
+        assert code(dev[qid]) == old_code("below_threshold", dev[qid]), qid
+
+
+def test_the_eval_path_never_calls_the_relabel():
+    for path in (ROOT / "src" / "cta" / "eval").rglob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        assert "abstain_code" not in text and "personal_account_cue" not in text, path
+
+
+# ---- through the API ----
+
+
+def abstain_app(monkeypatch):
+    stub = retrieve_answer(THRESHOLD_ABSTAIN, True, "below_threshold", citations=())
+    return make_client_app(Client(), monkeypatch, stub)
+
+
+def test_the_cd9d2a93_question_gets_the_plain_abstention_and_the_financial_aid_card(monkeypatch):
+    body = ask(
+        abstain_app(monkeypatch),
+        "what happens if i dont accept my financial aid award by the deadline",
+    ).json()
+    assert body["abstained"] and body["abstain_reason"] == "below_threshold"
+    assert body["contact"]["office"] == "financial-aid"
+    assert "personal account" not in body["answer"]
+
+
+def test_a_must_refuse_question_is_still_refused_through_the_api(monkeypatch):
+    body = ask(abstain_app(monkeypatch), "what is my financial aid status").json()
+    assert (
+        body["abstain_reason"] == "personal_account"
+        and body["contact"]["office"] == "financial-aid"
+    )

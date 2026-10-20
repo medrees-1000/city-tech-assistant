@@ -44,7 +44,6 @@ needs_records = pytest.mark.skipif(not RECORDS, reason="no processed course reco
 # all 197 course chains, the page fixtures, the loud failure on risky catalog text, and the router
 # switch. No model call anywhere.
 
-RECORDS = ch.load_records()
 CODES = sorted(RECORDS)
 
 
