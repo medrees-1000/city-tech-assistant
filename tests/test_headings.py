@@ -3,8 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from cta.parse.headings import clean_heading
-from cta.parse.html import to_sections
+from cta.parse.html import clean_heading, to_sections
 from cta.validate.headings import check_heading_markup, run_heading_checks
 
 LINKED = "[Computer Information Systems/AAS](https://citytech.catalog.cuny.edu/programs/CIS-AAS)"

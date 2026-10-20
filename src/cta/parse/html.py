@@ -2,8 +2,7 @@
 
 Only two regions of a page are read: the main content (`div.c-layout-sidebar-content`) and the
 contact panels in the sidebar. The header (mega-menu, alert banner), breadcrumbs, sidebar link
-list and footer are never visited, so nothing has to be "stripped" from them.
-"""
+list and footer are never visited, so nothing has to be "stripped" from them."""
 
 import re
 from collections.abc import Iterable, Iterator
@@ -13,7 +12,21 @@ from urllib.parse import unquote, urljoin, urlsplit, urlunsplit
 from bs4 import BeautifulSoup, NavigableString, Tag
 from bs4.element import PreformattedString
 
-from cta.parse.headings import clean_heading
+# ---- heading cleanup: no markdown link markup in headings or heading paths (was headings.py) ----
+#
+# A heading that was a link, "[Data Science/BS](https://.../programs/DSCI-BS)", becomes the visible
+# text "Data Science/BS"; the URL is kept in the section's `heading_url`.
+
+LINK = re.compile(r"\[([^\]]*)\]\(([^)\s]*)\)")
+
+
+def clean_heading(text: str | None) -> tuple[str | None, str | None]:
+    """(heading without link markup, the URL of its first link or None)."""
+    if text is None:
+        return None, None
+    found = LINK.search(text)
+    return (LINK.sub(r"\1", text), found[2] if found else None)
+
 
 MAIN = "div.c-layout-sidebar-content"
 PANELS = "div.c-layout-sidebar-menu div.panel"
