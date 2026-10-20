@@ -21,8 +21,7 @@ from pathlib import Path
 
 from cta.index import rerank as reranker
 from cta.index.db import connect
-from cta.index.embed import ApiError, embed_texts, make_client
-from cta.index.jsoncache import read_cache, write_cache
+from cta.index.embed import ApiError, embed_texts, make_client, read_cache, write_cache
 from cta.settings import ROOT, cost_usd, load_models
 
 CACHE_PATH = ROOT / "data" / "cache" / "query_embeddings.json"

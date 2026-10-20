@@ -17,8 +17,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from cta.index.chunks import get_encoding, source_label
-from cta.index.embed import ApiError, make_client, with_retries
-from cta.index.jsoncache import read_cache, write_cache
+from cta.index.embed import ApiError, make_client, read_cache, with_retries, write_cache
 from cta.settings import ROOT, cost_usd
 
 CACHE_PATH = ROOT / "data" / "cache" / "rerank.json"
