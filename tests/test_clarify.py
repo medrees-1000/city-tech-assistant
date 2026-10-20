@@ -1,6 +1,9 @@
 """Step 4 CLARIFY: the detector, the graph node, the API contract, the log row and the eval rule.
-No network, no database, no paid call. The dev questions are read; the test split is not."""
+No network, no database, no paid call. The dev questions are read; the test split is not.
 
+The vague-question sets for the CLARIFY detector (tester round 2, item C, T08) were written BEFORE
+the code.
+"""
 
 import pytest
 
@@ -20,8 +23,6 @@ from tests.helpers import (
 )
 
 STATED = {"q88", "q89"}  # the dev questions the detector must fire on
-
-
 
 
 # ---- the detector ----
@@ -243,3 +244,79 @@ def test_a_clarify_reply_is_not_part_of_the_citation_rate():
     for r in records:
         r["route"] = "clarify"
     assert ra.aggregate(records)["citation_rate"]["n"] == 0
+
+
+# ---- from clarify_phrases.py ----
+#
+# Tester round 2, item C (T08): the vague-question sets for the CLARIFY detector, written
+# BEFORE the code (docs/decisions.md, "Tester round 2, safety and small fixes"). Data only.
+
+# Short, vague, no topic noun, no course code, no department: must get the clarify template.
+VAGUE_POSITIVES = [
+    "when is it due",  # T08
+    "when is it",
+    "whens it due",
+    "when is that due",
+    "when is this due",
+    "when is it due?",
+    "when are they due",
+    "when's it due",
+]
+
+# Must NOT clarify.
+VAGUE_NEGATIVES = [
+    "when is it due for tuition",
+    "when is the add drop deadline",
+    "when does fall 2026 start",
+    "when is it due for CST 1101",
+    "when is the tuition due",
+    "when is my bill due",
+    "when is it open",
+    "when is it due for financial aid",
+    "when is the library open",
+    "when is graduation",
+    "when is it due, the fafsa",
+    "what time is it",
+    "when is it due for the thing my professor told me about in class last week",  # long
+]
+
+
+# ---- from test_clarify_vague.py ----
+#
+# Tester round 2, item C (T08): "when is it due" gets the clarify template. The phrase sets are
+# above (written before the code).
+
+
+
+def test_the_sets_have_the_pre_registered_sizes():
+    assert (len(VAGUE_POSITIVES), len(VAGUE_NEGATIVES)) == (8, 13)
+
+
+@pytest.mark.parametrize("question", VAGUE_POSITIVES)
+def test_vague_when_questions_clarify(question):
+    assert clarify.needs_clarification(question)
+
+
+@pytest.mark.parametrize("question", VAGUE_NEGATIVES)
+def test_questions_that_name_something_do_not(question):
+    assert not clarify.needs_clarification(question)
+
+
+def test_a_prerequisite_classification_still_blocks_it():
+    assert not clarify.needs_clarification("when is it due", "prerequisite")
+
+
+def test_dev_questions_that_clarify_are_the_same_as_before():
+    # q88 and q89 were the only ones before this round (tests/test_clarify.py); the vague pattern
+    # adds none
+    assert sorted(q["id"] for q in DEV if clarify.needs_clarification(q["question"])) == [
+        "q109", "q88", "q89",
+    ]  # fmt: skip
+
+
+def test_through_the_api_it_is_the_template_not_outside_what_i_can_answer(monkeypatch):
+    client = Client()
+    c = make_client_app(client, monkeypatch)
+    body = ask(c, "when is it due").json()
+    assert body["answer_type"] == "clarify" and body["answer"] == clarify.reply_text()
+    assert "I can only help with City Tech questions" not in body["answer"]

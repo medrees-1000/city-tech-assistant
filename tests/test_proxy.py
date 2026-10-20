@@ -21,11 +21,6 @@ from tests.helpers import (
     settings,
 )
 
-# ---- from test_proxy.py ----
-#
-# The shared secret of the Vercel proxy, the forwarded visitor address and the keyed hash.
-# Fake clients only: no network, no database, no paid call.
-
 SECRET = "s" * 32
 SALT = "x" * 32
 ENV = {"CTA_PROXY_SECRET": SECRET, "CTA_IP_SALT": SALT}

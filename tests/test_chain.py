@@ -20,10 +20,6 @@ from cta.index.search import Search
 from cta.settings import load_models
 from tests.helpers import WORLD, Model, rec, recs
 
-# ---- from test_chain.py ----
-#
-# Step 4b: the chain walk, the extraction, the tool, the chain node and the switch (no network).
-
 CFG = load_models(
     env={
         "CTA_RERANK": "off",

@@ -20,10 +20,6 @@ from cta.index.search import Search
 from cta.settings import ROOT, load_models
 from tests.helpers import TODAY, Client, Script, ask, make_client_app, retrieve_answer
 
-# ---- from test_contact.py ----
-#
-# Step 4c: the contact line after an abstention (plain code), its switch and its wiring.
-
 C = contact.load_contacts()
 REGISTRAR = "Contact the Registrar: registrar@citytech.cuny.edu, 718-260-5800."
 CST = (

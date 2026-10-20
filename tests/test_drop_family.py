@@ -1,5 +1,6 @@
-"""Casual round, item 2 (T04): the drop-family calendar rule. Phrase sets in
-tests/drop_phrases.py (written before the code). No model call."""
+"""Casual round, item 2 (T04): the drop-family calendar rule. The phrase sets (DROP_POSITIVES and
+DROP_NEGATIVES, below) were written BEFORE the code. No model call.
+"""
 
 import re
 from datetime import date
@@ -8,8 +9,42 @@ import pytest
 
 from cta.eval.questions import load_questions
 from cta.graph import build, clarify
-from tests.drop_phrases import NEGATIVES, POSITIVES
 from tests.helpers import Script, make_router
+
+# ---- from drop_phrases.py ----
+#
+# Casual round, item 2 (T04): the question sets for the drop-family calendar rule, written BEFORE
+# the code (docs/decisions.md, "Casual round"). Data only.
+
+# Unqualified drop/withdraw date questions: the rule applies (all three grade-related rows).
+DROP_POSITIVES = [
+    "whats the last day to drop a class fall 2026",
+    "last day to drop a class",
+    "when can i withdraw from a class in spring 2027",
+    "deadline to drop classes this fall",
+    "last day to withdraw from a course",
+    "when is the last day for dropping a course winter 2027",
+    "call me at [PHONE] whats the last day to drop a class fall 2026",
+    "last day for withdrawal spring 2027",
+    "until when can i drop my class",
+    "i wanna drop a class, what's the last day",
+]
+
+# Qualified, or not a drop/withdraw date question: the rule does not apply.
+DROP_NEGATIVES = [
+    "What is the last day to withdraw from a course with a grade of W in Fall 2026?",  # q31
+    "What is the last day to withdraw from a course with a W?",  # q71
+    "What is the last day to drop for a 50% tuition refund in Spring 2027?",  # q65
+    "last day to drop a class fall 2026 without a W",
+    "last day to add or drop",
+    "how do i drop a class",
+    "what is the tuition refund if i drop a class",
+    "last day to drop after the first week",
+    "last day to drop with a WD grade in Fall 2026",
+    "when is the last day to add a class fall 2026",
+    "when does the fall 2026 semester end",
+    "can i drop a class before the semester starts",
+]
 
 
 def calendar_rows():
@@ -17,15 +52,15 @@ def calendar_rows():
 
 
 def test_the_sets_have_the_pre_registered_sizes():
-    assert (len(POSITIVES), len(NEGATIVES)) == (10, 12)
+    assert (len(DROP_POSITIVES), len(DROP_NEGATIVES)) == (10, 12)
 
 
-@pytest.mark.parametrize("question", POSITIVES)
+@pytest.mark.parametrize("question", DROP_POSITIVES)
 def test_unqualified_drop_and_withdraw_date_questions_apply(question):
     assert clarify.drop_family_applies(question)
 
 
-@pytest.mark.parametrize("question", NEGATIVES)
+@pytest.mark.parametrize("question", DROP_NEGATIVES)
 def test_qualified_or_other_questions_do_not(question):
     assert not clarify.drop_family_applies(question)
 

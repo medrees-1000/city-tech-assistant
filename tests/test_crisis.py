@@ -23,11 +23,6 @@ from tests.crisis_data import (
 )
 from tests.helpers import Client, SpendConn, ask, cfg_guard, make_client_app, reply, retrieve_answer
 
-# ---- from test_crisis.py ----
-#
-# Tester round 2, item A: crisis detection (phrase sets in tests/crisis_phrases.py, written before
-# the code; docs/decisions.md). Scripted client only: no paid call.
-
 G = load_models(env={})["guardrails"]
 DEV = [q for q in load_questions() if q["split"] == "dev"]
 
@@ -231,7 +226,7 @@ def test_other_abstain_sentences_are_not_turned_into_the_crisis_reply(answer):
 
 # ---- from test_crisis_sweep.py ----
 #
-# Post-freeze safety sweep: every phrase of tests/crisis_sweep.py reaches the tier it should.
+# Post-freeze safety sweep: every phrase of SWEEP (tests/crisis_data.py) reaches its tier.
 
 TIER = {"D": "distress", "S": "stress", "X": "danger", "N": None, "L": None}
 

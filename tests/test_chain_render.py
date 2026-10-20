@@ -38,12 +38,6 @@ from tests.helpers import (
 needs_records = pytest.mark.skipif(not RECORDS, reason="no processed course records")
 
 
-# ---- from test_chain_render.py ----
-#
-# The chain answer written by plain code: the deterministic checks of the chain-layout plan over
-# all 197 course chains, the page fixtures, the loud failure on risky catalog text, and the router
-# switch. No model call anywhere.
-
 CODES = sorted(RECORDS)
 
 

@@ -1,16 +1,28 @@
-"""The local API (Phase 4). No network, no database, no paid call: the connection is a stub."""
+"""The local API (Phase 4). No network, no database, no paid call: the connection is a stub.
 
+It also pins the keys of the /ask response: the fallback query rewrite (experiment E1) is gone, and
+nothing in the production configuration could ever have turned it on.
+"""
+
+import importlib.util
+import inspect
 import json
+import logging  # noqa: E402
 from datetime import date
 
 import psycopg
 import pytest
 from fastapi.testclient import TestClient
 
+from cta import answer
 from cta.answer import THRESHOLD_ABSTAIN
 from cta.api import __main__ as api_main
 from cta.api import app as api_app
-from cta.api import convert, schema
+from cta.api import (
+    convert,
+    requestlog,  # noqa: E402
+    schema,
+)
 from cta.api.checks import StartupError, startup_problems
 from cta.graph import build
 from cta.graph.build import Router
@@ -176,25 +188,10 @@ def test_env_example_lists_the_new_names():
 # ================= POST /ask (step 3) =================
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 def test_the_test_app_reads_neither_the_real_clock_nor_the_real_checkout(monkeypatch):
     guard = make_client_app(Client(), monkeypatch).app.state.guard
     assert guard.now() == FIXED_NOW and guard.root == EMPTY_ROOT
     assert not guard.disabled()  # no data/api_disabled file in the empty root
-
-
 
 
 # ---- the contract ----
@@ -583,9 +580,6 @@ def test_abstain_code_unit():
 
 # ================= request logging (step 5) =================
 
-import logging  # noqa: E402
-
-from cta.api import requestlog  # noqa: E402
 
 ALLOWED_COLUMNS = set(requestlog.COLUMNS) - {"source"}  # `source` is added by the writer ('api')
 
@@ -722,3 +716,35 @@ def test_the_chain_block_names_the_courses_without_a_record(monkeypatch):
     client = Client("prerequisite", answer="AA 1001 needs BB 1001 [1][2].")
     body = ask(make_client_app(client, monkeypatch), "What do I need before AA 1001?").json()
     assert body["how_found"]["chain"]["no_record_codes"] == ["ENG 1101"]
+
+
+# ---- from test_no_fallback_rewrite.py ----
+#
+# The fallback query rewrite (experiment E1) is gone: the /ask response keeps every other key, and
+# nothing in the production configuration could ever have turned it on.
+
+# the keys of a normal answer before the removal, minus how_found.rewrite (it was always null)
+TOP_KEYS = ["abstain_reason", "abstained", "answer", "answer_type", "citations", "contact",
+            "how_found", "meta", "question", "request_id", "route"]  # fmt: skip
+HOW_FOUND_KEYS = ["abstain_threshold", "abstain_wording", "cache_hits", "calendar", "chain",
+                  "cost_usd", "intent", "language", "near_miss", "retrieved", "route_detail",
+                  "stages_ms", "tokens", "top_vector_similarity", "topic_in_scope"]  # fmt: skip
+
+
+def test_a_normal_answer_has_the_same_keys_as_before_minus_how_found_rewrite(monkeypatch):
+    body = ask(make_client_app(Client(), monkeypatch, retrieve_answer())).json()
+    assert sorted(body) == TOP_KEYS
+    assert sorted(body["how_found"]) == HOW_FOUND_KEYS
+    assert sorted(body["meta"]) == ["model", "today", "version"]
+
+
+def test_the_production_configuration_never_enabled_the_rewrite_and_no_path_is_left():
+    # it was "off" in config/models.yaml and no deploy file set CTA_FALLBACK_REWRITE
+    for name in ("config/models.yaml", ".env.production.example", "docker-compose.prod.yml",
+                 "Dockerfile", ".github/workflows/ci.yml"):  # fmt: skip
+        text = (ROOT / name).read_text(encoding="utf-8").lower()
+        assert "fallback_rewrite" not in text, name
+    assert "fallback_rewrite" not in load_models(env={"CTA_FALLBACK_REWRITE": "on"})["retrieval"]
+    assert "rewrite" not in inspect.signature(answer.answer).parameters
+    assert not hasattr(answer, "fallback_search")
+    assert importlib.util.find_spec("cta.index.rewrite") is None

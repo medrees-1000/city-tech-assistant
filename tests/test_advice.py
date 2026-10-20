@@ -1,5 +1,8 @@
 """Step 5 NO ADVICE: the detector, the three-part answer, the checks of the keep rule, the graph
-and the API. No network, no database, no paid call. Only the dev questions are read."""
+and the API. No network, no database, no paid call. Only the dev questions are read.
+
+The extended NO ADVICE cues (casual round, item 3): the question sets were written BEFORE the code.
+"""
 
 import re
 
@@ -265,3 +268,66 @@ def test_only_the_advice_call_gets_the_larger_limit(monkeypatch, events):
     assert {k: v for k, v in advice_cfg["answer"].items() if k != "max_output_tokens"} == {
         k: v for k, v in other_cfg["answer"].items() if k != "max_output_tokens"
     }
+
+
+# ---- from advice_cue_phrases.py ----
+#
+# Casual round, item 3: the question sets for the extended NO ADVICE cues, written BEFORE the
+# code (docs/decisions.md, "Casual round"). Data only.
+
+# Advice cue plus an action word: must be detected as an advice question.
+CUE_POSITIVES = [
+    "what would you do, take a payment plan or pay all at once",  # cq14
+    "what do you suggest, drop the class or withdraw",
+    "which is better, withdrawing or taking an incomplete",
+    "what's your advice, audit the course or take it for credit",
+    "what would you do in my place about changing my major",
+    "what do you suggest for transferring from another college",
+    "which is better, a payment plan or paying in full",
+    "do you think i should sign up for the winter session",
+]
+
+# Plain rule questions or a cue with no action word: must NOT be detected.
+CUE_NEGATIVES = [
+    "what would my payment be on the payment plan",
+    "which is better known, FAFSA or TAP",
+    "what would the refund be if i drop a class",
+    "what would a W do to my gpa",
+    "what do i do if i want to withdraw from a class",
+    "how do i sign up for the payment plan",
+    "which is the last day to withdraw in fall 2026",
+    "which is better, the degree checklist or the planner",
+    "what do you suggest for finding the registrar office",
+    "what is the advice policy for transfer credits",
+    "what would you need to bring to the advisement office to change my major",
+    "which is better for tuition, the bursar page or the financial aid page",
+]
+
+
+# ---- from test_advice_cues.py ----
+#
+# Casual round, item 3: the extended NO ADVICE cues. The phrase sets are above
+# (written before the code). No model call.
+
+def test_the_sets_have_the_pre_registered_sizes():
+    assert (len(CUE_POSITIVES), len(CUE_NEGATIVES)) == (8, 12)
+
+
+@pytest.mark.parametrize("question", CUE_POSITIVES)
+def test_the_new_cues_with_an_action_word_are_detected(question):
+    assert advice.needs_advice_rules(question)
+
+
+@pytest.mark.parametrize("question", CUE_NEGATIVES)
+def test_plain_rule_questions_and_cues_without_an_action_word_are_not(question):
+    assert not advice.needs_advice_rules(question)
+
+
+def test_cq14_is_the_payment_plan_action():
+    names = [a.name for a in advice.matched_actions(CUE_POSITIVES[0])]
+    assert names == ["payment_plan"]
+
+
+def test_on_the_dev_questions_only_the_advice_ones_and_cq14_fire():
+    fired = {q["id"] for q in DEV if advice.needs_advice_rules(q["question"])}
+    assert fired == {"q30", "q47", "q91", "q92", "q112"}

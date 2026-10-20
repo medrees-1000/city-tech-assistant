@@ -47,12 +47,6 @@ from tests.helpers import (
 )
 from tests.helpers import Client as FakeModel
 
-# ---- from test_tracing.py ----
-#
-# Optional LangSmith tracing (docs/decisions.md, "Near-miss floor and tracing"). A fake HTTP
-# session stands in for LangSmith: no network, no key. What the SDK would send is captured and
-# searched.
-
 RAW = {
     "email": "test.person123@example.com",
     "phone": "718-260-5800",

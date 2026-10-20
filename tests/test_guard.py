@@ -35,11 +35,6 @@ from tests.helpers import (
     settings,
 )
 
-# ---- from test_guard.py ----
-#
-# Phase 4 step 7, Stage 1: kill switch, rate limit, daily spend cap, timeouts, /health counts.
-# Fake clients, fake clocks and fake counters only: no network, no database, no paid call.
-
 DEV = [q for q in load_questions() if q["split"] == "dev"]
 
 
