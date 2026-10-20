@@ -12,8 +12,18 @@ from cta.eval import judge_sheet
 from cta.graph import build
 from cta.index.db import migration_files
 from cta.redact import redact
-from tests.test_api import Client, ask, make_client_app, retrieve_answer
-from tests.test_router import CFG, routed_ans
+from tests.helpers import (
+    ROUTER_CFG as CFG,
+)
+from tests.helpers import (
+    Client,
+    ask,
+    insert,
+    make_client_app,
+    notice_text,
+    retrieve_answer,
+    routed_ans,
+)
 
 # ---- redaction (what is removed, and the known gap) ----
 
@@ -162,12 +172,6 @@ def test_eval_reports_still_read_eval_rows_and_never_pick_up_api_rows(conn):
 # ---- purge ----
 
 
-def insert(conn, source, days_old, rid=None):
-    conn.execute(
-        "INSERT INTO request_logs (source, question, ts, request_id) "
-        "VALUES (%s, 'q', now() - make_interval(days => %s), %s)",
-        (source, days_old, rid),
-    )
 
 
 @pytest.mark.integration
@@ -257,10 +261,6 @@ def test_the_logs_command_prints_the_last_api_requests_redacted_and_a_total(
 # ---- the privacy notice matches the code ----
 
 
-def notice_text() -> str:
-    from cta.settings import ROOT
-
-    return (ROOT / "web" / "lib" / "notice.ts").read_text(encoding="utf-8")
 
 
 def test_the_notice_says_what_the_code_does():

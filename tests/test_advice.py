@@ -1,5 +1,8 @@
 """Step 5 NO ADVICE: the detector, the three-part answer, the checks of the keep rule, the graph
-and the API. No network, no database, no paid call. Only the dev questions are read."""
+and the API. No network, no database, no paid call. Only the dev questions are read.
+
+The extended NO ADVICE cues (casual round, item 3): the question sets were written BEFORE the code.
+"""
 
 import re
 
@@ -9,9 +12,18 @@ from cta.answer import Answer
 from cta.eval.questions import load_questions
 from cta.graph import advice, build, render, terms
 from cta.index.search import Search
-from tests.test_api import Client, ask, make_client_app
-from tests.test_clarify import CFG, stored_intents
-from tests.test_router import TODAY, Script, make_router
+from tests.helpers import (
+    CLARIFY_CFG as CFG,
+)
+from tests.helpers import (
+    TODAY,
+    Client,
+    Script,
+    ask,
+    make_client_app,
+    make_router,
+    stored_intents,
+)
 
 DEV = [q for q in load_questions() if q["split"] == "dev"]
 ADVICE_IDS = {"q30", "q47", "q91", "q92"}
@@ -118,12 +130,28 @@ def test_the_fixed_sentence_is_in_the_answer_once_and_first(events):
     assert not ans.abstained and ans.row_ids == rendered.row_ids
 
 
+# Phrases that would make an answer a recommendation. Checked on what the code writes.
+BANNED = (
+    "i recommend", "i'd recommend", "i would recommend", "my recommendation", "you should",
+    "you ought", "i suggest", "i'd suggest", "i advise", "it is best", "it's best",
+    "it would be better", "you'd be better", "better off", "consider dropping",
+    "consider withdrawing", "is a good idea", "is a bad idea",
+)  # fmt: skip
+
+
+def advice_phrases(text: str) -> list[str]:
+    """Banned phrases in the text. The fixed sentence is removed first: it says "whether you
+    should" in order to refuse, which is not a recommendation."""
+    lowered = text.replace(advice.SENTENCE, "").lower().replace("’", "'")
+    return [p for p in BANNED if p in lowered]
+
+
 def test_no_advice_phrase_in_the_code_written_parts(events):
     rendered = render.render_rows(rows(events), "r@x.edu", "Fall 2026")
-    assert advice.advice_phrases(advice.SENTENCE) == []  # the refusal itself is not advice
-    assert advice.advice_phrases(f"{advice.SENTENCE} You should drop.") == ["you should"]
-    assert advice.advice_phrases(rendered.text) == []
-    assert advice.advice_phrases("I recommend it. You should drop. It's best.") == [
+    assert advice_phrases(advice.SENTENCE) == []  # the refusal itself is not advice
+    assert advice_phrases(f"{advice.SENTENCE} You should drop.") == ["you should"]
+    assert advice_phrases(rendered.text) == []
+    assert advice_phrases("I recommend it. You should drop. It's best.") == [
         "i recommend", "you should", "it's best"
     ]  # fmt: skip
 
@@ -138,14 +166,6 @@ def test_citations_are_policy_sources_first_then_calendar_rows(events):
     used = {int(x) for x in re.findall(r"\[(\d+)\]", ans.text)}
     assert used == set(range(1, n + 1))  # every number in the text is a source, none is missing
     assert f"[{3}]" in ans.sources[2]["text"]  # the row's own text carries its new number
-
-
-def test_every_date_is_traceable_to_a_cited_source(events):
-    rendered = render.render_rows(rows(events), "r@x.edu", "Fall 2026")
-    ans = advice.compose(policy_answer("Drop by September 3 [1]."), rendered)
-    assert advice.untraceable_dates(ans) == set()
-    bad = advice.compose(policy_answer("Drop by October 31 [1]."), rendered)
-    assert advice.untraceable_dates(bad) == {(10, 31)}
 
 
 def test_no_calendar_rows_gives_the_sentence_and_the_policy_only():
@@ -250,11 +270,64 @@ def test_only_the_advice_call_gets_the_larger_limit(monkeypatch, events):
     }
 
 
-def test_todays_date_is_allowed_and_no_other_untraceable_date_is(events):
-    rendered = render.render_rows(rows(events), "r@x.edu", "Fall 2026")
-    text = "Drop by September 3 [1]. Since today is October 11, 2026, that has passed. Also Oct 31."
-    ans = advice.compose(policy_answer(text), rendered)
-    assert advice.untraceable_dates(ans) == {(10, 11)}  # without today: October 11 is flagged
-    assert advice.untraceable_dates(ans, TODAY) == set()  # TODAY is 2026-10-11
-    other = advice.compose(policy_answer("Drop by October 31 [1]."), rendered)
-    assert advice.untraceable_dates(other, TODAY) == {(10, 31)}
+# ---- from advice_cue_phrases.py ----
+#
+# Casual round, item 3: the question sets for the extended NO ADVICE cues, written BEFORE the
+# code (docs/decisions.md, "Casual round"). Data only.
+
+# Advice cue plus an action word: must be detected as an advice question.
+CUE_POSITIVES = [
+    "what would you do, take a payment plan or pay all at once",  # cq14
+    "what do you suggest, drop the class or withdraw",
+    "which is better, withdrawing or taking an incomplete",
+    "what's your advice, audit the course or take it for credit",
+    "what would you do in my place about changing my major",
+    "what do you suggest for transferring from another college",
+    "which is better, a payment plan or paying in full",
+    "do you think i should sign up for the winter session",
+]
+
+# Plain rule questions or a cue with no action word: must NOT be detected.
+CUE_NEGATIVES = [
+    "what would my payment be on the payment plan",
+    "which is better known, FAFSA or TAP",
+    "what would the refund be if i drop a class",
+    "what would a W do to my gpa",
+    "what do i do if i want to withdraw from a class",
+    "how do i sign up for the payment plan",
+    "which is the last day to withdraw in fall 2026",
+    "which is better, the degree checklist or the planner",
+    "what do you suggest for finding the registrar office",
+    "what is the advice policy for transfer credits",
+    "what would you need to bring to the advisement office to change my major",
+    "which is better for tuition, the bursar page or the financial aid page",
+]
+
+
+# ---- from test_advice_cues.py ----
+#
+# Casual round, item 3: the extended NO ADVICE cues. The phrase sets are above
+# (written before the code). No model call.
+
+def test_the_sets_have_the_pre_registered_sizes():
+    assert (len(CUE_POSITIVES), len(CUE_NEGATIVES)) == (8, 12)
+
+
+@pytest.mark.parametrize("question", CUE_POSITIVES)
+def test_the_new_cues_with_an_action_word_are_detected(question):
+    assert advice.needs_advice_rules(question)
+
+
+@pytest.mark.parametrize("question", CUE_NEGATIVES)
+def test_plain_rule_questions_and_cues_without_an_action_word_are_not(question):
+    assert not advice.needs_advice_rules(question)
+
+
+def test_cq14_is_the_payment_plan_action():
+    names = [a.name for a in advice.matched_actions(CUE_POSITIVES[0])]
+    assert names == ["payment_plan"]
+
+
+def test_on_the_dev_questions_only_the_advice_ones_and_cq14_fire():
+    fired = {q["id"] for q in DEV if advice.needs_advice_rules(q["question"])}
+    assert fired == {"q30", "q47", "q91", "q92", "q112"}

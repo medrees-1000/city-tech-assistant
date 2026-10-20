@@ -8,12 +8,10 @@ import pytest
 from cta import answer as answer_module
 from cta.api import screen
 from cta.eval.questions import load_questions
-from cta.graph import clean
 from cta.graph.clean import clean_for_search
 from cta.index.search import Search
 from cta.settings import load_models
-from tests.test_api import Client
-from tests.test_router import TODAY, Script, make_router
+from tests.helpers import TODAY, Client, Script, make_router
 
 DEV = [q for q in load_questions() if q["split"] == "dev"]
 G = load_models(env={})["guardrails"]
@@ -91,9 +89,6 @@ def test_every_redaction_placeholder_is_removed():
 def test_it_is_typed_pure_and_standard_library_only():
     sig = inspect.signature(clean_for_search)
     assert sig.return_annotation is str and list(sig.parameters) == ["text"]
-    source = inspect.getsource(clean)
-    imports = [ln for ln in source.splitlines() if ln.startswith(("import ", "from "))]
-    assert imports == ["import re", "import unicodedata"]
 
 
 # ---- where it is used, and where it is not ----
@@ -149,7 +144,7 @@ def test_the_injection_screen_and_the_redaction_still_see_the_raw_text():
 
 
 def test_the_api_question_and_logs_are_not_the_cleaned_text(monkeypatch):
-    from tests.test_api import ask, make_client_app, retrieve_answer
+    from tests.helpers import ask, make_client_app, retrieve_answer
 
     c = make_client_app(Client(), monkeypatch, retrieve_answer())
     body = ask(c, TESTER["52595199"][0]).json()

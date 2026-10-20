@@ -14,13 +14,12 @@ crawl:
 
 catalog_api:
   base_url: https://app.coursedog.com/api/v1
-  school: nyt01
   catalog_id: qPpQUgUy149umoKU2soi
   origin: https://citytech.catalog.cuny.edu
   effective_date: "2026-08-28"
   page_size: 20
   expected_total: 1445
-  # POST {base_url}/cm/{school}/courses/search/%24filters?catalogId=...&skip=..&limit=..&orderBy=code
+  # POST {base_url}/cm/nyt01/courses/search/%24filters?catalogId=...&skip=..&limit=..&orderBy=code
   search_path: /cm/nyt01/courses/search/%24filters
   # GET {base_url}/nyt01/requirementGroups/<ID>?returnFields=code,catalogDisplayName,descriptionLong
   rule_path: /nyt01/requirementGroups/{rule_id}
@@ -139,19 +138,6 @@ page_metadata:  # extra fields copied into a page record
   "https://www.citytech.cuny.edu/advisement/virtual-advisors.aspx":
     note: "lists staff emails"
 
-skip_pages:  # placeholders, JS-loaded or out of scope
-  - course-listing.aspx
-  - directory.aspx
-  - news-events
-  - advisory-committee
-  - research
-  - cuny-2x-tech
-
-not_collected_notes:
-  - admissions/dates-deadlines.aspx is thin; use the calendar PDFs for dates
-  - financial-aid/financial-payment-calendar.aspx only links to PDFs; the PDF is the content
-  - advisement/planner.aspx redirects (302) to http://; follow same-host redirect and normalize to https
-
 pdfs:  # downloaded by the owner into data/pdfs/; no download URLs are recorded
   - file: "data/pdfs/CST-NYT-2026-09-10-19-16-13.pdf"
     kind: department
@@ -200,7 +186,3 @@ known_data:  # PDFs already parsed into records (data/processed/pdfs/<slug>.json
     record: data/processed/pdfs/cunyfirst-student-reference.json
     doc_type: howto
     scope: cuny
-pdfs_skipped:
-  - "program-DSCI-BS-*.pdf  # subset of the CST department PDF"
-  - "2025-26 financial aid guide PDFs linked from the aid FAQ (out of date)"
-  - "form PDFs (re-admission, ePermit, graduation application, TAP waiver): record links in fetch log only"

@@ -1,18 +1,42 @@
 """Embedding client: batches, retries, dimension check, real token usage.
 
 The API key is read by the OpenAI client from the environment (OPENAI_API_KEY, loaded from .env)
-and is never printed or put in an error message.
-"""
+and is never printed or put in an error message."""
 
+import json
 import os
 import time
 from collections.abc import Callable
 from contextvars import ContextVar
+from pathlib import Path
 
 import openai
 from dotenv import load_dotenv
 
 from cta.settings import ROOT
+
+# ---- a small JSON file used as a cache: query embeddings, rerank scores, never answers ----
+# (was jsoncache.py)
+
+def read_cache(path: Path) -> dict:
+    """The cache as a dict; a missing, unreadable or corrupt file is an empty cache."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def write_cache(path: Path, cache: dict) -> None:
+    """Write through a temporary file so an interrupted write cannot corrupt the cache."""
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(cache), encoding="utf-8")
+        os.replace(tmp, path)
+    except OSError:
+        pass  # the cache is only a speed-up
+
 
 BATCH_SIZE = 64
 MAX_RETRIES = 3  # retries after the first attempt; waits 1, 2, 4 seconds

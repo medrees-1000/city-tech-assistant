@@ -68,8 +68,8 @@ class HowFound(BaseModel):
     # "topic" (sentence written from the templates) or "generic"; None for other answers
     abstain_wording: str | None = None
     topic_in_scope: bool | None = None  # the topic call's in_scope, when it ran and was usable
-    # the language step, when it ran (tester round 1b): the detected language and, for a question
-    # that was not English, the redacted English translation every later step worked on
+    # the language step, when it ran: the detected language and, for a question that was not
+    # English, its redacted English translation (the reply is a fixed English notice)
     language: dict[str, str | None] | None = None
     # a below-threshold abstention that lists the two closest pages (the near-miss helper)
     near_miss: bool = False

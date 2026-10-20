@@ -11,7 +11,7 @@ from datetime import date
 from pathlib import Path
 
 from cta.parse.calendar import Extraction, joined_lines, weekday_check
-from cta.validate.findings import Finding
+from cta.validate.findings import Finding, squash
 
 REQUIRED = ("id", "term", "event", "date_raw", "weekday_raw", "source_pdf", "source_page")
 
@@ -107,10 +107,6 @@ def check_term_markers(events: list[dict], term: str) -> list[Finding]:
             )
         )
     return found
-
-
-def squash(text: str) -> str:
-    return re.sub(r"\s+", "", text)
 
 
 def check_against_pdf(events: list[dict], ex: Extraction) -> list[Finding]:

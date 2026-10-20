@@ -35,7 +35,6 @@ class PLine:
     plain: str  # without markup
     page: int
     top: float
-    bottom: float
     x0: float
     x1: float
     size: float
@@ -162,7 +161,7 @@ def lines_from_chars(
         sizes = sorted(round(c["size"], 1) for c in g)
         lines.append(PLine(
             text=" ".join(parts), plain=" ".join(w["text"] for w in words), page=page_no,
-            top=min(c["top"] for c in g), bottom=max(c["bottom"] for c in g),
+            top=min(c["top"] for c in g),
             x0=min(c["x0"] for c in g), x1=max(c["x1"] for c in g),
             size=sizes[len(sizes) // 2], bold_all=all(is_bold(c["fontname"]) for c in g),
             page_height=page_height, first_word_width=words[0]["x1"] - words[0]["x0"],

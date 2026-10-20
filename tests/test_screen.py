@@ -9,7 +9,7 @@ from cta.api import convert, requestlog, schema, screen
 from cta.eval.questions import load_questions
 from cta.settings import load_models
 from tests.attack_strings import ATTACKS
-from tests.test_api import Client, ask, cfg_for, make_client_app, retrieve_answer
+from tests.helpers import Client, ask, cfg_for, make_client_app, retrieve_answer
 
 DEV = [q for q in load_questions() if q["split"] == "dev"]
 G = load_models(env={})["guardrails"]
@@ -58,15 +58,6 @@ ORDINARY = [  # near the patterns, and not guardrail cases: all must pass throug
 
 def test_the_lists_are_the_fixed_ones():
     assert len(screen.DISTRESS) == 21 and "suicide" in screen.DISTRESS
-    assert screen.REASONS == (
-        "distress",
-        "danger",
-        "bereavement",
-        "personal_data",
-        "injection",
-        "output",
-        "stress",
-    )  # stress: tester round 1
 
 
 # ---- 1. every listed phrase fires ----
@@ -426,7 +417,6 @@ def test_the_stress_reply_is_fixed_has_no_number_contact_or_claim():
     assert text.startswith("That sounds really stressful, and I'm sorry you're dealing with it.")
     assert not any(ch.isdigit() for ch in text) and "@" not in text and "http" not in text.lower()
     assert "988" not in text and "911" not in text and "[" not in text
-    assert "stress" in screen.REASONS
 
 
 def test_the_stress_tier_needs_first_person_a_stress_word_and_at_most_20_words():

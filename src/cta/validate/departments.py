@@ -10,8 +10,8 @@ import re
 from collections import Counter
 
 from cta.parse.departments import is_label
-from cta.validate.findings import Finding
-from cta.validate.pdfs import markdown_text, normalize, squash
+from cta.validate.findings import Finding, squash
+from cta.validate.pdfs import markdown_text, normalize
 
 REPLACEMENT = "�"
 BROKEN_GLYPH = "⯑"

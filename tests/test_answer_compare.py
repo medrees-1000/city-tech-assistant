@@ -8,7 +8,7 @@ from cta.eval import answer_compare as ac
 from cta.eval import run_answers as ra
 from cta.index.rerank import Rerank
 from cta.settings import load_models
-from tests.test_run_answers import ans, question, top
+from tests.helpers import ans, question, top
 
 
 def record(qid, correctness="correct", faithfulness="yes", **kw):

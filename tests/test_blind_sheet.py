@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from cta.eval import blind_sheet as bs
+from cta.eval import blind as bs
 
 QUESTIONS = {
     "cv2-01": {"id": "cv2-01", "gold_answer": "TODO", "tags": ["answer"],

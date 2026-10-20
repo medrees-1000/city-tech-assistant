@@ -3,6 +3,8 @@ personal data, prompt injection and an answer check. Plain code, no model call, 
 
 The lists are fixed in docs/decisions.md ("Stage 2 ... keep rule") before this code was written.
 Every fixed reply is a constant; none contains anything the student typed.
+
+`normalize` (input hygiene: hidden characters removed, whitespace collapsed) was api/hygiene.py.
 """
 
 import os
@@ -13,6 +15,24 @@ from cta.graph.clarify import CODE as COURSE_CODE
 from cta.graph.clarify import TERM_NAME, TOPIC_WORDS, WORD
 from cta.index.departments import detect_departments
 from cta.redact import redact
+
+# ---- input hygiene, run at API entry before any screen (was hygiene.py) ----
+#
+# Tester round 2, T13 (docs/decisions.md): the question is cleaned at API entry, before any screen,
+# redaction, log write or model call. Postgres cannot store a NUL character in a text column, so
+# one such character used to make the log row fail after the question was answered.
+
+# C0 and C1 controls except newline and tab, bidi overrides/isolates, zero-width characters, the
+# soft hyphen
+REMOVE = re.compile("[\x00-\x08\x0b-\x1f\x7f-\x9f‪-‮⁦-⁩​-‍⁠﻿­]")
+SPACES = re.compile(r"\s+")
+
+
+def normalize(text: str) -> str:
+    """The question without hidden characters and with every whitespace run as one space.
+    Idempotent: normalizing twice gives the same text."""
+    return SPACES.sub(" ", REMOVE.sub("", text)).strip()
+
 
 # The two numbers of the crisis replies live here once. The distress reply and the one sentence
 # added to every fixed "paused" reply (CRISIS_LINE, used by cta.api.guard) are built from them, so
@@ -76,7 +96,6 @@ DISTRESS_NO_NUMBER = (
     "face it alone. Talking with someone you trust, or reaching local emergency services if you "
     "are in danger, can help."
 )
-REASONS = ("distress", "danger", "bereavement", "personal_data", "injection", "output", "stress")
 
 DISTRESS = (
     "kill myself", "killing myself", "suicide", "suicidal", "end my life", "ending my life",
@@ -192,7 +211,8 @@ NOTE_TAGS = ("EMAIL", "PHONE", "ID", "NAME")
 
 @dataclass
 class Screened:
-    reason: str | None  # one of REASONS, or None when the question may go on
+    # distress, danger, bereavement, personal_data, injection, output or stress; None: it goes on
+    reason: str | None
     question: str  # the question as it goes to the model and the log (scrubbed)
     scrubbed: bool = False  # something was replaced
     removed_details: bool = False  # an e-mail, phone, ID-shaped number or name was removed

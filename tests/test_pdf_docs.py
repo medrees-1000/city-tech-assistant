@@ -43,7 +43,7 @@ HAVE_ALL = all((PDFS / name).exists() for _, name, _ in DOCUMENTS)
 
 def line(text, top, page=1, size=12.0, bold=False, x0=72.0, x1=300.0, first=30.0, margin=540.0):
     plain = text.replace("**", "")
-    return PLine(text, plain, page, top, top + size, x0, x1, size, bold, 792.0, first, margin)
+    return PLine(text, plain, page, top, x0, x1, size, bold, 792.0, first, margin)
 
 
 def flow(lines, **cfg):

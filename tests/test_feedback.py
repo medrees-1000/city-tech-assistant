@@ -10,17 +10,17 @@ from fastapi.testclient import TestClient
 from cta.api import app as api_app
 from cta.api import logs, purge, requestlog
 from cta.index.db import migration_files
-from tests.test_api import (
+from tests.helpers import (
     EVENTS,
     TODAY,
+    WORLD,
     Client,
     ask,
     cfg_for,
+    insert,
     make_client_app,
     retrieve_answer,
 )
-from tests.test_chain import WORLD
-from tests.test_requestlog import insert
 
 UNKNOWN = "7f0f3a4e00004000800000000000ffff"
 
@@ -332,7 +332,7 @@ def test_logs_id_for_an_unknown_id_an_eval_row_or_garbage_prints_nothing_stored(
 def test_the_notice_says_a_vote_is_saved_with_the_answer_and_nothing_else_is_stored_with_it():
     import re
 
-    from tests.test_requestlog import notice_text
+    from tests.helpers import notice_text
 
     assert (
         "thumbs up or down, that vote is saved with the answer. Nothing else is saved with it"

@@ -9,7 +9,7 @@ import pytest
 from cta.api import language, screen
 from cta.eval.questions import load_questions
 from cta.settings import ROOT, load_models
-from tests.test_api import Client, ask, cfg_for, make_client_app, retrieve_answer
+from tests.helpers import Client, ask, cfg_for, make_client_app, retrieve_answer
 
 DEV = [q["question"] for q in load_questions() if q["split"] == "dev"]
 CFG = load_models(env={})

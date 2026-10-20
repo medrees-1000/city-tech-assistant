@@ -10,7 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 from cta import answer as answer_module
-from cta.eval import blind_export
+from cta.eval import blind as blind_mod
 from cta.eval import questions as q_module
 from cta.eval.run_answers import main as run_answers_main
 from cta.index.rerank import Rerank
@@ -197,7 +197,7 @@ def answers(prefix):
 
 def test_blind_rows_hide_the_configuration_and_the_key_maps_it_back():
     base, fix = answers("baseline"), answers("fix")
-    rows, key = blind_export.blind_rows(base, fix, random.Random(7))
+    rows, key = blind_mod.blind_rows(base, fix, random.Random(7))
     assert sorted(r["id"] for r in rows) == sorted(base)
     text = json.dumps(rows)
     assert "abstain_reason" not in text and "route" not in text
@@ -215,7 +215,7 @@ def test_blind_rows_refuse_runs_with_different_questions():
     base, fix = answers("b"), answers("f")
     del fix["cv2-03"]
     with pytest.raises(ValueError, match="cv2-03"):
-        blind_export.blind_rows(base, fix, random.Random(1))
+        blind_mod.blind_rows(base, fix, random.Random(1))
 
 
 def test_blind_export_writes_two_files_and_never_overwrites(tmp_path, capsys):
@@ -223,13 +223,13 @@ def test_blind_export_writes_two_files_and_never_overwrites(tmp_path, capsys):
         rows = answers(prefix).values()
         (tmp_path / name).write_text("".join(json.dumps(r) + "\n" for r in rows))
     args = ["x", str(tmp_path / "b.jsonl"), str(tmp_path / "f.jsonl"), str(tmp_path / "out")]
-    assert blind_export.main(args, random.Random(3)) == 0
+    assert blind_mod.export_main(args, random.Random(3)) == 0
     blind = (tmp_path / "out-blind.jsonl").read_text().splitlines()
     key = json.loads((tmp_path / "out-key.json").read_text())
     assert len(blind) == 20 and len(key) == 20
-    allowed = {"id", "question"} | {f"{f}_{s}" for f in blind_export.SHOWN for s in "AB"}
+    allowed = {"id", "question"} | {f"{f}_{s}" for f in blind_mod.SHOWN for s in "AB"}
     assert all(set(json.loads(line)) == allowed for line in blind)  # no field names the config
-    assert blind_export.main(args, random.Random(3)) == 2  # refuses to overwrite
+    assert blind_mod.export_main(args, random.Random(3)) == 2  # refuses to overwrite
     assert "already exists" in capsys.readouterr().out
 
 

@@ -16,9 +16,8 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from cta.index.chunks import get_encoding
-from cta.index.embed import ApiError, make_client, with_retries
-from cta.index.jsoncache import read_cache, write_cache
+from cta.index.chunks import get_encoding, source_label
+from cta.index.embed import ApiError, make_client, read_cache, with_retries, write_cache
 from cta.settings import ROOT, cost_usd
 
 CACHE_PATH = ROOT / "data" / "cache" / "rerank.json"
@@ -66,12 +65,6 @@ def cut(text: str, limit: int = CHUNK_TOKENS) -> str:
     encoding = get_encoding()
     tokens = encoding.encode(text)
     return text if len(tokens) <= limit else encoding.decode(tokens[:limit])
-
-
-def source_label(chunk: dict) -> str:
-    if chunk["kind"] == "course":
-        return f"Course catalog: {chunk['id'].removeprefix('catalog:')}"
-    return chunk["source"]
 
 
 def candidate_block(n: int, chunk: dict) -> str:

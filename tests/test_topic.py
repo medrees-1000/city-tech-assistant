@@ -12,7 +12,7 @@ from cta.api import convert, topic
 from cta.api.topic import NOT_FOUND, OUT_OF_SCOPE, apologize, sanitize_topic, sentence
 from cta.index.embed import ApiError
 from cta.settings import ROOT
-from tests.test_api import Client, ask, make_client_app, retrieve_answer
+from tests.helpers import Client, ask, make_client_app, reply, retrieve_answer
 
 PIPELINE_GENERIC = (
     "I could not find this in the City Tech sources I have."  # as the pipeline writes it
@@ -20,8 +20,6 @@ PIPELINE_GENERIC = (
 GENERIC = "I'm sorry, " + PIPELINE_GENERIC  # the fallback: the same sentence with a short apology
 
 
-def reply(topic_text, in_scope):
-    return json.dumps({"topic": topic_text, "in_scope": in_scope})
 
 
 def abstain_app(monkeypatch, topic_reply, chunk="page/MATH-NYT/faqs#12", **client_kw):

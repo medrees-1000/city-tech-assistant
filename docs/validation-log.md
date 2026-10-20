@@ -256,7 +256,7 @@ Decisions applied:
      `known_404_changed` fails. Cause not investigated.
    The same failure on any other page is still an unexpected failure.
 6. Chunking rule for tables added to CLAUDE.md "Data rules": a table stays in the same chunk as the intro
-   text above it. `merge_tables_into_parents` (`src/cta/parse/sections.py`) merges a section that contains a
+   text above it. `merge_tables_into_parents` (`src/cta/index/chunks.py`) merges a section that contains a
    table into its parent section. On financial-aid/sap the 13 sections become 11 units: the intro ("the
    following table...") plus the Associate and Baccalaureate tables form one unit. Both SAP tables were
    checked by the owner against the live page.
@@ -680,7 +680,7 @@ The EET root "Our Mission" section is tagged Summer 2026 only because an advisem
   `winter-2027-023` ("End of Winter 2027 Session", Monday 2027-01-25, checked against the row), gold answer
   "Monday, January 25, 2027"; the note keeps its text and adds that Final Examinations (`winter-2027-022`) is
   the same day. All 30 questions now resolve.
-- Heading cleanup (`cta.parse.headings`, applied in `to_sections`, so it covers pages, PDFs and departments):
+- Heading cleanup (`cta.parse.html`, applied in `to_sections`, so it covers pages, PDFs and departments):
   link markup is removed from headings and heading paths, and a heading that was a link keeps its URL in the
   section's `heading_url` (null otherwise, present on every section). Section ids do not change.
   Headings changed: 11 section headings, in `CST-NYT/degrees` (4), `EET-NYT/degrees` (2), `MATH-NYT/degrees`

@@ -3,18 +3,7 @@ import shutil
 from pathlib import Path
 
 from cta.parse.pages import build_contacts, build_pages, record_for, slug_of
-from tests.test_parse_html import PAGES
-
-HOST = "https://www.citytech.cuny.edu"
-
-
-def entry(path, name, kind="office", owner="bursar", status=200, error=""):
-    return {
-        "url": HOST + path, "kind": kind, "owner": owner, "status": status, "error": error,
-        "final_url": HOST + path if status else None,
-        "saved_as": f"raw/{name}.html" if name else None,
-        "content_hash": "h" if status else None, "fetched_at": "2026-10-11T00:00:00+00:00",
-    }  # fmt: skip
+from tests.helpers import HOST, PAGES, entry
 
 
 def test_slug_of():

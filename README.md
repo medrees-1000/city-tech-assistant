@@ -193,10 +193,33 @@ The collected data is not in the repo, so this is not a one-command reproduce: t
 - Metrics: recall, precision, hit rate and MRR at k; judged correctness and faithfulness; abstention accuracy; cost; latency. Judge noise is about 0.03 to 0.05 on dev.
 - I built this with Claude Code as a coding assistant. I made the decisions, wrote or reviewed every eval question and gold answer, and set the pre-registered rules.
 
-## Repo layout, tests, license
+## Repo map, tests, license
 
-- `src/cta/`: `crawl`, `parse`, `index` (chunks, embeddings, search), `graph` (router, calendar, chain), `api` (FastAPI and guards), `eval`, `validate`. `web/` is the Next.js page; `config/` settings and sources; `db/migrations/`; `eval/` questions and results; `scripts/`; `docs/` decisions, plans and results.
-- Tests: 3,041 Python tests (`uv run pytest`) and 142 web tests (`npm test --prefix web`). On my machine all 3,041 Python tests pass; in a fresh clone without the collected data, 2,435 pass and 606 skip with a reason (they need the data or Postgres) and none fail. `ruff check` is clean.
+| Folder | What is in it |
+|---|---|
+| `src/cta/` | `crawl`, `parse`, `index` (chunks, embeddings, search), `graph` (router, calendar, chain), `api` (FastAPI and guards), `eval` (the eval runners; the README numbers do not need them), `validate` (the data checks) |
+| `web/` | the Next.js page (`npm test --prefix web`) |
+| `config/` | settings and sources: `models.yaml`, `sources.yaml`, `contacts.yaml`, `departments.yaml`, `calendar_terms.yaml` |
+| `db/migrations/` | the Postgres schema |
+| `eval/` | `questions.jsonl` (122 labelled questions), `questions_casual_v2.jsonl` (a second, held-out casual set), `judge_labels.json` (owner verdicts used to check the judge) and `results/` (one frozen JSON per run; which files are kept and why is at the top of [docs/results.md](docs/results.md)) |
+| `scripts/` | the table below |
+| `tests/` | flat; the shared fakes are in `helpers.py`; where each fixture came from is at the top of `conftest.py` |
+| `docs/` | start at [docs/README.md](docs/README.md) |
+
+Scripts (run from the repo root, `uv run python scripts/<name>.py`; they are not part of the app and ruff does not check them):
+
+| Script | What it does |
+|---|---|
+| `smoke_live.py` | sends about 14 `/ask` requests to a running API (direct, Caddy or the Vercel page) and prints a pass/fail table. Run after every deploy, wait about 70 seconds between runs; costs a few cents. Commands: [docs/deploy-runbook.md](docs/deploy-runbook.md) |
+| `export_index.sh`, `restore_index.sh` | dump and load only the index tables (chunks with embeddings, calendar), so a new server needs no re-embedding |
+| `readme_numbers.py` | prints the README and `docs/results.md` tables from `eval/results/` (no network, no cost) |
+| `recompute_final.py final-run` | recomputes the final-run headline numbers from scratch as a check; exits with 1 because four retrieval numbers differ from the stored ones (the table-merge map is not passed; see the file's docstring) |
+| `make_section_index.py` | rewrites `docs/section-index.md` (section ids for choosing eval gold sources) from `data/processed` |
+| `make_manual_check_docs.py` | writes the blank manual-check sheets for programs and contacts into `docs/archive/` |
+| `export_final_answers.py` | copies the stored answers of an eval run from the database to `eval/results/<label>-answers.jsonl`, because `request_logs` is purged after 30 days |
+| `test_catalog_api.py` | shows that the public catalog API can be read without logging in (2 requests); a script, not a pytest test |
+
+- Tests: 3,035 Python tests (`uv run pytest`) and 142 web tests (`npm test --prefix web`). On my machine all 3,035 Python tests pass; in a fresh clone without the collected data, 2,429 pass and 606 skip with a reason (they need the data or Postgres) and none fail. `ruff check` is clean.
 - License: MIT for the code (see [LICENSE](LICENSE)). No crawled City Tech content is included. `eval/questions.jsonl` quotes short passages from public City Tech pages in its gold answers; the project is not affiliated with City Tech or CUNY.
 
 ## Contact

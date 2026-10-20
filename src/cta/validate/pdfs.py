@@ -13,7 +13,7 @@ from pathlib import Path
 import pdfplumber
 
 from cta.parse.pdf_docs import BULLETS, LIGATURES, SCREENSHOT_LABEL, in_box
-from cta.validate.findings import Finding
+from cta.validate.findings import Finding, squash
 
 REPLACEMENT = "�"
 TERM = re.compile(r"\b(Fall|Spring|Summer|Winter)\s+(20\d\d)\b")
@@ -32,10 +32,6 @@ TABLE_POLICY = {
 }
 # Lines of a multi-column infographic interleave its panels, so lines cannot be compared one by one.
 LINE_CHECK_SKIPPED = {"Special_Circumstances_Flyer_2025_2026_2026_2027.pdf"}
-
-
-def squash(text: str) -> str:
-    return re.sub(r"\s+", "", text)
 
 
 def normalize(text: str) -> str:

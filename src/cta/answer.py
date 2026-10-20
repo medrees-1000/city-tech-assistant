@@ -18,7 +18,7 @@ from datetime import date
 
 from cta.graph.chain import explain_shorthand
 from cta.graph.clean import clean_for_search
-from cta.index.chunks import token_counter
+from cta.index.chunks import source_label, token_counter
 from cta.index.db import connect
 from cta.index.embed import ApiError, make_client, with_retries
 from cta.index.search import Search, search
@@ -163,12 +163,6 @@ def closest_pages(
 def near_miss_text(pages: list[dict]) -> str:
     lines = [f"- {c.get('heading_path') or c['id']} [{n}]" for n, c in enumerate(pages, 1)]
     return NEAR_MISS_INTRO + "\n\n" + "\n".join(lines)
-
-
-def source_label(chunk: dict) -> str:
-    if chunk["kind"] == "course":
-        return f"Course catalog: {chunk['id'].removeprefix('catalog:')}"
-    return chunk["source"]
 
 
 def format_source(n: int, chunk: dict) -> str:

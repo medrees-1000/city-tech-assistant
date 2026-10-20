@@ -24,7 +24,7 @@ from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from cta.api import convert, hygiene, language, requestlog, schema, screen, topic, tracing
+from cta.api import convert, language, requestlog, schema, screen, topic, tracing
 from cta.api import guard as guard_mod
 from cta.api.checks import require_startup
 from cta.graph import render
@@ -320,7 +320,7 @@ def create_app(
     @app.post("/ask", response_model=schema.AskResponse)
     async def ask(body: schema.AskRequest, request: Request):
         rid = request.state.request_id
-        question = hygiene.normalize(body.question)  # before any screen, redaction or log
+        question = screen.normalize(body.question)  # before any screen, redaction or log
         today = api["today"] or clock()
         started = time.perf_counter()
         reason = await run_in_threadpool(guard.stage1, request, connect)

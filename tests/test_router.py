@@ -9,20 +9,11 @@ import pytest
 from cta.answer import Answer
 from cta.eval import run_answers as ra
 from cta.graph import build, classify, render, select, terms
-from cta.graph.build import Router, answer_question, build_graph
-from cta.graph.state import RoutedAnswer
+from cta.graph.build import answer_question, build_graph
 from cta.index.search import Search
 from cta.settings import load_models
+from tests.helpers import ROUTER_CFG, TODAY, Script, make_router, routed_ans
 
-CFG = load_models(
-    env={
-        "CTA_RERANK": "off",
-        "CTA_ROUTER_MODE": "on",
-        "CTA_ROUTER_SELECTOR": "1",
-        "CTA_ROUTER_CHAIN": "off",
-        "CTA_ROUTER_CONTACTS": "off",
-    }
-)
 OFF = load_models(
     env={
         "CTA_RERANK": "off",
@@ -31,7 +22,6 @@ OFF = load_models(
         "CTA_ROUTER_CONTACTS": "off",
     }
 )
-TODAY = date(2026, 10, 11)
 
 
 def row(rid="fall-2026-040", **kw):
@@ -262,10 +252,6 @@ def gold_q(*ids):
     return {"id": "q", "gold_sources": [{"id": i} for i in ids]}
 
 
-def routed_ans(rows=(), route="calendar", abstained=False):
-    ans = RoutedAnswer("t", abstained, None, [], search=Search([], False, 0, 0, 0.0))
-    ans.row_ids, ans.route = list(rows), route
-    return ans
 
 
 @pytest.mark.parametrize(
@@ -312,39 +298,8 @@ def test_evaluate_question_uses_the_calendar_rule_only_when_asked():
 # ---- graph wiring (a scripted client, no network) ----
 
 
-class Script:
-    """A chat client with fixed replies for the classifier, the selector and the answerer."""
-
-    def __init__(
-        self, intent="calendar", mention=None, row_ids=(), selector_text=None, answer="ok [1]"
-    ):
-        self.intent, self.mention, self.row_ids = intent, mention, list(row_ids)
-        self.selector_text, self.answer_text, self.calls = selector_text, answer, []
-        self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
-
-    def create(self, **kw):
-        system = kw["messages"][0]["content"]
-        which = "classify" if system.startswith("You route") else "select" if system.startswith(
-            "You choose") else "answer"  # fmt: skip
-        self.calls.append(which)
-        reply = {
-            "classify": json.dumps({"intent": self.intent, "term_mention": self.mention}),
-            "select": self.selector_text or json.dumps({"row_ids": self.row_ids}),
-            "answer": self.answer_text,
-        }[which]
-        usage = SimpleNamespace(prompt_tokens=100, completion_tokens=10)
-        return SimpleNamespace(
-            choices=[SimpleNamespace(message=SimpleNamespace(content=reply))], usage=usage
-        )
 
 
-def make_router(script, monkeypatch, events, cfg=CFG):
-    stub = Answer(
-        "old path [1]", False, None, [{"id": "c1"}], [1], [], Search([], False, 0, 0, 0.0)
-    )
-    seen = []
-    monkeypatch.setattr(build, "answer", lambda *a, **k: seen.append((a, k)) or stub)
-    return Router(None, cfg, lambda: script, events=events, contact="registrar@x.edu"), seen
 
 
 def test_calendar_route_answers_from_the_rows_and_never_calls_retrieve(monkeypatch, events):
@@ -445,7 +400,7 @@ def test_a_failed_classifier_sends_the_question_to_the_old_pipeline(monkeypatch,
 
 
 def test_the_graph_has_the_pre_registered_nodes_and_edges():
-    graph = build_graph(build.Deps(None, CFG, None, [], "c")).get_graph()
+    graph = build_graph(build.Deps(None, ROUTER_CFG, None, [], "c")).get_graph()
     edges = {(e.source, e.target) for e in graph.edges}
     assert set(graph.nodes) == {
         "__start__", "classify", "clarify", "advice", "calendar", "chain", "retrieve", "__end__"
@@ -462,7 +417,7 @@ def test_the_graph_has_the_pre_registered_nodes_and_edges():
 def test_the_architecture_doc_shows_the_current_graph():
     from pathlib import Path
 
-    mermaid = build_graph(build.Deps(None, CFG, None, [], "c")).get_graph().draw_mermaid()
+    mermaid = build_graph(build.Deps(None, ROUTER_CFG, None, [], "c")).get_graph().draw_mermaid()
     doc = (Path(__file__).resolve().parents[1] / "docs" / "architecture.md").read_text()
     assert mermaid in doc
 
@@ -526,7 +481,7 @@ def test_request_log_row_carries_route_and_router_numbers_and_is_redacted(conn):
         {"x": 1},
     )
     ans.sources = [{"id": "fall-2026-040"}]
-    build.log_request(conn, "my email is a@b.edu, when?", ans, CFG, None)
+    build.log_request(conn, "my email is a@b.edu, when?", ans, ROUTER_CFG, None)
     q, a, route, router = conn.execute(
         "SELECT question, answer, route, router FROM request_logs"
     ).fetchone()
@@ -548,7 +503,7 @@ CFG2 = load_models(
 
 
 def test_selector_switch_values_and_validation():
-    assert CFG["router"]["selector"] == 1 and load_models(env={})["router"]["selector"] == 2
+    assert ROUTER_CFG["router"]["selector"] == 1 and load_models(env={})["router"]["selector"] == 2
     assert CFG2["router"]["selector"] == 2
     with pytest.raises(ValueError, match="router.selector"):
         load_models(env={"CTA_ROUTER_SELECTOR": "3"})
@@ -615,7 +570,7 @@ def test_selector_v2_sees_all_calendars_and_a_row_of_another_term_can_be_chosen(
 
 def test_selector_v1_is_unchanged_when_the_switch_is_1(monkeypatch, events):
     script = Script("calendar", "Fall 2026", ["fall-2026-040"])
-    router, _ = make_router(script, monkeypatch, events, CFG)
+    router, _ = make_router(script, monkeypatch, events, ROUTER_CFG)
     ans = router.answer("Last day to withdraw with a W in Fall 2026?", TODAY, log=False)
     assert script.calls == ["classify", "select"]
     assert ans.router["selector_version"] == 1 and ans.router["pool_size"] == 53

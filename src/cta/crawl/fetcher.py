@@ -1,16 +1,145 @@
-"""The one polite fetcher: rate limit, robots.txt, same-host redirects, raw store, fetch log."""
+"""The one polite fetcher: rate limit, robots.txt, same-host redirects, raw store, fetch log.
 
+The robots.txt policy, the URL and login rules and the raw store with its fetch log live here too
+(they were crawl/robots.py, urls.py and store.py).
+"""
+
+import hashlib
+import json
 import json as jsonlib
+import re
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+from urllib.parse import urljoin, urlsplit, urlunsplit
 from urllib.robotparser import RobotFileParser
 
 import httpx
 
-from cta.crawl.robots import describe, parse_robots
-from cta.crawl.store import LogEntry, RawStore, sha256_hex, utc_now
-from cta.crawl.urls import host_of, looks_like_login, normalize_url, resolve_redirect
+# ---- robots.txt handling: one parsed policy per host. (was robots.py) ----
+
+def parse_robots(status: int, text: str) -> RobotFileParser:
+    """Build a policy from a robots.txt response.
+
+    200 -> parse the rules. 404 (and other 4xx except 401/403) -> no rules, everything allowed.
+    401/403 and 5xx -> the file exists but cannot be read, so assume everything is disallowed.
+    """
+    rp = RobotFileParser()
+    if status == 200:
+        rp.parse(text.splitlines())
+        rp.modified()  # can_fetch() refuses until a check time is recorded
+    elif status in (401, 403) or status >= 500:
+        rp.disallow_all = True
+    else:
+        rp.allow_all = True
+    return rp
+
+
+def describe(rp: RobotFileParser) -> str:
+    if rp.disallow_all:
+        return "robots unreadable: disallow all"
+    if rp.allow_all:
+        return "no robots rules: allow all"
+    return "robots rules parsed"
+
+
+# ---- URL normalization and the host/login rules shared by the crawler. (was urls.py) ----
+
+LOGIN_WORDS = ("login", "logout", "signin", "sso", "cas/")
+
+
+def normalize_url(url: str) -> str:
+    """Return an https URL with a lowercase host, default port and no fragment."""
+    parts = urlsplit(url.strip())
+    if parts.scheme not in ("http", "https") or not parts.hostname:
+        raise ValueError(f"not an http(s) URL: {url!r}")
+    netloc = parts.hostname.lower()
+    if parts.port and parts.port not in (80, 443):
+        netloc = f"{netloc}:{parts.port}"
+    return urlunsplit(("https", netloc, parts.path or "/", parts.query, ""))
+
+
+def resolve_redirect(current_url: str, location: str) -> str:
+    """Resolve a Location header (possibly relative) against the current URL and normalize it."""
+    return normalize_url(urljoin(current_url, location))
+
+
+def host_of(url: str) -> str:
+    return urlsplit(url).hostname or ""
+
+
+def looks_like_login(url: str) -> bool:
+    path = urlsplit(url).path.lower()
+    return any(word in path for word in LOGIN_WORDS)
+
+
+# ---- Raw store under data/raw/ and the append-only fetch log. (was store.py) ----
+
+def sha256_hex(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def utc_now() -> str:
+    return datetime.now(UTC).isoformat(timespec="seconds")
+
+
+@dataclass
+class LogEntry:
+    """One row per HTTP request attempt (redirect hops, robots.txt and blocked URLs included)."""
+
+    timestamp: str
+    method: str
+    url: str
+    status: int | None
+    content_hash: str | None
+    bytes: int
+    saved_as: str | None
+    note: str = ""
+
+
+class RawStore:
+    def __init__(self, root: Path):
+        self.root = root
+        self.log_path = root / "fetch_log.jsonl"
+
+    def save(self, method: str, url: str, body: bytes, content_type: str, req_body: bytes) -> str:
+        """Write the response untouched; return its path relative to the store root."""
+        parts = urlsplit(url)
+        slug = re.sub(r"[^A-Za-z0-9]+", "-", f"{parts.path}-{parts.query}").strip("-")[:80]
+        key = sha256_hex(f"{method} {url}".encode() + req_body)[:10]
+        ext = _extension(content_type)
+        rel = Path(parts.hostname or "unknown") / f"{slug or 'index'}-{key}.{ext}"
+        path = self.root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(body)
+        return str(rel)
+
+    def log(self, entry: LogEntry) -> None:
+        self.root.mkdir(parents=True, exist_ok=True)
+        with self.log_path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(asdict(entry), ensure_ascii=False) + "\n")
+
+    def read_log(self) -> list[dict]:
+        if not self.log_path.exists():
+            return []
+        lines = self.log_path.read_text(encoding="utf-8").splitlines()
+        return [json.loads(line) for line in lines if line]
+
+
+def _extension(content_type: str) -> str:
+    ct = content_type.lower()
+    if "json" in ct:
+        return "json"
+    if "html" in ct:
+        return "html"
+    if "pdf" in ct:
+        return "pdf"
+    if "xml" in ct:
+        return "xml"
+    return "txt" if ct.startswith("text/") else "bin"
+
 
 REDIRECT_CODES = {301, 302, 303, 307, 308}
 

@@ -122,8 +122,8 @@ def check_departments() -> Area:
 
 
 def check_metadata() -> Area:
-    from cta.validate.headings import run_heading_checks
     from cta.validate.metadata import embedded_sections, load_records, run_metadata_checks
+    from cta.validate.pages import run_heading_checks
     from cta.validate.terms import run_term_checks
 
     area = Area("metadata")
@@ -143,7 +143,7 @@ def check_metadata() -> Area:
 
 
 def check_entities() -> Area:
-    from cta.validate.entities import check_entities as scan
+    from cta.validate.pages import check_entities as scan
 
     area = Area("entities")
     if not PROCESSED.exists():
