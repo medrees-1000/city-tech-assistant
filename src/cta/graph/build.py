@@ -24,7 +24,7 @@ from datetime import date
 from langgraph.graph import END, START, StateGraph
 
 from cta.answer import Answer, answer, call_chat, parse_reply
-from cta.graph import advice, chain_render, clarify, drop_family, render, select, terms
+from cta.graph import advice, chain_render, clarify, render, select, terms
 from cta.graph import chain as chains
 from cta.graph import classify as classifier
 from cta.graph import contact as contacts
@@ -152,13 +152,13 @@ def make_nodes(d: Deps):
                 if version == 2
                 else terms.term_pool(d.events, resolution.term)
             )
-        if resolution.status != "unsupported" and drop_family.applies(state["question"]):
-            rows = drop_family.rows_of(terms.term_pool(d.events, resolution.term))
+        if resolution.status != "unsupported" and clarify.drop_family_applies(state["question"]):
+            rows = clarify.drop_family_rows(terms.term_pool(d.events, resolution.term))
             if rows:  # T04: every grade-related drop/withdraw row of the term, no selector call
                 assumed = resolution.term if resolution.status == "assumed" else None
                 rendered = render.render_rows(rows, d.contact, assumed)
                 info.update(
-                    selector_version=drop_family.SELECTOR_VERSION,
+                    selector_version=clarify.DROP_FAMILY_VERSION,
                     pool_size=len(pool),
                     invalid_ids=0,
                 )

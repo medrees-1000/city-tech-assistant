@@ -7,7 +7,7 @@ from datetime import date
 import pytest
 
 from cta.eval.questions import load_questions
-from cta.graph import build, drop_family
+from cta.graph import build, clarify
 from tests.drop_phrases import NEGATIVES, POSITIVES
 from tests.helpers import Script, make_router
 
@@ -22,12 +22,12 @@ def test_the_sets_have_the_pre_registered_sizes():
 
 @pytest.mark.parametrize("question", POSITIVES)
 def test_unqualified_drop_and_withdraw_date_questions_apply(question):
-    assert drop_family.applies(question)
+    assert clarify.drop_family_applies(question)
 
 
 @pytest.mark.parametrize("question", NEGATIVES)
 def test_qualified_or_other_questions_do_not(question):
-    assert not drop_family.applies(question)
+    assert not clarify.drop_family_applies(question)
 
 
 # Oct 17, 2026 (owner decision): the drop and withdraw deadline rows AND the tuition-refund rows,
@@ -45,7 +45,7 @@ EXPECTED = {
 @pytest.mark.parametrize(("term", "ids"), EXPECTED.items())
 def test_each_term_matches_exactly_its_drop_and_refund_rows_in_date_order(term, ids):
     pool = [r for r in calendar_rows() if r["term"] == term]
-    rows = drop_family.rows_of(pool)
+    rows = clarify.drop_family_rows(pool)
     assert [r["id"] for r in rows] == ids
     assert [r["date_start"] for r in rows] == sorted(r["date_start"] for r in rows)
     # never an add row, a "grade ... is assigned" explanation row or a period start
@@ -57,12 +57,12 @@ def test_each_term_matches_exactly_its_drop_and_refund_rows_in_date_order(term, 
 
 def test_a_term_without_such_rows_gets_nothing():
     other = [{"id": "x-1", "event": "Classes begin", "date_start": "2026-01-01"}]
-    assert drop_family.rows_of(other) == []
+    assert clarify.drop_family_rows(other) == []
 
 
 def test_dev_questions_that_apply_are_only_the_new_cq17():
     dev = [q for q in load_questions() if q["split"] == "dev"]
-    assert [q["id"] for q in dev if drop_family.applies(q["question"])] == ["q114"]
+    assert [q["id"] for q in dev if clarify.drop_family_applies(q["question"])] == ["q114"]
 
 
 TODAY = date(2026, 10, 11)
@@ -82,7 +82,7 @@ def test_the_router_lists_the_drop_and_refund_rows_without_a_selector_call(monke
     ans = router.answer(question, TODAY, log=False)
     assert script.calls == ["classify"] and seen == []
     assert ans.route == "calendar" and ans.row_ids == THREE and not ans.abstained
-    assert ans.router["selector_version"] == "drop_family_v2" == drop_family.SELECTOR_VERSION
+    assert ans.router["selector_version"] == "drop_family_v2" == clarify.DROP_FAMILY_VERSION
     assert (
         ans.text.index("August 27")
         < ans.text.index("September 3")
@@ -109,7 +109,7 @@ def test_an_assumed_term_is_stated_like_any_calendar_answer(monkeypatch):
 
 def test_refund_rows_are_included_and_every_listed_row_is_in_the_verified_table():
     pool = [r for r in calendar_rows() if r["term"] == "Fall 2026"]
-    rows = drop_family.rows_of(pool)
+    rows = clarify.drop_family_rows(pool)
     percents = [r["event"] for r in rows if "tuition refund" in r["event"]]
     assert [p.split(" for ")[1][:4] for p in percents] == ["100%", "75% ", "50% ", "25% "]
     assert all(r in pool for r in rows)  # never a row that is not in the table
@@ -123,7 +123,7 @@ def test_a_term_with_no_refund_rows_gets_only_the_grade_rows():
          "date_start": "2027-04-05"},
         {"id": "t-3", "event": "Classes begin", "date_start": "2027-01-27"},
     ]  # fmt: skip
-    assert [r["id"] for r in drop_family.rows_of(pool)] == ["t-1", "t-2"]
+    assert [r["id"] for r in clarify.drop_family_rows(pool)] == ["t-1", "t-2"]
 
 
 def test_unrelated_events_and_questions_are_unchanged():
@@ -133,10 +133,11 @@ def test_unrelated_events_and_questions_are_unchanged():
          "date_start": "2026-09-04"},
         {"id": "u-3", "event": "Online registration begins", "date_start": "2026-10-29"},
     ]  # fmt: skip
-    assert drop_family.rows_of(pool) == []
-    assert not drop_family.applies("when is the last day to add a course")
-    assert not drop_family.applies("when do I get my tuition refund")  # a qualifier: the selector
+    assert clarify.drop_family_rows(pool) == []
+    assert not clarify.drop_family_applies("when is the last day to add a course")
+    # a qualifier: the selector
+    assert not clarify.drop_family_applies("when do I get my tuition refund")
 
 
 def test_the_selector_version_is_bumped_so_stored_records_stay_distinguishable():
-    assert drop_family.SELECTOR_VERSION == "drop_family_v2"
+    assert clarify.DROP_FAMILY_VERSION == "drop_family_v2"
