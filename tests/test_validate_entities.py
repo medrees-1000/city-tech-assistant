@@ -1,7 +1,7 @@
 import json
 
 from cta.crawl.catalog import decode_entities
-from cta.validate.entities import check_entities, entities_in
+from cta.validate.pages import check_entities, entities_in
 
 
 def test_entities_in_finds_named_and_numeric_forms_in_nested_values():

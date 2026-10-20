@@ -5,6 +5,9 @@ Findings the owner has accepted (ACCEPTED below) are still printed, with the rea
 count as unexpected failures.
 Pending manual items (not here): chair details vs the department PDF; refund pages show which
 terms they cover.
+
+The entity check ("&rsquo;", "&amp;", "&#8217;" left in processed text) and the heading-markup
+check (no "](" in headings) are here too; they were validate/entities.py and headings.py.
 """
 
 import json
@@ -19,6 +22,57 @@ from bs4 import BeautifulSoup
 from cta.parse.html import PANELS, is_login_url
 from cta.settings import ROOT
 from cta.validate.findings import Finding
+
+# ---- HTML entities left in processed text; any one is a failure (was entities.py) ----
+#
+# "&rsquo;", "&amp;", "&#8217;": the parse or clean step should have decoded them (the standard
+# library's html.unescape).
+
+ENTITY = re.compile(r"&(?:#\d+|#[xX][0-9a-fA-F]+|[A-Za-z][A-Za-z0-9]{1,31});")
+
+
+def entities_in(value: object) -> list[str]:
+    """Every entity found in the strings of a JSON value (nested dicts and lists)."""
+    if isinstance(value, str):
+        return ENTITY.findall(value)
+    if isinstance(value, dict):
+        return [e for v in value.values() for e in entities_in(v)]
+    if isinstance(value, list):
+        return [e for v in value for e in entities_in(v)]
+    return []
+
+
+def check_entities(processed: Path) -> tuple[int, list[Finding]]:
+    """(number of JSON records scanned, one failure per record that still has an entity)."""
+    paths = sorted(processed.glob("**/*.json"))
+    findings = []
+    for path in paths:
+        found = entities_in(json.loads(path.read_text(encoding="utf-8")))
+        if found:
+            shown = ", ".join(sorted(set(found)))
+            name = str(path.relative_to(processed))
+            findings.append(Finding("html_entity", "fail", f"still has {shown}", name))
+    return len(paths), findings
+
+
+# ---- no markdown link markup in headings or heading paths (was headings.py) ----
+
+def check_heading_markup(record: dict) -> list[Finding]:
+    """Fail for every section whose heading, or a parent heading, still contains "](" ."""
+    name = record.get("source_url") or record.get("source_file") or "?"
+    found = []
+    for n, s in enumerate(record["sections"], 1):
+        names = [s["heading"] or "", *[p["heading"] or "" for p in s["parents"]]]
+        bad = [h for h in names if "](" in h]
+        if bad:
+            message = f"section {n}: link markup left in {bad[0]!r}"
+            found.append(Finding("heading_markup", "fail", message, name))
+    return found
+
+
+def run_heading_checks(records: list[dict]) -> list[Finding]:
+    return [f for r in records for f in check_heading_markup(r)]
+
 
 EMAIL_OK = re.compile(r"^[\w.+-]+@[\w-]+(?:\.[\w-]+)+$")
 SPACED = re.compile(r"\S\s+@\w|\w@\s+\S")
