@@ -256,7 +256,7 @@ Decisions applied:
      `known_404_changed` fails. Cause not investigated.
    The same failure on any other page is still an unexpected failure.
 6. Chunking rule for tables added to CLAUDE.md "Data rules": a table stays in the same chunk as the intro
-   text above it. `merge_tables_into_parents` (`src/cta/parse/sections.py`) merges a section that contains a
+   text above it. `merge_tables_into_parents` (`src/cta/index/chunks.py`) merges a section that contains a
    table into its parent section. On financial-aid/sap the 13 sections become 11 units: the intro ("the
    following table...") plus the Associate and Baccalaureate tables form one unit. Both SAP tables were
    checked by the owner against the live page.

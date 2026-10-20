@@ -1,4 +1,4 @@
-from cta.parse.sections import has_table, merge_tables_into_parents
+from cta.index.chunks import has_table, merge_tables_into_parents
 from tests.helpers import parse
 
 

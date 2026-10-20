@@ -227,7 +227,7 @@ tests/
 - Chunk by heading/section, not fixed size. Keep tables as markdown.
 - A table stays in the same chunk as the intro text above it (for example "see the following table:").
   When chunking, merge a section's tables with their parent section's text (`merge_tables_into_parents`
-  in `src/cta/parse/sections.py`), keeping the table's own heading.
+  in `src/cta/index/chunks.py`), keeping the table's own heading.
 - A course record is one chunk: code, title, credits, description, resolved prerequisite text,
   department, and the program(s) that list it.
 - Calendar questions are answered from the calendar table, not vector search.

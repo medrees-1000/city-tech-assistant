@@ -4,12 +4,12 @@
     uv run python -m cta.index.chunks --write    # also save data/processed/chunks.jsonl
 
 Three kinds (docs/archive/phase2-plan.md, section a): section, course, contact. Calendar events
-are not chunked; the calendar table answers those questions.
-"""
+are not chunked; the calendar table answers those questions."""
 
 import hashlib
 import json
 import os
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -19,8 +19,42 @@ import tiktoken
 
 from cta.index.metadata import chunk_metadata
 from cta.index.section_index import heading_path, is_indexable
-from cta.parse.sections import merge_tables_into_parents
 from cta.settings import ROOT, cost_usd, load_models
+
+# ---- table helpers for the page sections (was parse/sections.py) ----
+
+TABLE_SEPARATOR = re.compile(r"^\|(?: *:?-{3,}:? *\|)+ *$", re.M)  # the | --- | --- | line
+
+
+def has_table(markdown: str) -> bool:
+    return bool(TABLE_SEPARATOR.search(markdown))
+
+
+def merge_tables_into_parents(sections: list[dict]) -> list[dict]:
+    """A table stays with the intro text above it ("see the following table:").
+
+    A section that contains a table is merged into its parent section (the text under the heading
+    above it), after the parent's text, with its own heading kept. A table whose parent has no text
+    of its own stays a unit of its own. Other sections are unchanged. Order is kept."""
+    units: list[dict] = []
+    for s in sections:
+        parent = s["parents"][-1] if s["parents"] else None
+        target = None
+        if parent and has_table(s["markdown"]):
+            target = next(
+                (u for u in reversed(units)
+                 if u["heading"] == parent["heading"] and u["level"] == parent["level"]),
+                None,
+            )  # fmt: skip
+        if target is None:
+            units.append({**s, "merged": []})
+            continue
+        title = f"{'#' * max(s['level'], 1)} {s['heading']}" if s["heading"] else ""
+        target["markdown"] += "\n\n" + "\n\n".join(x for x in (title, s["markdown"]) if x)
+        target["merged"].append(s["heading"])
+        target.setdefault("merged_keys", []).append(s.get("key"))  # caller's ids, if it set any
+    return units
+
 
 PROCESSED = ROOT / "data" / "processed"
 METADATA_FIELDS = (
