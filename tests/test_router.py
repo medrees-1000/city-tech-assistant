@@ -600,12 +600,12 @@ def test_the_renderer_names_each_rows_own_calendar_and_sorts_across_terms():
     out = render.render_rows([spring, fall], "c", assumed_term="Fall 2026")
     paragraphs = out.text.split("\n\n")
     assert out.row_ids == ["fall-2026-039", "spring-2027-040"]
-    assert paragraphs[1].startswith("- ") and paragraphs[3].startswith("- ")
-    assert paragraphs[2] == (
+    assert paragraphs[0].startswith("- ") and paragraphs[2].startswith("- ")
+    assert paragraphs[1] == (
         "From the Fall 2026 calendar (fall_2026.pdf, last updated 2026-09-15). "
         "The calendar can change."
     )
-    assert paragraphs[4] == (
+    assert paragraphs[3] == (
         "From the Spring 2027 calendar (spring_2027.pdf, last updated 2026-07-27). "
         "The calendar can change."
     )

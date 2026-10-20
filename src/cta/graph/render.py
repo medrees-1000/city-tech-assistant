@@ -145,7 +145,7 @@ def render_rows(rows: list[dict], contact: str, assumed_term: str | None = None)
             if not row["date_start"]:
                 tba.append(row["id"])
         parts += ["\n".join(lines), provenance_line(key)]
-    if assumed_term:
+    if assumed_term and all(r["term"] == assumed_term for r in ordered):
         parts.insert(0, f"Assuming the current term, {assumed_term}.")
     return Rendered("\n\n".join(parts), sources, [r["id"] for r in ordered], mismatches, tba)
 

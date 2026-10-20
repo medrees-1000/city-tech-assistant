@@ -216,6 +216,15 @@ def test_the_assumed_term_line_is_its_own_paragraph():
     assert out.text.split("\n\n")[0] == "Assuming the current term, Fall 2026."
 
 
+def test_the_assumed_term_line_is_shown_only_when_every_row_is_from_that_term():
+    spring = render.render_rows(rows("spring-2027-040"), CONTACT, "Fall 2026")
+    assert "Assuming" not in spring.text
+    mixed = render.render_rows(rows("fall-2026-040", "spring-2027-040"), CONTACT, "Fall 2026")
+    assert "Assuming" not in mixed.text
+    fall = render.render_rows(rows("fall-2026-040"), CONTACT, "Fall 2026")
+    assert fall.text.startswith("Assuming the current term, Fall 2026.")
+
+
 def test_no_forbidden_words_in_any_row_or_group():
     for row in LAYOUT_EVENTS:
         text = render.render_rows([row], CONTACT, "Fall 2026").text
