@@ -25,7 +25,6 @@ from types import SimpleNamespace
 from psycopg.types.json import Jsonb
 
 from cta.answer import Answer, answer, estimate_cost, format_source
-from cta.eval.metrics import CALENDAR_ID, average, matched_gold, scorable_gold
 from cta.eval.questions import (
     load_questions,
     question_ids_record,
@@ -33,7 +32,17 @@ from cta.eval.questions import (
     select_questions,
 )
 from cta.eval.rubric import ADVICE_INSTRUCTIONS, JUDGE_INSTRUCTIONS, RUBRIC_VERSION
-from cta.eval.run_retrieval import RESULTS, check_split, git_state, metrics_table, score
+from cta.eval.run_retrieval import (
+    CALENDAR_ID,
+    RESULTS,
+    average,
+    check_split,
+    git_state,
+    matched_gold,
+    metrics_table,
+    scorable_gold,
+    score,
+)
 from cta.graph.build import Router
 from cta.index.chunks import token_counter
 from cta.index.db import connect

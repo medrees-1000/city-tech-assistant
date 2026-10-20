@@ -1,7 +1,7 @@
 import pytest
 
 from cta.eval import run_retrieval as rr
-from cta.eval.metrics import average, question_metrics, scorable_gold
+from cta.eval.run_retrieval import average, question_metrics, scorable_gold
 
 
 def chunk(source_id, merged=()):

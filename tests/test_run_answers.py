@@ -351,7 +351,7 @@ def real_questions():
 
 
 def test_new_questions_are_classified_as_intended():
-    from cta.eval.metrics import scorable_gold
+    from cta.eval.run_retrieval import scorable_gold
 
     qs = real_questions()
     assert sorted(EXPECTED_KIND) == [f"q{n}" for n in range(31, 61)] and len(qs) >= 60
