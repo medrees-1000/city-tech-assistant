@@ -143,7 +143,7 @@ def make_nodes(d: Deps):
             pool = terms.term_pool(d.events, resolution.term)
             rows = advice.calendar_rows(pool, actions)
             assumed = resolution.term if resolution.status == "assumed" else None
-            rendered = render.render_rows(rows, d.contact) if rows else None
+            rendered = render.render_rows(rows, d.contact, today=state["today"]) if rows else None
             info["term"] = resolution.term
         ans = advice.compose(found, rendered, assumed if rendered else None)
         info["row_ids"] = ans.row_ids
@@ -174,7 +174,7 @@ def make_nodes(d: Deps):
             rows = clarify.drop_family_rows(terms.term_pool(d.events, resolution.term))
             if rows:  # T04: every grade-related drop/withdraw row of the term, no selector call
                 assumed = resolution.term if resolution.status == "assumed" else None
-                rendered = render.render_rows(rows, d.contact, assumed)
+                rendered = render.render_rows(rows, d.contact, assumed, state["today"])
                 info.update(
                     selector_version=clarify.DROP_FAMILY_VERSION,
                     pool_size=len(pool),
@@ -207,7 +207,7 @@ def make_nodes(d: Deps):
         started = time.perf_counter()
         assumed = resolution.term if resolution.status == "assumed" else None
         picked = [by_id[i] for i in chosen.row_ids]
-        rendered = render.render_rows(picked, d.contact, assumed)
+        rendered = render.render_rows(picked, d.contact, assumed, state["today"])
         rendered.text += payment_gap_note(state["question"], picked, label)
         info["render_ms"] = round((time.perf_counter() - started) * 1000, 3)
         info["weekday_mismatches"] = rendered.weekday_mismatches

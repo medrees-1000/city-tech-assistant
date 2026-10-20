@@ -6,6 +6,7 @@ no database, no model call.
 import hashlib
 import json
 import re
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -223,6 +224,30 @@ def test_the_assumed_term_line_is_shown_only_when_every_row_is_from_that_term():
     assert "Assuming" not in mixed.text
     fall = render.render_rows(rows("fall-2026-040"), CONTACT, "Fall 2026")
     assert fall.text.startswith("Assuming the current term, Fall 2026.")
+
+
+PASSED = "(this date has passed)"
+
+
+def test_a_past_date_is_marked_and_today_and_the_future_are_not():
+    row = rows("fall-2026-040")  # 2026-11-06
+    assert PASSED in render.render_rows(row, CONTACT, today=date(2026, 11, 7)).text
+    assert PASSED not in render.render_rows(row, CONTACT, today=date(2026, 11, 6)).text
+    assert PASSED not in render.render_rows(row, CONTACT, today=date(2026, 10, 19)).text
+
+
+def test_a_range_is_marked_by_its_end_date():
+    row = rows("fall-2026-017")  # 2026-09-11 to 2026-09-13
+    assert PASSED not in render.render_rows(row, CONTACT, today=date(2026, 9, 13)).text
+    assert PASSED in render.render_rows(row, CONTACT, today=date(2026, 9, 14)).text
+
+
+def test_a_tba_row_is_never_marked_and_no_today_changes_nothing():
+    assert PASSED not in render.render_rows(rows("spring-2027-055"), CONTACT,
+                                            today=date(2030, 1, 1)).text  # fmt: skip
+    row = rows("fall-2026-040")
+    plain = render.render_rows(row, CONTACT).text
+    assert render.render_rows(row, CONTACT, today=None).text == plain
 
 
 def test_no_forbidden_words_in_any_row_or_group():
