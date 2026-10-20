@@ -10,9 +10,7 @@ from pathlib import Path
 
 import httpx
 
-from cta.crawl.fetcher import FetchBlocked, Fetcher
-from cta.crawl.store import RawStore, utc_now
-from cta.crawl.urls import normalize_url
+from cta.crawl.fetcher import FetchBlocked, Fetcher, RawStore, normalize_url, utc_now
 from cta.settings import ROOT, build_user_agent, load_sources
 
 

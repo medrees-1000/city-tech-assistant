@@ -16,8 +16,7 @@ from urllib.parse import parse_qs, urlsplit
 
 import httpx
 
-from cta.crawl.fetcher import Fetcher
-from cta.crawl.store import RawStore, utc_now
+from cta.crawl.fetcher import Fetcher, RawStore, utc_now
 from cta.settings import ROOT, build_user_agent, load_sources
 
 # Same body the catalog website sends (see scripts/test_catalog_api.py).

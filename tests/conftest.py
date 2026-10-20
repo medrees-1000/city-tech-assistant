@@ -4,8 +4,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from cta.crawl.fetcher import Fetcher
-from cta.crawl.store import RawStore
+from cta.crawl.fetcher import Fetcher, RawStore
 from cta.index import db
 
 FIXTURES = Path(__file__).parent / "fixtures"

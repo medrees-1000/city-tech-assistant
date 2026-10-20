@@ -1104,8 +1104,7 @@ def main() -> int:
     import httpx
 
     from cta.crawl.catalog import RuleResolver
-    from cta.crawl.fetcher import Fetcher
-    from cta.crawl.store import RawStore
+    from cta.crawl.fetcher import Fetcher, RawStore
     from cta.parse.dept_pdf import RULE_ID  # noqa: F401
     from cta.settings import build_user_agent, load_sources
     from cta.validate.departments import run_department_checks

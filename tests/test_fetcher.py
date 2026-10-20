@@ -3,8 +3,7 @@ import hashlib
 import httpx
 import pytest
 
-from cta.crawl.fetcher import FetchBlocked
-from cta.crawl.urls import normalize_url
+from cta.crawl.fetcher import FetchBlocked, normalize_url
 from tests.conftest import UA, fixture_bytes
 
 HOST = "https://www.citytech.cuny.edu"
