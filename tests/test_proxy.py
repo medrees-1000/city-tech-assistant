@@ -1,5 +1,7 @@
-"""The shared secret of the Vercel proxy, the forwarded visitor address and the keyed hash.
-Fake clients only: no network, no database, no paid call."""
+"""The shared secret of the Vercel proxy, the forwarded visitor address and the keyed hash, and the
+one diagnostic line per /ask (booleans only) with the header the limiter key comes from. Fake
+clients only: no network, no database, no paid call.
+"""
 
 import hashlib
 import hmac
@@ -18,6 +20,11 @@ from tests.helpers import (
     retrieve_answer,
     settings,
 )
+
+# ---- from test_proxy.py ----
+#
+# The shared secret of the Vercel proxy, the forwarded visitor address and the keyed hash.
+# Fake clients only: no network, no database, no paid call.
 
 SECRET = "s" * 32
 SALT = "x" * 32
@@ -164,3 +171,133 @@ def test_a_short_secret_or_salt_stops_the_start(tmp_path):
     assert any("CTA_IP_SALT is set but shorter than 16" in p for p in problems)
     ok = startup_problems(CFG, env=base | ENV, connect=lambda: FakeConn([]))
     assert not any("CTA_" in p and "shorter" in p for p in ok)
+
+
+# ---- from test_proxy_diag.py ----
+#
+# The one diagnostic line per /ask (booleans only) and which header the limiter key comes from.
+
+DIAG_SECRET, DIAG_SALT = "s" * 32, "x" * 32
+DIAG_ENV = {"CTA_PROXY_SECRET": DIAG_SECRET, "CTA_IP_SALT": DIAG_SALT}
+IP = "203.0.113.7"
+
+
+def lines(capsys):
+    out = capsys.readouterr().out
+    return [json.loads(ln) for ln in out.splitlines() if ln.startswith('{"event": "ask"')]
+
+
+def diag_post(c, secret=DIAG_SECRET, ip=IP, **extra):
+    headers = dict(extra)
+    if secret is not None:
+        headers["x-cta-proxy-secret"] = secret
+    if ip is not None:
+        headers["x-real-ip"] = ip
+    return c.post("/ask", json={"question": "I want to kill myself"}, headers=headers)
+
+
+def diag_app(monkeypatch, env=DIAG_ENV):
+    return make_client_app(Client(), monkeypatch, retrieve_answer(), env=env, cfg=cfg_guard())
+
+
+def test_a_valid_secret_is_logged_as_trusted_with_a_forwarded_visitor(monkeypatch, capsys):
+    c = diag_app(monkeypatch)
+    diag_post(c)
+    diag_post(c)
+    first, second = lines(capsys)
+    assert first["proxy_required"] is True and first["proxy_trusted"] is True
+    assert first["forwarded_present"] is True and second["proxy_trusted"] is True
+
+
+def test_a_wrong_or_missing_secret_is_logged_as_not_trusted_and_still_rejected(monkeypatch, capsys):
+    c = diag_app(monkeypatch)
+    assert diag_post(c, secret="wrong").status_code == 403
+    assert diag_post(c, secret=None).status_code == 403
+    for ln in lines(capsys):
+        assert ln["proxy_required"] is True and ln["proxy_trusted"] is False
+
+
+def test_a_missing_forwarded_visitor_is_logged(monkeypatch, capsys):
+    c = diag_app(monkeypatch)
+    diag_post(c, ip=None)
+    diag_post(c, ip="not-an-ip")
+    assert [ln["forwarded_present"] for ln in lines(capsys)] == [False, False]
+
+
+def test_forwarded_present_counts_x_cta_visitor_when_trusted_but_not_otherwise(monkeypatch, capsys):
+    c = diag_app(monkeypatch)
+    diag_post(c, ip=None, **{"x-cta-visitor": IP})  # the header the API uses, no x-real-ip at all
+    diag_post(c, ip=None, **{"x-cta-visitor": "junk"})
+    # not trusted: the header is ignored
+    diag_post(c, secret="wrong", ip=None, **{"x-cta-visitor": IP})
+    assert [ln["forwarded_present"] for ln in lines(capsys)] == [True, False, False]
+
+
+def test_local_use_with_no_secret_is_not_trusted(monkeypatch, capsys):
+    c = diag_app(monkeypatch, env={})
+    diag_post(c, secret=None)
+    (ln,) = lines(capsys)
+    assert ln["proxy_required"] is False and ln["proxy_trusted"] is False
+
+
+def test_health_and_other_paths_make_no_line(monkeypatch, capsys):
+    c = diag_app(monkeypatch)
+    c.get("/health")
+    c.get("/nope", headers={"x-cta-proxy-secret": DIAG_SECRET})
+    assert lines(capsys) == []
+
+
+def test_the_line_never_holds_the_secret_the_salt_an_address_or_a_hash(monkeypatch, capsys):
+    import hashlib
+    import hmac
+
+    c = diag_app(monkeypatch)
+    diag_post(c)
+    out = capsys.readouterr().out
+    key = hmac.new(DIAG_SALT.encode(), IP.encode(), hashlib.sha256).hexdigest()
+    for secret in (DIAG_SECRET, DIAG_SALT, IP, "testclient", key, key[:12]):
+        assert secret not in out
+    (ln,) = [json.loads(x) for x in out.splitlines() if x.startswith('{"event": "ask"')]
+    assert set(ln) == {"event", "request_id", "proxy_required", "proxy_trusted",
+                       "forwarded_present"}  # fmt: skip
+    flags = set(ln) - {"event", "request_id"}
+    assert all(isinstance(ln[k], bool) for k in flags)
+
+
+class FakeRequest:
+    def __init__(self, headers, host="172.18.0.9"):
+        self.headers = headers
+        self.client = type("C", (), {"host": host})()
+
+
+def test_x_cta_visitor_is_ignored_without_a_matching_secret():
+    g = cfg_guard_guard()
+    conn = g.visitor_key(FakeRequest({}))
+    for headers in ({"x-cta-visitor": IP}, {"x-cta-visitor": IP, "x-cta-proxy-secret": "wrong"}):
+        assert g.visitor_key(FakeRequest(headers)) == conn  # the connection address, as before
+    ok = g.visitor_key(FakeRequest({"x-cta-visitor": IP, "x-cta-proxy-secret": DIAG_SECRET}))
+    assert ok == g.tag(IP) and ok != conn
+
+
+def cfg_guard_guard():
+    from cta.api.guard import Guard
+
+    cfg = {"disabled": False, "rate_limit_max_keys": 100}
+    return Guard(cfg, proxy_secret=DIAG_SECRET, ip_salt=DIAG_SALT)
+
+
+def key_for(g, **headers):
+    return g.visitor_key(FakeRequest({"x-cta-proxy-secret": DIAG_SECRET, **headers}))
+
+
+def test_x_cta_visitor_is_the_visitor_even_when_x_real_ip_changes():
+    g = cfg_guard_guard()
+    a = key_for(g, **{"x-cta-visitor": "203.0.113.9", "x-real-ip": "198.51.100.1"})
+    b = key_for(g, **{"x-cta-visitor": "203.0.113.9", "x-real-ip": "198.51.100.2"})
+    other = key_for(g, **{"x-cta-visitor": "203.0.113.10", "x-real-ip": "198.51.100.1"})
+    assert a == b and a != other
+
+
+def test_an_invalid_x_cta_visitor_falls_back_to_x_real_ip():
+    g = cfg_guard_guard()
+    assert key_for(g, **{"x-cta-visitor": "junk", "x-real-ip": IP}) == g.tag(IP)
