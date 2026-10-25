@@ -1,12 +1,13 @@
 "use client";
 
+import { Show, UserButton, useClerk } from "@clerk/nextjs";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { ask, MAX_QUESTION_CHARS } from "../../lib/api";
 import { showDetails } from "../../lib/details";
 import { FOOTER_LINE, footerNotice } from "../../lib/notice";
-import { canSend, finishTurn, isEmpty, isLoading, startTurn } from "../../lib/messages";
+import { canSend, dropTurn, finishTurn, isEmpty, isLoading, startTurn } from "../../lib/messages";
 import type { Message } from "../../lib/messages";
 import { AssistantMessage } from "../components/AssistantMessage";
 import { Composer } from "../components/Composer";
@@ -22,9 +23,10 @@ const EXAMPLES = [
 ];
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<Message[]>([]); // in memory only: no storage, no cookies
+  const [messages, setMessages] = useState<Message[]>([]); // in memory only; Clerk keeps the sign-in cookies
   const [text, setText] = useState("");
   const [details, setDetails] = useState(false); // ?details=1 shows the technical panel; read after mount
+  const { openSignIn } = useClerk();
   const nextId = useRef(1);
   const epoch = useRef(0); // bumped by "New chat" so a late answer is dropped
   const input = useRef<HTMLTextAreaElement | null>(null);
@@ -66,7 +68,14 @@ export default function ChatPage() {
     setMessages((m) => startTurn(m, id, raw.trim()));
     setText("");
     const result = await ask(raw.trim());
-    if (epoch.current === mine) setMessages((m) => finishTurn(m, id + 1, result));
+    if (epoch.current !== mine) return;
+    if (!result.ok && result.error.code === "sign_in_required") {
+      setMessages((m) => dropTurn(m, id)); // not answered: keep what was typed and ask for sign-in
+      setText(raw);
+      openSignIn();
+      return;
+    }
+    setMessages((m) => finishTurn(m, id + 1, result));
   }
 
   function newChat() {
@@ -82,9 +91,14 @@ export default function ChatPage() {
         <Link href="/" className="brand">
           City Tech Assistant
         </Link>
-        <button type="button" className="ghost" onClick={newChat} disabled={empty}>
-          New chat
-        </button>
+        <div className="topbar-end">
+          <button type="button" className="ghost" onClick={newChat} disabled={empty}>
+            New chat
+          </button>
+          <Show when="signed-in">
+            <UserButton />
+          </Show>
+        </div>
       </header>
 
       <main className="body">

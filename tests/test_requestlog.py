@@ -295,10 +295,12 @@ def test_the_notice_says_what_the_code_does():
     assert "removed only when it follows" not in text
 
 
-def test_the_notice_claim_of_no_ip_and_no_cookies_is_true_of_the_code():
+def test_the_notice_claim_of_no_ip_and_no_stored_ids_is_true_of_the_code():
     from cta.settings import ROOT
 
-    assert "No IP address and no cookies are stored" in notice_text()
+    assert "No IP address is stored" in notice_text()
+    assert "Clerk sets the cookies needed to keep you signed in" in notice_text()
+    assert "Ids and emails are not stored in our logs" in notice_text()
     assert "counted in memory per visitor" in notice_text()  # the step 7 sentence, true of guard.py
     assert "cleared when the service restarts" in notice_text()
     forbidden = {"ip", "ip_address", "client_ip", "user_agent", "cookie", "cookies", "headers"}

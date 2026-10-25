@@ -24,6 +24,11 @@ export function startTurn(messages: Message[], id: number, text: string): Messag
   ];
 }
 
+/** Remove a turn (the question and its placeholder), so a question that needs sign-in can be typed again. */
+export function dropTurn(messages: Message[], userId: number): Message[] {
+  return messages.filter((m) => m.id !== userId && m.id !== userId + 1);
+}
+
 /** Replace the placeholder with the result. Unknown ids leave the list unchanged. */
 export function finishTurn(messages: Message[], assistantId: number, result: AskResult): Message[] {
   const turn: Turn = result.ok

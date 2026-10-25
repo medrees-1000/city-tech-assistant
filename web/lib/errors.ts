@@ -23,6 +23,7 @@ const MESSAGES: Record<string, string> = {
   daily_cap: `The assistant has reached its limit for today. Please try again tomorrow. ${CRISIS_LINE}`,
   kill_switch: `The assistant is temporarily paused. Please check back later. ${CRISIS_LINE}`,
   monthly_cap: `The assistant is paused for the rest of this month to stay within its budget. Please check back next month. ${CRISIS_LINE}`,
+  gmail_required: "Please sign in with a Gmail address (@gmail.com) to use the City Tech Assistant.",
   forbidden: "The assistant could not be reached from here. Please try again in a moment.",
 };
 
