@@ -1,8 +1,8 @@
 """Cost and abuse guards of the API (Phase 4 step 7, Stage 1; docs/decisions.md).
 
 Plain code, API layer only. In the order they run inside POST /ask: the per-visitor rate limit
-(`stage1`), then the regex safety screen (app.py), then the kill switch and the daily and monthly
-spend caps (`cap_reason`). The timeouts are applied in app.py.
+(`stage1`), the login check (`login_ok`), the regex safety screen (app.py), then the kill switch and
+the daily and monthly spend caps (`cap_reason`). The timeouts are applied in app.py.
 
 Privacy: the visitor's network address is read in ONE place (`Guard.visitor_key`) and goes straight
 into a keyed hash (HMAC-SHA256). The key is CTA_IP_SALT from the environment, or a random one made
@@ -12,11 +12,15 @@ written to the database, a log or /health, and a restart clears them.
 Behind the Vercel proxy (CTA_PROXY_SECRET set): a request must carry the shared secret in the
 x-cta-proxy-secret header, and only then is the visitor read from the x-real-ip header that the
 proxy set. Without the variable (local development) nothing changes.
+
+Login: with the secret set, /ask also needs x-cta-user, the opaque Clerk user id that web/proxy.ts
+sets for a signed-in Gmail visitor. Only its shape is checked; it is never stored, hashed or logged.
 """
 
 import hashlib
 import hmac
 import os
+import re
 import secrets
 import socket
 import threading
@@ -48,6 +52,9 @@ DISABLED_FILE = Path("data") / "api_disabled"
 PROXY_HEADER = "x-cta-proxy-secret"
 FORWARDED_HEADER = "x-real-ip"
 VISITOR_HEADER = "x-cta-visitor"  # set by web/proxy.ts; preferred over x-real-ip when trusted
+USER_HEADER = "x-cta-user"  # set by web/proxy.ts: the Clerk user id of the signed-in visitor
+USER_ID = re.compile(r"user_[A-Za-z0-9]+")
+USER_ID_MAX = 64
 
 
 def utc_now() -> datetime:
@@ -136,6 +143,18 @@ class Guard:
         trusted = self.proxy_trusted(request)
         names = (VISITOR_HEADER, FORWARDED_HEADER) if trusted else (FORWARDED_HEADER,)
         return any(valid_ip(request.headers.get(name, "").strip()) for name in names)
+
+    def login_ok(self, request) -> bool:
+        """True when login is not enforced (no proxy secret: local use) or the request carries the
+        proxy secret AND a well-formed user id. The id is only matched, never kept."""
+        if not self.proxy_secret:
+            return True
+        user = request.headers.get(USER_HEADER, "")
+        return (
+            self.proxy_trusted(request)
+            and len(user) <= USER_ID_MAX
+            and USER_ID.fullmatch(user) is not None
+        )
 
     def tag(self, value: str) -> str:
         """The salted HMAC-SHA256 of a visitor value, in hex (the limiter key; never logged)."""

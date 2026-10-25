@@ -146,3 +146,47 @@ def test_main_returns_one_on_a_failure(monkeypatch, capsys):
     assert smoke.main(["x", "http://api.test", "--secret", SECRET]) == 1
     out = capsys.readouterr().out
     assert "FAIL" in out and "PASS" in out and SECRET not in out
+
+
+def login_server(user_required=True):
+    """An API that enforces login: 401 sign_in_required unless x-cta-user is sent."""
+    inner = FakeServer()
+
+    def handler(request):
+        needs_login = request.url.path.endswith("/ask") and user_required
+        if needs_login and "x-cta-user" not in request.headers:
+            return httpx.Response(401, json={"error": "sign_in_required"})
+        return inner(request)
+
+    return handler, inner
+
+
+def test_user_sends_x_cta_user_and_a_direct_run_passes():
+    handler, inner = login_server()
+    client = httpx.Client(transport=httpx.MockTransport(handler), base_url="http://api.test")
+    s = smoke.Smoke(client, "", SECRET, "203.0.113.9", "user_smoke1")
+    smoke.run(s, "open", "http://api.test/health")
+    assert [ok for _, ok, _ in s.rows] == [True] * 9, s.table()
+    sent = [h["x-cta-user"] for h in inner.seen_headers if "x-cta-user" in h]
+    assert sent and set(sent) == {"user_smoke1"}
+
+
+def test_without_user_a_login_enforcing_api_fails_with_a_hint():
+    handler, _ = login_server()
+    client = httpx.Client(transport=httpx.MockTransport(handler), base_url="http://api.test")
+    s = smoke.Smoke(client, "", SECRET, "203.0.113.9")
+    smoke.run(s, "open", "http://api.test/ask-less-health")
+    assert "--user" in s.table() and "FAIL" in s.table()
+
+
+def test_expect_signed_out_passes_on_401_and_fails_if_ask_is_open():
+    handler, _ = login_server()
+    client = httpx.Client(transport=httpx.MockTransport(handler), base_url="http://api.test")
+    s = smoke.Smoke(client, "", "", "203.0.113.9")
+    smoke.run_signed_out(s, "open", "http://api.test/health")
+    assert [ok for _, ok, _ in s.rows] == [True, True], s.table()
+    open_handler, _ = login_server(user_required=False)
+    client = httpx.Client(transport=httpx.MockTransport(open_handler), base_url="http://api.test")
+    s = smoke.Smoke(client, "", "", "203.0.113.9")
+    smoke.run_signed_out(s, "open", "http://api.test/health")
+    assert s.rows[0][1] is False and "HTTP 200" in s.rows[0][2]

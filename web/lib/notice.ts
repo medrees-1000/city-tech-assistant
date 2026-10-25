@@ -7,6 +7,19 @@ export const NOTICE_SHORT =
 /** The one footer line (landing page and chat page). The saved-questions line under it asks for no personal information. */
 export const FOOTER_LINE = "Independent student project, not affiliated with City Tech or CUNY";
 
+/** The line under the question box, shown before anyone sends (the gate is in proxy.ts). */
+export const SIGN_IN_LINE = "Sign-in required. Gmail addresses (@gmail.com) only.";
+
+const GMAIL_ONLY = "Gmail addresses (@gmail.com) only.";
+
+/** Text overrides for Clerk's sign-in and sign-up boxes (the `localization` prop of ClerkProvider; keys
+ * from LocalizationResource in @clerk/shared). The gate itself is in proxy.ts. */
+export const CLERK_LOCALIZATION = {
+  signIn: { start: { subtitle: GMAIL_ONLY } },
+  signUp: { start: { subtitle: GMAIL_ONLY } },
+  formFieldInputPlaceholder__emailAddress: "you@gmail.com",
+};
+
 /** Under the chat bar: the full notice on the landing screen, one short line once a question has been
  * sent. "New chat" empties the list, so it returns to the full notice. */
 export type FooterNotice = "full" | "short";
@@ -25,7 +38,8 @@ export const NOTICE_POINTS: string[] = [
   "Names are removed from your question where we can detect them (for example after \"my name is\", \"I'm\" or \"this is\"). A name written another way may be saved, so please don't type personal information.",
   "Also saved: which pages were used, how long each step took, and what the request cost (numbers only).",
   "If you press the thumbs up or down, that vote is saved with the answer. Nothing else is saved with it.",
-  "No IP address and no cookies are stored, and there are no accounts. Our own records hold no network address at all.",
+  "Sign-in is by an emailed code through Clerk, a third-party sign-in service, and only Gmail addresses (@gmail.com) can use the assistant. Clerk sets the cookies needed to keep you signed in. We use only the domain of your email to allow Gmail.",
+  "The assistant's server receives an opaque user id only to confirm that you are signed in. Ids and emails are not stored in our logs. The assistant's own request records hold no network address. Our hosts and Clerk may keep their own standard server logs.",
   "To prevent abuse, requests are counted in memory per visitor using a scrambled (hashed) form of the network address that is never saved with your questions; the count is cleared when the service restarts.",
   "Your question (after the removals above) and the assistant's reply are also sent to LangSmith, a third-party tracing service, so mistakes can be found and fixed. LangSmith keeps them for 14 days. Messages that the safety checks handle (for example about self-harm, danger or a death), and the fixed reply to off-topic requests, are not sent. No IP address and no cookies are sent.",
   "The page is hosted on Vercel and the assistant runs on Amazon Web Services. They keep ordinary server logs that may include IP addresses, under their own policies.",

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
 
-import { ask, sendFeedback } from "./api.ts";
+import { ask, loginCode, sendFeedback } from "./api.ts";
 import { friendlyMessage } from "./errors.ts";
 
 // ask() with a fake fetch: whatever the layers in front of the API answer, the visitor gets a plain
@@ -67,4 +67,25 @@ test("feedback failures fall back to the fixed message", async () => {
   fakeFetch(502, "<html>bad</html>");
   const result = await sendFeedback("abc", "up");
   assert.equal(result.ok, false);
+});
+
+test("login is decided by the code in the body, not the HTTP status", async () => {
+  const json = "application/json";
+  fakeFetch(401, '{"error":"sign_in_required"}', json);
+  const signedOut = await ask("q");
+  assert.deepEqual(signedOut.ok ? null : signedOut.error.code, "sign_in_required");
+  fakeFetch(403, '{"error":"gmail_required"}', json);
+  const notGmail = await ask("q");
+  assert.deepEqual(notGmail.ok ? null : notGmail.error.code, "gmail_required");
+  if (notGmail.ok) throw new Error("unreachable");
+  assert.match(friendlyMessage(notGmail.error), /sign in with a Gmail address \(@gmail\.com\)/);
+  // the API's own 403 and any other 401 or 403 are ordinary errors
+  for (const [status, body] of [[403, '{"error":{"code":"forbidden","message":"Not available."},"request_id":"r"}'], [401, '{"error":"other"}'], [403, "<html>no</html>"]] as const) {
+    fakeFetch(status, body, json);
+    const r = await ask("q");
+    assert.equal(r.ok, false);
+    if (!r.ok) assert.ok(r.error.code !== "sign_in_required" && r.error.code !== "gmail_required", body);
+  }
+  assert.equal(loginCode({ error: { code: "gmail_required" } }), null);
+  assert.equal(loginCode(null), null);
 });

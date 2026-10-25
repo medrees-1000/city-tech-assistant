@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 import type { ReactNode } from "react";
+
+import { CLERK_LOCALIZATION } from "../lib/notice";
 
 import "./globals.css";
 
@@ -18,7 +21,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ClerkProvider localization={CLERK_LOCALIZATION}>{children}</ClerkProvider>
+      </body>
     </html>
   );
 }

@@ -233,6 +233,7 @@ data/cache/
 data/api_disabled
 
 # production and rehearsal secrets (docs/deploy-runbook.md)
+.env.local
 .env.production
 .env.rehearsal
 backups/

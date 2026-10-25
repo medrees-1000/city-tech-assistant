@@ -14,6 +14,7 @@ from tests.helpers import (
     CFG,
     Client,
     FakeConn,
+    SpendConn,
     cfg_guard,
     make_client_app,
     req,
@@ -27,8 +28,11 @@ ENV = {"CTA_PROXY_SECRET": SECRET, "CTA_IP_SALT": SALT}
 GOOD = {"x-cta-proxy-secret": SECRET}
 
 
-def post(c, ip=None, secret=SECRET, question="How do I apply for graduation?"):
-    headers = {}
+USER = "user_2abcXYZ123"
+
+
+def post(c, ip=None, secret=SECRET, question="How do I apply for graduation?", user=USER):
+    headers = {} if user is None else {"x-cta-user": user}
     if secret is not None:
         headers["x-cta-proxy-secret"] = secret
     if ip is not None:
@@ -296,3 +300,82 @@ def test_x_cta_visitor_is_the_visitor_even_when_x_real_ip_changes():
 def test_an_invalid_x_cta_visitor_falls_back_to_x_real_ip():
     g = cfg_guard_guard()
     assert key_for(g, **{"x-cta-visitor": "junk", "x-real-ip": IP}) == g.tag(IP)
+
+
+# ---- login: x-cta-user, checked after the rate limit and before the safety screen ----
+
+SIGN_IN = {"error": "sign_in_required"}
+
+
+def signed_out_is_refused(c, client, **kw):
+    r = post(c, "203.0.113.7", **kw)
+    assert r.status_code == 401 and r.json() == SIGN_IN
+    assert client.calls == [] and c.logs == []  # no model call, no log row
+
+
+def test_a_missing_or_malformed_user_header_is_401_with_no_row_and_no_model_call(monkeypatch):
+    client = Client()
+    c = make_client_app(client, monkeypatch, retrieve_answer(), env=ENV, cfg=cfg_guard())
+    for user in (None, "", "abc", "user_", "user_a-b", "User_abc", " user_abc", "user_abc\n",
+                 "user_" + "a" * 60, "x" * 65):
+        signed_out_is_refused(c, client, user=user)
+
+
+def test_the_longest_allowed_user_id_is_64_characters(monkeypatch):
+    c = app(monkeypatch)
+    assert post(c, "203.0.113.7", user="user_" + "a" * 59).status_code == 200
+    assert post(c, "203.0.113.7", user="user_" + "a" * 60).status_code == 401
+
+
+def test_a_user_header_without_the_matching_secret_is_the_existing_403(monkeypatch):
+    client = Client()
+    c = make_client_app(client, monkeypatch, retrieve_answer(), env=ENV, cfg=cfg_guard())
+    for secret in (None, "wrong"):
+        r = post(c, "203.0.113.7", secret=secret)  # a forged direct call: valid user id, no secret
+        assert r.status_code == 403 and r.json()["error"]["code"] == "forbidden"
+    assert client.calls == [] and c.logs == []
+
+
+def test_a_valid_user_header_with_the_secret_is_served_and_the_id_is_not_logged(monkeypatch):
+    c = app(monkeypatch)
+    r = post(c, "203.0.113.7")
+    assert r.status_code == 200 and r.json()["answer_type"] == "answer"
+    assert USER not in json.dumps(c.logs) + r.text + json.dumps(c.get("/health").json())
+
+
+def test_login_is_not_enforced_without_a_proxy_secret(monkeypatch):
+    c = make_client_app(Client(), monkeypatch, retrieve_answer(), env={}, cfg=cfg_guard())
+    r = c.post("/ask", json={"question": "How do I apply for graduation?"})
+    assert r.status_code == 200 and r.json()["answer_type"] == "answer"
+
+
+def test_the_rate_limit_runs_before_the_login_check(monkeypatch):
+    client = Client()
+    c = make_client_app(client, monkeypatch, retrieve_answer(), env=ENV,
+                        cfg=cfg_guard(rate_per_minute=1))  # fmt: skip
+    assert post(c, "203.0.113.7", user=None).status_code == 401
+    second = post(c, "203.0.113.7", user=None)  # same visitor, over the limit: the rate-limit reply
+    detail = second.json()["how_found"]["route_detail"]
+    assert second.status_code == 200 and detail == "rate_limited"
+
+
+def test_signed_out_with_the_kill_switch_on_is_401_not_the_paused_reply(monkeypatch):
+    client = Client()
+    c = make_client_app(client, monkeypatch, retrieve_answer(), env=ENV,
+                        cfg=cfg_guard(disabled=True))  # fmt: skip
+    signed_out_is_refused(c, client, user=None)
+    signed_out_is_refused(c, client, user=None, question="I want to kill myself")  # no 988 either
+    signed_in = post(c, "203.0.113.7")
+    assert signed_in.json()["how_found"]["route_detail"] == "kill_switch"
+
+
+def test_signed_in_at_a_cap_gets_the_cap_reply(monkeypatch):
+    client = Client()
+    c = make_client_app(client, monkeypatch, retrieve_answer(), env=ENV,
+                        cfg=cfg_guard(daily_spend_cap_usd=1.0),
+                        connect=lambda: SpendConn(50.0))  # fmt: skip
+    r = post(c, "203.0.113.7")
+    assert r.status_code == 200 and r.json()["how_found"]["route_detail"] == "daily_cap"
+    rows = len(c.logs)
+    r = post(c, "203.0.113.7", user=None)
+    assert r.status_code == 401 and r.json() == SIGN_IN and len(c.logs) == rows

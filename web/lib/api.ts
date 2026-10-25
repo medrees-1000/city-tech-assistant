@@ -104,6 +104,15 @@ const TIMEOUT: ApiError = {
   request_id: null,
 };
 
+export type LoginCode = "sign_in_required" | "gmail_required";
+
+/** The page proxy's login refusal, decided by the code in the body ({"error":"gmail_required"}), never by
+ * the HTTP status: any other 401 or 403 (the API's own "forbidden", a host page) is a normal error. */
+export function loginCode(body: unknown): LoginCode | null {
+  const code = (body as { error?: unknown } | null)?.error;
+  return code === "sign_in_required" || code === "gmail_required" ? code : null;
+}
+
 /** An error for a failed HTTP status whose body was not the API's own error object (a proxy page, an
  * empty body, a 429 or 503 from a layer in front of the API). The page shows its own plain sentence. */
 export function errorForStatus(status: number): ApiError {
@@ -134,6 +143,8 @@ export async function ask(question: string, signal?: AbortSignal): Promise<AskRe
     return { ok: false, error: response.ok ? UNREACHABLE : errorForStatus(response.status) };
   }
   if (response.ok) return { ok: true, data: body as AskResponse };
+  const login = loginCode(body);
+  if (login) return { ok: false, error: { code: login, message: "", request_id: null } };
   const e = (body as { error?: { code?: unknown; message?: unknown }; request_id?: unknown }) ?? {};
   if (typeof e.error?.message === "string") {
     const code = typeof e.error.code === "string" ? e.error.code : "error";

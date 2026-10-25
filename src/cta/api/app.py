@@ -329,6 +329,9 @@ def create_app(
         reason = await run_in_threadpool(guard.stage1, request, connect)
         if reason:
             return await run_in_threadpool(block, reason, question, rid, today, started)
+        if not guard.login_ok(request):  # no row, no trace, no model call; the page asks to sign in
+            return JSONResponse({"error": "sign_in_required"}, status_code=401,
+                                headers={"X-Request-ID": rid})  # fmt: skip
         verdict = screen.screen(question, guards)
         if verdict.reason:  # a fixed reply; the text is not stored, only its length
             guard.blocked[verdict.reason] += 1

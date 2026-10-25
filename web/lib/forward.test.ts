@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { apiTarget, forwardHeaders, PROXY_HEADER, REAL_IP_HEADER, VISITOR_HEADER, visitorAddress } from "./forward.ts";
+import { ALLOWED_EMAIL_DOMAINS, apiTarget, forwardHeaders, gateFor, gateUser, PROXY_HEADER, REAL_IP_HEADER, USER_HEADER, VISITOR_HEADER, visitorAddress } from "./forward.ts";
 
 const h = (o: Record<string, string>) => new Headers(o);
 
@@ -51,4 +51,66 @@ test("x-cta-visitor carries the visitor address and replaces anything the client
   assert.equal(noAddress.get(VISITOR_HEADER), null);
   const noSecret = forwardHeaders(h({ "x-forwarded-for": "203.0.113.7", [VISITOR_HEADER]: "1.2.3.4" }), undefined);
   assert.equal(noSecret.get(VISITOR_HEADER), null);
+});
+
+const claims = (email: unknown, ...verified: unknown[]) => ({ email, email_verified: verified.length ? verified[0] : true });
+
+test("signed out is sign_in_required; a verified Gmail address is allowed", () => {
+  assert.equal(gateUser(null, claims("a@gmail.com")), "sign_in_required");
+  assert.equal(gateUser(undefined, null), "sign_in_required");
+  assert.equal(gateUser("user_1", claims("a@gmail.com")), "allowed");
+});
+
+test("the email is compared in lowercase; dots and +tags are not touched", () => {
+  assert.equal(gateUser("user_1", claims("Some.One+tag@GMAIL.com")), "allowed");
+});
+
+test("only the exact domain list passes: googlemail.com, lookalikes and CUNY are refused", () => {
+  assert.deepEqual(ALLOWED_EMAIL_DOMAINS, ["gmail.com"]);
+  for (const e of ["a@googlemail.com", "a@gmail.com.evil.org", "a@notgmail.com", "a@mail.gmail.com", "@gmail.com", "gmail.com", "a@login.cuny.edu", ""]) {
+    assert.equal(gateUser("user_1", claims(e)), "gmail_required", e);
+  }
+});
+
+test("email_verified is accepted as true or \"true\" and nothing else", () => {
+  assert.equal(gateUser("user_1", claims("a@gmail.com", true)), "allowed");
+  assert.equal(gateUser("user_1", claims("a@gmail.com", "true")), "allowed");
+  for (const v of [false, "false", "True", 1, null, undefined, "yes"]) {
+    assert.equal(gateUser("user_1", claims("a@gmail.com", v)), "gmail_required", String(v));
+  }
+});
+
+test("a missing email claim, a non-string email or missing claims never crash and are refused", () => {
+  assert.equal(gateUser("user_1", { email_verified: true }), "gmail_required");
+  assert.equal(gateUser("user_1", claims(42)), "gmail_required");
+  assert.equal(gateUser("user_1", null), "gmail_required");
+  assert.equal(gateUser("user_1", undefined), "gmail_required");
+});
+
+test("the Clerk user id goes in x-cta-user; a client-sent x-cta-user and x-cta-visitor are replaced", () => {
+  const out = forwardHeaders(h({ "x-forwarded-for": "203.0.113.7", [USER_HEADER]: "user_evil", [VISITOR_HEADER]: "9.9.9.9" }), "s", "user_abc");
+  assert.equal(out.get(USER_HEADER), "user_abc");
+  assert.equal(out.get(VISITOR_HEADER), "203.0.113.7");
+  const signedOut = forwardHeaders(h({ [USER_HEADER]: "user_evil" }), "s", null);
+  assert.equal(signedOut.get(USER_HEADER), null);
+});
+
+test("cookie, authorization and every x-clerk-* header are stripped, for ask and feedback alike", () => {
+  const incoming = h({
+    cookie: "__session=abc", authorization: "Bearer t", "x-clerk-auth-token": "t", "X-Clerk-Auth-Status": "signed-in",
+    "content-type": "application/json", "x-forwarded-for": "203.0.113.7",
+  });
+  for (const user of ["user_abc", null]) {
+    const out = forwardHeaders(incoming, "s", user);
+    assert.equal(out.get("cookie"), null);
+    assert.equal(out.get("authorization"), null);
+    assert.deepEqual([...out.keys()].filter((k) => k.startsWith("x-clerk-")), []);
+    assert.equal(out.get("content-type"), "application/json");
+  }
+});
+
+test("only /api/ask is gated: feedback is open to a signed-out visitor", () => {
+  assert.equal(gateFor("/api/ask", null, null), "sign_in_required");
+  assert.equal(gateFor("/api/feedback", null, null), "allowed");
+  assert.equal(gateFor("/api/feedback", "user_1", claims("a@example.org")), "allowed");
 });
