@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { ask, MAX_QUESTION_CHARS } from "../../lib/api";
 import { showDetails } from "../../lib/details";
-import { FOOTER_LINE, footerNotice } from "../../lib/notice";
+import { FOOTER_LINE, footerNotice, SIGN_IN_LINE } from "../../lib/notice";
 import { canSend, dropTurn, finishTurn, isEmpty, isLoading, startTurn } from "../../lib/messages";
 import type { Message } from "../../lib/messages";
 import { AssistantMessage } from "../components/AssistantMessage";
@@ -132,6 +132,7 @@ export default function ChatPage() {
             onSend={() => void send(text)}
             inputRef={input}
           />
+          <p className="fine">{SIGN_IN_LINE}</p>
           {empty ? (
             <ul className="chips" aria-label="Example questions">
               {EXAMPLES.map((q) => (

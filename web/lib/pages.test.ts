@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-import { FOOTER_LINE } from "./notice.ts";
+import { FOOTER_LINE, SIGN_IN_LINE } from "./notice.ts";
 
 // The pages are .tsx (no JSX loader in node:test), so these tests read the page source, the
 // stylesheet and the icon as text; the built pages were also fetched from `next start` when these
@@ -34,6 +34,13 @@ test("the one-line footer under the chat box still renders, with the same words"
   const chat = read("../app/chat/page.tsx");
   assert.ok(chat.includes('<span className="unofficial">{FOOTER_LINE}</span>'));
   assert.ok(chat.includes("<PrivacyNotice mode={notice} />"));
+});
+
+test("the sign-in line sits under the question box and shows before anything is sent", () => {
+  const chat = read("../app/chat/page.tsx");
+  assert.equal(SIGN_IN_LINE, "Sign-in required. Gmail addresses (@gmail.com) only.");
+  assert.ok(chat.includes('<p className="fine">{SIGN_IN_LINE}</p>'));
+  assert.ok(chat.indexOf("<Composer") < chat.indexOf("{SIGN_IN_LINE}"));
 });
 
 test("the pill's style is still the orange-outlined rounded one", () => {

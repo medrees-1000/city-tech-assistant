@@ -7,6 +7,9 @@ export const NOTICE_SHORT =
 /** The one footer line (landing page and chat page). The saved-questions line under it asks for no personal information. */
 export const FOOTER_LINE = "Independent student project, not affiliated with City Tech or CUNY";
 
+/** The line under the question box, shown before anyone sends (the gate is in proxy.ts). */
+export const SIGN_IN_LINE = "Sign-in required. Gmail addresses (@gmail.com) only.";
+
 /** Under the chat bar: the full notice on the landing screen, one short line once a question has been
  * sent. "New chat" empties the list, so it returns to the full notice. */
 export type FooterNotice = "full" | "short";
