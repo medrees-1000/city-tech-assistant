@@ -1684,3 +1684,24 @@ Tracked size before and after Cleanup 3 (before = the state after Cleanup 2; eva
 6. **Registrar topic cues** (`config/contacts.yaml`): section, sections, seat, seats, "class schedule", "open classes". The named-department rule still comes first, so "what sections of CST 1101 are open" keeps the CST card (tested).
 
 **Deliberately skipped:** a rule-6 sentence in the retrieval answer prompt for passed dates (needs a full paid dev eval); a professor or instructor card; the 18-credits question (the data holds no credit-load rule). **Owner to do after deploy:** check the NLP phrasings on the live site.
+
+## Login (Clerk) (branch login1)
+
+**Who may ask:** a signed-in visitor whose Clerk primary email is verified and ends with `@gmail.com`. The address is lowercased first; dots and `+tags` are not normalized; `googlemail.com` is not allowed. Login is required for model answers **and** for the safety replies: the sign-in message has no crisis line (owner decision).
+
+**Dependency:** `@clerk/nextjs` (exact version, in `web/`) is the one new package: it gives the sign-in modal, the session check in `proxy.ts` and the user menu, which we would otherwise have to build and secure ourselves.
+
+**Where the rules live:**
+- **The Gmail rule is in the proxy** (`gateUser` in `web/lib/forward.ts`, called from `web/proxy.ts`), because Clerk's free plan has no email-domain allowlist. The allowed domains are one constant, `ALLOWED_EMAIL_DOMAINS`; adding a domain is one line plus a test.
+- **Claims, not a Clerk call.** The proxy reads `email` and `email_verified` from the session token claims (custom claims `{{user.primary_email_address}}` and `{{user.email_verified}}` set in both Clerk instances), so there is no backend call per request. `email_verified` may be boolean `true` or the string `"true"`; anything else, or a missing claim, is "not allowed", never a crash.
+- **Proxy answers** (`/api/ask` only): signed out gives 401 `{"error":"sign_in_required"}`; signed in but not a verified Gmail gives 403 `{"error":"gmail_required"}`; neither is forwarded. `/api/feedback` stays ungated. Clerk's helper runs on both paths but blocks nothing itself.
+- **Forwarded headers:** the existing secret and visitor headers plus `x-cta-user` = the Clerk user id (`user_...`, never the email). Stripped before forwarding, on both paths: `cookie`, `authorization`, every `x-clerk-*` header, and any client-sent `x-cta-user` / `x-cta-visitor`.
+- **The page** decides by the error code in the response body, never the HTTP status: only `sign_in_required` opens the sign-in modal (the typed question is kept), only `gmail_required` shows the Gmail sentence with a sign-out button. The API's own 403 `forbidden` and any other 401/403 show the normal error text.
+
+**Why the API trusts `x-cta-user` only together with the proxy secret:** anyone can send a header to the API host. With `CTA_PROXY_SECRET` set, a request without the matching secret is already refused with 403 `forbidden` by the existing middleware; with it, `x-cta-user` must be present, at most 64 characters and match `^user_[A-Za-z0-9]+$`, else 401 `{"error":"sign_in_required"}` with no log row, no trace and no model call. The id is only matched: not stored, hashed or logged. The API therefore proves "the proxy vouched for a signed-in Gmail user", not who they are. With the secret unset (local development) login is not enforced.
+
+**New `/ask` order:** rate limit, login check, safety screen, kill switch, daily cap, monthly cap. The rate limit stays first so a signed-out flood is still counted.
+
+**Deliberately not done:** a block list; hashing or storing the user id; per-user limits (the per-visitor limit stays by network address); social sign-in; passwords (sign-in is by emailed code); CUNY-only email (`@login.cuny.edu`).
+
+**Privacy wording** changed in `web/lib/notice.ts`, the README and the tests that pin it: sign-in through Clerk, Clerk's cookies, only the email domain is used, an opaque user id reaches the API, ids and emails are not in our logs.

@@ -6,9 +6,9 @@ A retrieval-augmented question-answering assistant for City Tech (CUNY) students
 
 Built with: Python 3.12, FastAPI, LangGraph, Postgres with pgvector, OpenAI models, Next.js.
 
-Status: runs locally; not deployed. There is a recorded walkthrough (linked below) instead of a live demo.
+Status: deployed, with access limited to signed-in Gmail users. There is a recorded walkthrough (linked below).
 
-Independent student portfolio project. Not affiliated with or endorsed by City Tech or CUNY, and not an official source. No login and no student data. Check anything important with the office.
+Independent student portfolio project. Not affiliated with or endorsed by City Tech or CUNY, and not an official source. Sign-in with a Gmail address is required to ask questions; the assistant holds no student data. Check anything important with the office.
 
 Demo (about 3 minutes): [watch the walkthrough](https://youtu.be/BrpqzHRU3pc)
 
@@ -128,7 +128,7 @@ Key decisions and why:
 - Daily spend cap of $1.00 and a kill switch (config or a file); per-visitor rate limits of 10 a minute and 100 a day, kept in memory with addresses hashed and never stored; 15 s per model call and 45 s per request.
 - Input handling: hidden characters removed; prompt-injection phrases blocked with a fixed reply; emails, phone and ID numbers redacted; a Social Security number shaped input refused; a name typed after "my name is", "I'm", "I am", "this is", "name is", "name:" or "call me" removed (plain patterns with a stoplist, no name list).
 - Distress and stress phrases get a fixed reply that names 988 for the narrow cases. It is phrase matching and can miss other wording. Questions in other languages get a short English notice; the safety screens run on a translation first.
-- Logs hold the redacted question and answer, sources, cost and latency; no IP address and no account identifier; a purge command deletes rows older than 30 days. No login, no cookies, no analytics. The API listens on 127.0.0.1 only.
+- Logs hold the redacted question and answer, sources, cost and latency; no IP address, email or user id; a purge command deletes rows older than 30 days. Sign-in is by emailed code through Clerk, which sets the cookies needed to keep you signed in; only the email's domain is used (to allow Gmail), and the API receives an opaque user id only to confirm you are signed in. No analytics. The API listens on 127.0.0.1 only.
 - Optional LangSmith tracing exists for development, off by default, with every payload scrubbed.
 - Crawling: robots.txt respected, at most 1 request per second, an identifying User-Agent, only the allowed hosts in `config/sources.yaml`, never login links, raw responses saved with a content hash.
 

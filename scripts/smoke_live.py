@@ -2,10 +2,15 @@
 """Smoke test of a running City Tech Assistant: about ten requests, a pass/fail table, exit code 1 on
 any failure. Works against the local API, the Caddy address of the server, or the Vercel page.
 
-    uv run python scripts/smoke_live.py http://127.0.0.1:8080 --secret "$CTA_PROXY_SECRET"
+    uv run python scripts/smoke_live.py http://127.0.0.1:8080 --secret "$CTA_PROXY_SECRET" --user user_smoke1
     uv run python scripts/smoke_live.py https://myname.duckdns.org --secret "$CTA_PROXY_SECRET" --health hidden
-    uv run python scripts/smoke_live.py https://myapp.vercel.app --prefix /api --health hidden
-    uv run python scripts/smoke_live.py http://127.0.0.1:8080 --paused    # while the kill switch is on
+    uv run python scripts/smoke_live.py https://myapp.vercel.app --prefix /api --health hidden --expect-signed-out
+    uv run python scripts/smoke_live.py http://127.0.0.1:8080 --user user_smoke1 --paused  # kill switch on
+
+Login: with CTA_PROXY_SECRET set, the API answers /ask only with x-cta-user, an opaque id like user_abc123
+(--user sends it, for a direct run that also has --secret; it is not a real account and is not stored).
+The Vercel page needs a signed-in Gmail session, which this script cannot have, so the run against it
+uses --expect-signed-out: /ask must answer 401 {"error":"sign_in_required"}, and the other checks still run.
 
 Cost: four requests reach the model (about $0.002 in all); the rest are fixed replies that cost
 nothing. The shared secret is read from --secret or the environment variable CTA_PROXY_SECRET and is
@@ -28,14 +33,15 @@ LIMIT_PER_MINUTE = 10
 
 
 class Smoke:
-    def __init__(self, client: httpx.Client, prefix: str, secret: str, visitor: str):
+    def __init__(self, client: httpx.Client, prefix: str, secret: str, visitor: str, user: str = ""):
         self.client, self.prefix = client, prefix.rstrip("/")
         # the made-up visitor goes with every request: the local page forwards it, the API trusts it
         # only with the secret, and Vercel replaces it with the real visitor
         # x-cta-visitor is the header the API prefers (web/proxy.ts sets it); direct runs send the
         # same made-up visitor in both, and the page proxy overwrites both
         self.headers = {"x-real-ip": visitor, "x-cta-visitor": visitor,
-                        **({"x-cta-proxy-secret": secret} if secret else {})}  # fmt: skip
+                        **({"x-cta-proxy-secret": secret} if secret else {}),
+                        **({"x-cta-user": user} if user else {})}  # fmt: skip
         self.sent = 0
         self.first_at: float | None = None  # when the first /ask was sent (the limit is per minute)
         self.rows: list[tuple[str, bool, str]] = []
@@ -44,6 +50,8 @@ class Smoke:
         self.sent += 1
         self.first_at = self.first_at or time.monotonic()
         r = self.client.post(f"{self.prefix}/ask", json={"question": question}, headers=self.headers)
+        if r.status_code == 401:
+            raise AssertionError("HTTP 401 sign_in_required (a direct run needs --user user_...)")
         if r.status_code != 200:
             raise AssertionError(f"HTTP {r.status_code}")
         return r.json()
@@ -164,6 +172,28 @@ def run_paused(s: Smoke, health: str, health_url: str) -> None:
     s.check("health reports the kill switch", health_check)
 
 
+def run_signed_out(s: Smoke, health: str, health_url: str) -> None:
+    """The Vercel run: /ask needs a login the script does not have, so it must be refused."""
+
+    def refused():
+        r = s.client.post(f"{s.prefix}/ask", json={"question": "How do I apply for graduation?"},
+                          headers=s.headers)  # fmt: skip
+        need(r.status_code == 401, f"HTTP {r.status_code}")
+        need(r.json() == {"error": "sign_in_required"}, "body is not sign_in_required")
+        return "401 sign_in_required"
+
+    def health_check():
+        r = s.client.get(health_url)
+        if health == "hidden":
+            need(r.status_code in (403, 404), f"health is public (HTTP {r.status_code})")
+            return f"not public (HTTP {r.status_code}), as designed"
+        need(r.status_code == 200, f"HTTP {r.status_code}")
+        return "health ok"
+
+    s.check("signed out: /ask is refused with 401", refused)
+    s.check("health endpoint", health_check)
+
+
 def main(argv: list[str]) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
     p.add_argument("base_url")
@@ -171,6 +201,9 @@ def main(argv: list[str]) -> int:
     p.add_argument("--prefix", default="", help="path prefix, for example /api on the Vercel page")
     p.add_argument("--health", choices=("open", "hidden"), default="open",
                    help="hidden: the address does not expose /health (Caddy, Vercel)")  # fmt: skip
+    p.add_argument("--user", default="", help="send x-cta-user (a direct run with --secret)")
+    p.add_argument("--expect-signed-out", action="store_true",
+                   help="the Vercel run: /ask must return 401 sign_in_required")  # fmt: skip
     p.add_argument("--paused", action="store_true", help="expect the kill switch to be on")
     p.add_argument("--insecure", action="store_true", help="accept a self-signed certificate")
     args = p.parse_args(argv[1:])
@@ -178,8 +211,8 @@ def main(argv: list[str]) -> int:
     visitor = f"203.0.113.{random.randint(1, 254)}"
     started = time.perf_counter()
     with httpx.Client(base_url=base, timeout=60, verify=not args.insecure) as client:
-        s = Smoke(client, args.prefix, args.secret, visitor)
-        runner = run_paused if args.paused else run
+        s = Smoke(client, args.prefix, args.secret, visitor, args.user)
+        runner = run_signed_out if args.expect_signed_out else run_paused if args.paused else run
         runner(s, args.health, f"{base}{args.prefix.rstrip('/')}/health")
     print(s.table())
     print(f"({time.perf_counter() - started:.1f} s)")

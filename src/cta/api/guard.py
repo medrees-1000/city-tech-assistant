@@ -14,7 +14,7 @@ x-cta-proxy-secret header, and only then is the visitor read from the x-real-ip 
 proxy set. Without the variable (local development) nothing changes.
 
 Login: with the secret set, /ask also needs x-cta-user, the opaque Clerk user id that web/proxy.ts
-sets for a signed-in Gmail visitor. It is only checked for its shape, never stored, hashed or logged.
+sets for a signed-in Gmail visitor. Only its shape is checked; it is never stored, hashed or logged.
 """
 
 import hashlib
