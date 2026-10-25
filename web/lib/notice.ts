@@ -26,7 +26,7 @@ export const NOTICE_POINTS: string[] = [
   "Also saved: which pages were used, how long each step took, and what the request cost (numbers only).",
   "If you press the thumbs up or down, that vote is saved with the answer. Nothing else is saved with it.",
   "Sign-in is by an emailed code through Clerk, a third-party sign-in service, and only Gmail addresses (@gmail.com) can use the assistant. Clerk sets the cookies needed to keep you signed in. We use only the domain of your email to allow Gmail.",
-  "No IP address is stored. The assistant's server receives an opaque user id only to confirm that you are signed in. Ids and emails are not stored in our logs, and our own records hold no network address at all.",
+  "The assistant's server receives an opaque user id only to confirm that you are signed in. Ids and emails are not stored in our logs. The assistant's own request records hold no network address. Our hosts and Clerk may keep their own standard server logs.",
   "To prevent abuse, requests are counted in memory per visitor using a scrambled (hashed) form of the network address that is never saved with your questions; the count is cleared when the service restarts.",
   "Your question (after the removals above) and the assistant's reply are also sent to LangSmith, a third-party tracing service, so mistakes can be found and fixed. LangSmith keeps them for 14 days. Messages that the safety checks handle (for example about self-harm, danger or a death), and the fixed reply to off-topic requests, are not sent. No IP address and no cookies are sent.",
   "The page is hosted on Vercel and the assistant runs on Amazon Web Services. They keep ordinary server logs that may include IP addresses, under their own policies.",

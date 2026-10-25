@@ -107,7 +107,7 @@ test("the details say what goes to LangSmith, what does not, who else keeps logs
   assert.match(all, /Sign-in is by an emailed code through Clerk/);
   assert.match(all, /Clerk sets the cookies needed to keep you signed in/);
   assert.match(all, /We use only the domain of your email to allow Gmail/);
-  assert.match(all, /No IP address is stored/);
+  assert.match(all, /The assistant's own request records hold no network address\. Our hosts and Clerk may keep their own standard server logs/);
   assert.match(all, /Ids and emails are not stored in our logs/);
   assert.doesNotMatch(all, /no accounts|no cookies are stored/);
   assert.doesNotMatch(all, /Optional developer tracing is off by default/);
