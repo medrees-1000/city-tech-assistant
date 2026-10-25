@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-import { FOOTER_LINE, SIGN_IN_LINE } from "./notice.ts";
+import { CLERK_LOCALIZATION, FOOTER_LINE, SIGN_IN_LINE } from "./notice.ts";
 
 // The pages are .tsx (no JSX loader in node:test), so these tests read the page source, the
 // stylesheet and the icon as text; the built pages were also fetched from `next start` when these
@@ -41,6 +41,14 @@ test("the sign-in line sits under the question box and shows before anything is 
   assert.equal(SIGN_IN_LINE, "Sign-in required. Gmail addresses (@gmail.com) only.");
   assert.ok(chat.includes('<p className="fine">{SIGN_IN_LINE}</p>'));
   assert.ok(chat.indexOf("<Composer") < chat.indexOf("{SIGN_IN_LINE}"));
+});
+
+test("Clerk's sign-in and sign-up boxes say Gmail only, and the layout passes the strings", () => {
+  const L = CLERK_LOCALIZATION;
+  assert.equal(L.signIn.start.subtitle, "Gmail addresses (@gmail.com) only.");
+  assert.equal(L.signUp.start.subtitle, "Gmail addresses (@gmail.com) only.");
+  assert.equal(L.formFieldInputPlaceholder__emailAddress, "you@gmail.com");
+  assert.ok(read("../app/layout.tsx").includes("<ClerkProvider localization={CLERK_LOCALIZATION}>"));
 });
 
 test("the pill's style is still the orange-outlined rounded one", () => {

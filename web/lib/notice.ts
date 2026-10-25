@@ -10,6 +10,16 @@ export const FOOTER_LINE = "Independent student project, not affiliated with Cit
 /** The line under the question box, shown before anyone sends (the gate is in proxy.ts). */
 export const SIGN_IN_LINE = "Sign-in required. Gmail addresses (@gmail.com) only.";
 
+const GMAIL_ONLY = "Gmail addresses (@gmail.com) only.";
+
+/** Text overrides for Clerk's sign-in and sign-up boxes (the `localization` prop of ClerkProvider; keys
+ * from LocalizationResource in @clerk/shared). The gate itself is in proxy.ts. */
+export const CLERK_LOCALIZATION = {
+  signIn: { start: { subtitle: GMAIL_ONLY } },
+  signUp: { start: { subtitle: GMAIL_ONLY } },
+  formFieldInputPlaceholder__emailAddress: "you@gmail.com",
+};
+
 /** Under the chat bar: the full notice on the landing screen, one short line once a question has been
  * sent. "New chat" empties the list, so it returns to the full notice. */
 export type FooterNotice = "full" | "short";
