@@ -95,6 +95,11 @@ export default function ChatPage() {
           <button type="button" className="ghost" onClick={newChat} disabled={empty}>
             New chat
           </button>
+          <Show when="signed-out">
+            <button type="button" className="ghost" onClick={() => openSignIn()}>
+              Sign in
+            </button>
+          </Show>
           <Show when="signed-in">
             <UserButton />
           </Show>

@@ -51,6 +51,14 @@ test("Clerk's sign-in and sign-up boxes say Gmail only, and the layout passes th
   assert.ok(read("../app/layout.tsx").includes("<ClerkProvider localization={CLERK_LOCALIZATION}>"));
 });
 
+test("the top bar shows Sign in when signed out (same modal as the send-time prompt) and the account button when signed in", () => {
+  const chat = read("../app/chat/page.tsx");
+  const out = chat.indexOf('<Show when="signed-out">');
+  assert.ok(out > chat.indexOf("New chat") - 200 && out < chat.indexOf('<Show when="signed-in">'));
+  assert.ok(chat.slice(out, chat.indexOf('<Show when="signed-in">')).includes("onClick={() => openSignIn()}"));
+  assert.ok(chat.includes("<UserButton />"));
+});
+
 test("the pill's style is still the orange-outlined rounded one", () => {
   const css = read("../app/globals.css");
   const rule = css.match(/\.unofficial \{[^}]*\}/)?.[0] ?? "";
